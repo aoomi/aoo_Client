@@ -1,0 +1,45 @@
+{
+  "account": "29",
+  "asset": "ClubList",
+  "assertions": {
+    "newRootLoaded": true,
+    "deskScrollPolicyEquivalent": true,
+    "underfilledFollowsAndBounces": false,
+    "backgroundDoesNotPierce": true,
+    "noOldAssetLoadError": true
+  },
+  "root": {
+    "name": "ClubList",
+    "active": true
+  },
+  "scroll": {
+    "horizontal": true,
+    "vertical": false,
+    "inertia": true,
+    "brake": 0.32,
+    "elastic": true,
+    "bounceDuration": 0.16,
+    "cancelInnerEvents": true,
+    "direction": 0,
+    "minDrag": 50,
+    "follow": 1,
+    "activeRows": 0
+  },
+  "underfilledOrigin": 0,
+  "underfilledDragged": {
+    "x": 7.884836960032796,
+    "underfilled": false,
+    "dragging": false,
+    "pending": false
+  },
+  "underfilledReturned": 0,
+  "afterBackground": {
+    "stack": [
+      "lobby/UILobbyMain",
+      "lobby/UILobbyClubList"
+    ],
+    "clubListActive": true
+  },
+  "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-13T06-55-08-562Z/club-list-loaded.png",
+  "errors": []
+}

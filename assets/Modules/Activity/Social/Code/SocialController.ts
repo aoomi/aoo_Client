@@ -1,0 +1,23 @@
+import { isValid,Node } from 'cc';
+import { SocialGateway,type Friend } from '../../../../Common/Code/Runtime/Social/SocialGateway';
+/** Production UI binding with durable catch-up polling converted to lobby push callbacks. */
+export class SocialController {
+ private readonly disposers:Array<()=>void>=[];private timer:number|undefined;private cursor=0;private polling=false;private active=false;
+ public constructor(private readonly node:Node,private readonly gateway:SocialGateway,private readonly error:(e:unknown)=>void){}
+ public install():void{this.active=true;this.listen('legacy-friend-request',v=>void this.request(v));this.listen('legacy-friend-accept',v=>void this.decide(v,true));this.listen('legacy-friend-reject',v=>void this.decide(v,false));this.listen('legacy-friend-refresh',()=>void this.refresh());this.listen('legacy-presence-set',v=>void this.presence(v));this.listen('legacy-notification-read',v=>void this.read(v));this.listen('legacy-mail-open',v=>void this.openMail(v));this.listen('legacy-mail-read',v=>void this.readMail(v));this.listen('social.notice.changed',()=>void this.poll());void this.activate();}
+ public destroy():void{this.active=false;if(isValid(this.node,true)&&(this.node as unknown as{_eventProcessor?:unknown})._eventProcessor)for(const d of this.disposers.splice(0))d();else this.disposers.length=0;this.stopTimer();}
+ private async activate():Promise<void>{try{await this.gateway.setPresence('ONLINE');if(!this.alive())return;await this.refresh();await this.poll();if(this.alive())this.timer=globalThis.setInterval(()=>void this.poll(),5000);}catch(e){this.report(e);}}
+ private async request(v:unknown):Promise<void>{try{const data=await this.gateway.request(this.positive(this.record(v).recipientId));this.emit('legacy-friend-requested',data);await this.refresh();}catch(e){this.report(e);}}
+ private async decide(v:unknown,accept:boolean):Promise<void>{try{const id=this.positive(this.record(v).requestId);const data=accept?await this.gateway.accept(id):await this.gateway.reject(id);this.emit('legacy-friend-decided',data);await this.refresh();}catch(e){this.report(e);}}
+ private async refresh():Promise<void>{if(!this.alive())return;try{const [friends,requests]=await Promise.all([this.gateway.friends(),this.gateway.requests()]);this.emit('legacy-friends-updated',{friends,requests});}catch(e){this.report(e);}}
+ private async presence(v:unknown):Promise<void>{try{const p=this.record(v);const state=String(p.state) as Friend['state'];const roomId=p.roomId===undefined?undefined:this.positive(p.roomId);await this.gateway.setPresence(state,roomId,String(p.visibility??'FRIENDS') as 'FRIENDS'|'NOBODY');this.emit('legacy-presence-updated',{state,roomId});}catch(e){this.report(e);}}
+ private async poll():Promise<void>{if(this.polling||!this.alive())return;this.polling=true;try{const [feed,mails,notices,redDots]=await Promise.all([this.gateway.notifications(this.cursor),this.gateway.mails(0),this.gateway.notices(0),this.gateway.redDots()]);if(!this.alive())return;this.cursor=Math.max(this.cursor,feed.nextCursor);this.emit('legacy-notifications-pushed',feed);this.emit('legacy-mails-updated',mails);this.emit('legacy-notices-updated',notices);this.emit('legacy-red-dots-updated',redDots);}catch(e){this.report(e);}finally{this.polling=false;}}
+ private async read(v:unknown):Promise<void>{try{const data=await this.gateway.read(this.positive(this.record(v).cursor));this.emit('legacy-notifications-read',data);}catch(e){this.report(e);}}
+ private async openMail(v:unknown):Promise<void>{try{const mail=await this.gateway.mailDetail(this.positive(this.record(v).mailId));this.emit('legacy-mail-detail',mail);}catch(e){this.report(e);}}
+ private async readMail(v:unknown):Promise<void>{try{const data=await this.gateway.readMail(this.positive(this.record(v).cursor));this.emit('legacy-mails-read',data);await this.poll();}catch(e){this.report(e);}}
+ private alive():boolean{if(this.active&&this.node.isValid)return true;if(!this.node.isValid)this.active=false;this.stopTimer();return false;}
+ private emit(name:string,value:unknown):void{if(this.alive())this.node.emit(name,value);}
+ private report(error:unknown):void{if(this.alive())this.error(error);}
+ private stopTimer():void{if(this.timer!==undefined)globalThis.clearInterval(this.timer);this.timer=undefined;}
+ private listen(name:string,fn:(v:unknown)=>void):void{this.node.on(name,fn);this.disposers.push(()=>{if(this.node.isValid)this.node.off(name,fn);});}private record(v:unknown):Record<string,unknown>{return v&&typeof v==='object'?v as Record<string,unknown>:{};}private positive(v:unknown):number{const n=Number(v);if(!Number.isSafeInteger(n)||n<=0)throw new Error('positive integer required');return n;}
+}

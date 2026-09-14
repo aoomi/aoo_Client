@@ -1,0 +1,70 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "fa704892-f328-4bf5-9b8f-a19dff392801",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "ddz_zuqiu": {
+      "ver": "1.0.4",
+      "uuid": "ca9384bb-f12a-4e6d-9099-079526d71fce",
+      "rawTextureUuid": "fa704892-f328-4bf5-9b8f-a19dff392801",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": -0.5,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 784,
+      "height": 518,
+      "rawWidth": 785,
+      "rawHeight": 518,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {},
+      "importer": "*",
+      "imported": false,
+      "files": [],
+      "userData": {},
+      "displayName": "",
+      "id": "",
+      "name": ""
+    },
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "fa704892-f328-4bf5-9b8f-a19dff392801@6c48a",
+      "displayName": "ddz_zuqiu",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "fa704892-f328-4bf5-9b8f-a19dff392801",
+        "visible": false
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "hasAlpha": true,
+    "type": "texture",
+    "fixAlphaTransparencyArtifacts": false,
+    "redirect": "fa704892-f328-4bf5-9b8f-a19dff392801@6c48a"
+  }
+}

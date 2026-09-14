@@ -1,0 +1,1002 @@
+{
+  "consoleEvents": [
+    {
+      "stage": "bootstrap",
+      "type": "timeEnd",
+      "text": "Init Base: 0.2099609375 ms"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "WebGL device initialized."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "VENDOR: Google Inc. (Google)"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "Shader 'Blit Pass' compilation succeeded."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "timeEnd",
+      "text": "Init Infrastructure: 13.529052734375 ms"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "meshopt wasm decoder initialized"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "[bullet]:bullet wasm lib loaded."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "[PHYSICS2D]: register box2d."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "[PHYSICS]: register bullet."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "[PHYSICS]: using bullet."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "timeEnd",
+      "text": "Init SubSystem: 114.307861328125 ms"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "Cocos Creator v3.8.8"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "log",
+      "text": "Using custom pipeline: Builtin"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "timeEnd",
+      "text": "Init Project: 362.97802734375 ms"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CLAIM\",\"bootId\":\"53a1b52e-eb94-4537-ba0a-a4222d697a05\",\"sceneName\":\"BootStrap\",\"nodeUuid\":\"nCanvas\"}"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[LoadingEnvironment] boot=419e0fec-6ddc-4be7-bc31-2c75e1d25c0c environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:start Object"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:success"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] services:start"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] services:success"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:start"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:progress Object"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[AuthRestore] cache=missing"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:success Object"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:start"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:skipped"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:start"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:success"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"visible\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248307596}"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248307597}"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:start"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "timeEnd",
+      "text": "LoadScene LoginScene: 16.43603515625 ms"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:success"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"53a1b52e-eb94-4537-ba0a-a4222d697a05\",\"nodeUuid\":\"nCanvas\"}}"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[MessageDrift] bound Object"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789248307680}"
+    },
+    {
+      "stage": "bootstrap",
+      "type": "info",
+      "text": "[AooTransition] aoo-transition-20260907-coordinator-1 overlay:destroy"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Base: 0.0908203125 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "WebGL device initialized."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "VENDOR: Google Inc. (Google)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'Blit Pass' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Infrastructure: 8.983154296875 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "meshopt wasm decoder initialized"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[bullet]:bullet wasm lib loaded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS2D]: register box2d."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS]: register bullet."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS]: using bullet."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init SubSystem: 76.2900390625 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "Cocos Creator v3.8.8"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "Using custom pipeline: Builtin"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Project: 295.738037109375 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CLAIM\",\"bootId\":\"98425bfb-32f5-49cd-86be-4e8ffd4482e0\",\"sceneName\":\"BootStrap\",\"nodeUuid\":\"nCanvas\"}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[LoadingEnvironment] boot=9f8fa1f3-d4d3-41f7-9983-9665012347da environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:start Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] services:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] services:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:progress Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AuthRestore] cache=missing"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:success Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:skipped"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"visible\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248401127}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248401127}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "LoadScene LoginScene: 16.568115234375 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"98425bfb-32f5-49cd-86be-4e8ffd4482e0\",\"nodeUuid\":\"nCanvas\"}}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[MessageDrift] bound Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789248401193}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooTransition] aoo-transition-20260907-coordinator-1 overlay:destroy"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Base: 0.095947265625 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "WebGL device initialized."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "VENDOR: Google Inc. (Google)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'Blit Pass' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Infrastructure: 8.083984375 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "meshopt wasm decoder initialized"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[bullet]:bullet wasm lib loaded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS2D]: register box2d."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS]: register bullet."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "[PHYSICS]: using bullet."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init SubSystem: 221.201904296875 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "Cocos Creator v3.8.8"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "log",
+      "text": "Using custom pipeline: Builtin"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "Init Project: 404.54296875 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CLAIM\",\"bootId\":\"f34414ca-5e73-4440-b722-785e66943f3b\",\"sceneName\":\"BootStrap\",\"nodeUuid\":\"nCanvas\"}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[LoadingEnvironment] boot=564820d0-475b-4011-b5f2-aca024401791 environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:start Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] version-check:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] services:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] services:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:progress Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AuthRestore] cache=missing"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] startup-route:success Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-bundle:skipped"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-preload:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"visible\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248453024}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789248453024}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:start"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "timeEnd",
+      "text": "LoadScene LoginScene: 17.307861328125 ms"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "The asset  has been destroyed!"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "debug",
+      "text": "[BootstrapStage] login-scene-load:success"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[BootstrapOwner] {\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"f34414ca-5e73-4440-b722-785e66943f3b\",\"nodeUuid\":\"nCanvas\"}}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[MessageDrift] bound Object"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789248453107}"
+    },
+    {
+      "stage": "desktop:navigate",
+      "type": "info",
+      "text": "[AooTransition] aoo-transition-20260907-coordinator-1 overlay:destroy"
+    }
+  ],
+  "exceptions": [],
+  "requests": [
+    {
+      "stage": "desktop:navigate",
+      "requestId": "873320DEE5E31E42272D04C0008190D1",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.1566",
+      "method": "POST",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "70D2B2A2E3B3DC709EEE6CE0B828E659",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.2388",
+      "method": "POST",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    }
+  ],
+  "responses": [
+    {
+      "stage": "desktop:navigate",
+      "requestId": "873320DEE5E31E42272D04C0008190D1",
+      "status": 204,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.1566",
+      "status": 200,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "70D2B2A2E3B3DC709EEE6CE0B828E659",
+      "status": 204,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.2388",
+      "status": 200,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    }
+  ]
+}

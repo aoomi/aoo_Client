@@ -1,0 +1,73 @@
+{
+  "results": [
+    {
+      "button": "Settings",
+      "root": "SettingsPanel",
+      "passed": true,
+      "before": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbySettings"
+      ],
+      "after": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbySettings"
+      ]
+    },
+    {
+      "button": "Feedback",
+      "root": "Feedback",
+      "passed": true,
+      "before": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyFeedback"
+      ],
+      "after": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyFeedback"
+      ]
+    },
+    {
+      "button": "Notice",
+      "root": "Notice",
+      "passed": true,
+      "before": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyNotice"
+      ],
+      "after": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyNotice"
+      ]
+    },
+    {
+      "button": "CheckIn",
+      "root": "CheckIn",
+      "passed": true,
+      "before": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyCheckIn",
+        "lobby/UIMessage_Drift"
+      ],
+      "after": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyCheckIn",
+        "lobby/UIMessage_Drift"
+      ]
+    },
+    {
+      "button": "Bind",
+      "root": "PhoneBind",
+      "passed": true,
+      "before": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyPhoneBind",
+        "lobby/UIMessage_Drift"
+      ],
+      "after": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyPhoneBind",
+        "lobby/UIMessage_Drift"
+      ]
+    }
+  ]
+}

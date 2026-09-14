@@ -1,0 +1,120 @@
+{
+  "frames": [
+    {
+      "i": 0,
+      "ms": 88,
+      "scene": "LoginScene",
+      "retained": false,
+      "transition": false
+    },
+    {
+      "i": 1,
+      "ms": 282,
+      "scene": "LoginScene",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 2,
+      "ms": 549,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 3,
+      "ms": 789,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 4,
+      "ms": 1005,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 5,
+      "ms": 1286,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 6,
+      "ms": 1508,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 7,
+      "ms": 1737,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 8,
+      "ms": 1854,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "transition": true
+    },
+    {
+      "i": 9,
+      "ms": 1955,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "transition": false
+    },
+    {
+      "i": 10,
+      "ms": 2085,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "transition": false
+    },
+    {
+      "i": 11,
+      "ms": 2213,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "transition": false
+    },
+    {
+      "i": 12,
+      "ms": 2344,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "transition": false
+    },
+    {
+      "i": 13,
+      "ms": 2463,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "transition": false
+    }
+  ],
+  "relevant": [
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789298463954}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789298463955}"
+    },
+    {
+      "type": "info",
+      "text": "[AuthNavigation] {\"operationId\":1,\"stage\":\"ROOM_PRESENTED\",\"owner\":\"authenticated-route\",\"roomId\":577494,\"scene\":\"GameRoom2D\",\"navigationGeneration\":1}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298465555}"
+    }
+  ]
+}

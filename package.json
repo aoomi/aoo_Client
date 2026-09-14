@@ -1,0 +1,27 @@
+{
+  "name": "aoo-card-game-frontend-architecture",
+  "version": "3.8.8",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "description": "aoo",
+  "engines": {
+    "cocos": "3.8.8",
+    "node": "24.19.0",
+    "pnpm": "11.19.0"
+  },
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "audit:client-runtime": "node scripts/audit-client-runtime-deps.mjs",
+    "verify:client-manager": "node scripts/verify-client-manager.mjs",
+    "verify:component-registration": "node scripts/verify-component-registration.mjs",
+    "verify:creator-node-creation": "node scripts/verify-creator-node-creation.mjs",
+    "verify:creator-native-assets": "node scripts/verify-creator-native-assets.mjs",
+    "verify:cur07-editor-sync": "node scripts/verify-cur07-editor-sync.mjs",
+    "normalize:editbox-label-layout": "node scripts/normalize-editbox-label-layout.mjs --write",
+    "verify:editbox-label-layout": "node scripts/normalize-editbox-label-layout.mjs && node --test tests/ui/EditBoxLabelLayout.test.mjs"
+  },
+  "uuid": "c1873409-b244-4c13-be1a-95071f295439"
+}

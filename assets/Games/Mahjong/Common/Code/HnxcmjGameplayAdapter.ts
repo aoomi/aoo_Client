@@ -1,0 +1,6 @@
+import{MahjongWaitingExSequentialAdapter}from'./MahjongLifecycleFamilyAdapters';
+import{FAMILY_RUNTIME_REGISTRY}from'../../../Common/Code/Catalog/CatalogFamilyBindings';
+export interface HnxcmjTransport{request<T>(message:string,payload:unknown):Promise<T>;}export type HnxcmjWanFa=0|1;export type HnxcmjXiaPao=0|1|2|3|4|5|6|7|8|9;export type HnxcmjOption=0|1|2|3|4|5;export interface HnxcmjSnapshot{gameCode:'hnxcmj';stateVersion:number;phase:'LOBBY'|'WAITING_EX'|'PLAYING'|'SETTLED';choiceSeat:number;piaoFen:readonly number[];hunIndicator:number;hunTile:number;createRules?:{wanfa:HnxcmjWanFa;xiapao:HnxcmjXiaPao;kexuanwanfa:readonly HnxcmjOption[];[key:string]:unknown};[key:string]:unknown;}/** Intent-only: hun, feng-mo, bao-ting, gang-pao, seven-pairs, gang-flower and settlement are server authoritative. */
+export const HNXCMJ_REGION_BINDING=FAMILY_RUNTIME_REGISTRY.resolve('hnxcmj')!;export const HNXCMJ_ROUTE='mahjong.hnxcmj.dispatch';
+/** Compatibility factory; lifecycle, route and stale-snapshot handling are family-owned. */
+export class HnxcmjGameplayAdapter extends MahjongWaitingExSequentialAdapter<HnxcmjSnapshot>{constructor(wire:HnxcmjTransport,roomId:number,..._regionConfig:unknown[]){super(wire,roomId,HNXCMJ_REGION_BINDING);}timeout(seat:number){return this.intent(seat,'piaoFen',{value:0});}}

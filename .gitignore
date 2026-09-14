@@ -1,0 +1,10 @@
+/build/
+/build-*/
+/library/
+/temp/
+/node_modules/
+/profiles/
+/tests/reports/*
+!/tests/reports/README.md
+*.log
+.DS_Store

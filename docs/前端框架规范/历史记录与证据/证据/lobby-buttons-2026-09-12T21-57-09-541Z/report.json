@@ -1,0 +1,55 @@
+{
+  "result": [
+    {
+      "button": "Help",
+      "root": "GameHelp",
+      "form": "UIGameHelp",
+      "passed": true,
+      "closed": false,
+      "formStack": [
+        "lobby/UILobbyMain",
+        "lobby/UIGameHelp",
+        "lobby/UITop"
+      ],
+      "errors": []
+    },
+    {
+      "button": "Records",
+      "root": "Records",
+      "form": "UILobbyRecords",
+      "passed": true,
+      "closed": false,
+      "formStack": [
+        "lobby/UILobbyMain",
+        "lobby/UILobbyRecords"
+      ],
+      "errors": []
+    },
+    {
+      "button": "Shop",
+      "root": "Store",
+      "form": "UIStore",
+      "passed": true,
+      "closed": false,
+      "formStack": [
+        "lobby/UILobbyMain",
+        "lobby/UITop",
+        "lobby/UIStore",
+        "lobby/UIMessage_Drift"
+      ],
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[LobbyScreenController] 请求失败 ProductionApiError: 请求失败\n    at http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:250:23\n    at Generator.next (<anonymous>)\n    at asyncGeneratorStep (http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:6:105)\n    at _next (http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:8:196)"
+      ]
+    }
+  ],
+  "browserErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "[LobbyScreenController] 请求失败 ProductionApiError: 请求失败\n    at http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:250:23\n    at Generator.next (<anonymous>)\n    at asyncGeneratorStep (http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:6:105)\n    at _next (http://127.0.0.1:7456/scripting/x/chunks/06/06ff551a9d21225e0f0e9d027057c96e3dd5bca0.js:8:196)"
+  ],
+  "evidenceDir": "docs/前端框架规范/历史记录与证据/证据/lobby-buttons-2026-09-12T21-57-09-541Z"
+}

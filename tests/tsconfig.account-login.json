@@ -1,0 +1,29 @@
+{
+  "extends": "../temp/tsconfig.cocos.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "target": "ES2019",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "types": [
+      "../temp/declarations/cc",
+      "../temp/declarations/cc.env",
+      "../temp/declarations/cc.custom-macro",
+      "../temp/declarations/jsb"
+    ]
+  },
+  "include": [
+    "../assets/Common/Code/Runtime/core/AppError.ts",
+    "../assets/Common/Code/Runtime/core/Storage.ts",
+    "../assets/Login/Code/Auth/AuthSession.ts",
+    "../assets/Login/Code/Auth/AuthTypes.ts",
+    "../assets/Login/Code/Auth/GuestSessionStore.ts",
+    "../assets/Login/Code/Auth/LastAccountStore.ts",
+    "../assets/Login/Code/Auth/UnifiedIdentityAuthGateway.ts",
+    "../assets/Login/Code/Auth/LoginView.ts"
+  ]
+}

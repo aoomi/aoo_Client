@@ -1,0 +1,4156 @@
+{
+  "runId": "2026-09-08T14-34-58-242Z",
+  "buildId": "creator-3.8.8-preview-7456-chengdu-pdk",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://192.168.1.107:7456/",
+  "chrome": "Chrome/152.0.7977.82",
+  "rounds": [
+    {
+      "round": 1,
+      "finalAuthority": {
+        "roomId": 682301,
+        "stateVersion": 15,
+        "serverSeq": 0,
+        "phase": "FINISHED",
+        "operationId": "1788878140280-3d0e96e8bd8668",
+        "turnSeat": 1,
+        "trickId": 6,
+        "lastActionCount": 1
+      },
+      "rawDesktop": {
+        "replayCode": "623910",
+        "family": "poker:pao-de-kuai",
+        "playedCards": [
+          {
+            "type": "SINGLE",
+            "primaryRank": 14,
+            "cards": [
+              214
+            ]
+          }
+        ],
+        "interactionEnabled": true,
+        "serverEpochMillis": 1788878140362,
+        "roundLimit": 8,
+        "trickReset": false,
+        "currentTrick": {
+          "type": "SINGLE",
+          "primaryRank": 14,
+          "seat": 1,
+          "cards": [
+            214
+          ]
+        },
+        "roomId": 682301,
+        "playerCount": 2,
+        "ruleOptions": {
+          "reverseSpringMode": "HAND_TABLE",
+          "fourAttachmentMode": "SINGLES",
+          "cardsPerPlayer": 16,
+          "bombScoreCap": 0,
+          "baseScore": 1,
+          "gpsMinimumDistanceMeters": 0,
+          "reverseSpringValue": 2,
+          "allowSpecialTripleBombWithOne": false,
+          "allowSingle": true,
+          "forceHighestPairAgainstReportedPair": false,
+          "allowJokersInRuns": false,
+          "payerMode": "OWNER",
+          "compareTripleAttachments": false,
+          "playedCardVisibility": "LAST_ONLY",
+          "distanceWarningEnabled": false,
+          "airplaneAttachmentMode": "EITHER",
+          "bombScoreMode": "FIXED_POINTS",
+          "directWinPatterns": [],
+          "allowConsecutiveBomb": false,
+          "offlineDissolveSeconds": 60,
+          "settlementPresentation": "POPUP",
+          "airplaneWithoutAttachmentTiming": "ANYTIME",
+          "reverseSpringMaxPlayedCards": 999,
+          "tripleAttachmentMode": "EITHER",
+          "reverseSpringAppliesToAllLosers": false,
+          "allowPair": true,
+          "mustBeatWhenPossible": true,
+          "initialHandPatterns": [],
+          "gpsAdmissionRequired": false,
+          "minimumPairRunLength": 2,
+          "skipCompeteDealerFirstRound": false,
+          "uniqueIpRequired": false,
+          "jinHuaScoreUnit": 0,
+          "allowFourBombWithOne": false,
+          "deckCards": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            205,
+            206,
+            207,
+            208,
+            209,
+            210,
+            211,
+            212,
+            213,
+            214,
+            305,
+            306,
+            307,
+            308,
+            309,
+            310,
+            311,
+            312,
+            313,
+            314,
+            405,
+            406,
+            407,
+            408,
+            409,
+            410,
+            411,
+            412,
+            413
+          ],
+          "springAppliesToAllLosers": true,
+          "minimumStraightLength": 5,
+          "firstLead": "MINIMUM_CARD_HOLDER",
+          "carryInMultipliers": [],
+          "fourOfKindPatternRanks": [],
+          "textChatEnabled": true,
+          "autoReady": false,
+          "bankerCannotCompeteAfterAllPass": false,
+          "springValue": 2,
+          "interactionEnabled": true,
+          "specialTripleBombRanks": [
+            14
+          ],
+          "competeDealerStartAfterBanker": false,
+          "initialHandPatternLimit": 0,
+          "competeDealerEnabled": false,
+          "springMode": "HAND_TABLE",
+          "springMaxPlayedCards": 2147483647,
+          "forceHighestSingleAgainstReportedSingle": true,
+          "declaredRoundTimeoutSeconds": 1800,
+          "bombFixedPoints": 5,
+          "tripleWithoutAttachmentTiming": "ANYTIME",
+          "initialHandPatternScoreUnit": 3,
+          "allowFourWithThree": false,
+          "selectBankerEveryRound": false,
+          "entryMode": "PARTICIPANT",
+          "allowTerminalAttachmentShortage": false,
+          "allowAirplaneWithTwo": true,
+          "handScoreTable": [
+            1,
+            0,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            6,
+            6,
+            7,
+            7,
+            8,
+            8,
+            9,
+            9,
+            10,
+            10,
+            11,
+            11,
+            12,
+            12,
+            13,
+            13,
+            14,
+            14,
+            15,
+            15,
+            16,
+            16,
+            17,
+            17
+          ],
+          "hostingMissThreshold": -1,
+          "operationTimeoutSeconds": 1000,
+          "allowTwoInRuns": false,
+          "requiredFirstCardRounds": 0
+        },
+        "trickId": 6,
+        "operationDeadline": {
+          "deadlineEpochMillis": 0,
+          "seatId": -1,
+          "operationId": ""
+        },
+        "seats": {
+          "0": {
+            "headImageUrl": "",
+            "roundScore": -6,
+            "remainingCards": [
+              314,
+              410,
+              115,
+              307,
+              309,
+              312
+            ],
+            "playedCards": [
+              112,
+              411,
+              110,
+              209,
+              108,
+              107,
+              106,
+              205,
+              408,
+              308
+            ],
+            "winCount": 0,
+            "name": "玩家400",
+            "playerId": 400,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 6,
+            "loseCount": 1,
+            "cards": [
+              314,
+              410,
+              115,
+              307,
+              309,
+              312
+            ],
+            "continued": false,
+            "totalScore": -6
+          },
+          "1": {
+            "headImageUrl": "",
+            "roundScore": 6,
+            "remainingCards": [],
+            "playedCards": [
+              313,
+              113,
+              412,
+              212,
+              211,
+              111,
+              310,
+              210,
+              413,
+              406,
+              306,
+              206,
+              305,
+              407,
+              207,
+              214
+            ],
+            "winCount": 1,
+            "name": "玩家396",
+            "playerId": 396,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 0,
+            "loseCount": 0,
+            "cards": [],
+            "continued": false,
+            "totalScore": 6
+          }
+        },
+        "ownerId": 400,
+        "seatLimit": 2,
+        "currentPlayerId": 396,
+        "winnerSeat": 1,
+        "dissolved": false,
+        "currentSeat": 1,
+        "observers": {},
+        "lastActions": [
+          {
+            "cardType": "SINGLE",
+            "playIndex": 7,
+            "stateVersion": 15,
+            "operationId": "1788878140280-3d0e96e8bd8668",
+            "action": "play",
+            "cards": [
+              214
+            ],
+            "seat": 1
+          }
+        ],
+        "playVersion": "1.0.0",
+        "settlementPresentation": "POPUP",
+        "finished": true,
+        "replaySetId": 0,
+        "phase": "FINISHED",
+        "distanceWarningEnabled": false,
+        "stockCount": 8,
+        "canContinue": true,
+        "matchFinished": false,
+        "competeDealerSeat": -1,
+        "dissolveReason": "",
+        "started": true,
+        "playHistory": [
+          {
+            "type": "STRAIGHT",
+            "playIndex": 1,
+            "seat": 0,
+            "cards": [
+              112,
+              411,
+              110,
+              209,
+              108,
+              107,
+              106,
+              205
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 2,
+            "seat": 0,
+            "cards": [
+              408,
+              308
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 3,
+            "seat": 1,
+            "cards": [
+              313,
+              113
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 4,
+            "seat": 1,
+            "cards": [
+              412,
+              212,
+              211,
+              111,
+              310,
+              210
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 5,
+            "seat": 1,
+            "cards": [
+              413,
+              406,
+              306,
+              206,
+              305
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 6,
+            "seat": 1,
+            "cards": [
+              407,
+              207
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 7,
+            "seat": 1,
+            "cards": [
+              214
+            ]
+          }
+        ],
+        "roundNo": 1,
+        "bankerSeat": 0,
+        "textChatEnabled": true,
+        "stateVersion": 15,
+        "capabilities": {
+          "robDoor": false,
+          "openCard": false,
+          "addDouble": false
+        }
+      },
+      "rawMobile": {
+        "replayCode": "623910",
+        "family": "poker:pao-de-kuai",
+        "playedCards": [
+          {
+            "type": "SINGLE",
+            "primaryRank": 14,
+            "cards": [
+              214
+            ]
+          }
+        ],
+        "interactionEnabled": true,
+        "serverEpochMillis": 1788878140370,
+        "roundLimit": 8,
+        "trickReset": false,
+        "currentTrick": {
+          "type": "SINGLE",
+          "primaryRank": 14,
+          "seat": 1,
+          "cards": [
+            214
+          ]
+        },
+        "roomId": 682301,
+        "playerCount": 2,
+        "ruleOptions": {
+          "reverseSpringMode": "HAND_TABLE",
+          "fourAttachmentMode": "SINGLES",
+          "cardsPerPlayer": 16,
+          "bombScoreCap": 0,
+          "baseScore": 1,
+          "gpsMinimumDistanceMeters": 0,
+          "reverseSpringValue": 2,
+          "allowSpecialTripleBombWithOne": false,
+          "allowSingle": true,
+          "forceHighestPairAgainstReportedPair": false,
+          "allowJokersInRuns": false,
+          "payerMode": "OWNER",
+          "compareTripleAttachments": false,
+          "playedCardVisibility": "LAST_ONLY",
+          "distanceWarningEnabled": false,
+          "airplaneAttachmentMode": "EITHER",
+          "bombScoreMode": "FIXED_POINTS",
+          "directWinPatterns": [],
+          "allowConsecutiveBomb": false,
+          "offlineDissolveSeconds": 60,
+          "settlementPresentation": "POPUP",
+          "airplaneWithoutAttachmentTiming": "ANYTIME",
+          "reverseSpringMaxPlayedCards": 999,
+          "tripleAttachmentMode": "EITHER",
+          "reverseSpringAppliesToAllLosers": false,
+          "allowPair": true,
+          "mustBeatWhenPossible": true,
+          "initialHandPatterns": [],
+          "gpsAdmissionRequired": false,
+          "minimumPairRunLength": 2,
+          "skipCompeteDealerFirstRound": false,
+          "uniqueIpRequired": false,
+          "jinHuaScoreUnit": 0,
+          "allowFourBombWithOne": false,
+          "deckCards": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            205,
+            206,
+            207,
+            208,
+            209,
+            210,
+            211,
+            212,
+            213,
+            214,
+            305,
+            306,
+            307,
+            308,
+            309,
+            310,
+            311,
+            312,
+            313,
+            314,
+            405,
+            406,
+            407,
+            408,
+            409,
+            410,
+            411,
+            412,
+            413
+          ],
+          "springAppliesToAllLosers": true,
+          "minimumStraightLength": 5,
+          "firstLead": "MINIMUM_CARD_HOLDER",
+          "carryInMultipliers": [],
+          "fourOfKindPatternRanks": [],
+          "textChatEnabled": true,
+          "autoReady": false,
+          "bankerCannotCompeteAfterAllPass": false,
+          "springValue": 2,
+          "interactionEnabled": true,
+          "specialTripleBombRanks": [
+            14
+          ],
+          "competeDealerStartAfterBanker": false,
+          "initialHandPatternLimit": 0,
+          "competeDealerEnabled": false,
+          "springMode": "HAND_TABLE",
+          "springMaxPlayedCards": 2147483647,
+          "forceHighestSingleAgainstReportedSingle": true,
+          "declaredRoundTimeoutSeconds": 1800,
+          "bombFixedPoints": 5,
+          "tripleWithoutAttachmentTiming": "ANYTIME",
+          "initialHandPatternScoreUnit": 3,
+          "allowFourWithThree": false,
+          "selectBankerEveryRound": false,
+          "entryMode": "PARTICIPANT",
+          "allowTerminalAttachmentShortage": false,
+          "allowAirplaneWithTwo": true,
+          "handScoreTable": [
+            1,
+            0,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            6,
+            6,
+            7,
+            7,
+            8,
+            8,
+            9,
+            9,
+            10,
+            10,
+            11,
+            11,
+            12,
+            12,
+            13,
+            13,
+            14,
+            14,
+            15,
+            15,
+            16,
+            16,
+            17,
+            17
+          ],
+          "hostingMissThreshold": -1,
+          "operationTimeoutSeconds": 1000,
+          "allowTwoInRuns": false,
+          "requiredFirstCardRounds": 0
+        },
+        "trickId": 6,
+        "operationDeadline": {
+          "deadlineEpochMillis": 0,
+          "seatId": -1,
+          "operationId": ""
+        },
+        "seats": {
+          "0": {
+            "headImageUrl": "",
+            "roundScore": -6,
+            "remainingCards": [
+              314,
+              410,
+              115,
+              307,
+              309,
+              312
+            ],
+            "playedCards": [
+              112,
+              411,
+              110,
+              209,
+              108,
+              107,
+              106,
+              205,
+              408,
+              308
+            ],
+            "winCount": 0,
+            "name": "玩家400",
+            "playerId": 400,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 6,
+            "loseCount": 1,
+            "cards": [
+              314,
+              410,
+              115,
+              307,
+              309,
+              312
+            ],
+            "continued": false,
+            "totalScore": -6
+          },
+          "1": {
+            "headImageUrl": "",
+            "roundScore": 6,
+            "remainingCards": [],
+            "playedCards": [
+              313,
+              113,
+              412,
+              212,
+              211,
+              111,
+              310,
+              210,
+              413,
+              406,
+              306,
+              206,
+              305,
+              407,
+              207,
+              214
+            ],
+            "winCount": 1,
+            "name": "玩家396",
+            "playerId": 396,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 0,
+            "loseCount": 0,
+            "cards": [],
+            "continued": false,
+            "totalScore": 6
+          }
+        },
+        "ownerId": 400,
+        "seatLimit": 2,
+        "currentPlayerId": 396,
+        "winnerSeat": 1,
+        "dissolved": false,
+        "currentSeat": 1,
+        "observers": {},
+        "lastActions": [
+          {
+            "cardType": "SINGLE",
+            "playIndex": 7,
+            "stateVersion": 15,
+            "operationId": "1788878140280-3d0e96e8bd8668",
+            "action": "play",
+            "cards": [
+              214
+            ],
+            "seat": 1
+          }
+        ],
+        "playVersion": "1.0.0",
+        "settlementPresentation": "POPUP",
+        "finished": true,
+        "replaySetId": 0,
+        "phase": "FINISHED",
+        "distanceWarningEnabled": false,
+        "stockCount": 8,
+        "canContinue": true,
+        "matchFinished": false,
+        "competeDealerSeat": -1,
+        "dissolveReason": "",
+        "started": true,
+        "playHistory": [
+          {
+            "type": "STRAIGHT",
+            "playIndex": 1,
+            "seat": 0,
+            "cards": [
+              112,
+              411,
+              110,
+              209,
+              108,
+              107,
+              106,
+              205
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 2,
+            "seat": 0,
+            "cards": [
+              408,
+              308
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 3,
+            "seat": 1,
+            "cards": [
+              313,
+              113
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 4,
+            "seat": 1,
+            "cards": [
+              412,
+              212,
+              211,
+              111,
+              310,
+              210
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 5,
+            "seat": 1,
+            "cards": [
+              413,
+              406,
+              306,
+              206,
+              305
+            ]
+          },
+          {
+            "type": "PAIR",
+            "playIndex": 6,
+            "seat": 1,
+            "cards": [
+              407,
+              207
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 7,
+            "seat": 1,
+            "cards": [
+              214
+            ]
+          }
+        ],
+        "roundNo": 1,
+        "bankerSeat": 0,
+        "textChatEnabled": true,
+        "stateVersion": 15,
+        "capabilities": {
+          "robDoor": false,
+          "openCard": false,
+          "addDouble": false
+        }
+      },
+      "requests": {
+        "play": {
+          "desktop": 0,
+          "mobile": 0
+        },
+        "hint": {
+          "desktop": 0,
+          "mobile": 0
+        }
+      },
+      "operationIds": {
+        "desktop": [
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-dissolve",
+          "1-3-ready",
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-play",
+          "2ba7ad4c-8cf0-4938-b2b9-3557e55f9dea",
+          "1-5-pass",
+          "1-6-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1-7-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1788878136521-3dae892a00747",
+          "1-8-pass",
+          "1-9-play",
+          "1788878137334-efb2e8ad551f58",
+          "1-10-pass",
+          "1-11-play",
+          "1788878138151-e079dd002c7008",
+          "1-12-pass",
+          "1-13-play",
+          "1788878138968-4ce16275c67e88",
+          "1-14-pass",
+          "1788878140280-3d0e96e8bd8668"
+        ],
+        "mobile": [
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-play",
+          "2ba7ad4c-8cf0-4938-b2b9-3557e55f9dea",
+          "1-5-pass",
+          "1-6-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1-7-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1788878136521-3dae892a00747",
+          "1-8-pass",
+          "1-9-play",
+          "1788878137334-efb2e8ad551f58",
+          "1-10-pass",
+          "1-11-play",
+          "1788878138151-e079dd002c7008",
+          "1-12-pass",
+          "1-13-play",
+          "1788878138968-4ce16275c67e88",
+          "1-14-pass",
+          "1788878140280-3d0e96e8bd8668"
+        ]
+      }
+    },
+    {
+      "round": 2,
+      "finalAuthority": {
+        "roomId": 682301,
+        "stateVersion": 29,
+        "serverSeq": 0,
+        "phase": "FINISHED",
+        "operationId": "1788878148820-df623ed9e1bd18",
+        "turnSeat": 0,
+        "trickId": 10,
+        "lastActionCount": 2
+      },
+      "rawDesktop": {
+        "replayCode": "548281",
+        "family": "poker:pao-de-kuai",
+        "playedCards": [
+          {
+            "type": "SINGLE",
+            "primaryRank": 15,
+            "cards": [
+              115
+            ]
+          }
+        ],
+        "interactionEnabled": true,
+        "serverEpochMillis": 1788878150121,
+        "roundLimit": 8,
+        "trickReset": false,
+        "currentTrick": {
+          "type": "SINGLE",
+          "primaryRank": 15,
+          "seat": 0,
+          "cards": [
+            115
+          ]
+        },
+        "roomId": 682301,
+        "playerCount": 2,
+        "ruleOptions": {
+          "reverseSpringMode": "HAND_TABLE",
+          "fourAttachmentMode": "SINGLES",
+          "cardsPerPlayer": 16,
+          "bombScoreCap": 0,
+          "baseScore": 1,
+          "gpsMinimumDistanceMeters": 0,
+          "reverseSpringValue": 2,
+          "allowSpecialTripleBombWithOne": false,
+          "allowSingle": true,
+          "forceHighestPairAgainstReportedPair": false,
+          "allowJokersInRuns": false,
+          "payerMode": "OWNER",
+          "compareTripleAttachments": false,
+          "playedCardVisibility": "LAST_ONLY",
+          "distanceWarningEnabled": false,
+          "airplaneAttachmentMode": "EITHER",
+          "bombScoreMode": "FIXED_POINTS",
+          "directWinPatterns": [],
+          "allowConsecutiveBomb": false,
+          "offlineDissolveSeconds": 60,
+          "settlementPresentation": "POPUP",
+          "airplaneWithoutAttachmentTiming": "ANYTIME",
+          "reverseSpringMaxPlayedCards": 999,
+          "tripleAttachmentMode": "EITHER",
+          "reverseSpringAppliesToAllLosers": false,
+          "allowPair": true,
+          "mustBeatWhenPossible": true,
+          "initialHandPatterns": [],
+          "gpsAdmissionRequired": false,
+          "minimumPairRunLength": 2,
+          "skipCompeteDealerFirstRound": false,
+          "uniqueIpRequired": false,
+          "jinHuaScoreUnit": 0,
+          "allowFourBombWithOne": false,
+          "deckCards": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            205,
+            206,
+            207,
+            208,
+            209,
+            210,
+            211,
+            212,
+            213,
+            214,
+            305,
+            306,
+            307,
+            308,
+            309,
+            310,
+            311,
+            312,
+            313,
+            314,
+            405,
+            406,
+            407,
+            408,
+            409,
+            410,
+            411,
+            412,
+            413
+          ],
+          "springAppliesToAllLosers": true,
+          "minimumStraightLength": 5,
+          "firstLead": "MINIMUM_CARD_HOLDER",
+          "carryInMultipliers": [],
+          "fourOfKindPatternRanks": [],
+          "textChatEnabled": true,
+          "autoReady": false,
+          "bankerCannotCompeteAfterAllPass": false,
+          "springValue": 2,
+          "interactionEnabled": true,
+          "specialTripleBombRanks": [
+            14
+          ],
+          "competeDealerStartAfterBanker": false,
+          "initialHandPatternLimit": 0,
+          "competeDealerEnabled": false,
+          "springMode": "HAND_TABLE",
+          "springMaxPlayedCards": 2147483647,
+          "forceHighestSingleAgainstReportedSingle": true,
+          "declaredRoundTimeoutSeconds": 1800,
+          "bombFixedPoints": 5,
+          "tripleWithoutAttachmentTiming": "ANYTIME",
+          "initialHandPatternScoreUnit": 3,
+          "allowFourWithThree": false,
+          "selectBankerEveryRound": false,
+          "entryMode": "PARTICIPANT",
+          "allowTerminalAttachmentShortage": false,
+          "allowAirplaneWithTwo": true,
+          "handScoreTable": [
+            1,
+            0,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            6,
+            6,
+            7,
+            7,
+            8,
+            8,
+            9,
+            9,
+            10,
+            10,
+            11,
+            11,
+            12,
+            12,
+            13,
+            13,
+            14,
+            14,
+            15,
+            15,
+            16,
+            16,
+            17,
+            17
+          ],
+          "hostingMissThreshold": -1,
+          "operationTimeoutSeconds": 1000,
+          "allowTwoInRuns": false,
+          "requiredFirstCardRounds": 0
+        },
+        "trickId": 10,
+        "operationDeadline": {
+          "deadlineEpochMillis": 0,
+          "seatId": -1,
+          "operationId": ""
+        },
+        "seats": {
+          "0": {
+            "headImageUrl": "",
+            "roundScore": 0,
+            "remainingCards": [],
+            "playedCards": [
+              413,
+              213,
+              113,
+              207,
+              205,
+              214,
+              212,
+              411,
+              311,
+              111,
+              309,
+              209,
+              408,
+              108,
+              409,
+              115
+            ],
+            "winCount": 1,
+            "name": "玩家400",
+            "playerId": 400,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 0,
+            "loseCount": 1,
+            "cards": [],
+            "continued": false,
+            "totalScore": -6
+          },
+          "1": {
+            "headImageUrl": "",
+            "roundScore": 0,
+            "remainingCards": [
+              314
+            ],
+            "playedCards": [
+              310,
+              210,
+              110,
+              109,
+              208,
+              313,
+              412,
+              312,
+              112,
+              105,
+              306,
+              106,
+              405,
+              305,
+              114
+            ],
+            "winCount": 1,
+            "name": "玩家396",
+            "playerId": 396,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 1,
+            "loseCount": 1,
+            "cards": [
+              314
+            ],
+            "continued": false,
+            "totalScore": 6
+          }
+        },
+        "ownerId": 400,
+        "seatLimit": 2,
+        "currentPlayerId": 400,
+        "winnerSeat": 0,
+        "dissolved": false,
+        "currentSeat": 0,
+        "observers": {},
+        "lastActions": [
+          {
+            "cardType": "SINGLE",
+            "playIndex": 9,
+            "stateVersion": 29,
+            "operationId": "c176a2a8-8f2b-48bc-9f91-585bfc2445ef",
+            "action": "play",
+            "cards": [
+              115
+            ],
+            "seat": 0
+          },
+          {
+            "cardType": "SINGLE",
+            "playIndex": 8,
+            "stateVersion": 28,
+            "operationId": "1788878148820-df623ed9e1bd18",
+            "action": "play",
+            "cards": [
+              114
+            ],
+            "seat": 1
+          }
+        ],
+        "playVersion": "1.0.0",
+        "settlementPresentation": "POPUP",
+        "finished": true,
+        "replaySetId": 1,
+        "phase": "FINISHED",
+        "distanceWarningEnabled": false,
+        "stockCount": 8,
+        "canContinue": true,
+        "matchFinished": false,
+        "competeDealerSeat": -1,
+        "dissolveReason": "",
+        "started": true,
+        "playHistory": [
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 1,
+            "seat": 1,
+            "cards": [
+              310,
+              210,
+              110,
+              109,
+              208
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 2,
+            "seat": 0,
+            "cards": [
+              413,
+              213,
+              113,
+              207,
+              205
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 3,
+            "seat": 0,
+            "cards": [
+              214,
+              212,
+              411,
+              311,
+              111
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 4,
+            "seat": 1,
+            "cards": [
+              313,
+              412,
+              312,
+              112,
+              105
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 5,
+            "seat": 1,
+            "cards": [
+              306,
+              106,
+              405,
+              305
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 6,
+            "seat": 0,
+            "cards": [
+              309,
+              209,
+              408,
+              108
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 7,
+            "seat": 0,
+            "cards": [
+              409
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 8,
+            "seat": 1,
+            "cards": [
+              114
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 9,
+            "seat": 0,
+            "cards": [
+              115
+            ]
+          }
+        ],
+        "roundNo": 2,
+        "bankerSeat": 1,
+        "textChatEnabled": true,
+        "stateVersion": 29,
+        "capabilities": {
+          "robDoor": false,
+          "openCard": false,
+          "addDouble": false
+        }
+      },
+      "rawMobile": {
+        "replayCode": "548281",
+        "family": "poker:pao-de-kuai",
+        "playedCards": [
+          {
+            "type": "SINGLE",
+            "primaryRank": 15,
+            "cards": [
+              115
+            ]
+          }
+        ],
+        "interactionEnabled": true,
+        "serverEpochMillis": 1788878150127,
+        "roundLimit": 8,
+        "trickReset": false,
+        "currentTrick": {
+          "type": "SINGLE",
+          "primaryRank": 15,
+          "seat": 0,
+          "cards": [
+            115
+          ]
+        },
+        "roomId": 682301,
+        "playerCount": 2,
+        "ruleOptions": {
+          "reverseSpringMode": "HAND_TABLE",
+          "fourAttachmentMode": "SINGLES",
+          "cardsPerPlayer": 16,
+          "bombScoreCap": 0,
+          "baseScore": 1,
+          "gpsMinimumDistanceMeters": 0,
+          "reverseSpringValue": 2,
+          "allowSpecialTripleBombWithOne": false,
+          "allowSingle": true,
+          "forceHighestPairAgainstReportedPair": false,
+          "allowJokersInRuns": false,
+          "payerMode": "OWNER",
+          "compareTripleAttachments": false,
+          "playedCardVisibility": "LAST_ONLY",
+          "distanceWarningEnabled": false,
+          "airplaneAttachmentMode": "EITHER",
+          "bombScoreMode": "FIXED_POINTS",
+          "directWinPatterns": [],
+          "allowConsecutiveBomb": false,
+          "offlineDissolveSeconds": 60,
+          "settlementPresentation": "POPUP",
+          "airplaneWithoutAttachmentTiming": "ANYTIME",
+          "reverseSpringMaxPlayedCards": 999,
+          "tripleAttachmentMode": "EITHER",
+          "reverseSpringAppliesToAllLosers": false,
+          "allowPair": true,
+          "mustBeatWhenPossible": true,
+          "initialHandPatterns": [],
+          "gpsAdmissionRequired": false,
+          "minimumPairRunLength": 2,
+          "skipCompeteDealerFirstRound": false,
+          "uniqueIpRequired": false,
+          "jinHuaScoreUnit": 0,
+          "allowFourBombWithOne": false,
+          "deckCards": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            205,
+            206,
+            207,
+            208,
+            209,
+            210,
+            211,
+            212,
+            213,
+            214,
+            305,
+            306,
+            307,
+            308,
+            309,
+            310,
+            311,
+            312,
+            313,
+            314,
+            405,
+            406,
+            407,
+            408,
+            409,
+            410,
+            411,
+            412,
+            413
+          ],
+          "springAppliesToAllLosers": true,
+          "minimumStraightLength": 5,
+          "firstLead": "MINIMUM_CARD_HOLDER",
+          "carryInMultipliers": [],
+          "fourOfKindPatternRanks": [],
+          "textChatEnabled": true,
+          "autoReady": false,
+          "bankerCannotCompeteAfterAllPass": false,
+          "springValue": 2,
+          "interactionEnabled": true,
+          "specialTripleBombRanks": [
+            14
+          ],
+          "competeDealerStartAfterBanker": false,
+          "initialHandPatternLimit": 0,
+          "competeDealerEnabled": false,
+          "springMode": "HAND_TABLE",
+          "springMaxPlayedCards": 2147483647,
+          "forceHighestSingleAgainstReportedSingle": true,
+          "declaredRoundTimeoutSeconds": 1800,
+          "bombFixedPoints": 5,
+          "tripleWithoutAttachmentTiming": "ANYTIME",
+          "initialHandPatternScoreUnit": 3,
+          "allowFourWithThree": false,
+          "selectBankerEveryRound": false,
+          "entryMode": "PARTICIPANT",
+          "allowTerminalAttachmentShortage": false,
+          "allowAirplaneWithTwo": true,
+          "handScoreTable": [
+            1,
+            0,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            5,
+            5,
+            6,
+            6,
+            7,
+            7,
+            8,
+            8,
+            9,
+            9,
+            10,
+            10,
+            11,
+            11,
+            12,
+            12,
+            13,
+            13,
+            14,
+            14,
+            15,
+            15,
+            16,
+            16,
+            17,
+            17
+          ],
+          "hostingMissThreshold": -1,
+          "operationTimeoutSeconds": 1000,
+          "allowTwoInRuns": false,
+          "requiredFirstCardRounds": 0
+        },
+        "trickId": 10,
+        "operationDeadline": {
+          "deadlineEpochMillis": 0,
+          "seatId": -1,
+          "operationId": ""
+        },
+        "seats": {
+          "0": {
+            "headImageUrl": "",
+            "roundScore": 0,
+            "remainingCards": [],
+            "playedCards": [
+              413,
+              213,
+              113,
+              207,
+              205,
+              214,
+              212,
+              411,
+              311,
+              111,
+              309,
+              209,
+              408,
+              108,
+              409,
+              115
+            ],
+            "winCount": 1,
+            "name": "玩家400",
+            "playerId": 400,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 0,
+            "loseCount": 1,
+            "cards": [],
+            "continued": false,
+            "totalScore": -6
+          },
+          "1": {
+            "headImageUrl": "",
+            "roundScore": 0,
+            "remainingCards": [
+              314
+            ],
+            "playedCards": [
+              310,
+              210,
+              110,
+              109,
+              208,
+              313,
+              412,
+              312,
+              112,
+              105,
+              306,
+              106,
+              405,
+              305,
+              114
+            ],
+            "winCount": 1,
+            "name": "玩家396",
+            "playerId": 396,
+            "offline": false,
+            "ready": true,
+            "hosting": false,
+            "cardCount": 1,
+            "loseCount": 1,
+            "cards": [
+              314
+            ],
+            "continued": false,
+            "totalScore": 6
+          }
+        },
+        "ownerId": 400,
+        "seatLimit": 2,
+        "currentPlayerId": 400,
+        "winnerSeat": 0,
+        "dissolved": false,
+        "currentSeat": 0,
+        "observers": {},
+        "lastActions": [
+          {
+            "cardType": "SINGLE",
+            "playIndex": 9,
+            "stateVersion": 29,
+            "operationId": "c176a2a8-8f2b-48bc-9f91-585bfc2445ef",
+            "action": "play",
+            "cards": [
+              115
+            ],
+            "seat": 0
+          },
+          {
+            "cardType": "SINGLE",
+            "playIndex": 8,
+            "stateVersion": 28,
+            "operationId": "1788878148820-df623ed9e1bd18",
+            "action": "play",
+            "cards": [
+              114
+            ],
+            "seat": 1
+          }
+        ],
+        "playVersion": "1.0.0",
+        "settlementPresentation": "POPUP",
+        "finished": true,
+        "replaySetId": 1,
+        "phase": "FINISHED",
+        "distanceWarningEnabled": false,
+        "stockCount": 8,
+        "canContinue": true,
+        "matchFinished": false,
+        "competeDealerSeat": -1,
+        "dissolveReason": "",
+        "started": true,
+        "playHistory": [
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 1,
+            "seat": 1,
+            "cards": [
+              310,
+              210,
+              110,
+              109,
+              208
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 2,
+            "seat": 0,
+            "cards": [
+              413,
+              213,
+              113,
+              207,
+              205
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 3,
+            "seat": 0,
+            "cards": [
+              214,
+              212,
+              411,
+              311,
+              111
+            ]
+          },
+          {
+            "type": "TRIPLE_WITH_TWO",
+            "playIndex": 4,
+            "seat": 1,
+            "cards": [
+              313,
+              412,
+              312,
+              112,
+              105
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 5,
+            "seat": 1,
+            "cards": [
+              306,
+              106,
+              405,
+              305
+            ]
+          },
+          {
+            "type": "CONSECUTIVE_PAIRS",
+            "playIndex": 6,
+            "seat": 0,
+            "cards": [
+              309,
+              209,
+              408,
+              108
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 7,
+            "seat": 0,
+            "cards": [
+              409
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 8,
+            "seat": 1,
+            "cards": [
+              114
+            ]
+          },
+          {
+            "type": "SINGLE",
+            "playIndex": 9,
+            "seat": 0,
+            "cards": [
+              115
+            ]
+          }
+        ],
+        "roundNo": 2,
+        "bankerSeat": 1,
+        "textChatEnabled": true,
+        "stateVersion": 29,
+        "capabilities": {
+          "robDoor": false,
+          "openCard": false,
+          "addDouble": false
+        }
+      },
+      "requests": {
+        "play": {
+          "desktop": 0,
+          "mobile": 0
+        },
+        "hint": {
+          "desktop": 0,
+          "mobile": 0
+        }
+      },
+      "operationIds": {
+        "desktop": [
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-dissolve",
+          "1-3-ready",
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-play",
+          "2ba7ad4c-8cf0-4938-b2b9-3557e55f9dea",
+          "1-5-pass",
+          "1-6-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1-7-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1788878136521-3dae892a00747",
+          "1-8-pass",
+          "1-9-play",
+          "1788878137334-efb2e8ad551f58",
+          "1-10-pass",
+          "1-11-play",
+          "1788878138151-e079dd002c7008",
+          "1-12-pass",
+          "1-13-play",
+          "1788878138968-4ce16275c67e88",
+          "1-14-pass",
+          "1788878140280-3d0e96e8bd8668",
+          "1788878140280-3d0e96e8bd8668",
+          "2-17-continue",
+          "2-18-play",
+          "1788878143268-3ec38a2e9b82c8",
+          "2-19-play",
+          "1788878143268-3ec38a2e9b82c8",
+          "a1eba200-c794-443a-8597-cc5473244593",
+          "2-20-pass",
+          "2-21-play",
+          "0f43d315-dc2b-4aa7-8349-139d3df00f8c",
+          "2-22-play",
+          "0f43d315-dc2b-4aa7-8349-139d3df00f8c",
+          "1788878145657-85625c55917bb8",
+          "2-23-pass",
+          "2-24-play",
+          "1788878146467-aab5f714bcda8",
+          "2-25-play",
+          "1788878146467-aab5f714bcda8",
+          "8ddf9d3f-0209-4627-9d67-1c0e733edb5a",
+          "2-26-pass",
+          "2-27-play",
+          "11200510-f941-4b07-9c45-578eb7d12004",
+          "2-28-play",
+          "11200510-f941-4b07-9c45-578eb7d12004",
+          "1788878148820-df623ed9e1bd18",
+          "c176a2a8-8f2b-48bc-9f91-585bfc2445ef",
+          "1788878148820-df623ed9e1bd18"
+        ],
+        "mobile": [
+          "1-3-ready",
+          "1-3-ready",
+          "1-4-play",
+          "2ba7ad4c-8cf0-4938-b2b9-3557e55f9dea",
+          "1-5-pass",
+          "1-6-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1-7-play",
+          "dd0cc6e2-0bbd-448a-8c1f-b94ffe85fd7d",
+          "1788878136521-3dae892a00747",
+          "1-8-pass",
+          "1-9-play",
+          "1788878137334-efb2e8ad551f58",
+          "1-10-pass",
+          "1-11-play",
+          "1788878138151-e079dd002c7008",
+          "1-12-pass",
+          "1-13-play",
+          "1788878138968-4ce16275c67e88",
+          "1-14-pass",
+          "1788878140280-3d0e96e8bd8668",
+          "1788878140280-3d0e96e8bd8668",
+          "2-17-continue",
+          "2-18-play",
+          "1788878143268-3ec38a2e9b82c8",
+          "2-19-play",
+          "1788878143268-3ec38a2e9b82c8",
+          "a1eba200-c794-443a-8597-cc5473244593",
+          "2-20-pass",
+          "2-21-play",
+          "0f43d315-dc2b-4aa7-8349-139d3df00f8c",
+          "2-22-play",
+          "0f43d315-dc2b-4aa7-8349-139d3df00f8c",
+          "1788878145657-85625c55917bb8",
+          "2-23-pass",
+          "2-24-play",
+          "1788878146467-aab5f714bcda8",
+          "2-25-play",
+          "1788878146467-aab5f714bcda8",
+          "8ddf9d3f-0209-4627-9d67-1c0e733edb5a",
+          "2-26-pass",
+          "2-27-play",
+          "11200510-f941-4b07-9c45-578eb7d12004",
+          "2-28-play",
+          "11200510-f941-4b07-9c45-578eb7d12004",
+          "1788878148820-df623ed9e1bd18",
+          "c176a2a8-8f2b-48bc-9f91-585bfc2445ef",
+          "1788878148820-df623ed9e1bd18"
+        ]
+      }
+    }
+  ],
+  "assertions": {
+    "exactCutDeck": true,
+    "threeAcesOneTwo": true,
+    "dealAndStock": true,
+    "serverDefaults": false,
+    "sameBuildAndProtocol": true,
+    "reconnectPreservedAuthority": true,
+    "twoRounds": true,
+    "realCanvasClicks": true,
+    "frontendLocalHints": true,
+    "idempotentOperations": false,
+    "stateVersionsMonotonic": true,
+    "roomCleaned": true,
+    "noRuntimeErrors": false
+  },
+  "roomId": 682301,
+  "initial": {
+    "desktop": {
+      "ruleOptions": {
+        "reverseSpringMode": "HAND_TABLE",
+        "fourAttachmentMode": "SINGLES",
+        "cardsPerPlayer": 16,
+        "bombScoreCap": 0,
+        "baseScore": 1,
+        "gpsMinimumDistanceMeters": 0,
+        "reverseSpringValue": 2,
+        "allowSpecialTripleBombWithOne": false,
+        "allowSingle": true,
+        "forceHighestPairAgainstReportedPair": false,
+        "allowJokersInRuns": false,
+        "payerMode": "OWNER",
+        "compareTripleAttachments": false,
+        "playedCardVisibility": "LAST_ONLY",
+        "distanceWarningEnabled": false,
+        "airplaneAttachmentMode": "EITHER",
+        "bombScoreMode": "FIXED_POINTS",
+        "directWinPatterns": [],
+        "allowConsecutiveBomb": false,
+        "offlineDissolveSeconds": 60,
+        "settlementPresentation": "POPUP",
+        "airplaneWithoutAttachmentTiming": "ANYTIME",
+        "reverseSpringMaxPlayedCards": 999,
+        "tripleAttachmentMode": "EITHER",
+        "reverseSpringAppliesToAllLosers": false,
+        "allowPair": true,
+        "mustBeatWhenPossible": true,
+        "initialHandPatterns": [],
+        "gpsAdmissionRequired": false,
+        "minimumPairRunLength": 2,
+        "skipCompeteDealerFirstRound": false,
+        "uniqueIpRequired": false,
+        "jinHuaScoreUnit": 0,
+        "allowFourBombWithOne": false,
+        "deckCards": [
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          205,
+          206,
+          207,
+          208,
+          209,
+          210,
+          211,
+          212,
+          213,
+          214,
+          305,
+          306,
+          307,
+          308,
+          309,
+          310,
+          311,
+          312,
+          313,
+          314,
+          405,
+          406,
+          407,
+          408,
+          409,
+          410,
+          411,
+          412,
+          413
+        ],
+        "springAppliesToAllLosers": true,
+        "minimumStraightLength": 5,
+        "firstLead": "MINIMUM_CARD_HOLDER",
+        "carryInMultipliers": [],
+        "fourOfKindPatternRanks": [],
+        "textChatEnabled": true,
+        "autoReady": false,
+        "bankerCannotCompeteAfterAllPass": false,
+        "springValue": 2,
+        "interactionEnabled": true,
+        "specialTripleBombRanks": [
+          14
+        ],
+        "competeDealerStartAfterBanker": false,
+        "initialHandPatternLimit": 0,
+        "competeDealerEnabled": false,
+        "springMode": "HAND_TABLE",
+        "springMaxPlayedCards": 2147483647,
+        "forceHighestSingleAgainstReportedSingle": true,
+        "declaredRoundTimeoutSeconds": 1800,
+        "bombFixedPoints": 5,
+        "tripleWithoutAttachmentTiming": "ANYTIME",
+        "initialHandPatternScoreUnit": 3,
+        "allowFourWithThree": false,
+        "selectBankerEveryRound": false,
+        "entryMode": "PARTICIPANT",
+        "allowTerminalAttachmentShortage": false,
+        "allowAirplaneWithTwo": true,
+        "handScoreTable": [
+          1,
+          0,
+          2,
+          2,
+          3,
+          3,
+          4,
+          4,
+          5,
+          5,
+          6,
+          6,
+          7,
+          7,
+          8,
+          8,
+          9,
+          9,
+          10,
+          10,
+          11,
+          11,
+          12,
+          12,
+          13,
+          13,
+          14,
+          14,
+          15,
+          15,
+          16,
+          16,
+          17,
+          17
+        ],
+        "hostingMissThreshold": -1,
+        "operationTimeoutSeconds": 1000,
+        "allowTwoInRuns": false,
+        "requiredFirstCardRounds": 0
+      },
+      "distanceWarningEnabled": false,
+      "winnerSeat": -1,
+      "dissolved": false,
+      "currentSeat": 0,
+      "ownerId": 400,
+      "roundLimit": 8,
+      "lastActions": [],
+      "interactionEnabled": true,
+      "seats": {
+        "0": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家400",
+          "playerId": 400,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            107,
+            205,
+            314,
+            108,
+            209,
+            410,
+            112,
+            115,
+            307,
+            309,
+            312,
+            408,
+            106,
+            411,
+            308,
+            110
+          ],
+          "continued": false,
+          "totalScore": 0
+        },
+        "1": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家396",
+          "playerId": 396,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "continued": false,
+          "totalScore": 0
+        }
+      },
+      "trickReset": true,
+      "currentTrick": {},
+      "serverEpochMillis": 1788878128761,
+      "family": "poker:pao-de-kuai",
+      "stockCount": 8,
+      "textChatEnabled": true,
+      "dissolveReason": "",
+      "finished": false,
+      "currentPlayerId": 400,
+      "competeDealerSeat": -1,
+      "capabilities": {
+        "robDoor": false,
+        "openCard": false,
+        "addDouble": false
+      },
+      "observers": {},
+      "playVersion": "1.0.0",
+      "bankerSeat": 0,
+      "phase": "PLAYING",
+      "playedCards": [],
+      "settlementPresentation": "POPUP",
+      "matchFinished": false,
+      "stateVersion": 3,
+      "roundNo": 1,
+      "playHistory": [],
+      "canContinue": false,
+      "roomId": 682301,
+      "operationDeadline": {
+        "deadlineEpochMillis": 1788879128732,
+        "seatId": 0,
+        "operationId": "1-3-ready"
+      },
+      "trickId": 1,
+      "seatLimit": 2,
+      "playerCount": 2,
+      "started": true
+    },
+    "mobile": {
+      "ruleOptions": {
+        "reverseSpringMode": "HAND_TABLE",
+        "fourAttachmentMode": "SINGLES",
+        "cardsPerPlayer": 16,
+        "bombScoreCap": 0,
+        "baseScore": 1,
+        "gpsMinimumDistanceMeters": 0,
+        "reverseSpringValue": 2,
+        "allowSpecialTripleBombWithOne": false,
+        "allowSingle": true,
+        "forceHighestPairAgainstReportedPair": false,
+        "allowJokersInRuns": false,
+        "payerMode": "OWNER",
+        "compareTripleAttachments": false,
+        "playedCardVisibility": "LAST_ONLY",
+        "distanceWarningEnabled": false,
+        "airplaneAttachmentMode": "EITHER",
+        "bombScoreMode": "FIXED_POINTS",
+        "directWinPatterns": [],
+        "allowConsecutiveBomb": false,
+        "offlineDissolveSeconds": 60,
+        "settlementPresentation": "POPUP",
+        "airplaneWithoutAttachmentTiming": "ANYTIME",
+        "reverseSpringMaxPlayedCards": 999,
+        "tripleAttachmentMode": "EITHER",
+        "reverseSpringAppliesToAllLosers": false,
+        "allowPair": true,
+        "mustBeatWhenPossible": true,
+        "initialHandPatterns": [],
+        "gpsAdmissionRequired": false,
+        "minimumPairRunLength": 2,
+        "skipCompeteDealerFirstRound": false,
+        "uniqueIpRequired": false,
+        "jinHuaScoreUnit": 0,
+        "allowFourBombWithOne": false,
+        "deckCards": [
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          205,
+          206,
+          207,
+          208,
+          209,
+          210,
+          211,
+          212,
+          213,
+          214,
+          305,
+          306,
+          307,
+          308,
+          309,
+          310,
+          311,
+          312,
+          313,
+          314,
+          405,
+          406,
+          407,
+          408,
+          409,
+          410,
+          411,
+          412,
+          413
+        ],
+        "springAppliesToAllLosers": true,
+        "minimumStraightLength": 5,
+        "firstLead": "MINIMUM_CARD_HOLDER",
+        "carryInMultipliers": [],
+        "fourOfKindPatternRanks": [],
+        "textChatEnabled": true,
+        "autoReady": false,
+        "bankerCannotCompeteAfterAllPass": false,
+        "springValue": 2,
+        "interactionEnabled": true,
+        "specialTripleBombRanks": [
+          14
+        ],
+        "competeDealerStartAfterBanker": false,
+        "initialHandPatternLimit": 0,
+        "competeDealerEnabled": false,
+        "springMode": "HAND_TABLE",
+        "springMaxPlayedCards": 2147483647,
+        "forceHighestSingleAgainstReportedSingle": true,
+        "declaredRoundTimeoutSeconds": 1800,
+        "bombFixedPoints": 5,
+        "tripleWithoutAttachmentTiming": "ANYTIME",
+        "initialHandPatternScoreUnit": 3,
+        "allowFourWithThree": false,
+        "selectBankerEveryRound": false,
+        "entryMode": "PARTICIPANT",
+        "allowTerminalAttachmentShortage": false,
+        "allowAirplaneWithTwo": true,
+        "handScoreTable": [
+          1,
+          0,
+          2,
+          2,
+          3,
+          3,
+          4,
+          4,
+          5,
+          5,
+          6,
+          6,
+          7,
+          7,
+          8,
+          8,
+          9,
+          9,
+          10,
+          10,
+          11,
+          11,
+          12,
+          12,
+          13,
+          13,
+          14,
+          14,
+          15,
+          15,
+          16,
+          16,
+          17,
+          17
+        ],
+        "hostingMissThreshold": -1,
+        "operationTimeoutSeconds": 1000,
+        "allowTwoInRuns": false,
+        "requiredFirstCardRounds": 0
+      },
+      "distanceWarningEnabled": false,
+      "winnerSeat": -1,
+      "dissolved": false,
+      "currentSeat": 0,
+      "ownerId": 400,
+      "roundLimit": 8,
+      "lastActions": [],
+      "interactionEnabled": true,
+      "seats": {
+        "0": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家400",
+          "playerId": 400,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "continued": false,
+          "totalScore": 0
+        },
+        "1": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家396",
+          "playerId": 396,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            210,
+            214,
+            313,
+            207,
+            413,
+            306,
+            310,
+            111,
+            212,
+            406,
+            113,
+            407,
+            412,
+            305,
+            211,
+            206
+          ],
+          "continued": false,
+          "totalScore": 0
+        }
+      },
+      "trickReset": true,
+      "currentTrick": {},
+      "serverEpochMillis": 1788878128761,
+      "family": "poker:pao-de-kuai",
+      "stockCount": 8,
+      "textChatEnabled": true,
+      "dissolveReason": "",
+      "finished": false,
+      "currentPlayerId": 400,
+      "competeDealerSeat": -1,
+      "capabilities": {
+        "robDoor": false,
+        "openCard": false,
+        "addDouble": false
+      },
+      "observers": {},
+      "playVersion": "1.0.0",
+      "bankerSeat": 0,
+      "phase": "PLAYING",
+      "playedCards": [],
+      "settlementPresentation": "POPUP",
+      "matchFinished": false,
+      "stateVersion": 3,
+      "roundNo": 1,
+      "playHistory": [],
+      "canContinue": false,
+      "roomId": 682301,
+      "operationDeadline": {
+        "deadlineEpochMillis": 1788879128732,
+        "seatId": 0,
+        "operationId": "1-3-ready"
+      },
+      "trickId": 1,
+      "seatLimit": 2,
+      "playerCount": 2,
+      "started": true
+    }
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/01-desktop-dealt.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/02-mobile-dealt.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/03-desktop-round-1-settlement.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/04-mobile-round-1-settlement.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/05-desktop-round-2-settlement.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/chengdu-pdk-local-hint-2026-09-08T14-34-58-242Z/06-mobile-round-2-settlement.png"
+  ],
+  "reconnect": {
+    "before": {
+      "roomId": 682301,
+      "stateVersion": 3,
+      "operationId": "1-3-ready"
+    },
+    "after": {
+      "ruleOptions": {
+        "reverseSpringMode": "HAND_TABLE",
+        "fourAttachmentMode": "SINGLES",
+        "cardsPerPlayer": 16,
+        "bombScoreCap": 0,
+        "baseScore": 1,
+        "gpsMinimumDistanceMeters": 0,
+        "reverseSpringValue": 2,
+        "allowSpecialTripleBombWithOne": false,
+        "allowSingle": true,
+        "forceHighestPairAgainstReportedPair": false,
+        "allowJokersInRuns": false,
+        "payerMode": "OWNER",
+        "compareTripleAttachments": false,
+        "playedCardVisibility": "LAST_ONLY",
+        "distanceWarningEnabled": false,
+        "airplaneAttachmentMode": "EITHER",
+        "bombScoreMode": "FIXED_POINTS",
+        "directWinPatterns": [],
+        "allowConsecutiveBomb": false,
+        "offlineDissolveSeconds": 60,
+        "settlementPresentation": "POPUP",
+        "airplaneWithoutAttachmentTiming": "ANYTIME",
+        "reverseSpringMaxPlayedCards": 999,
+        "tripleAttachmentMode": "EITHER",
+        "reverseSpringAppliesToAllLosers": false,
+        "allowPair": true,
+        "mustBeatWhenPossible": true,
+        "initialHandPatterns": [],
+        "gpsAdmissionRequired": false,
+        "minimumPairRunLength": 2,
+        "skipCompeteDealerFirstRound": false,
+        "uniqueIpRequired": false,
+        "jinHuaScoreUnit": 0,
+        "allowFourBombWithOne": false,
+        "deckCards": [
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          205,
+          206,
+          207,
+          208,
+          209,
+          210,
+          211,
+          212,
+          213,
+          214,
+          305,
+          306,
+          307,
+          308,
+          309,
+          310,
+          311,
+          312,
+          313,
+          314,
+          405,
+          406,
+          407,
+          408,
+          409,
+          410,
+          411,
+          412,
+          413
+        ],
+        "springAppliesToAllLosers": true,
+        "minimumStraightLength": 5,
+        "firstLead": "MINIMUM_CARD_HOLDER",
+        "carryInMultipliers": [],
+        "fourOfKindPatternRanks": [],
+        "textChatEnabled": true,
+        "autoReady": false,
+        "bankerCannotCompeteAfterAllPass": false,
+        "springValue": 2,
+        "interactionEnabled": true,
+        "specialTripleBombRanks": [
+          14
+        ],
+        "competeDealerStartAfterBanker": false,
+        "initialHandPatternLimit": 0,
+        "competeDealerEnabled": false,
+        "springMode": "HAND_TABLE",
+        "springMaxPlayedCards": 2147483647,
+        "forceHighestSingleAgainstReportedSingle": true,
+        "declaredRoundTimeoutSeconds": 1800,
+        "bombFixedPoints": 5,
+        "tripleWithoutAttachmentTiming": "ANYTIME",
+        "initialHandPatternScoreUnit": 3,
+        "allowFourWithThree": false,
+        "selectBankerEveryRound": false,
+        "entryMode": "PARTICIPANT",
+        "allowTerminalAttachmentShortage": false,
+        "allowAirplaneWithTwo": true,
+        "handScoreTable": [
+          1,
+          0,
+          2,
+          2,
+          3,
+          3,
+          4,
+          4,
+          5,
+          5,
+          6,
+          6,
+          7,
+          7,
+          8,
+          8,
+          9,
+          9,
+          10,
+          10,
+          11,
+          11,
+          12,
+          12,
+          13,
+          13,
+          14,
+          14,
+          15,
+          15,
+          16,
+          16,
+          17,
+          17
+        ],
+        "hostingMissThreshold": -1,
+        "operationTimeoutSeconds": 1000,
+        "allowTwoInRuns": false,
+        "requiredFirstCardRounds": 0
+      },
+      "distanceWarningEnabled": false,
+      "winnerSeat": -1,
+      "dissolved": false,
+      "currentSeat": 0,
+      "ownerId": 400,
+      "roundLimit": 8,
+      "lastActions": [],
+      "interactionEnabled": true,
+      "seats": {
+        "0": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家400",
+          "playerId": 400,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            107,
+            205,
+            314,
+            108,
+            209,
+            410,
+            112,
+            115,
+            307,
+            309,
+            312,
+            408,
+            106,
+            411,
+            308,
+            110
+          ],
+          "continued": false,
+          "totalScore": 0
+        },
+        "1": {
+          "headImageUrl": "",
+          "roundScore": 0,
+          "remainingCards": [],
+          "playedCards": [],
+          "winCount": 0,
+          "name": "玩家396",
+          "playerId": 396,
+          "offline": false,
+          "ready": true,
+          "hosting": false,
+          "cardCount": 16,
+          "loseCount": 0,
+          "cards": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "continued": false,
+          "totalScore": 0
+        }
+      },
+      "trickReset": true,
+      "currentTrick": {},
+      "serverEpochMillis": 1788878133214,
+      "family": "poker:pao-de-kuai",
+      "stockCount": 8,
+      "textChatEnabled": true,
+      "dissolveReason": "",
+      "finished": false,
+      "currentPlayerId": 400,
+      "competeDealerSeat": -1,
+      "capabilities": {
+        "robDoor": false,
+        "openCard": false,
+        "addDouble": false
+      },
+      "observers": {},
+      "playVersion": "1.0.0",
+      "bankerSeat": 0,
+      "phase": "PLAYING",
+      "playedCards": [],
+      "settlementPresentation": "POPUP",
+      "matchFinished": false,
+      "stateVersion": 3,
+      "roundNo": 1,
+      "playHistory": [],
+      "canContinue": false,
+      "roomId": 682301,
+      "operationDeadline": {
+        "deadlineEpochMillis": 1788879128732,
+        "seatId": 0,
+        "operationId": "1-3-ready"
+      },
+      "trickId": 1,
+      "seatLimit": 2,
+      "playerCount": 2,
+      "started": true
+    }
+  },
+  "errors": {
+    "desktop": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "mobile": [
+      "WebSocket connection to 'ws://192.168.1.107:8080/api/v2/gateway/ws?ticket=FbEcihJZfmsdhWPaH6jiQkiq1hzAaV2TlSMYzv3rj4M&pageInstanceId=page-mtsru0fa-d380996c12f74' failed: Error during WebSocket handshake: Unexpected response code: 403",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 827.1666666666667,
+        "y": 570.6944444444445,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/Btn_AccountLogin",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "AccountInput",
+        "x": 640.2222222222222,
+        "y": 328.4611805555556,
+        "world": {
+          "x": 639.9999999999999,
+          "y": 419.15000000000003
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/AccountInput",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "PasswordInput",
+        "x": 640.2222222222222,
+        "y": 437.00673333333333,
+        "world": {
+          "x": 639.9999999999999,
+          "y": 303.02400000000006
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/PasswordInput",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Login",
+        "x": 795.3272236111111,
+        "y": 551.3709319444445,
+        "world": {
+          "x": 805.9369999999999,
+          "y": 180.67300000000006
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/Btn_Login",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_DissolveRoom",
+        "x": 223.35480555555554,
+        "y": 95.19751111111115,
+        "world": {
+          "x": 194.01999999999998,
+          "y": 668.704
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Btn/Room/Btn_DissolveRoom",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "CreateRoom",
+        "x": 849.7794666666667,
+        "y": 295.8861111111111,
+        "world": {
+          "x": 864.1919999999999,
+          "y": 454.00000000000006
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Lobby_Main/Right/CreateRoom",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "btn_create_room",
+        "x": 1042.1527777777778,
+        "y": 643.6027777777778,
+        "world": {
+          "x": 1070,
+          "y": 82.00000000000006
+        },
+        "canvasWorld": {
+          "x": 639.9999999999999,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Create_Room/MainPanel/btn/btn_create_room",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Ready",
+        "x": 510.9108805555555,
+        "y": 563.0372,
+        "world": {
+          "x": 501.6579999999999,
+          "y": 168.192
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Btn/Game/Btn_Ready",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Continue",
+        "x": 640.2222222222222,
+        "y": 681.8310472222222,
+        "world": {
+          "x": 640,
+          "y": 41.101999999999975
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/SmallSettlement/SmallSettlementPanel/BottomBar/ActionButtons/Btn_Continue",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 510.43604166666665,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 770.0084027777779,
+        "y": 477.22222222222223,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_Continue",
+        "x": 640.2222222222222,
+        "y": 681.8310472222222,
+        "world": {
+          "x": 640,
+          "y": 41.101999999999975
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/SmallSettlement/SmallSettlementPanel/BottomBar/ActionButtons/Btn_Continue",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "Btn_DissolveRoom",
+        "x": 223.35480555555554,
+        "y": 95.19751111111115,
+        "world": {
+          "x": 194.01999999999998,
+          "y": 668.704
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Btn/Room/Btn_DissolveRoom",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      },
+      {
+        "name": "btnSure",
+        "x": 728.1960784313726,
+        "y": 527.7253738562092,
+        "world": {
+          "x": 734.1176470588235,
+          "y": 205.96988235294117
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/DissolveRoom/btnSure",
+        "viewport": {
+          "x": 42,
+          "y": 0,
+          "width": 1196.4444444444443,
+          "height": 673
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.9347222222222222,
+          "y": 0.9347222222222222
+        }
+      }
+    ],
+    "mobile": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 535.5,
+        "y": 305.66666666666663,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/Btn_AccountLogin",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "AccountInput",
+        "x": 426.3333333333333,
+        "y": 164.21395833333332,
+        "world": {
+          "x": 640,
+          "y": 419.15000000000003
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/AccountInput",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426.3333333333333,
+        "y": 227.59939999999997,
+        "world": {
+          "x": 640,
+          "y": 303.02400000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/PasswordInput",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.9072791666666,
+        "y": 294.3826541666666,
+        "world": {
+          "x": 805.937,
+          "y": 180.67300000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/Btn_Login",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "JoinRoom",
+        "x": 696.7948416666666,
+        "y": 144.6212708333333,
+        "world": {
+          "x": 1135.502,
+          "y": 455.0450000000001
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Lobby_Main/Right/JoinRoom",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_6",
+        "x": 540.9583333333333,
+        "y": 210.14583333333331,
+        "world": {
+          "x": 850,
+          "y": 335.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_6",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_8",
+        "x": 426.3333333333333,
+        "y": 264.72916666666663,
+        "world": {
+          "x": 640,
+          "y": 235.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_8",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_2",
+        "x": 426.3333333333333,
+        "y": 155.56249999999997,
+        "world": {
+          "x": 640,
+          "y": 435.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_2",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_3",
+        "x": 540.9583333333333,
+        "y": 155.56249999999997,
+        "world": {
+          "x": 850,
+          "y": 435.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_3",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_0",
+        "x": 426.3333333333333,
+        "y": 319.31249999999994,
+        "world": {
+          "x": 640,
+          "y": 135.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_0",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_1",
+        "x": 311.7083333333333,
+        "y": 155.56249999999997,
+        "world": {
+          "x": 430,
+          "y": 435.00000000000006
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Keys/Btn_1",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Confirm",
+        "x": 547.3374875,
+        "y": 93.88333333333333,
+        "world": {
+          "x": 861.687,
+          "y": 548
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360.00000000000006
+        },
+        "path": "MainScene/Canvas/Numpad/Keypad/Btn_Confirm",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Ready",
+        "x": 350,
+        "y": 301,
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Btn/Game/Btn_Ready",
+        "source": "mobile-visual-center"
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Continue",
+        "x": 426.3333333333333,
+        "y": 370.56515833333333,
+        "world": {
+          "x": 640,
+          "y": 41.101999999999975
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/SmallSettlement/SmallSettlementPanel/BottomBar/ActionButtons/Btn_Continue",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Tip",
+        "x": 350.54437499999995,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 501.15,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_Tip",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_OutCard",
+        "x": 502.1222916666666,
+        "y": 251.08333333333331,
+        "world": {
+          "x": 778.85,
+          "y": 260
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Btn_Game/Btn_OutCard",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "Btn_Continue",
+        "x": 426.3333333333333,
+        "y": 370.56515833333333,
+        "world": {
+          "x": 640,
+          "y": 41.101999999999975
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/SmallSettlement/SmallSettlementPanel/BottomBar/ActionButtons/Btn_Continue",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      },
+      {
+        "name": "btnSure",
+        "x": 477.70588235294116,
+        "y": 280.5747725490196,
+        "world": {
+          "x": 734.1176470588235,
+          "y": 205.96988235294117
+        },
+        "canvasWorld": {
+          "x": 640,
+          "y": 360
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/DissolveRoom/btnSure",
+        "viewport": {
+          "x": 77,
+          "y": 0,
+          "width": 698.6666666666666,
+          "height": 393
+        },
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "scale": {
+          "x": 0.5458333333333333,
+          "y": 0.5458333333333333
+        }
+      }
+    ]
+  }
+}

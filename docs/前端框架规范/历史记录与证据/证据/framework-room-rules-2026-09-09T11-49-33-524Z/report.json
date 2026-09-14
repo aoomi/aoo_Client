@@ -1,0 +1,18 @@
+{
+  "runId": "2026-09-09T11-49-33-524Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "pageUrl": "http://127.0.0.1:7456/",
+  "apiUrl": "http://127.0.0.1:8080",
+  "assertions": {},
+  "regions": {},
+  "errors": [
+    "cc is not defined"
+  ],
+  "preCleanup": null,
+  "failure": {
+    "message": "page.waitForFunction: ReferenceError: cc is not defined\n    at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:15)\n    at predicate (eval at evaluate (:311:30), <anonymous>:7:27)\n    at next (eval at evaluate (:311:30), <anonymous>:29:33)\n    at eval (eval at evaluate (:311:30), <anonymous>:42:13)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+    "stack": "page.waitForFunction: ReferenceError: cc is not defined\n    at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:15)\n    at predicate (eval at evaluate (:311:30), <anonymous>:7:27)\n    at next (eval at evaluate (:311:30), <anonymous>:29:33)\n    at eval (eval at evaluate (:311:30), <anonymous>:42:13)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:19:45"
+  },
+  "failureScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T11-49-33-524Z/failure.png"
+}

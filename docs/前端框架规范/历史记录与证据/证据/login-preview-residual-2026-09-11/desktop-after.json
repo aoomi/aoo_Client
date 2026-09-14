@@ -1,0 +1,64 @@
+{
+  "url": "http://127.0.0.1:7456/",
+  "viewport": {
+    "w": 1280,
+    "h": 720
+  },
+  "body": {
+    "scrollWidth": 1280,
+    "scrollHeight": 720
+  },
+  "canvases": [
+    {
+      "x": 214,
+      "y": 188.5,
+      "width": 852,
+      "height": 393,
+      "display": "inline",
+      "position": "static"
+    }
+  ],
+  "gameDiv": {
+    "x": 214,
+    "y": 188.5,
+    "width": 852,
+    "height": 393,
+    "display": "flex",
+    "position": "relative"
+  },
+  "container": {
+    "x": 214,
+    "y": 188.5,
+    "width": 852,
+    "height": 393,
+    "display": "block",
+    "position": "static"
+  },
+  "cover": {
+    "hidden": true,
+    "aria": "true",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "display": "none",
+      "position": "fixed"
+    },
+    "count": 1
+  },
+  "logo": {
+    "count": 1,
+    "src": "assets/main/native/a3/a34fea2d-da8e-461f-9e00-3e231298ef0f.png",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "display": "block",
+      "position": "static"
+    }
+  },
+  "runtimeStyle": true,
+  "scene": "Login_Scene"
+}

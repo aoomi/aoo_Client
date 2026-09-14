@@ -1,0 +1,957 @@
+{
+  "BtnClick": {
+    "SoundName": "BtnClick",
+    "SoundPath": "sound/background/anniu",
+    "Text": "控件点击"
+  },
+  "MainScene": {
+    "SoundName": "MainScene",
+    "SoundPath": "sound/background/dengruzhuchangjingyinyue",
+    "Text": "主场景"
+  },
+  "RoomWaitStart": {
+    "SoundName": "RoomWaitStart",
+    "SoundPath": "sound/background/dengdaikaiju",
+    "Text": "牌局等待开始"
+  },
+  "RoomStart": {
+    "SoundName": "RoomStart",
+    "SoundPath": "sound/background/kaishipaiju",
+    "Text": "牌局开始"
+  },
+  "WaitRoomStart": {
+    "SoundName": "WaitRoomStart",
+    "SoundPath": "sound/background/dengdaikaiju",
+    "Text": "等待牌局开始"
+  },
+  "boy_FastVoice_1": {
+    "SoundName": "boy_FastVoice_1",
+    "SoundPath": "sound/chat/boy/1",
+    "Text": "夸奖"
+  },
+  "boy_FastVoice_2": {
+    "SoundName": "boy_FastVoice_2",
+    "SoundPath": "sound/chat/boy/2",
+    "Text": "赞赏"
+  },
+  "boy_FastVoice_3": {
+    "SoundName": "boy_FastVoice_3",
+    "SoundPath": "sound/chat/boy/3",
+    "Text": "无奈"
+  },
+  "boy_FastVoice_4": {
+    "SoundName": "boy_FastVoice_4",
+    "SoundPath": "sound/chat/boy/4",
+    "Text": "求碰"
+  },
+  "boy_FastVoice_5": {
+    "SoundName": "boy_FastVoice_5",
+    "SoundPath": "sound/chat/boy/5",
+    "Text": "催促"
+  },
+  "boy_FastVoice_6": {
+    "SoundName": "boy_FastVoice_6",
+    "SoundPath": "sound/chat/boy/6",
+    "Text": "呵呵"
+  },
+  "boy_FastVoice_7": {
+    "SoundName": "boy_FastVoice_7",
+    "SoundPath": "sound/chat/boy/7",
+    "Text": "得意"
+  },
+  "boy_FastVoice_8": {
+    "SoundName": "boy_FastVoice_8",
+    "SoundPath": "sound/chat/boy/8",
+    "Text": "绝交"
+  },
+  "boy_FastVoice_9": {
+    "SoundName": "boy_FastVoice_9",
+    "SoundPath": "sound/chat/boy/9",
+    "Text": "嘲讽"
+  },
+  "boy_FastVoice_10": {
+    "SoundName": "boy_FastVoice_10",
+    "SoundPath": "sound/chat/boy/10",
+    "Text": "调侃"
+  },
+  "boy_ay_1": {
+    "SoundName": "boy_ay_1",
+    "SoundPath": "sound/chat/boy/ay_1",
+    "Text": "调侃"
+  },
+  "boy_ay_2": {
+    "SoundName": "boy_ay_2",
+    "SoundPath": "sound/chat/boy/ay_2",
+    "Text": "调侃"
+  },
+  "boy_ay_3": {
+    "SoundName": "boy_ay_3",
+    "SoundPath": "sound/chat/boy/ay_3",
+    "Text": "调侃"
+  },
+  "boy_ay_4": {
+    "SoundName": "boy_ay_4",
+    "SoundPath": "sound/chat/boy/ay_4",
+    "Text": "调侃"
+  },
+  "boy_ay_5": {
+    "SoundName": "boy_ay_5",
+    "SoundPath": "sound/chat/boy/ay_5",
+    "Text": "调侃"
+  },
+  "boy_ay_6": {
+    "SoundName": "boy_ay_6",
+    "SoundPath": "sound/chat/boy/ay_6",
+    "Text": "调侃"
+  },
+  "boy_ay_7": {
+    "SoundName": "boy_ay_7",
+    "SoundPath": "sound/chat/boy/ay_7",
+    "Text": "调侃"
+  },
+  "boy_ay_8": {
+    "SoundName": "boy_ay_8",
+    "SoundPath": "sound/chat/boy/ay_8",
+    "Text": "调侃"
+  },
+  "boy_ay_9": {
+    "SoundName": "boy_ay_9",
+    "SoundPath": "sound/chat/boy/ay_9",
+    "Text": "调侃"
+  },
+  "boy_ay_10": {
+    "SoundName": "boy_ay_10",
+    "SoundPath": "sound/chat/boy/ay_10",
+    "Text": "调侃"
+  },
+  "boy_ay_11": {
+    "SoundName": "boy_ay_11",
+    "SoundPath": "sound/chat/boy/ay_11",
+    "Text": "调侃"
+  },
+  "boy_ay_12": {
+    "SoundName": "boy_ay_12",
+    "SoundPath": "sound/chat/boy/ay_12",
+    "Text": "调侃"
+  },
+  "boy_ay_13": {
+    "SoundName": "boy_ay_13",
+    "SoundPath": "sound/chat/boy/ay_13",
+    "Text": "调侃"
+  },
+  "boy_ay_14": {
+    "SoundName": "boy_ay_14",
+    "SoundPath": "sound/chat/boy/ay_14",
+    "Text": "调侃"
+  },
+  "boy_ay_15": {
+    "SoundName": "boy_ay_15",
+    "SoundPath": "sound/chat/boy/ay_15",
+    "Text": "调侃"
+  },
+  "boy_ay_16": {
+    "SoundName": "boy_ay_16",
+    "SoundPath": "sound/chat/boy/ay_16",
+    "Text": "调侃"
+  },
+  "girl_FastVoice_1": {
+    "SoundName": "girl_FastVoice_1",
+    "SoundPath": "sound/chat/girl/1",
+    "Text": "夸奖"
+  },
+  "girl_FastVoice_2": {
+    "SoundName": "girl_FastVoice_2",
+    "SoundPath": "sound/chat/girl/2",
+    "Text": "赞赏"
+  },
+  "girl_FastVoice_3": {
+    "SoundName": "girl_FastVoice_3",
+    "SoundPath": "sound/chat/girl/3",
+    "Text": "无奈"
+  },
+  "girl_FastVoice_4": {
+    "SoundName": "girl_FastVoice_4",
+    "SoundPath": "sound/chat/girl/4",
+    "Text": "求碰"
+  },
+  "girl_FastVoice_5": {
+    "SoundName": "girl_FastVoice_5",
+    "SoundPath": "sound/chat/girl/5",
+    "Text": "催促"
+  },
+  "girl_FastVoice_6": {
+    "SoundName": "girl_FastVoice_6",
+    "SoundPath": "sound/chat/girl/6",
+    "Text": "呵呵"
+  },
+  "girl_FastVoice_7": {
+    "SoundName": "girl_FastVoice_7",
+    "SoundPath": "sound/chat/girl/7",
+    "Text": "得意"
+  },
+  "girl_FastVoice_8": {
+    "SoundName": "girl_FastVoice_8",
+    "SoundPath": "sound/chat/girl/8",
+    "Text": "绝交"
+  },
+  "girl_FastVoice_9": {
+    "SoundName": "girl_FastVoice_9",
+    "SoundPath": "sound/chat/girl/9",
+    "Text": "嘲讽"
+  },
+  "girl_FastVoice_10": {
+    "SoundName": "girl_FastVoice_10",
+    "SoundPath": "sound/chat/girl/10",
+    "Text": "调侃"
+  },
+  "girl_ay_1": {
+    "SoundName": "girl_ay_1",
+    "SoundPath": "sound/chat/girl/ay_1",
+    "Text": "调侃"
+  },
+  "girl_ay_2": {
+    "SoundName": "girl_ay_2",
+    "SoundPath": "sound/chat/girl/ay_2",
+    "Text": "调侃"
+  },
+  "girl_ay_3": {
+    "SoundName": "girl_ay_3",
+    "SoundPath": "sound/chat/girl/ay_3",
+    "Text": "调侃"
+  },
+  "girl_ay_4": {
+    "SoundName": "girl_ay_4",
+    "SoundPath": "sound/chat/girl/ay_4",
+    "Text": "调侃"
+  },
+  "girl_ay_5": {
+    "SoundName": "girl_ay_5",
+    "SoundPath": "sound/chat/girl/ay_5",
+    "Text": "调侃"
+  },
+  "girl_ay_6": {
+    "SoundName": "girl_ay_6",
+    "SoundPath": "sound/chat/girl/ay_6",
+    "Text": "调侃"
+  },
+  "girl_ay_7": {
+    "SoundName": "girl_ay_7",
+    "SoundPath": "sound/chat/girl/ay_7",
+    "Text": "调侃"
+  },
+  "girl_ay_8": {
+    "SoundName": "girl_ay_8",
+    "SoundPath": "sound/chat/girl/ay_8",
+    "Text": "调侃"
+  },
+  "girl_ay_9": {
+    "SoundName": "girl_ay_9",
+    "SoundPath": "sound/chat/girl/ay_9",
+    "Text": "调侃"
+  },
+  "girl_ay_10": {
+    "SoundName": "girl_ay_10",
+    "SoundPath": "sound/chat/girl/ay_10",
+    "Text": "调侃"
+  },
+  "girl_ay_11": {
+    "SoundName": "girl_ay_11",
+    "SoundPath": "sound/chat/girl/ay_11",
+    "Text": "调侃"
+  },
+  "girl_ay_12": {
+    "SoundName": "girl_ay_12",
+    "SoundPath": "sound/chat/girl/ay_12",
+    "Text": "调侃"
+  },
+  "girl_ay_13": {
+    "SoundName": "girl_ay_13",
+    "SoundPath": "sound/chat/girl/ay_13",
+    "Text": "调侃"
+  },
+  "girl_ay_14": {
+    "SoundName": "girl_ay_14",
+    "SoundPath": "sound/chat/girl/ay_14",
+    "Text": "调侃"
+  },
+  "girl_ay_15": {
+    "SoundName": "girl_ay_15",
+    "SoundPath": "sound/chat/girl/ay_15",
+    "Text": "调侃"
+  },
+  "girl_ay_16": {
+    "SoundName": "girl_ay_16",
+    "SoundPath": "sound/chat/girl/ay_16",
+    "Text": "调侃"
+  },
+  "gameBackGround": {
+    "SoundName": "gameBackGround",
+    "SoundPath": "sound/background/gameBackMusic",
+    "Text": "游戏背景音乐"
+  },
+  "mofa_jidanAni": {
+    "SoundName": "mofa_jidanAni",
+    "SoundPath": "sound/mofa/mofa_jidanAni",
+    "Text": "鸡蛋"
+  },
+  "mofa_pengbeiAni": {
+    "SoundName": "mofa_pengbeiAni",
+    "SoundPath": "sound/mofa/mofa_pengbeiAni",
+    "Text": "碰杯"
+  },
+  "mofa_xianwenAni": {
+    "SoundName": "mofa_xianwenAni",
+    "SoundPath": "sound/mofa/mofa_xianwenAni",
+    "Text": "献吻"
+  },
+  "mofa_poshuiAni": {
+    "SoundName": "mofa_poshuiAni",
+    "SoundPath": "sound/mofa/mofa_poshuiAni",
+    "Text": "泼水"
+  },
+  "mofa_xianhuaAni": {
+    "SoundName": "mofa_xianhuaAni",
+    "SoundPath": "sound/mofa/mofa_xianhuaAni",
+    "Text": "鲜花"
+  },
+  "mofa_zhadanAni": {
+    "SoundName": "mofa_zhadanAni",
+    "SoundPath": "sound/mofa/mofa_zhadanAni",
+    "Text": "炸弹"
+  },
+  "mofa_zhuajiAni": {
+    "SoundName": "mofa_zhuajiAni",
+    "SoundPath": "sound/mofa/mofa_zhuajiAni",
+    "Text": "抓鸡"
+  },
+  "boyBuPiao": {
+    "SoundName": "boyBuPiao",
+    "SoundPath": "game/AYDSS/sound/boy/buPiao",
+    "Text": "不飘"
+  },
+  "boyTou": {
+    "SoundName": "boyTou",
+    "SoundPath": "game/AYDSS/sound/boy/Tou",
+    "Text": "偷"
+  },
+  "boyBaoJiao": {
+    "SoundName": "boyBaoJiao",
+    "SoundPath": "game/AYDSS/sound/boy/BaoJiao",
+    "Text": "爆叫"
+  },
+  "boyChi": {
+    "SoundName": "boyChi",
+    "SoundPath": "game/AYDSS/sound/boy/Chi",
+    "Text": "吃"
+  },
+  "boyGang": {
+    "SoundName": "boyGang",
+    "SoundPath": "game/AYDSS/sound/boy/Gang",
+    "Text": "杠"
+  },
+  "boyHu": {
+    "SoundName": "boyHu",
+    "SoundPath": "game/AYDSS/sound/boy/Hu",
+    "Text": "胡"
+  },
+  "boyPeng": {
+    "SoundName": "boyPeng",
+    "SoundPath": "game/AYDSS/sound/boy/Peng",
+    "Text": "碰"
+  },
+  "boypiao": {
+    "SoundName": "boypiao",
+    "SoundPath": "game/AYDSS/sound/boy/piao",
+    "Text": "飘"
+  },
+  "boyZhao": {
+    "SoundName": "boyZhao",
+    "SoundPath": "game/AYDSS/sound/boy/Zhao",
+    "Text": "招"
+  },
+  "boy01": {
+    "SoundName": "boy01",
+    "SoundPath": "game/AYDSS/sound/boy/01",
+    "Text": ""
+  },
+  "boy02": {
+    "SoundName": "boy02",
+    "SoundPath": "game/AYDSS/sound/boy/02",
+    "Text": ""
+  },
+  "boy03": {
+    "SoundName": "boy03",
+    "SoundPath": "game/AYDSS/sound/boy/03",
+    "Text": ""
+  },
+  "boy04": {
+    "SoundName": "boy04",
+    "SoundPath": "game/AYDSS/sound/boy/04",
+    "Text": ""
+  },
+  "boy05": {
+    "SoundName": "boy05",
+    "SoundPath": "game/AYDSS/sound/boy/05",
+    "Text": ""
+  },
+  "boy06": {
+    "SoundName": "boy06",
+    "SoundPath": "game/AYDSS/sound/boy/06",
+    "Text": ""
+  },
+  "boy07": {
+    "SoundName": "boy07",
+    "SoundPath": "game/AYDSS/sound/boy/07",
+    "Text": ""
+  },
+  "boy08": {
+    "SoundName": "boy08",
+    "SoundPath": "game/AYDSS/sound/boy/08",
+    "Text": ""
+  },
+  "boy09": {
+    "SoundName": "boy09",
+    "SoundPath": "game/AYDSS/sound/boy/09",
+    "Text": ""
+  },
+  "boy010": {
+    "SoundName": "boy010",
+    "SoundPath": "game/AYDSS/sound/boy/010",
+    "Text": ""
+  },
+  "boy011": {
+    "SoundName": "boy011",
+    "SoundPath": "game/AYDSS/sound/boy/011",
+    "Text": ""
+  },
+  "boy012": {
+    "SoundName": "boy012",
+    "SoundPath": "game/AYDSS/sound/boy/012",
+    "Text": ""
+  },
+  "boy013": {
+    "SoundName": "boy013",
+    "SoundPath": "game/AYDSS/sound/boy/013",
+    "Text": ""
+  },
+  "boy161": {
+    "SoundName": "boy161",
+    "SoundPath": "game/AYDSS/sound/boy/161",
+    "Text": ""
+  },
+  "boy162": {
+    "SoundName": "boy162",
+    "SoundPath": "game/AYDSS/sound/boy/162",
+    "Text": ""
+  },
+  "boy163": {
+    "SoundName": "boy163",
+    "SoundPath": "game/AYDSS/sound/boy/163",
+    "Text": ""
+  },
+  "boy164": {
+    "SoundName": "boy164",
+    "SoundPath": "game/AYDSS/sound/boy/164",
+    "Text": ""
+  },
+  "boy165": {
+    "SoundName": "boy165",
+    "SoundPath": "game/AYDSS/sound/boy/165",
+    "Text": ""
+  },
+  "boy166": {
+    "SoundName": "boy166",
+    "SoundPath": "game/AYDSS/sound/boy/166",
+    "Text": ""
+  },
+  "boy167": {
+    "SoundName": "boy167",
+    "SoundPath": "game/AYDSS/sound/boy/167",
+    "Text": ""
+  },
+  "boy168": {
+    "SoundName": "boy168",
+    "SoundPath": "game/AYDSS/sound/boy/168",
+    "Text": ""
+  },
+  "boy169": {
+    "SoundName": "boy169",
+    "SoundPath": "game/AYDSS/sound/boy/169",
+    "Text": ""
+  },
+  "boy1610": {
+    "SoundName": "boy1610",
+    "SoundPath": "game/AYDSS/sound/boy/1610",
+    "Text": ""
+  },
+  "boy1611": {
+    "SoundName": "boy1611",
+    "SoundPath": "game/AYDSS/sound/boy/1611",
+    "Text": ""
+  },
+  "boy1612": {
+    "SoundName": "boy1612",
+    "SoundPath": "game/AYDSS/sound/boy/1612",
+    "Text": ""
+  },
+  "boy1613": {
+    "SoundName": "boy1613",
+    "SoundPath": "game/AYDSS/sound/boy/1613",
+    "Text": ""
+  },
+  "boy321": {
+    "SoundName": "boy321",
+    "SoundPath": "game/AYDSS/sound/boy/321",
+    "Text": ""
+  },
+  "boy322": {
+    "SoundName": "boy322",
+    "SoundPath": "game/AYDSS/sound/boy/322",
+    "Text": ""
+  },
+  "boy323": {
+    "SoundName": "boy323",
+    "SoundPath": "game/AYDSS/sound/boy/323",
+    "Text": ""
+  },
+  "boy324": {
+    "SoundName": "boy324",
+    "SoundPath": "game/AYDSS/sound/boy/324",
+    "Text": ""
+  },
+  "boy325": {
+    "SoundName": "boy325",
+    "SoundPath": "game/AYDSS/sound/boy/325",
+    "Text": ""
+  },
+  "boy326": {
+    "SoundName": "boy326",
+    "SoundPath": "game/AYDSS/sound/boy/326",
+    "Text": ""
+  },
+  "boy327": {
+    "SoundName": "boy327",
+    "SoundPath": "game/AYDSS/sound/boy/327",
+    "Text": ""
+  },
+  "boy328": {
+    "SoundName": "boy328",
+    "SoundPath": "game/AYDSS/sound/boy/328",
+    "Text": ""
+  },
+  "boy329": {
+    "SoundName": "boy329",
+    "SoundPath": "game/AYDSS/sound/boy/329",
+    "Text": ""
+  },
+  "boy3210": {
+    "SoundName": "boy3210",
+    "SoundPath": "game/AYDSS/sound/boy/3210",
+    "Text": ""
+  },
+  "boy3211": {
+    "SoundName": "boy3211",
+    "SoundPath": "game/AYDSS/sound/boy/3211",
+    "Text": ""
+  },
+  "boy3212": {
+    "SoundName": "boy3212",
+    "SoundPath": "game/AYDSS/sound/boy/3212",
+    "Text": ""
+  },
+  "boy3213": {
+    "SoundName": "boy3213",
+    "SoundPath": "game/AYDSS/sound/boy/3213",
+    "Text": ""
+  },
+  "boy481": {
+    "SoundName": "boy481",
+    "SoundPath": "game/AYDSS/sound/boy/481",
+    "Text": ""
+  },
+  "boy482": {
+    "SoundName": "boy482",
+    "SoundPath": "game/AYDSS/sound/boy/482",
+    "Text": ""
+  },
+  "boy483": {
+    "SoundName": "boy483",
+    "SoundPath": "game/AYDSS/sound/boy/483",
+    "Text": ""
+  },
+  "boy484": {
+    "SoundName": "boy484",
+    "SoundPath": "game/AYDSS/sound/boy/484",
+    "Text": ""
+  },
+  "boy485": {
+    "SoundName": "boy485",
+    "SoundPath": "game/AYDSS/sound/boy/485",
+    "Text": ""
+  },
+  "boy486": {
+    "SoundName": "boy486",
+    "SoundPath": "game/AYDSS/sound/boy/486",
+    "Text": ""
+  },
+  "boy487": {
+    "SoundName": "boy487",
+    "SoundPath": "game/AYDSS/sound/boy/487",
+    "Text": ""
+  },
+  "boy488": {
+    "SoundName": "boy488",
+    "SoundPath": "game/AYDSS/sound/boy/488",
+    "Text": ""
+  },
+  "boy489": {
+    "SoundName": "boy489",
+    "SoundPath": "game/AYDSS/sound/boy/489",
+    "Text": ""
+  },
+  "boy4810": {
+    "SoundName": "boy4810",
+    "SoundPath": "game/AYDSS/sound/boy/4810",
+    "Text": ""
+  },
+  "boy4811": {
+    "SoundName": "boy4811",
+    "SoundPath": "game/AYDSS/sound/boy/4811",
+    "Text": ""
+  },
+  "boy4812": {
+    "SoundName": "boy4812",
+    "SoundPath": "game/AYDSS/sound/boy/4812",
+    "Text": ""
+  },
+  "boy4813": {
+    "SoundName": "boy4813",
+    "SoundPath": "game/AYDSS/sound/boy/4813",
+    "Text": ""
+  },
+  "boy641": {
+    "SoundName": "boy641",
+    "SoundPath": "game/AYDSS/sound/boy/641",
+    "Text": ""
+  },
+  "boy642": {
+    "SoundName": "boy642",
+    "SoundPath": "game/AYDSS/sound/boy/642",
+    "Text": ""
+  },
+  "girlBuPiao ": {
+    "SoundName": "girlBuPiao ",
+    "SoundPath": "game/AYDSS/sound/girl/buBiao",
+    "Text": "不飘"
+  },
+  "girlTou": {
+    "SoundName": "girlTou",
+    "SoundPath": "game/AYDSS/sound/girl/Tou",
+    "Text": "偷"
+  },
+  "girlBaoJiao": {
+    "SoundName": "girlBaoJiao",
+    "SoundPath": "game/AYDSS/sound/girl/BaoJiao",
+    "Text": "爆叫"
+  },
+  "girlChi": {
+    "SoundName": "girlChi",
+    "SoundPath": "game/AYDSS/sound/girl/Chi",
+    "Text": "吃"
+  },
+  "girlGang": {
+    "SoundName": "girlGang",
+    "SoundPath": "game/AYDSS/sound/girl/Gang",
+    "Text": "杠"
+  },
+  "girlHu": {
+    "SoundName": "girlHu",
+    "SoundPath": "game/AYDSS/sound/girl/Hu",
+    "Text": "胡"
+  },
+  "girlPeng": {
+    "SoundName": "girlPeng",
+    "SoundPath": "game/AYDSS/sound/girl/Peng",
+    "Text": "碰"
+  },
+  "girlpiao": {
+    "SoundName": "girlpiao",
+    "SoundPath": "game/AYDSS/sound/girl/piao",
+    "Text": "飘"
+  },
+  "girlZhao": {
+    "SoundName": "girlZhao",
+    "SoundPath": "game/AYDSS/sound/girl/Zhao",
+    "Text": "招"
+  },
+  "girl01": {
+    "SoundName": "girl01",
+    "SoundPath": "game/AYDSS/sound/girl/01",
+    "Text": ""
+  },
+  "girl02": {
+    "SoundName": "girl02",
+    "SoundPath": "game/AYDSS/sound/girl/02",
+    "Text": ""
+  },
+  "girl03": {
+    "SoundName": "girl03",
+    "SoundPath": "game/AYDSS/sound/girl/03",
+    "Text": ""
+  },
+  "girl04": {
+    "SoundName": "girl04",
+    "SoundPath": "game/AYDSS/sound/girl/04",
+    "Text": ""
+  },
+  "girl05": {
+    "SoundName": "girl05",
+    "SoundPath": "game/AYDSS/sound/girl/05",
+    "Text": ""
+  },
+  "girl06": {
+    "SoundName": "girl06",
+    "SoundPath": "game/AYDSS/sound/girl/06",
+    "Text": ""
+  },
+  "girl07": {
+    "SoundName": "girl07",
+    "SoundPath": "game/AYDSS/sound/girl/07",
+    "Text": ""
+  },
+  "girl08": {
+    "SoundName": "girl08",
+    "SoundPath": "game/AYDSS/sound/girl/08",
+    "Text": ""
+  },
+  "girl09": {
+    "SoundName": "girl09",
+    "SoundPath": "game/AYDSS/sound/girl/09",
+    "Text": ""
+  },
+  "girl010": {
+    "SoundName": "girl010",
+    "SoundPath": "game/AYDSS/sound/girl/010",
+    "Text": ""
+  },
+  "girl011": {
+    "SoundName": "girl011",
+    "SoundPath": "game/AYDSS/sound/girl/011",
+    "Text": ""
+  },
+  "girl012": {
+    "SoundName": "girl012",
+    "SoundPath": "game/AYDSS/sound/girl/012",
+    "Text": ""
+  },
+  "girl013": {
+    "SoundName": "girl013",
+    "SoundPath": "game/AYDSS/sound/girl/013",
+    "Text": ""
+  },
+  "girl161": {
+    "SoundName": "girl161",
+    "SoundPath": "game/AYDSS/sound/girl/161",
+    "Text": ""
+  },
+  "girl162": {
+    "SoundName": "girl162",
+    "SoundPath": "game/AYDSS/sound/girl/162",
+    "Text": ""
+  },
+  "girl163": {
+    "SoundName": "girl163",
+    "SoundPath": "game/AYDSS/sound/girl/163",
+    "Text": ""
+  },
+  "girl164": {
+    "SoundName": "girl164",
+    "SoundPath": "game/AYDSS/sound/girl/164",
+    "Text": ""
+  },
+  "girl165": {
+    "SoundName": "girl165",
+    "SoundPath": "game/AYDSS/sound/girl/165",
+    "Text": ""
+  },
+  "girl166": {
+    "SoundName": "girl166",
+    "SoundPath": "game/AYDSS/sound/girl/166",
+    "Text": ""
+  },
+  "girl167": {
+    "SoundName": "girl167",
+    "SoundPath": "game/AYDSS/sound/girl/167",
+    "Text": ""
+  },
+  "girl168": {
+    "SoundName": "girl168",
+    "SoundPath": "game/AYDSS/sound/girl/168",
+    "Text": ""
+  },
+  "girl169": {
+    "SoundName": "girl169",
+    "SoundPath": "game/AYDSS/sound/girl/169",
+    "Text": ""
+  },
+  "girl1610": {
+    "SoundName": "girl1610",
+    "SoundPath": "game/AYDSS/sound/girl/1610",
+    "Text": ""
+  },
+  "girl1611": {
+    "SoundName": "girl1611",
+    "SoundPath": "game/AYDSS/sound/girl/1611",
+    "Text": ""
+  },
+  "girl1612": {
+    "SoundName": "girl1612",
+    "SoundPath": "game/AYDSS/sound/girl/1612",
+    "Text": ""
+  },
+  "girl1613": {
+    "SoundName": "girl1613",
+    "SoundPath": "game/AYDSS/sound/girl/1613",
+    "Text": ""
+  },
+  "girl321": {
+    "SoundName": "girl321",
+    "SoundPath": "game/AYDSS/sound/girl/321",
+    "Text": ""
+  },
+  "girl322": {
+    "SoundName": "girl322",
+    "SoundPath": "game/AYDSS/sound/girl/322",
+    "Text": ""
+  },
+  "girl323": {
+    "SoundName": "girl323",
+    "SoundPath": "game/AYDSS/sound/girl/323",
+    "Text": ""
+  },
+  "girl324": {
+    "SoundName": "girl324",
+    "SoundPath": "game/AYDSS/sound/girl/324",
+    "Text": ""
+  },
+  "girl325": {
+    "SoundName": "girl325",
+    "SoundPath": "game/AYDSS/sound/girl/325",
+    "Text": ""
+  },
+  "girl326": {
+    "SoundName": "girl326",
+    "SoundPath": "game/AYDSS/sound/girl/326",
+    "Text": ""
+  },
+  "girl327": {
+    "SoundName": "girl327",
+    "SoundPath": "game/AYDSS/sound/girl/327",
+    "Text": ""
+  },
+  "girl328": {
+    "SoundName": "girl328",
+    "SoundPath": "game/AYDSS/sound/girl/328",
+    "Text": ""
+  },
+  "girl329": {
+    "SoundName": "girl329",
+    "SoundPath": "game/AYDSS/sound/girl/329",
+    "Text": ""
+  },
+  "girl3210": {
+    "SoundName": "girl3210",
+    "SoundPath": "game/AYDSS/sound/girl/3210",
+    "Text": ""
+  },
+  "girl3211": {
+    "SoundName": "girl3211",
+    "SoundPath": "game/AYDSS/sound/girl/3211",
+    "Text": ""
+  },
+  "girl3212": {
+    "SoundName": "girl3212",
+    "SoundPath": "game/AYDSS/sound/girl/3212",
+    "Text": ""
+  },
+  "girl3213": {
+    "SoundName": "girl3213",
+    "SoundPath": "game/AYDSS/sound/girl/3213",
+    "Text": ""
+  },
+  "girl481": {
+    "SoundName": "girl481",
+    "SoundPath": "game/AYDSS/sound/girl/481",
+    "Text": ""
+  },
+  "girl482": {
+    "SoundName": "girl482",
+    "SoundPath": "game/AYDSS/sound/girl/482",
+    "Text": ""
+  },
+  "girl483": {
+    "SoundName": "girl483",
+    "SoundPath": "game/AYDSS/sound/girl/483",
+    "Text": ""
+  },
+  "girl484": {
+    "SoundName": "girl484",
+    "SoundPath": "game/AYDSS/sound/girl/484",
+    "Text": ""
+  },
+  "girl485": {
+    "SoundName": "girl485",
+    "SoundPath": "game/AYDSS/sound/girl/485",
+    "Text": ""
+  },
+  "girl486": {
+    "SoundName": "girl486",
+    "SoundPath": "game/AYDSS/sound/girl/486",
+    "Text": ""
+  },
+  "girl487": {
+    "SoundName": "girl487",
+    "SoundPath": "game/AYDSS/sound/girl/487",
+    "Text": ""
+  },
+  "girl488": {
+    "SoundName": "girl488",
+    "SoundPath": "game/AYDSS/sound/girl/488",
+    "Text": ""
+  },
+  "girl489": {
+    "SoundName": "girl489",
+    "SoundPath": "game/AYDSS/sound/girl/489",
+    "Text": ""
+  },
+  "girl4810": {
+    "SoundName": "girl4810",
+    "SoundPath": "game/AYDSS/sound/girl/4810",
+    "Text": ""
+  },
+  "girl4811": {
+    "SoundName": "girl4811",
+    "SoundPath": "game/AYDSS/sound/girl/4811",
+    "Text": ""
+  },
+  "girl4812": {
+    "SoundName": "girl4812",
+    "SoundPath": "game/AYDSS/sound/girl/4812",
+    "Text": ""
+  },
+  "girl4813": {
+    "SoundName": "girl4813",
+    "SoundPath": "game/AYDSS/sound/girl/4813",
+    "Text": ""
+  },
+  "girl641": {
+    "SoundName": "girl641",
+    "SoundPath": "game/AYDSS/sound/girl/641",
+    "Text": ""
+  },
+  "girl642": {
+    "SoundName": "girl642",
+    "SoundPath": "game/AYDSS/sound/girl/642",
+    "Text": ""
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "hzmjMainScene": {
+    "SceneType": "hzmjMainScene",
+    "Name": "主场景",
+    "ComponentName": "hzmj_SceneMain",
+    "gamePrefab": "0",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  },
+  "hzmjScene": {
+    "SceneType": "hzmjScene",
+    "Name": "红中麻将场景",
+    "ComponentName": "hzmjScene",
+    "gamePrefab": "game/HZMJ/ui/UIHZMJPlay",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "hzmjVideoScene": {
+    "SceneType": "hzmjVideoScene",
+    "Name": "红中麻将回放场景",
+    "ComponentName": "hzmjVideoScene",
+    "gamePrefab": "game/HZMJ/ui/UIHZMJVideo",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "hzmjLoginScene": {
+    "SceneType": "hzmjLoginScene",
+    "Name": "登陆场景",
+    "ComponentName": "hzmj_SceneLogin",
+    "gamePrefab": "hzmj_UILogin",
+    "IsCanMove": 0,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "previewUrl": "http://127.0.0.1:7456/",
+  "device": "Apple iPhone 14 Pro",
+  "captureMethod": "Cocos RenderTexture after Director.EVENT_AFTER_DRAW",
+  "entry": {
+    "from": "MainScene",
+    "to": "GameRoom2D",
+    "progressCoverVisible": false,
+    "retainedFrameObserved": true,
+    "retainedNonBlackSamples": 2157,
+    "retainedFrameReleased": true
+  },
+  "exit": {
+    "from": "GameRoom2D",
+    "to": "MainScene",
+    "progressCoverVisible": false,
+    "retainedFrameObserved": true,
+    "retainedNonBlackSamples": 4864,
+    "retainedFrameReleased": true
+  }
+}

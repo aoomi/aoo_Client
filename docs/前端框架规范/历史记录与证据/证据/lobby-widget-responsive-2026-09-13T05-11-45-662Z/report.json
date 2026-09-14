@@ -1,0 +1,226 @@
+{
+  "runId": "2026-09-13T05-11-45-662Z",
+  "url": "http://127.0.0.1:7456/",
+  "samples": [
+    {
+      "width": 1280,
+      "height": 720,
+      "inner": {
+        "width": 1280,
+        "height": 720
+      },
+      "view": {
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "visible": {
+          "width": 1369.3907875185735,
+          "height": 720
+        },
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "frame": {
+          "width": 1280,
+          "height": 673
+        },
+        "viewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 673
+        }
+      },
+      "root": {
+        "name": "LobbyMain",
+        "x": 0,
+        "y": 0,
+        "width": 1369.3907875185735,
+        "height": 720,
+        "bounds": {
+          "x": -115.30460624071327,
+          "y": 0,
+          "width": 1600,
+          "height": 720
+        },
+        "flags": 45
+      },
+      "top": {
+        "name": "Top",
+        "x": 0,
+        "y": 310,
+        "width": 1369.3907875185735,
+        "height": 100,
+        "bounds": {
+          "x": 0,
+          "y": 598.849,
+          "width": 1369.3907875185735,
+          "height": 121.83899999999994
+        },
+        "flags": 41
+      },
+      "bottom": {
+        "name": "Bottom",
+        "x": 0,
+        "y": -320.5,
+        "width": 1369.3907875185735,
+        "height": 79,
+        "bounds": {
+          "x": 0,
+          "y": -7.799999999999997,
+          "width": 1369.3907875185735,
+          "height": 107
+        },
+        "flags": 44
+      },
+      "left": {
+        "name": "Left",
+        "x": -360.96839375928676,
+        "y": 49.5,
+        "width": 146,
+        "height": 341,
+        "bounds": {
+          "x": 79.49999999999997,
+          "y": 122.21600000000001,
+          "width": 317.227,
+          "height": 475
+        },
+        "flags": 72
+      },
+      "right": {
+        "name": "Right",
+        "x": -35.98132993150443,
+        "y": 0,
+        "width": 640.6767236907912,
+        "height": 100,
+        "bounds": {
+          "x": 648.7140638277823,
+          "y": 165.46436825195775,
+          "width": 640.6767236907912,
+          "height": 382.5806317480423
+        },
+        "flags": 96
+      }
+    },
+    {
+      "width": 1800,
+      "height": 720,
+      "inner": {
+        "width": 1800,
+        "height": 720
+      },
+      "view": {
+        "design": {
+          "width": 1280,
+          "height": 720
+        },
+        "visible": {
+          "width": 1369.3907875185735,
+          "height": 720
+        },
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "frame": {
+          "width": 1280,
+          "height": 673
+        },
+        "viewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 673
+        }
+      },
+      "root": {
+        "name": "LobbyMain",
+        "x": 0,
+        "y": 0,
+        "width": 1369.3907875185735,
+        "height": 720,
+        "bounds": {
+          "x": -115.30460624071327,
+          "y": 0,
+          "width": 1600,
+          "height": 720
+        },
+        "flags": 45
+      },
+      "top": {
+        "name": "Top",
+        "x": 0,
+        "y": 310,
+        "width": 1369.3907875185735,
+        "height": 100,
+        "bounds": {
+          "x": 0,
+          "y": 598.849,
+          "width": 1369.3907875185735,
+          "height": 121.83899999999994
+        },
+        "flags": 41
+      },
+      "bottom": {
+        "name": "Bottom",
+        "x": 0,
+        "y": -320.5,
+        "width": 1369.3907875185735,
+        "height": 79,
+        "bounds": {
+          "x": 0,
+          "y": -7.799999999999997,
+          "width": 1369.3907875185735,
+          "height": 107
+        },
+        "flags": 44
+      },
+      "left": {
+        "name": "Left",
+        "x": -360.96839375928676,
+        "y": 49.5,
+        "width": 146,
+        "height": 341,
+        "bounds": {
+          "x": 79.49999999999997,
+          "y": 122.21600000000001,
+          "width": 317.227,
+          "height": 475
+        },
+        "flags": 72
+      },
+      "right": {
+        "name": "Right",
+        "x": -35.98132993150443,
+        "y": 0,
+        "width": 640.6767236907912,
+        "height": 100,
+        "bounds": {
+          "x": 648.7140638277823,
+          "y": 165.46436825195775,
+          "width": 640.6767236907912,
+          "height": 382.5806317480423
+        },
+        "flags": 96
+      }
+    }
+  ],
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/lobby-widget-responsive-2026-09-13T05-11-45-662Z/1280x720.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/lobby-widget-responsive-2026-09-13T05-11-45-662Z/1800x720.png"
+  ],
+  "assertions": {
+    "widgetFlagsCorrect": true,
+    "rootTracksVisibleWidth": true,
+    "topTracksRoot": false,
+    "bottomTracksRoot": false,
+    "leftOffsetPreserved": false,
+    "rightOffsetPreserved": false,
+    "noRuntimeErrors": false
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json"
+  ]
+}

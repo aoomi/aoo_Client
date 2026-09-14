@@ -1,0 +1,934 @@
+{
+  "targetId": "691F837037901E94D955D5CA0402BDCE",
+  "geometry": {
+    "dpr": 1,
+    "rect": {
+      "x": 288,
+      "y": 48.1875,
+      "width": 1280,
+      "height": 688.8125
+    },
+    "canvas": {
+      "width": 1280,
+      "height": 689
+    },
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 689
+    },
+    "scale": {
+      "x": 0.9569444444444445,
+      "y": 0.9569444444444445
+    }
+  },
+  "clicks": {
+    "total": 16,
+    "passed": 16,
+    "failed": []
+  },
+  "testedCards": [
+    {
+      "index": 0,
+      "name": "Poker_Card_314",
+      "dom": {
+        "x": 412.40277777777777,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 1,
+      "name": "Poker_Card_313",
+      "dom": {
+        "x": 472.88166666666666,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "name": "Poker_Card_213",
+      "dom": {
+        "x": 533.3605555555555,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 3,
+      "name": "Poker_Card_312",
+      "dom": {
+        "x": 593.8394444444443,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 4,
+      "name": "Poker_Card_212",
+      "dom": {
+        "x": 654.3183333333334,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 5,
+      "name": "Poker_Card_112",
+      "dom": {
+        "x": 714.7972222222222,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 6,
+      "name": "Poker_Card_311",
+      "dom": {
+        "x": 775.276111111111,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 7,
+      "name": "Poker_Card_211",
+      "dom": {
+        "x": 835.755,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 8,
+      "name": "Poker_Card_310",
+      "dom": {
+        "x": 896.2338888888888,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 9,
+      "name": "Poker_Card_210",
+      "dom": {
+        "x": 956.7127777777778,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 10,
+      "name": "Poker_Card_110",
+      "dom": {
+        "x": 1017.1916666666667,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 11,
+      "name": "Poker_Card_409",
+      "dom": {
+        "x": 1077.6705555555557,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 12,
+      "name": "Poker_Card_408",
+      "dom": {
+        "x": 1138.1494444444447,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 13,
+      "name": "Poker_Card_108",
+      "dom": {
+        "x": 1198.6283333333333,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 14,
+      "name": "Poker_Card_407",
+      "dom": {
+        "x": 1259.1072222222224,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    },
+    {
+      "index": 15,
+      "name": "Poker_Card_205",
+      "dom": {
+        "x": 1354.0361111111113,
+        "y": 608.5667253333334
+      },
+      "pass": true
+    }
+  ],
+  "swipe": {
+    "traversed": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "changed": [
+      {
+        "index": 1,
+        "name": "Poker_Card_313",
+        "delta": 20
+      },
+      {
+        "index": 2,
+        "name": "Poker_Card_213",
+        "delta": 20
+      }
+    ],
+    "pass": true
+  },
+  "trace": [
+    {
+      "stage": "start",
+      "index": 12,
+      "coveredIndexes": [
+        12
+      ],
+      "finalCards": [],
+      "pointerId": 27,
+      "source": "touch",
+      "raw": {
+        "x": 1138.1494140625,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1138.1494140625,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 850.1494140625,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 888.3999682510885,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 248.39996825108847,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.00003968613942,
+        "y": 43.00971885205004
+      },
+      "at": 1788928936906
+    },
+    {
+      "stage": "tap",
+      "index": 12,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 27,
+      "source": "touch",
+      "raw": {
+        "x": 1138.1494140625,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1138.1494140625,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 850.1494140625,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 888.3999682510885,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 248.39996825108847,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.00003968613942,
+        "y": 43.00971885205004
+      },
+      "at": 1788928936956
+    },
+    {
+      "stage": "start",
+      "index": 13,
+      "coveredIndexes": [
+        13
+      ],
+      "finalCards": [],
+      "pointerId": 28,
+      "source": "touch",
+      "raw": {
+        "x": 1198.6282958984375,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1198.6282958984375,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 910.6282958984375,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 951.5999608808055,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 311.5999608808055,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.0000488989931,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937090
+    },
+    {
+      "stage": "tap",
+      "index": 13,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 28,
+      "source": "touch",
+      "raw": {
+        "x": 1198.6282958984375,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1198.6282958984375,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 910.6282958984375,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 951.5999608808055,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 311.5999608808055,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.0000488989931,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937156
+    },
+    {
+      "stage": "start",
+      "index": 13,
+      "coveredIndexes": [
+        13
+      ],
+      "finalCards": [],
+      "pointerId": 29,
+      "source": "touch",
+      "raw": {
+        "x": 1198.6282958984375,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1198.6282958984375,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 910.6282958984375,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 951.5999608808055,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 311.5999608808055,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.0000488989931,
+        "y": 43.00971885205004
+      },
+      "at": 1788928937288
+    },
+    {
+      "stage": "tap",
+      "index": 13,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 29,
+      "source": "touch",
+      "raw": {
+        "x": 1198.6282958984375,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1198.6282958984375,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 910.6282958984375,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 951.5999608808055,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 311.5999608808055,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.0000488989931,
+        "y": 43.00971885205004
+      },
+      "at": 1788928937338
+    },
+    {
+      "stage": "start",
+      "index": 14,
+      "coveredIndexes": [
+        14
+      ],
+      "finalCards": [],
+      "pointerId": 30,
+      "source": "touch",
+      "raw": {
+        "x": 1259.107177734375,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1259.107177734375,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 971.107177734375,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 1014.7999535105224,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 374.7999535105224,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00005811184678,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937471
+    },
+    {
+      "stage": "tap",
+      "index": 14,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 30,
+      "source": "touch",
+      "raw": {
+        "x": 1259.107177734375,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1259.107177734375,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 971.107177734375,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 1014.7999535105224,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 374.7999535105224,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00005811184678,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937523
+    },
+    {
+      "stage": "start",
+      "index": 14,
+      "coveredIndexes": [
+        14
+      ],
+      "finalCards": [],
+      "pointerId": 31,
+      "source": "touch",
+      "raw": {
+        "x": 1259.107177734375,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1259.107177734375,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 971.107177734375,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 1014.7999535105224,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 374.7999535105224,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.00005811184678,
+        "y": 43.00971885205004
+      },
+      "at": 1788928937654
+    },
+    {
+      "stage": "tap",
+      "index": 14,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 31,
+      "source": "touch",
+      "raw": {
+        "x": 1259.107177734375,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1259.107177734375,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 971.107177734375,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 1014.7999535105224,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 374.7999535105224,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": -45.00005811184678,
+        "y": 43.00971885205004
+      },
+      "at": 1788928937705
+    },
+    {
+      "stage": "start",
+      "index": 15,
+      "coveredIndexes": [
+        15
+      ],
+      "finalCards": [],
+      "pointerId": 32,
+      "source": "touch",
+      "raw": {
+        "x": 1354.0361328125,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1354.0361328125,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 1066.0361328125,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 1114.0000226777938,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 474.0000226777938,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": 0.00002834724250533327,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937838
+    },
+    {
+      "stage": "tap",
+      "index": 15,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 32,
+      "source": "touch",
+      "raw": {
+        "x": 1354.0361328125,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 1354.0361328125,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 1066.0361328125,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 1114.0000226777938,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 474.0000226777938,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": 0.00002834724250533327,
+        "y": 43.00973834077921
+      },
+      "at": 1788928937889
+    },
+    {
+      "stage": "start",
+      "index": 15,
+      "coveredIndexes": [
+        15
+      ],
+      "finalCards": [],
+      "pointerId": 33,
+      "source": "touch",
+      "raw": {
+        "x": 1354.0361328125,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1354.0361328125,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 1066.0361328125,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 1114.0000226777938,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 474.0000226777938,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": 0.00002834724250533327,
+        "y": 43.00971885205004
+      },
+      "at": 1788928938021
+    },
+    {
+      "stage": "tap",
+      "index": 15,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 33,
+      "source": "touch",
+      "raw": {
+        "x": 1354.0361328125,
+        "y": 593.255615234375
+      },
+      "client": {
+        "x": 1354.0361328125,
+        "y": 593.255615234375
+      },
+      "canvas": {
+        "x": 1066.0361328125,
+        "y": 545.068115234375
+      },
+      "ui": {
+        "x": 1114.0000226777938,
+        "y": 150.40777508164004
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": 474.0000226777938,
+        "y": 50.40777508164004
+      },
+      "cardLocal": {
+        "x": 0.00002834724250533327,
+        "y": 43.00971885205004
+      },
+      "at": 1788928938071
+    },
+    {
+      "stage": "start",
+      "index": -1,
+      "coveredIndexes": [],
+      "finalCards": [],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 292,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 292,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 4,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 4.179970972423803,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -635.8200290275762,
+        "y": 34.40779067262335
+      },
+      "cardLocal": null,
+      "at": 1788928938205
+    },
+    {
+      "stage": "move",
+      "index": 0,
+      "coveredIndexes": [
+        0
+      ],
+      "finalCards": [],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 412.40277099609375,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 412.40277099609375,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 124.40277099609375,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 129.9999929131894,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -510.00000708681057,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00000885851324,
+        "y": 43.00973834077921
+      },
+      "at": 1788928938271
+    },
+    {
+      "stage": "move",
+      "index": 1,
+      "coveredIndexes": [
+        0,
+        1
+      ],
+      "finalCards": [],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 472.88165283203125,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 472.88165283203125,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 184.88165283203125,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 193.19998554290638,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -446.80001445709365,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00001807136704,
+        "y": 43.00973834077921
+      },
+      "at": 1788928938337
+    },
+    {
+      "stage": "move",
+      "index": 2,
+      "coveredIndexes": [
+        0,
+        1,
+        2
+      ],
+      "finalCards": [],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 533.3605346679688,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 533.3605346679688,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 245.36053466796875,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 256.3999781726234,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -383.6000218273766,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00002728422072,
+        "y": 43.00973834077921
+      },
+      "at": 1788928938387
+    },
+    {
+      "stage": "move",
+      "index": 3,
+      "coveredIndexes": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "finalCards": [],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 593.8394165039062,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 593.8394165039062,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 305.83941650390625,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 319.59997080234035,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -320.40002919765965,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00003649707446,
+        "y": 43.00973834077921
+      },
+      "at": 1788928938437
+    },
+    {
+      "stage": "commit",
+      "index": 3,
+      "coveredIndexes": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "finalCards": [
+        313,
+        213
+      ],
+      "pointerId": 34,
+      "source": "touch",
+      "raw": {
+        "x": 593.8394165039062,
+        "y": 608.5667114257812
+      },
+      "client": {
+        "x": 593.8394165039062,
+        "y": 608.5667114257812
+      },
+      "canvas": {
+        "x": 305.83941650390625,
+        "y": 560.3792114257812
+      },
+      "ui": {
+        "x": 319.59997080234035,
+        "y": 134.40779067262335
+      },
+      "targetPath": "html>body>div#content>div>div#GameDiv>div#Cocos3dGameContainer>canvas#GameCanvas",
+      "windowId": 0,
+      "handLocal": {
+        "x": -320.40002919765965,
+        "y": 34.40779067262335
+      },
+      "cardLocal": {
+        "x": -45.00003649707446,
+        "y": 43.00973834077921
+      },
+      "at": 1788928938471
+    }
+  ],
+  "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-independent-touch-area-2026-09-09/wide-click-swipe-player1.png"
+}

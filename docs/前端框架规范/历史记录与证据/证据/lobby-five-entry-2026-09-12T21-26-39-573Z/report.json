@@ -1,0 +1,65 @@
+{
+  "runId": "2026-09-12T21-26-39-573Z",
+  "result": "FAIL",
+  "stage": "desktop:navigate",
+  "error": {
+    "message": "等待超时: 登录或大厅场景",
+    "stack": "Error: 等待超时: 登录或大厅场景\n    at Cdp.wait (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/lobby-five-entry-e2e.mjs:56:11)\n    at async login (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/lobby-five-entry-e2e.mjs:182:17)\n    at async verifyMode (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/lobby-five-entry-e2e.mjs:232:3)\n    at async file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/lobby-five-entry-e2e.mjs:295:19"
+  },
+  "requests": [
+    {
+      "stage": "desktop:navigate",
+      "requestId": "873320DEE5E31E42272D04C0008190D1",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.1566",
+      "method": "POST",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "70D2B2A2E3B3DC709EEE6CE0B828E659",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.2388",
+      "method": "POST",
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    }
+  ],
+  "responses": [
+    {
+      "stage": "desktop:navigate",
+      "requestId": "873320DEE5E31E42272D04C0008190D1",
+      "status": 204,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.1566",
+      "status": 200,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "70D2B2A2E3B3DC709EEE6CE0B828E659",
+      "status": 204,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    },
+    {
+      "stage": "desktop:navigate",
+      "requestId": "91061.2388",
+      "status": 200,
+      "url": "http://127.0.0.1:8080/api/v2/version/check"
+    }
+  ],
+  "consoleErrors": [],
+  "exceptions": [],
+  "actions": [],
+  "failureScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/lobby-five-entry-2026-09-12T21-26-39-573Z/98-failure.png"
+}

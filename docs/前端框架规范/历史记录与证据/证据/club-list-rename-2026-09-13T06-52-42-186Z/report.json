@@ -1,0 +1,42 @@
+{
+  "account": "29",
+  "asset": "ClubList",
+  "assertions": {
+    "newRootLoaded": true,
+    "deskScrollPolicyEquivalent": true,
+    "underfilledFollowsAndBounces": false,
+    "backgroundDoesNotPierce": true,
+    "noOldAssetLoadError": true
+  },
+  "root": {
+    "name": "ClubList",
+    "active": true
+  },
+  "scroll": {
+    "horizontal": true,
+    "vertical": false,
+    "inertia": true,
+    "brake": 0.32,
+    "elastic": true,
+    "bounceDuration": 0.16,
+    "cancelInnerEvents": true,
+    "direction": 0,
+    "minDrag": 50,
+    "follow": 1,
+    "activeRows": 0
+  },
+  "underfilledOrigin": 0,
+  "underfilledDragged": 8.476527346581001,
+  "underfilledReturned": 0,
+  "afterBackground": {
+    "stack": [
+      "lobby/UILobbyMain",
+      "lobby/UILobbyClubList"
+    ],
+    "clubListActive": true
+  },
+  "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-13T06-52-42-152Z/club-list-loaded.png",
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json"
+  ]
+}

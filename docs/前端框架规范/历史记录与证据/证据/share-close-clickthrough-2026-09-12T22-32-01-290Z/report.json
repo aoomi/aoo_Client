@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "close": {
+    "x": 793.885811965812,
+    "y": 293.5911111111111
+  },
+  "before": {
+    "stack": [
+      "lobby/UILobbyMain",
+      "lobby/UILobbyShare"
+    ],
+    "shareVisible": true,
+    "bottomClicks": []
+  },
+  "after": {
+    "stack": [
+      "lobby/UILobbyMain"
+    ],
+    "shareVisible": false,
+    "bottomClicks": []
+  },
+  "errors": []
+}

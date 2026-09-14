@@ -1,0 +1,42 @@
+{
+  "runId": "2026-09-09T06-23-38-841Z",
+  "previewUrl": "http://127.0.0.1:7456/",
+  "chrome": "Chrome/152.0.7977.83",
+  "assertions": {
+    "otherPanelOpened": true,
+    "otherPanelClosed": true,
+    "otherTargetSent": true,
+    "selfPanelOpened": true,
+    "selfPanelClosed": true,
+    "groupTargetSent": true,
+    "noRuntimeErrors": false
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T06-23-38-841Z/other-player-panel.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T06-23-38-841Z/self-player-panel.png"
+  ],
+  "roomId": 199451,
+  "otherHeadClick": {
+    "x": 856.4254956944445,
+    "y": 107.43966152777779,
+    "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_2/Head/Common_Head/Head/Avatar/SquareAvatar/Mask/Img_Avatar"
+  },
+  "selfHeadClick": {
+    "x": 98.9095013888889,
+    "y": 573.1798708333333,
+    "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/Head/Common_Head/Head/Avatar/SquareAvatar/Mask/Img_Avatar"
+  },
+  "ownerErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "guestErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

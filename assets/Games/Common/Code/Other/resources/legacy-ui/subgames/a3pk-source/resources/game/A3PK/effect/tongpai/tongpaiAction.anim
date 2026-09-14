@@ -1,0 +1,55 @@
+{
+  "__type__": "cc.AnimationClip",
+  "_name": "tongpaiAction",
+  "_objFlags": 0,
+  "_native": "",
+  "_duration": 0.1,
+  "sample": 60,
+  "speed": 0.1,
+  "wrapMode": 1,
+  "curveData": {
+    "comps": {
+      "cc.Sprite": {
+        "spriteFrame": [
+          {
+            "frame": 0,
+            "value": {
+              "__uuid__": "61a88f80-54a1-4d96-8049-1700b9729e15"
+            }
+          },
+          {
+            "frame": 0.016666666666666666,
+            "value": {
+              "__uuid__": "6dd0a73f-aee1-4d2b-88a0-906b90b21ed8"
+            }
+          },
+          {
+            "frame": 0.03333333333333333,
+            "value": {
+              "__uuid__": "79542364-eb04-4830-9daf-243016a8ab47"
+            }
+          },
+          {
+            "frame": 0.05,
+            "value": {
+              "__uuid__": "90e45a24-b216-40a0-8077-14310073c70a"
+            }
+          },
+          {
+            "frame": 0.06666666666666667,
+            "value": {
+              "__uuid__": "cfd47a85-f764-40f8-a08a-96332db51e06"
+            }
+          },
+          {
+            "frame": 0.08333333333333333,
+            "value": {
+              "__uuid__": "9615c567-2aff-4ff4-8709-71888b733666"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "events": []
+}

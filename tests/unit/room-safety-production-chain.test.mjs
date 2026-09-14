@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(`../../${p}`,import.meta.url),'utf8');
+test('report button has no PHP bypass and uses the production room safety bridge',()=>{const lobby=read('assets/Lobby/Code/LobbyScreenController.ts');assert.doesNotMatch(lobby,/module=Report|qinghuaimajiang\.com\/index\.php/);assert.match(lobby,/productionBridge\?\.roomSafety\.open\(\)/);});
+test('room safety UI consumes report success and error callbacks',()=>{const source=read('assets/Modules/Support/Code/RoomSafety/RoomSafetyController.ts');for(const fact of ['aoo-report-submitted','aoo-report-error','aoo-room-safety-error'])assert.match(source,new RegExp(fact));assert.doesNotMatch(source,/aoo-room-mute|aoo-room-gps|aoo-room-distance-state/);});
+test('gateway uses only canonical authenticated API client routes',()=>{const source=read('assets/Modules/Support/Code/RoomSafety/RoomSafetyGateway.ts');assert.match(source,/ProductionApiClient/);assert.match(source,/\/api\/v2\/room-safety\/reports/);assert.doesNotMatch(source,/fetch\(|http:\/\/|https:\/\//);});

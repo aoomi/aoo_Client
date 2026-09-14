@@ -1,0 +1,8 @@
+{
+  "bundles": [
+    { "id": "boot", "priority": "P0", "required": true },
+    { "id": "common_lobby", "priority": "P0", "preloadAt": "login" },
+    { "id": "common_room", "priority": "P1", "preloadAt": "lobby" },
+    { "id": "common_mahjong", "priority": "P1", "preloadAt": "player_prediction" }
+  ]
+}

@@ -1,0 +1,946 @@
+{
+  "runId": "2026-09-12T22-48-09-445Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://127.0.0.1:7456/",
+  "assertions": {
+    "moreFirstOpenSorted": true,
+    "roomRuleOpened": true,
+    "voiceRecordingAnimated": true,
+    "noRuntimeErrors": true,
+    "roomCleaned": true
+  },
+  "roomId": 234323,
+  "moreFirstOpen": [
+    -154,
+    -246,
+    -214,
+    -285
+  ],
+  "moreFirstOpenScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-12T22-48-09-445Z/desktop-more-first-open.png",
+  "roomRule": "2人 8局 1000秒 赢家先出 5分 小局结算弹窗 四带二 3A算炸弹 去掉3、4 必须出黑桃3",
+  "roomRuleScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-12T22-48-09-445Z/desktop-room-rule-panel.png",
+  "voiceRecording": {
+    "firstLevel": 2,
+    "secondLevel": 4,
+    "animated": true
+  },
+  "voiceScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-12T22-48-09-445Z/desktop-voice-recording.png",
+  "sceneDiagnostics": {
+    "desktop": {
+      "scene": "GameRoom2D",
+      "labels": [
+        {
+          "name": "DurationLabel",
+          "value": "1秒"
+        },
+        {
+          "name": "RoundLabel",
+          "value": "局数：0/8"
+        },
+        {
+          "name": "RoomIdLabel",
+          "value": "房间号：234323"
+        },
+        {
+          "name": "Lb_Btn_Star",
+          "value": "开房规则"
+        },
+        {
+          "name": "Lb",
+          "value": "3"
+        },
+        {
+          "name": "Lb",
+          "value": "4"
+        },
+        {
+          "name": "Lb",
+          "value": "5"
+        },
+        {
+          "name": "Lb",
+          "value": "6"
+        },
+        {
+          "name": "Lb",
+          "value": "7"
+        },
+        {
+          "name": "Lb",
+          "value": "8"
+        },
+        {
+          "name": "Lb",
+          "value": "9"
+        },
+        {
+          "name": "Lb",
+          "value": "10"
+        },
+        {
+          "name": "Lb",
+          "value": "J"
+        },
+        {
+          "name": "Lb",
+          "value": "Q"
+        },
+        {
+          "name": "Lb",
+          "value": "K"
+        },
+        {
+          "name": "Lb",
+          "value": "A"
+        },
+        {
+          "name": "Lb",
+          "value": "2"
+        },
+        {
+          "name": "Lb_PlayerScore",
+          "value": "0"
+        },
+        {
+          "name": "Lb_PlayerName",
+          "value": "玩家646"
+        }
+      ],
+      "nodes": [
+        "GameRoom2D",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "GameRoom2DController",
+        "Canvas",
+        "ResultLayer",
+        "PopupLayer",
+        "EffectLayer",
+        "OperationLayer",
+        "PlayerLayer",
+        "TableLayer",
+        "VoiceRecordingPanel",
+        "DurationLabel",
+        "VoiceLevel03",
+        "Backdrop",
+        "LegacyModalInputMask",
+        "CommonRoom",
+        "RoomInfo",
+        "RoundLabel",
+        "RoomIdLabel",
+        "MoreMenu",
+        "MoreButton",
+        "WaitingActions",
+        "ReadyButton",
+        "RoomActions",
+        "SmallSettlementButton",
+        "Lb_Btn_Star",
+        "ChatButton",
+        "VoiceButton",
+        "RoomMenu",
+        "BackButton",
+        "PDK_CommonRoom",
+        "PdkRoomAudio",
+        "PdkGameAudio",
+        "Panel",
+        "Card_Counter",
+        "Img_Jpq",
+        "Num_Manage",
+        "15",
+        "14",
+        "13",
+        "12",
+        "11",
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "Lb_Manage",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Lb",
+        "Line_Manage",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Ling_Shu",
+        "Line_Heng",
+        "Gps",
+        "Players",
+        "Sp_Seat_2",
+        "Spine",
+        "Shut_Dow_Ani",
+        "Shut_Dow_Ani",
+        "Dragon_Ani",
+        "Plane_Ani",
+        "Boom_Ani",
+        "Tip",
+        "Card",
+        "Table_Cards",
+        "Sp_Seat_0",
+        "HeadButton",
+        "Spine",
+        "Play_CardSpine",
+        "Head_Spine",
+        "Card",
+        "Hand_TouchArea",
+        "Table_Cards",
+        "Hand_Cards",
+        "Tip",
+        "Head",
+        "CommonHead",
+        "Settlement",
+        "ChatEffects",
+        "GameStatus",
+        "Head",
+        "IdentityStatus",
+        "PlayerInfo",
+        "Lb_PlayerScore",
+        "Lb_PlayerName",
+        "Avatar",
+        "SquareAvatar",
+        "Img_Frame",
+        "Mask",
+        "Img_Avatar",
+        "BG",
+        "Bg_Table",
+        "BackgroundLayer",
+        "Camera2D"
+      ]
+    },
+    "mobile": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "Label",
+          "value": "匹配 / 赛事"
+        },
+        {
+          "name": "Label",
+          "value": "绑定微信"
+        },
+        {
+          "name": "Version",
+          "value": "V0.1.0"
+        },
+        {
+          "name": "Value",
+          "value": "10000"
+        },
+        {
+          "name": "PlayerName",
+          "value": "Player647"
+        },
+        {
+          "name": "PlayerId",
+          "value": "ID:964968"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "Camera",
+        "LobbyMain",
+        "btn_matchmaking",
+        "Label",
+        "Middle",
+        "GiftRoomCard",
+        "Support",
+        "Right",
+        "JoinRoom",
+        "CreateRoom",
+        "JoinClub",
+        "Left",
+        "Rewards",
+        "InviteRewards",
+        "LuckyDraw",
+        "Rebate",
+        "Bounty",
+        "Agent",
+        "Practice",
+        "Bottom",
+        "BindWeChat",
+        "Label",
+        "Shop",
+        "Highlight",
+        "Navigation",
+        "Share",
+        "Records",
+        "CheckIn",
+        "VerifyIdentity",
+        "More",
+        "Top",
+        "Version",
+        "Logout",
+        "Balances",
+        "RoomCard",
+        "AddIcon",
+        "Value",
+        "AddRoomCard",
+        "Player",
+        "PlayerName",
+        "PlayerId",
+        "PlayerBackground",
+        "AvatarMask",
+        "Avatar",
+        "BG",
+        "Background"
+      ]
+    }
+  },
+  "errors": {
+    "desktop": [],
+    "mobile": []
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 510.7704309063894,
+        "y": 632.6991084695393,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 491.29894571879646,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput (EditBox activation)"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 554.6608415304606,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput (EditBox activation)"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 621.4192876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 574.1692876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "CreateRoom",
+        "x": 504.33542165210986,
+        "y": 472.283720282318,
+        "world": {
+          "x": 828.2106700684956,
+          "y": 454
+        },
+        "path": "MainScene/should_hide_in_hierarchy/LobbyMain/Right/CreateRoom"
+      },
+      {
+        "name": "CreateButton",
+        "x": 660.7083333333334,
+        "y": 675.258293090639,
+        "world": {
+          "x": 1114.6953937592866,
+          "y": 82
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Create_Room/MainPanel/Actions/CreateButton"
+      },
+      {
+        "name": "MoreButton",
+        "x": 679.7846625,
+        "y": 384.34389535196885,
+        "world": {
+          "x": 1149.6443937592867,
+          "y": 615.171
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/CommonRoom/MoreMenu/MoreButton"
+      },
+      {
+        "name": "RoomRuleButton",
+        "x": 679.7846625,
+        "y": 571.1678032271545,
+        "world": {
+          "x": 1149.6443937592867,
+          "y": 272.771
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/CommonRoom/MoreMenu/MoreItems/RoomRuleButton"
+      },
+      {
+        "name": "VoiceButton",
+        "x": 728.5996291666665,
+        "y": 672.2616899888559,
+        "world": {
+          "x": 1239.0763937592867,
+          "y": 87.49200000000008
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/CommonRoom/RoomActions/VoiceButton"
+      },
+      {
+        "name": "VoiceRecordingPanel",
+        "x": 422.1791666666666,
+        "y": 524.6642552005944,
+        "world": {
+          "x": 677.6953937592867,
+          "y": 358.00000000000006
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/VoiceRecordingPanel"
+      },
+      {
+        "name": "BackButton",
+        "x": 114.82751250000004,
+        "y": 354.59502530182016,
+        "world": {
+          "x": 114.60839375928677,
+          "y": 669.6930000000001
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/CommonRoom/RoomActions/RoomMenu/BackButton"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 458.5,
+        "y": 315.66666666666663,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 164.21395833333335,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 227.59939999999997,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333333,
+        "y": 294.3826541666666,
+        "world": {
+          "x": 946.3950152671756,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "JoinRoom",
+        "x": 652.4254633187765,
+        "y": 144.6212708333333,
+        "world": {
+          "x": 1195.2832915763845,
+          "y": 455.0450000000001
+        },
+        "path": "MainScene/should_hide_in_hierarchy/LobbyMain/Right/JoinRoom"
+      },
+      {
+        "name": "Btn_2",
+        "x": 426,
+        "y": 155.56250000000003,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 435.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_2"
+      },
+      {
+        "name": "Btn_3",
+        "x": 540.625,
+        "y": 155.56250000000003,
+        "world": {
+          "x": 990.4580152671756,
+          "y": 435.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_3"
+      },
+      {
+        "name": "Btn_4",
+        "x": 311.37500000000006,
+        "y": 210.14583333333331,
+        "world": {
+          "x": 570.4580152671756,
+          "y": 335.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_4"
+      },
+      {
+        "name": "Btn_3",
+        "x": 540.625,
+        "y": 155.56250000000003,
+        "world": {
+          "x": 990.4580152671756,
+          "y": 435.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_3"
+      },
+      {
+        "name": "Btn_2",
+        "x": 426,
+        "y": 155.56250000000003,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 435.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_2"
+      },
+      {
+        "name": "Btn_3",
+        "x": 540.625,
+        "y": 155.56250000000003,
+        "world": {
+          "x": 990.4580152671756,
+          "y": 435.00000000000006
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Keys/Btn_3"
+      },
+      {
+        "name": "Btn_Confirm",
+        "x": 547.0041541666666,
+        "y": 93.88333333333333,
+        "world": {
+          "x": 1002.1450152671755,
+          "y": 548
+        },
+        "path": "MainScene/should_hide_in_hierarchy/Numpad/Keypad/Btn_Confirm"
+      },
+      {
+        "name": "BackButton",
+        "x": 114.82751250000013,
+        "y": 27.45923749999997,
+        "world": {
+          "x": 210.37101526717564,
+          "y": 669.6930000000001
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/CommonRoom/RoomActions/RoomMenu/BackButton"
+      }
+    ]
+  },
+  "loginInputDiagnostic": {
+    "desktop": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 639.25,
+            "y": 11.625,
+            "width": 41,
+            "height": 24
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "97",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 484.4992980957031,
+            "y": 401.70465087890625,
+            "width": 315.0013732910156,
+            "height": 70.10415649414062
+          },
+          "focused": true
+        }
+      ]
+    },
+    "mobile": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "98",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 336.0270690917969,
+            "y": 207.13064575195312,
+            "width": 183.94583129882812,
+            "height": 40.9375
+          },
+          "focused": true
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "",
+          "value": "",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        }
+      ]
+    }
+  },
+  "preInputComponents": {
+    "desktop": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ],
+    "mobile": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ]
+  },
+  "preInputState": {
+    "desktop": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 484.4992980957031,
+        "y": 293.15911865234375,
+        "width": 315.0013732910156,
+        "height": 70.10415649414062
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 684.6953937592867,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    },
+    "mobile": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 336.0270690917969,
+        "y": 143.74520874023438,
+        "width": 183.94583129882812,
+        "height": 40.9375
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 780.4580152671756,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    }
+  }
+}

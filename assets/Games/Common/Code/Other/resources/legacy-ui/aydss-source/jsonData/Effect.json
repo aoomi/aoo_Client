@@ -1,0 +1,686 @@
+{
+  "WaitNet": {
+    "EffectRes": "WaitNet",
+    "FilePath": "effect/WaitNet/WaitNet",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 0,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Finger": {
+    "EffectRes": "Finger",
+    "FilePath": "effect/Finger/Finger",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "RedPoint": {
+    "EffectRes": "RedPoint",
+    "FilePath": "effect/RedPoint/RedPoint",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 9,
+    "OffPosList": "[-10,-10]"
+  },
+  "OutCatTip": {
+    "EffectRes": "OutCatTip",
+    "FilePath": "game/base/effect/majiang/Tip/Tip",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "OutCatTip2": {
+    "EffectRes": "OutCatTip2",
+    "FilePath": "game/base/effect/majiang/Tip/Tip2",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Gang": {
+    "EffectRes": "Gang",
+    "FilePath": "game/base/effect/majiang/gang/gang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "BuGang_YF": {
+    "EffectRes": "BuGang_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/bugang/bugang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "GongGang_YF": {
+    "EffectRes": "GongGang_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/gonggang/gonggang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "AnGang_YF": {
+    "EffectRes": "AnGang_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/angang/angang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Peng": {
+    "EffectRes": "Peng",
+    "FilePath": "game/base/effect/majiang/peng/peng",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Peng_YF": {
+    "EffectRes": "Peng_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/peng/peng",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Chi": {
+    "EffectRes": "Chi",
+    "FilePath": "game/base/effect/majiang/chi/chi",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Chi_YF": {
+    "EffectRes": "Chi_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/chi/chi",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "Zimo": {
+    "EffectRes": "Zimo",
+    "FilePath": "game/base/effect/majiang/zimo/zimo",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "touda": {
+    "EffectRes": "touda",
+    "FilePath": "game/base/effect/majiang/touda/touda",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "erda": {
+    "EffectRes": "erda",
+    "FilePath": "game/base/effect/majiang/erda/erda",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "beidongda": {
+    "EffectRes": "beidongda",
+    "FilePath": "game/base/effect/majiang/beidongda/beidongda",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "guanerda": {
+    "EffectRes": "guanerda",
+    "FilePath": "game/base/effect/majiang/guanerda/guanerda",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "genzhang": {
+    "EffectRes": "genzhang",
+    "FilePath": "game/base/effect/majiang/genzhang/genzhang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "QiangGangHu": {
+    "EffectRes": "QiangGangHu",
+    "FilePath": "game/base/effect/majiang/qiangganghu/qiangganghu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "DanYou": {
+    "EffectRes": "DanYou",
+    "FilePath": "game/base/effect/majiang/danyou/danyou",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "ShuangYou": {
+    "EffectRes": "ShuangYou",
+    "FilePath": "game/base/effect/majiang/shuangyou/shuangyou",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "SanYou": {
+    "EffectRes": "SanYou",
+    "FilePath": "game/base/effect/majiang/sanyou/sanyou",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "SanJinDao": {
+    "EffectRes": "SanJinDao",
+    "FilePath": "game/base/effect/majiang/sanjindao/sanjindao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "SiJinDao": {
+    "EffectRes": "SiJinDao",
+    "FilePath": "game/base/effect/majiang/sijindao/sijindao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "WuJinDao": {
+    "EffectRes": "WuJinDao",
+    "FilePath": "game/base/effect/majiang/wujindao/wujindao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "LiuJinDao": {
+    "EffectRes": "LiuJinDao",
+    "FilePath": "game/base/effect/majiang/liujindao/liujindao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "FenBing": {
+    "EffectRes": "FenBing",
+    "FilePath": "game/base/effect/majiang/fenbing/fenbing",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "QiangJin": {
+    "EffectRes": "QiangJin",
+    "FilePath": "game/base/effect/majiang/qiangjin/qiangjin",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "ShiSanYao": {
+    "EffectRes": "ShiSanYao",
+    "FilePath": "game/base/effect/majiang/shisanyao/shisanyao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "tianhu": {
+    "EffectRes": "tianhu",
+    "FilePath": "game/base/effect/majiang/tianhu/tianhu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "duiduihu": {
+    "EffectRes": "duiduihu",
+    "FilePath": "game/base/effect/majiang/duiduihu/duiduihu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "hu": {
+    "EffectRes": "hu",
+    "FilePath": "game/base/effect/majiang/hu/hu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "hu_YF": {
+    "EffectRes": "hu_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/hu/hu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "hunyise": {
+    "EffectRes": "hunyise",
+    "FilePath": "game/base/effect/majiang/hunyise/hunyise",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "jinlong": {
+    "EffectRes": "jinlong",
+    "FilePath": "game/base/effect/majiang/jinlong/jinlong",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "jinque": {
+    "EffectRes": "jinque",
+    "FilePath": "game/base/effect/majiang/jinque/jinque",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "dasanyuan": {
+    "EffectRes": "dasanyuan",
+    "FilePath": "game/base/effect/majiang/dasanyuan/dasanyuan",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "daduipeng": {
+    "EffectRes": "daduipeng",
+    "FilePath": "game/base/effect/majiang/daduipeng/daduipeng",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "sanjinyou": {
+    "EffectRes": "sanjinyou",
+    "FilePath": "game/base/effect/majiang/sanjinyou/sanjinyou",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "qingyise": {
+    "EffectRes": "qingyise",
+    "FilePath": "game/base/effect/majiang/qingyise/qingyise",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "yizhanghua": {
+    "EffectRes": "yizhanghua",
+    "FilePath": "game/base/effect/majiang/yizhanghua/yizhanghua",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "wuhuawugang": {
+    "EffectRes": "wuhuawugang",
+    "FilePath": "game/base/effect/majiang/wuhuawugang/wuhuawugang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "dihu": {
+    "EffectRes": "dihu",
+    "FilePath": "game/base/effect/majiang/dihu/dihu",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "xiaozhadan": {
+    "EffectRes": "xiaozhadan",
+    "FilePath": "game/base/effect/majiang/xiaozhadan/xiaozhadan",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "dazhadan": {
+    "EffectRes": "dazhadan",
+    "FilePath": "game/base/effect/majiang/dazhadan/dazhadan",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "chaojizhadan": {
+    "EffectRes": "chaojizhadan",
+    "FilePath": "game/base/effect/majiang/chaojizhadan/chaojizhadan",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "liuju": {
+    "EffectRes": "liuju",
+    "FilePath": "game/base/effect/majiang/liuju/liuju",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "SiHongZhong": {
+    "EffectRes": "SiHongZhong",
+    "FilePath": "game/base/effect/majiang/sihongzhong/sihongzhong",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "BuHua": {
+    "EffectRes": "BuHua",
+    "FilePath": "game/base/effect/majiang/buhua/buhua",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "BuHua_YF": {
+    "EffectRes": "BuHua_YF",
+    "FilePath": "game/JSYZMJ/texture/effect/buhua/buhua",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "xipai": {
+    "EffectRes": "xipai",
+    "FilePath": "game/base/effect/majiang/xipai/xipai",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "KaiJin": {
+    "EffectRes": "KaiJin",
+    "FilePath": "game/base/effect/majiang/kaijin/kaijin",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "touxiangkuangtexiao": {
+    "EffectRes": "touxiangkuangtexiao",
+    "FilePath": "effect/Particle/touxiangkuangtexiao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "pxcn_touxiangkuangtexiao": {
+    "EffectRes": "pxcn_touxiangkuangtexiao",
+    "FilePath": "texture/game/pxcn/particle/pxcn_touxiangkuangtexiao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "bjpk_touxiangkuangtexiao": {
+    "EffectRes": "bjpk_touxiangkuangtexiao",
+    "FilePath": "game/BJPK/particle/bjpk_touxiangkuangtexiao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "gd_touxiangkuangtexiao": {
+    "EffectRes": "gd_touxiangkuangtexiao",
+    "FilePath": "texture/game/gd/particle/gd_touxiangkuangtexiao",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "sidatianwang": {
+    "EffectRes": "sidatianwang",
+    "FilePath": "game/GD/effect/sidatianwang/sidatianwang",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "tonghuashun": {
+    "EffectRes": "tonghuashun",
+    "FilePath": "game/GD/effect/tonghuashun/tonghuashun",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "zhadan": {
+    "EffectRes": "zhadan",
+    "FilePath": "game/GD/effect/zhadan/zhadan",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "shunzi": {
+    "EffectRes": "shunzi",
+    "FilePath": "game/GD/effect/shunzi/shunzi",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face1": {
+    "EffectRes": "face1",
+    "FilePath": "effect/face1/face1",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face2": {
+    "EffectRes": "face2",
+    "FilePath": "effect/face2/face2",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face3": {
+    "EffectRes": "face3",
+    "FilePath": "effect/face3/face3",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face4": {
+    "EffectRes": "face4",
+    "FilePath": "effect/face4/face4",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face5": {
+    "EffectRes": "face5",
+    "FilePath": "effect/face5/face5",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face6": {
+    "EffectRes": "face6",
+    "FilePath": "effect/face6/face6",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face7": {
+    "EffectRes": "face7",
+    "FilePath": "effect/face7/face7",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face8": {
+    "EffectRes": "face8",
+    "FilePath": "effect/face8/face8",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face9": {
+    "EffectRes": "face9",
+    "FilePath": "effect/face9/face9",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face10": {
+    "EffectRes": "face10",
+    "FilePath": "effect/face10/face10",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face11": {
+    "EffectRes": "face11",
+    "FilePath": "effect/face11/face11",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face12": {
+    "EffectRes": "face12",
+    "FilePath": "effect/face12/face12",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face13": {
+    "EffectRes": "face13",
+    "FilePath": "effect/face13/face13",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face14": {
+    "EffectRes": "face14",
+    "FilePath": "effect/face14/face14",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  },
+  "face15": {
+    "EffectRes": "face15",
+    "FilePath": "effect/face15/face15",
+    "ComponentName": "aypdk_BaseEffect",
+    "Scale": 100,
+    "ZorderLv": 1,
+    "PosType": 0,
+    "OffPosList": "[]"
+  }
+}

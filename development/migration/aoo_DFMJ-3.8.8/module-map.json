@@ -1,0 +1,25 @@
+{
+  "sourceProject": "/Users/aoo/Code/Game/BCG/Test/aoo_DFMJ/client-next-3.8.8",
+  "targetProject": "/Users/aoo/Code/Game/BCG/Aoo/Client",
+  "creatorVersion": "3.8.8",
+  "modules": {
+    "common": "assets/Common",
+    "login": "assets/Login",
+    "lobby": "assets/Lobby",
+    "club": "assets/Club",
+    "njpdk": "assets/Games/Poker/Packs/Pack01",
+    "hzmj": "assets/Games/Mahjong/Packs/Pack01"
+  },
+  "fixedCategories": [
+    "LongCard",
+    "Mahjong",
+    "Poker",
+    "WordCard"
+  ],
+  "rules": {
+    "preserveMeta": true,
+    "preserveRelativePathWithinType": true,
+    "nativePrefabOnly": true,
+    "sourceReadOnly": true
+  }
+}

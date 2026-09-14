@@ -1,0 +1,7 @@
+{
+  "mainPackage": ["common/boot-minimum", "common/code/app", "common/code/common-framework", "login/minimum"],
+  "loginPreload": ["lobby/common_lobby"],
+  "lobbyImmediate": ["games/common_room", "club/common_club"],
+  "onDemand": ["games/{category}/common_{category}", "games/{category}/families/{family}", "games/{category}/regional/{game}"],
+  "optional": ["common/social", "games/common_cosmetics"]
+}

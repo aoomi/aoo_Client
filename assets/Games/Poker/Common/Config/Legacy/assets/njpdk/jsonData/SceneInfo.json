@@ -1,0 +1,42 @@
+{
+  "njpdkMainScene": {
+    "SceneType": "njpdkMainScene",
+    "Name": "主场景",
+    "ComponentName": "njpdk_SceneMain",
+    "gamePrefab": "0",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  },
+  "njpdkScene": {
+    "SceneType": "njpdkScene",
+    "Name": "安岳跑得快麻将场景",
+    "ComponentName": "njpdkScene",
+    "gamePrefab": "pdk/PDK_CommonRoom",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "njpdkVideoScene": {
+    "SceneType": "njpdkVideoScene",
+    "Name": "安岳跑得快麻将回放场景",
+    "ComponentName": "njpdkVideoScene",
+    "gamePrefab": "0",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "njpdkLoginScene": {
+    "SceneType": "njpdkLoginScene",
+    "Name": "登陆场景",
+    "ComponentName": "njpdk_SceneLogin",
+    "gamePrefab": "njpdk_UILogin",
+    "IsCanMove": 0,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  }
+}

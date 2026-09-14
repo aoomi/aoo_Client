@@ -1,0 +1,18 @@
+import { Button, Label, Layout, Node, instantiate } from 'cc';
+import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
+import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+
+export class LegacyUnionClubReportController {
+    private form: LegacyForm | null = null; private opClubId = 0; private opPid = 0; private path = '';
+    private readonly disposers: Array<() => void> = [];
+    public constructor(private readonly forms: LegacyFormManager, private readonly client: ProtocolClient) {}
+    public install(): void { for (const path of ['ui/club/UIUnionClubReport', 'ui/club_2/UIUnionClubReport_2']) this.forms.register(path, { zOrder: 11, lifecycle: { onCreate: (form) => this.bind(form, path), onShow: (form, clubId, pid) => this.show(form, path, Number(clubId ?? 0), Number(pid ?? 0)), onClose: () => { this.form = null; } }}); }
+    public dispose(): void { for (const dispose of this.disposers.splice(0)) dispose(); }
+    private bind(form: LegacyForm, path: string): void { this.click(form.node, 'btn_close', () => this.forms.close(path)); }
+    private show(form: LegacyForm, path: string, clubId: number, pid: number): void { this.form = form; this.path = path; this.opClubId = clubId; this.opPid = pid; void this.load(); }
+    private async load(): Promise<void> { const form = this.form; if (!form) return; try { const rows = await this.client.request<Array<Record<string, unknown>>>('union.CUnionClubReportForm', { opClubId: this.opClubId, opPid: this.opPid }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; for (const child of [...content.children]) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.label(node, 'lb_date', String(row.dateTime ?? '')); this.label(node, 'lb_wanjiashu', String(row.sizePlayer ?? 0)); this.label(node, 'lb_huoyuedu', String(row.scorePoint ?? 0)); this.label(node, 'lb_costZS', String(row.consume ?? 0)); this.label(node, 'lb_sumScore', String(row.sumClubCent ?? 0)); if (this.path.includes('club_2')) { this.label(node, 'lb_jushu', String(row.roomSize ?? 0)); this.label(node, 'lb_winlostSP', String(row.zhongZhiTotalPoint ?? 0)); this.label(node, 'lb_singleSP', String(row.zhongZhiFinalTotalPoint ?? 0)); this.label(node, 'lb_sumTaoTaiScore', String(row.zhongZhiEliminatePointSum ?? 0)); } else { this.label(node, 'lb_jushu', String(row.setCount ?? 0)); this.label(node, 'lb_baomingfei', String(row.entryFee ?? 0)); this.label(node, 'lb_fencheng', String(row.shareValue ?? 0)); this.label(node, 'lb_winlostSP', String(row.clubCentConsume ?? 0)); this.label(node, 'lb_singleSP', String(row.personalClubCent ?? 0)); } content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取联盟俱乐部报表失败'); } }
+    private click(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.disposers.push(() => node.off(Button.EventType.CLICK, fn)); }
+    private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const result = this.desc(child, name); if (result) return result; } return null; }
+    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private async tip(message: string): Promise<void> { await this.forms.show('UIMessage_Drift', null, null, message); }
+}

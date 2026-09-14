@@ -1,0 +1,110 @@
+{
+  "runId": "2026-09-09T21-15-00-664Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://127.0.0.1:7456/",
+  "assertions": {},
+  "failure": {
+    "message": "desktop: timeout waiting for lobby",
+    "stack": "Error: desktop: timeout waiting for lobby\n    at Page.wait (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:84:11)\n    at async login (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:163:3)\n    at async Promise.all (index 0)\n    at async file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:311:3"
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-09T21-15-00-664Z/desktop-failure.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-09T21-15-00-664Z/mobile-failure.png"
+  ],
+  "errors": {
+    "desktop": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "mobile": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ]
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 743.3888888888889,
+        "y": 570.6944444444445,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 598.2222222222222,
+        "y": 328.4611805555556,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 419.15000000000003
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/AccountInput"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 598.2222222222222,
+        "y": 437.00673333333333,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 303.02400000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/PasswordInput"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 753.3272236111111,
+        "y": 551.3709319444445,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 458.49999999999994,
+        "y": 305.66666666666663,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "Login_Scene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 164.2139583333333,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 419.15000000000003
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/AccountInput"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 227.59939999999995,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 303.02400000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/PasswordInput"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333333,
+        "y": 294.3826541666666,
+        "world": {
+          "x": 946.3950152671756,
+          "y": 180.67300000000006
+        },
+        "path": "Login_Scene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      }
+    ]
+  }
+}

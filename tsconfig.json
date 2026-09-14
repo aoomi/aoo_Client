@@ -1,0 +1,14 @@
+{
+  "extends": "./temp/tsconfig.cocos.json",
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2019",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["assets/**/*.ts"],
+  "exclude": ["development", "library", "temp", "build", "node_modules", "assets/Common/Code/Runtime/bootstrap"]
+}

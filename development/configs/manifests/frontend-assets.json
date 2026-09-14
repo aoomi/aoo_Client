@@ -1,0 +1,13 @@
+{
+  "creatorVersion": "3.8.8",
+  "backendConnected": false,
+  "layers": {
+    "core": "公共运行代码",
+    "lobby": "登录、大厅和亲友圈原生 UI",
+    "room": "通用房间基础资源",
+    "games": "牌类、大玩法和子游戏",
+    "shared": "公共 UI、特效和纹理",
+    "configs": "资源与玩法清单"
+  },
+  "enabledGames": ["njpdk"]
+}

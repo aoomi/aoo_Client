@@ -1,0 +1,16 @@
+{
+  "runId": "2026-09-09T11-46-57-739Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "pageUrl": "http://127.0.0.1:7456/",
+  "apiUrl": "http://127.0.0.1:8080",
+  "assertions": {},
+  "regions": {},
+  "errors": [],
+  "preCleanup": null,
+  "failure": {
+    "message": "page.evaluate: Error: missing CreateRoom\n    at eval (eval at evaluate (:311:30), <anonymous>:1:183)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+    "stack": "page.evaluate: Error: missing CreateRoom\n    at eval (eval at evaluate (:311:30), <anonymous>:1:183)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at point (/Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:9:40)\n    at click (/Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:10:42)\n    at /Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:19:40"
+  },
+  "failureScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T11-46-57-739Z/failure.png"
+}

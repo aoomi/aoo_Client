@@ -1,0 +1,7 @@
+import{MahjongStandardDirectAdapter}from'./MahjongLifecycleFamilyAdapters';
+import{FAMILY_RUNTIME_REGISTRY}from'../../../Common/Code/Catalog/CatalogFamilyBindings';
+export interface FjyxmjTransport{request<T>(m:string,p:unknown):Promise<T>;on(m:string,h:(p:unknown)=>void):()=>void;}export type FjyxmjOption=0|1|2|3|4;export type FjyxmjPhase='LOBBY'|'WAITING_PIAO'|'WAITING_QIANG_JIN'|'PLAYING'|'SETTLED';export interface FjyxmjRules{playerMinNum:2|3|4;playerNum:2|3|4;setCount:number;paymentRoomCardType:0|1|2;difen:number;youjin:number;ziMoFen:number;fangGangFen:number;kexuanwanfa:readonly FjyxmjOption[];fangjian:readonly number[];xianShi:number;jiesan:number;gaoji:readonly number[];}export interface FjyxmjSnapshot{roomId:number;gameCode:'fjyxmj';stateVersion:number;phase:FjyxmjPhase;choiceSeat:number;jinIndicator:number;jin:number;piaoFen:readonly number[];qiangJin:boolean;youJinLevel:0|1|2|3;sanJinDao:boolean;textChatAllowed:boolean;scoreFloorEnabled:boolean;[key:string]:unknown;}/** Intent-only: Qiang-jin eligibility/order, jin waits, you-jin level, san-jin-dao and settlement are server authoritative. */
+export const FJYXMJ_REGION_BINDING=FAMILY_RUNTIME_REGISTRY.resolve('fjyxmj')!;export const FJYXMJ_ROUTE='mahjong.fjyxmj.dispatch';
+/** Compatibility factory; lifecycle, route and stale-snapshot handling are family-owned. */
+export class FjyxmjGameplayAdapter extends MahjongStandardDirectAdapter{constructor(wire:FjyxmjTransport,roomId:number,..._regionConfig:unknown[]){super(wire,roomId,FJYXMJ_REGION_BINDING);}}
+

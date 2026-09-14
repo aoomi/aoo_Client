@@ -1,0 +1,42 @@
+{
+  "a3pkMainScene": {
+    "SceneType": "a3pkMainScene",
+    "Name": "主场景",
+    "ComponentName": "a3pk_SceneMain",
+    "gamePrefab": "0",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  },
+  "a3pkScene": {
+    "SceneType": "a3pkScene",
+    "Name": "游戏场景",
+    "ComponentName": "a3pkScene",
+    "gamePrefab": "game/A3PK/ui/UIA3PKPlay",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "a3pkVideoScene": {
+    "SceneType": "a3pkVideoScene",
+    "Name": "扬中麻将回放场景",
+    "ComponentName": "a3pkVideoScene",
+    "gamePrefab": "game/A3PK/ui/UIPokerA3PKVideo",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "a3pkLoginScene": {
+    "SceneType": "a3pkLoginScene",
+    "Name": "登陆场景",
+    "ComponentName": "a3pk_SceneLogin",
+    "gamePrefab": "ui/a3pk_UILogin",
+    "IsCanMove": 0,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  }
+}

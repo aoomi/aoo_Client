@@ -1,0 +1,6 @@
+import{MahjongWaitingExSequentialAdapter}from'./MahjongLifecycleFamilyAdapters';
+import{FAMILY_RUNTIME_REGISTRY}from'../../../Common/Code/Catalog/CatalogFamilyBindings';
+export interface GsmjTransport{request<T>(message:string,payload:unknown):Promise<T>;}export type GsmjDiFen=0|1|2|3;export type GsmjQiDui=0|1|2|3;export type GsmjOption=0|1|2|3|4;export interface GsmjSnapshot{gameCode:'gsmj';stateVersion:number;phase:'LOBBY'|'WAITING_EX'|'PLAYING'|'SETTLED';choiceSeat:number;piao:readonly number[];horseCards:readonly number[];horseHits:Readonly<Record<string,number>>;gangPoints:readonly number[];optionAuthority:Readonly<Record<string,boolean>>;[key:string]:unknown;}/** Intent-only: base points, seven-pairs gate, legal operations, horses, gang ledger and settlement are server authoritative. */
+export const GSMJ_REGION_BINDING=FAMILY_RUNTIME_REGISTRY.resolve('gsmj')!;export const GSMJ_ROUTE='mahjong.gsmj.dispatch';
+/** Compatibility factory; lifecycle, route and stale-snapshot handling are family-owned. */
+export class GsmjGameplayAdapter extends MahjongWaitingExSequentialAdapter<GsmjSnapshot>{constructor(wire:GsmjTransport,roomId:number,..._regionConfig:unknown[]){super(wire,roomId,GSMJ_REGION_BINDING);}piao(seat:number,value:0|1|2|3){return this.intent(seat,'piao',{value});}timeout(seat:number){return this.intent(seat,'timeout',{});}}

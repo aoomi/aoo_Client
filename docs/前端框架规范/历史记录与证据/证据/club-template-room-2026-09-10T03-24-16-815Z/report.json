@@ -1,0 +1,155 @@
+{
+  "account": "31",
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/club-template-room-2026-09-10T03-24-16-815Z/rules-next.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/club-template-room-2026-09-10T03-24-16-815Z/union-settings.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/club-template-room-2026-09-10T03-24-16-815Z/after-save.png"
+  ],
+  "clicks": [
+    {
+      "name": "Btn_AccountLogin",
+      "x": 785.1666666666666,
+      "y": 570.6944444444445,
+      "world": {
+        "x": 840,
+        "y": 160.00000000000006
+      },
+      "path": "Login_Scene/Canvas/Login/Btn_AccountLogin"
+    },
+    {
+      "name": "AccountInput",
+      "x": 640,
+      "y": 328.46118055555553,
+      "world": {
+        "x": 684.6953937592867,
+        "y": 419.15000000000003
+      },
+      "path": "Login_Scene/Canvas/Login/AccountLoginPanel/AccountInput"
+    },
+    {
+      "name": "PasswordInput",
+      "x": 640,
+      "y": 437.0067333333333,
+      "world": {
+        "x": 684.6953937592867,
+        "y": 303.02400000000006
+      },
+      "path": "Login_Scene/Canvas/Login/AccountLoginPanel/PasswordInput"
+    },
+    {
+      "name": "Btn_Login",
+      "x": 795.1050013888889,
+      "y": 551.3709319444445,
+      "world": {
+        "x": 850.6323937592867,
+        "y": 180.67300000000006
+      },
+      "path": "Login_Scene/Canvas/Login/AccountLoginPanel/Btn_Login"
+    },
+    {
+      "name": "JoinClub",
+      "x": 1025.9909957723578,
+      "y": 521.1242555555555,
+      "world": {
+        "x": 1097.6426700684956,
+        "y": 213.03200000000007
+      },
+      "path": "MainScene/Canvas/Lobby_Main/Right/JoinClub"
+    },
+    {
+      "name": "btn_enter",
+      "x": 343.69305555555553,
+      "y": 530.3901569444445,
+      "world": {
+        "x": 367.69539375928673,
+        "y": 203.11900000000006
+      },
+      "path": "MainScene/Canvas/ClubList/mark/layout/btn_club/btn_enter"
+    },
+    {
+      "name": "btn_union",
+      "x": 629.4333333333333,
+      "y": 99.59444444444445,
+      "world": {
+        "x": 673.3907875185735,
+        "y": 664
+      },
+      "path": "MainScene/Canvas/ClubMainDefault/top/right_btn/btn_union"
+    },
+    {
+      "name": "btn_close",
+      "x": 1223.2666666666664,
+      "y": 70.61805555555556,
+      "world": {
+        "x": 1308.6953937592866,
+        "y": 695
+      },
+      "path": "MainScene/Canvas/UnionManager/bg_create/btn_close"
+    },
+    {
+      "name": "btn_roomlist",
+      "x": 974.8131944444443,
+      "y": 99.59444444444445,
+      "world": {
+        "x": 1042.8907875185735,
+        "y": 664
+      },
+      "path": "MainScene/Canvas/ClubMainDefault/top/right_btn/btn_roomlist"
+    },
+    {
+      "name": "btn_create",
+      "x": 955.0013888888889,
+      "y": 637.9944444444444,
+      "world": {
+        "x": 1021.6953937592867,
+        "y": 88
+      },
+      "path": "MainScene/Canvas/UnionManager/right/btn_WanfaNode/btn_create"
+    },
+    {
+      "name": "btn_next",
+      "x": 1041.9305555555554,
+      "y": 643.6027777777778,
+      "world": {
+        "x": 1114.6953937592866,
+        "y": 82.00000000000006
+      },
+      "path": "MainScene/Canvas/Create_Room/MainPanel/Actions/btn_next"
+    },
+    {
+      "name": "roomNameEditBox",
+      "x": 541.8541666666666,
+      "y": 201.47916666666666,
+      "world": {
+        "x": 579.6953937592867,
+        "y": 555
+      },
+      "path": "MainScene/Canvas/UnionPLSet/pointScrollView/view/content/line_1/roomNameEditBox"
+    },
+    {
+      "name": "btn_save",
+      "x": 1052.2124999999999,
+      "y": 666.6240513888888,
+      "world": {
+        "x": 1125.6953937592866,
+        "y": 57.37100000000004
+      },
+      "path": "MainScene/Canvas/UnionPLSet/btn_save"
+    }
+  ],
+  "errors": [],
+  "frames": [
+    {
+      "method": "Network.webSocketFrameSent",
+      "payload": "{\"protocolVersion\":\"2.0\",\"msgId\":\"club.dispatch\",\"kind\":\"req\",\"requestId\":\"f89c369c-f24f-435d-a94b-127e348ecc5b\",\"seq\":8,\"timestamp\":1789010674352,\"traceId\":\"f89c369c-f24f-435d-a94b-127e348ecc5b\",\"body\":{\"action\":\"union.CUnionGetAllRoomMin\",\"payload\":{\"unionId\":963230,\"clubId\":549245,\"pageNum\":1}}}"
+    },
+    {
+      "method": "Network.webSocketFrameSent",
+      "payload": "{\"protocolVersion\":\"2.0\",\"msgId\":\"club.dispatch\",\"kind\":\"req\",\"requestId\":\"4fb6569c-2bc2-4d02-b37a-6c1da443f774\",\"seq\":15,\"timestamp\":1789010681244,\"traceId\":\"4fb6569c-2bc2-4d02-b37a-6c1da443f774\",\"body\":{\"action\":\"union.CUnionCreateRoom\",\"payload\":{\"playerCount\":2,\"roundCount\":8,\"operationTimeoutSeconds\":1000,\"firstPlayRule\":\"winner_first\",\"bombScore\":5,\"rule_cd201_0001\":[\"option_0001\"],\"playRule\":[\"four_with_two\",\"triple_ace_bomb\",\"remove_three_four\",\"require_spade_three\"],\"roomRestriction\":[],\"baseScore\":1,\"gameId\":8,\"gameCode\":\"CD201\",\"playVersion\":\"1.0.0\",\"clubId\":549245,\"unionId\":963230,\"gameIndex\":0,\"roomName\":\"E2E31模板\",\"roomSportsThreshold\":0,\"sportsDouble\":0,\"JoinGamePoint\":0,\"roomSportsType\":0,\"roomSportsEveryoneConsume\":0,\"autoDismiss\":0,\"prizePool\":0,\"prizePool2\":0,\"password\":\"\",\"percentage\":0,\"leavePoint\":0,\"getBankerPoint\":0,\"bigWinnerConsumeList\":[{\"winScore\":0,\"sportsPoint\":0,\"sportsPointCost\":0}]}}}"
+    },
+    {
+      "method": "Network.webSocketFrameSent",
+      "payload": "{\"protocolVersion\":\"2.0\",\"msgId\":\"club.dispatch\",\"kind\":\"req\",\"requestId\":\"46bdacfc-00b1-438e-84b0-c50ec6c51ade\",\"seq\":16,\"timestamp\":1789010681319,\"traceId\":\"46bdacfc-00b1-438e-84b0-c50ec6c51ade\",\"body\":{\"action\":\"union.CUnionGetAllRoomMin\",\"payload\":{\"unionId\":963230,\"clubId\":549245,\"pageNum\":1}}}"
+    }
+  ]
+}

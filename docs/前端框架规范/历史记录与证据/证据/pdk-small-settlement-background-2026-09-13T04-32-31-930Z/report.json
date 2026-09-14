@@ -1,0 +1,2114 @@
+{
+  "runId": "2026-09-13T04-32-31-930Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://192.168.1.133:7456/",
+  "assertions": {},
+  "failure": {
+    "message": "mobile: timeout waiting for login scene",
+    "stack": "Error: mobile: timeout waiting for login scene\n    at Page.wait (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:90:11)\n    at async login (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:237:3)\n    at async Promise.all (index 1)\n    at async file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:523:3"
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-13T04-32-31-930Z/desktop-failure.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-13T04-32-31-930Z/mobile-failure.png"
+  ],
+  "sceneDiagnostics": {
+    "desktop": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "Label",
+          "value": "匹配 / 赛事"
+        },
+        {
+          "name": "Label",
+          "value": "绑定微信"
+        },
+        {
+          "name": "Version",
+          "value": "V0.1.0"
+        },
+        {
+          "name": "Value",
+          "value": "9900"
+        },
+        {
+          "name": "PlayerName",
+          "value": "Player400"
+        },
+        {
+          "name": "PlayerId",
+          "value": "ID:395226"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "Camera",
+        "LobbyMain",
+        "btn_matchmaking",
+        "Label",
+        "Middle",
+        "GiftRoomCard",
+        "Support",
+        "Right",
+        "JoinRoom",
+        "CreateRoom",
+        "JoinClub",
+        "Left",
+        "Rewards",
+        "InviteRewards",
+        "LuckyDraw",
+        "Rebate",
+        "Bounty",
+        "Agent",
+        "Practice",
+        "Bottom",
+        "BindWeChat",
+        "Label",
+        "Shop",
+        "Highlight",
+        "Navigation",
+        "Share",
+        "Records",
+        "CheckIn",
+        "VerifyIdentity",
+        "More",
+        "Top",
+        "Version",
+        "Logout",
+        "Balances",
+        "RoomCard",
+        "AddIcon",
+        "Value",
+        "AddRoomCard",
+        "Player",
+        "PlayerName",
+        "PlayerId",
+        "PlayerBackground",
+        "AvatarMask",
+        "Avatar",
+        "BG",
+        "Background"
+      ]
+    },
+    "mobile": null
+  },
+  "errors": {
+    "desktop": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/rewards-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/43/432c2839-face-4a43-b734-edfe6aac76f4@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/73/73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/ee/ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/d8/d8ad1b27-bdcd-41d0-adfd-20aa503b90a0.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/14/148f292e-fd9e-4991-8857-85248333a58b@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/51/5130d1c4-bed4-4e80-9584-66677e173041@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/43/432c2839-face-4a43-b734-edfe6aac76f4@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/73/73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941.json"
+    ],
+    "mobile": []
+  },
+  "console": {
+    "desktop": [
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Base: 0.189208984375 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "WebGL device initialized."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "RENDERER: ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Max, Unspecified Version)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VENDOR: Google Inc. (Apple)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "COMPRESSED_FORMAT: etc1 etc2 dxt pvrtc astc "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB KHR_parallel_shader_compile OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_blend_func_extended WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_pvrtc WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'Blit Pass' compilation succeeded."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Infrastructure: 18.593017578125 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "meshopt wasm decoder initialized"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[bullet]:bullet wasm lib loaded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS2D]: register box2d."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: register bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: using bullet."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init SubSystem: 80.816162109375 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Cocos Creator v3.8.8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Using custom pipeline: Builtin"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Project: 194.27294921875 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CLAIM\",\"bootId\":\"ff1786ec-d77d-4ec8-bc66-8b257a3995e1\",\"sceneName\":\"BootStrap\",\"nodeUuid\":\"nCanvas\"}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[LoadingEnvironment] boot=cf9f84a1-08df-45de-bd96-7ba633994b2a environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:start",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:progress",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthRestore] cache=missing"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:success",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:skipped"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"BootStrap\",\"timestamp\":1789273953694}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:start"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "LoadScene LoginScene: 16.427001953125 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"ff1786ec-d77d-4ec8-bc66-8b257a3995e1\",\"nodeUuid\":\"nCanvas\"}}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[MessageDrift] bound",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789273953877}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031397}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"400\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在加载大厅公共资源...\",\"progress\":0.68,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031462}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅界面...\",\"progress\":0.78,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031475}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031480}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031484}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031497}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031510}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031510}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031558}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8661538461538462,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031559}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8714285714285714,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031560}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8828571428571429,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031562}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8942857142857144,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031578}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9057142857142857,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031578}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9171428571428571,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031611}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9285714285714286,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031611}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9400000000000001,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031644}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0.9400000000000001,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789274031658}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789274031695}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789274031696}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789274031697}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789274031897}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789274032109}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789274032141}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789274032166}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789274032257}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Tasks{cc.Prefab(a0fb7e69-e534-4338-afb2-f37d67181b61)} is missing! \nNode path: Tasks/right_main/mark/layout/layout2/newer_layout/demo2/rich_title\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by InviteTask{cc.Prefab(ea10ccc9-4c61-42bd-bf3b-437c6056ceee)} is missing! \nNode path: InviteTask/left_main/richText\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Invite{cc.Prefab(d91a55cb-e928-435d-b3e0-208ea1099cc4)} is missing! \nNode path: Invite/image01/LabelMessage\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_wx\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_dd\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_xl\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list2/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list3/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list4/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/list/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "Download Font [ mini_font_0.TTF_LABEL ] failed, using Arial or system default font instead"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by ClubMsg{cc.Prefab(f4502c89-565e-4e16-b341-8ef2e3ccbdda)} is missing! \nNode path: ClubMsg/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetPL{cc.Prefab(d98570e0-644f-45c6-af6a-ca62156332ca)} is missing! \nNode path: UserSetPL/TargetClubCent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserOutRace{cc.Prefab(e3954fd9-a7ec-4c0c-8294-7d36ba4542d3)} is missing! \nNode path: UserOutRace/TargetClubCent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle1/Background\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle1/checkmark\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle2/Background\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle2/checkmark\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterSetActive{cc.Prefab(5bffc581-3795-48f8-90e3-50b365531b0c)} is missing! \nNode path: PromoterSetActive/lb_TargetActive\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterSetActiveNum{cc.Prefab(10b4f9af-5832-4445-a5ae-6cec17e07ccc)} is missing! \nNode path: PromoterSetActiveNum/lb_TargetActive\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterMsg{cc.Prefab(d5773f41-8523-4530-87c9-598ed68b8c39)} is missing! \nNode path: PromoterMsg/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterManager{cc.Prefab(12622382-61fd-49a9-87d5-e221e86b872e)} is missing! \nNode path: PromoterManager/right/btn_PromoterMsgNode/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetBaoMingFei{cc.Prefab(ae8f6022-9b47-4199-9863-6bf78b80af4f)} is missing! \nNode path: UserSetBaoMingFei/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSelfBaoMingFei{cc.Prefab(886d18f1-1373-415b-93a4-a9fd032d092c)} is missing! \nNode path: UserSelfBaoMingFei/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetPercent{cc.Prefab(8d6b7467-0541-456d-8c40-27ce34cb9ed7)} is missing! \nNode path: UserSetPercent/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionRankTip{cc.Prefab(1b5d91e0-1202-4031-8510-61c4d074149d)} is missing! \nNode path: UnionRankTip/lb_unionName\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionRankTip{cc.Prefab(1b5d91e0-1202-4031-8510-61c4d074149d)} is missing! \nNode path: UnionRankTip/lb_rank\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionManager{cc.Prefab(d36b9366-ac98-4dd9-9555-ae2362fe6d9d)} is missing! \nNode path: UnionManager/right/btn_MessageNode/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 used by DrawResult{cc.Prefab(a56688bc-33c3-42b4-888a-65db7a419601)} is missing! \nNode path: DrawResult/image01/img_bjl_fx/btnSure_wx\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 used by DrawResult{cc.Prefab(a56688bc-33c3-42b4-888a-65db7a419601)} is missing! \nNode path: DrawResult/image01/img_bjl_fx/btnSure_dd\nPropName: _spriteFrame"
+        ]
+      }
+    ],
+    "mobile": []
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 510.7704309063894,
+        "y": 632.6991084695393,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 491.29894571879646,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput (EditBox activation)"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 554.6608415304606,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput (EditBox activation)"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 621.4192876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 574.1692876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      }
+    ],
+    "mobile": []
+  },
+  "loginInputDiagnostic": {
+    "desktop": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 639.25,
+            "y": 11.625,
+            "width": 41,
+            "height": 24
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "20",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 484.4992980957031,
+            "y": 401.70465087890625,
+            "width": 315.0013732910156,
+            "height": 70.10415649414062
+          },
+          "focused": true
+        }
+      ]
+    },
+    "mobile": null
+  },
+  "preInputComponents": {
+    "desktop": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ],
+    "mobile": null
+  },
+  "preInputState": {
+    "desktop": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 484.4992980957031,
+        "y": 293.15911865234375,
+        "width": 315.0013732910156,
+        "height": 70.10415649414062
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 684.6953937592867,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    },
+    "mobile": null
+  }
+}

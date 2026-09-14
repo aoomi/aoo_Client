@@ -1,0 +1,19 @@
+{
+  "previewUrl": "http://127.0.0.1:7456/",
+  "cdpPort": 1234,
+  "device": "Apple iPhone 14 Pro",
+  "entry": {
+    "sampleCount": 724,
+    "scenes": ["MainScene", "GameRoom2D"],
+    "progressCoverVisible": false,
+    "retainedFrameObserved": true,
+    "finalScene": "GameRoom2D"
+  },
+  "exit": {
+    "sampleCount": 384,
+    "scenes": ["GameRoom2D", "MainScene"],
+    "progressCoverVisible": false,
+    "retainedFrameObserved": true,
+    "finalScene": "MainScene"
+  }
+}

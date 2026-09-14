@@ -1,0 +1,100 @@
+{
+  "scene": "MainScene",
+  "children": [
+    {
+      "name": "should_hide_in_hierarchy",
+      "active": true,
+      "canvas": true
+    },
+    {
+      "name": "PROFILER_NODE",
+      "active": true,
+      "canvas": false
+    }
+  ],
+  "cover": {
+    "hidden": false,
+    "text": "正在准备目标界面...\n正在准备目标界面..."
+  },
+  "transitions": [
+    {
+      "action": "visible",
+      "id": 1,
+      "name": "scene-navigation",
+      "message": "正在准备目标界面...",
+      "progress": 0,
+      "progressKind": "STAGE",
+      "visible": true,
+      "failed": false,
+      "activeCount": 1,
+      "scene": "Boot_Strap",
+      "timestamp": 1789058536185
+    },
+    {
+      "action": "begin",
+      "id": 1,
+      "name": "scene-navigation",
+      "message": "正在准备目标界面...",
+      "progress": 0,
+      "progressKind": "STAGE",
+      "visible": true,
+      "failed": false,
+      "activeCount": 1,
+      "scene": "Boot_Strap",
+      "timestamp": 1789058536186
+    },
+    {
+      "action": "commit",
+      "id": 1,
+      "name": "scene-navigation",
+      "message": "正在准备目标界面...",
+      "progress": 0,
+      "progressKind": "STAGE",
+      "visible": true,
+      "failed": false,
+      "activeCount": 0,
+      "scene": "Login_Scene",
+      "timestamp": 1789058536252
+    },
+    {
+      "action": "visible",
+      "id": 2,
+      "name": "scene-navigation",
+      "message": "正在准备目标界面...",
+      "progress": 0,
+      "progressKind": "STAGE",
+      "visible": true,
+      "failed": false,
+      "activeCount": 1,
+      "scene": "Login_Scene",
+      "timestamp": 1789058676647
+    },
+    {
+      "action": "begin",
+      "id": 2,
+      "name": "scene-navigation",
+      "message": "正在准备目标界面...",
+      "progress": 0,
+      "progressKind": "STAGE",
+      "visible": true,
+      "failed": false,
+      "activeCount": 1,
+      "scene": "Login_Scene",
+      "timestamp": 1789058676647
+    }
+  ],
+  "navigation": [
+    {
+      "operationId": 1,
+      "stage": "START",
+      "accountId": "570",
+      "navigationGeneration": 1
+    },
+    {
+      "operationId": 1,
+      "stage": "LOBBY_SCENE_LOAD_START",
+      "owner": "authenticated-route",
+      "navigationGeneration": 1
+    }
+  ]
+}

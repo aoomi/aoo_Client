@@ -1,0 +1,6 @@
+import{MahjongWaitingExSequentialAdapter}from'./MahjongLifecycleFamilyAdapters';
+import{FAMILY_RUNTIME_REGISTRY}from'../../../Common/Code/Catalog/CatalogFamilyBindings';
+export interface HbmjTransport{request<T>(message:string,payload:unknown):Promise<T>;}export type HbmjOption=0|1;export interface HbmjSnapshot{gameCode:'hbmj';stateVersion:number;phase:'LOBBY'|'WAITING_EX'|'PLAYING'|'SETTLED';choiceSeat:number;piao:readonly number[];gangPoints:readonly number[];optionAuthority:{liangFeng:boolean;paoShiFen:boolean};[key:string]:unknown;}/** Intent-only: LiangFeng legality, patterns, OpValue, gang ledger and settlement are server authoritative. */
+export const HBMJ_REGION_BINDING=FAMILY_RUNTIME_REGISTRY.resolve('hbmj')!;export const HBMJ_ROUTE='mahjong.hbmj.dispatch';
+/** Compatibility factory; lifecycle, route and stale-snapshot handling are family-owned. */
+export class HbmjGameplayAdapter extends MahjongWaitingExSequentialAdapter<HbmjSnapshot>{constructor(wire:HbmjTransport,roomId:number,..._regionConfig:unknown[]){super(wire,roomId,HBMJ_REGION_BINDING);}liangFeng(seat:number,value:0|1|2|3){return this.intent(seat,'liangFeng',{value});}timeout(seat:number){return this.intent(seat,'timeout',{});}}

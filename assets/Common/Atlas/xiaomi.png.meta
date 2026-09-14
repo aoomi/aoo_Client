@@ -1,0 +1,162 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "67a401df-155e-48f3-9a9c-35719b822dda",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "xiaomi": {
+      "ver": "1.0.4",
+      "uuid": "afbf71d3-a7e1-4ce2-a8be-e3e7c012e1f7",
+      "rawTextureUuid": "67a401df-155e-48f3-9a9c-35719b822dda",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0.5,
+      "offsetY": 0,
+      "trimX": 6,
+      "trimY": 18,
+      "width": 111,
+      "height": 70,
+      "rawWidth": 122,
+      "rawHeight": 106,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {},
+      "importer": "*",
+      "imported": false,
+      "files": [],
+      "userData": {},
+      "displayName": "",
+      "id": "",
+      "name": ""
+    },
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "67a401df-155e-48f3-9a9c-35719b822dda@6c48a",
+      "displayName": "xiaomi",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "67a401df-155e-48f3-9a9c-35719b822dda",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "67a401df-155e-48f3-9a9c-35719b822dda@f9941",
+      "displayName": "xiaomi",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0.5,
+        "offsetY": 0,
+        "trimX": 6,
+        "trimY": 18,
+        "width": 111,
+        "height": 70,
+        "rawWidth": 122,
+        "rawHeight": 106,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "67a401df-155e-48f3-9a9c-35719b822dda@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto",
+        "vertices": {
+          "rawPosition": [
+            -55.5,
+            -35,
+            0,
+            55.5,
+            -35,
+            0,
+            -55.5,
+            35,
+            0,
+            55.5,
+            35,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            6,
+            88,
+            117,
+            88,
+            6,
+            18,
+            117,
+            18
+          ],
+          "nuv": [
+            0.04918032786885246,
+            0.16981132075471697,
+            0.9590163934426229,
+            0.16981132075471697,
+            0.04918032786885246,
+            0.8301886792452831,
+            0.9590163934426229,
+            0.8301886792452831
+          ],
+          "minPos": [
+            -55.5,
+            -35,
+            0
+          ],
+          "maxPos": [
+            55.5,
+            35,
+            0
+          ]
+        }
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "67a401df-155e-48f3-9a9c-35719b822dda@6c48a"
+  }
+}

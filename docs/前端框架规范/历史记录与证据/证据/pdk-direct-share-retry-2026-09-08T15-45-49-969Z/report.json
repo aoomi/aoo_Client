@@ -1,0 +1,668 @@
+{
+  "buildId": "creator-3.8.8-preview-7456-direct-share",
+  "protocolVersion": "2.0",
+  "url": "http://127.0.0.1:7456/",
+  "roomId": 532998,
+  "pre": {
+    "controller": true,
+    "node": true,
+    "active": true,
+    "enabled": true,
+    "interactable": true,
+    "hasClick": true,
+    "eventKeys": []
+  },
+  "button": {
+    "x": 546.5277777777778,
+    "y": 383.75,
+    "world": {
+      "x": 540,
+      "y": 360
+    },
+    "canvasWorld": {
+      "x": 640,
+      "y": 360
+    },
+    "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Btn/WaitingActions/Btn_Share",
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 673
+    },
+    "design": {
+      "width": 1280,
+      "height": 720
+    },
+    "scale": {
+      "x": 0.9347222222222222,
+      "y": 0.9347222222222222
+    }
+  },
+  "post": {
+    "labels": [
+      "1235689",
+      "玩家昵称上水电",
+      "1235689",
+      "玩家昵称上水电",
+      "1235689",
+      "玩家昵称上水电",
+      "1235689",
+      "玩家昵称上水电",
+      " 留座",
+      "0",
+      "文字标签文字标",
+      "0",
+      " 留座",
+      "0",
+      "文字标签文字标",
+      "0",
+      " 留座",
+      "0",
+      "文字标签文字标",
+      "0",
+      " 留座",
+      "0",
+      "文字标签文字标",
+      "0",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "J",
+      "Q",
+      "K",
+      "A",
+      "2",
+      "玩法",
+      "550",
+      "检测失败",
+      "550",
+      "检测失败",
+      "550",
+      "检测失败",
+      "550",
+      "检测失败",
+      "30",
+      "10张",
+      "30",
+      "30",
+      "10张",
+      "30",
+      "请出包间",
+      "0",
+      "玩家400",
+      "10张",
+      "解散",
+      "局数：0/8",
+      "房间号：532998",
+      "跑得快"
+    ],
+    "logs": [
+      [
+        "[AooRuntimeIdentity]",
+        {
+          "buildId": "aoo-preview-20260906-unified-room-4",
+          "protocolVersion": "2.0",
+          "environment": "test",
+          "apiOrigin": "http://127.0.0.1:8080",
+          "pageOrigin": "http://127.0.0.1:7456"
+        }
+      ],
+      [
+        "[BootstrapOwner]",
+        "{\"action\":\"CLAIM\",\"bootId\":\"9574b057-62d9-4f7b-be84-bedb33a720e1\",\"sceneName\":\"Boot_Strap\",\"nodeUuid\":\"nCanvas\"}"
+      ],
+      [
+        "[AuthRestore] cache=missing"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Boot_Strap\",\"timestamp\":1788882351736}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Boot_Strap\",\"timestamp\":1788882351737}"
+      ],
+      [
+        "[BootstrapOwner]",
+        "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"Login_Scene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"9574b057-62d9-4f7b-be84-bedb33a720e1\",\"nodeUuid\":\"nCanvas\"}}"
+      ],
+      [
+        "[MessageDrift] bound",
+        {
+          "uuid": "8cZHEKLA5K3ZivI21n/PSn",
+          "path": "Login_Scene/Message_Drift/Sprite/LabelMessage"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"Login_Scene\",\"timestamp\":1788882351820}"
+      ],
+      [
+        "[AooTransition]",
+        "aoo-transition-20260907-coordinator-1",
+        "overlay:destroy"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"400\",\"navigationGeneration\":1}"
+      ],
+      [
+        "[SessionLifecycle] client-created",
+        {
+          "clientId": "ws-1",
+          "owner": "hall"
+        }
+      ],
+      [
+        "[SessionLifecycle] connect",
+        {
+          "clientId": "ws-1",
+          "owner": "hall",
+          "endpoint": "ws://127.0.0.1:8080/api/v2/gateway/ws"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353171}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353171}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在加载玩法资源...\",\"progress\":0.18,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353187}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.35,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353204}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.8,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353208}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在切换房间场景...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"Login_Scene\",\"timestamp\":1788882353220}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353238}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":3,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353270}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":4,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353271}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":3,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353397}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":4,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353397}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":4,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353820}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":3,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353820}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":4,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353853}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":3,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353853}"
+      ],
+      [
+        "[SessionLifecycle] client-created",
+        {
+          "clientId": "ws-2",
+          "owner": "game"
+        }
+      ],
+      [
+        "[SessionLifecycle] connect",
+        {
+          "clientId": "ws-2",
+          "owner": "game",
+          "endpoint": "ws://127.0.0.1:8080/api/v2/gateway/ws"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353905}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353905}"
+      ],
+      [
+        "[CommonRoomState]",
+        {
+          "roomId": 960167,
+          "stateVersion": 0,
+          "serverSeq": 1,
+          "phase": "WAITING",
+          "operationId": "",
+          "turnSeat": -1,
+          "trickId": 0,
+          "lastActionCount": 0
+        }
+      ],
+      [
+        "[CommonRoomTurnState]",
+        {
+          "roomId": 960167,
+          "stateVersion": 0,
+          "trickId": 0,
+          "operationId": "",
+          "turnSeat": -1,
+          "trickReset": true,
+          "lastActionCount": 0,
+          "targetCards": [],
+          "selectedCards": [],
+          "hintCount": 0,
+          "playInFlight": false
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353906}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":2,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882353970}"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":1,\"stage\":\"ROOM_PRESENTED\",\"owner\":\"authenticated-route\",\"roomId\":960167,\"scene\":\"GameRoom2D\",\"navigationGeneration\":1}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882354025}"
+      ],
+      [
+        "[RoomDissolve] bound unified entry",
+        {
+          "form": "room/DissolveRoom"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882354440}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1788882354470}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":6,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882363362}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":6,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882363362}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":6,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882363387}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":6,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1788882363420}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":7,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882371492}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":7,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882371492}"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":2,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":2,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":2}"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":2,\"stage\":\"RECOVER_LOBBY_TRANSPORT\",\"navigationGeneration\":2}"
+      ],
+      [
+        "[SessionLifecycle] client-created",
+        {
+          "clientId": "ws-3",
+          "owner": "hall"
+        }
+      ],
+      [
+        "[BootstrapOwner]",
+        "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"MainScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"9574b057-62d9-4f7b-be84-bedb33a720e1\",\"nodeUuid\":\"nCanvas\"}}"
+      ],
+      [
+        "[SessionLifecycle] connect",
+        {
+          "clientId": "ws-3",
+          "owner": "hall",
+          "endpoint": "ws://127.0.0.1:8080/api/v2/gateway/ws"
+        }
+      ],
+      [
+        "[LobbyMountTrace]",
+        "before-defaults"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":8,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882371548}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":8,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882371548}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":8,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882371670}"
+      ],
+      [
+        "[LobbyMountTrace]",
+        "onCreate:start"
+      ],
+      [
+        "[LobbyMountTrace]",
+        "onCreate:visibility"
+      ],
+      [
+        "[LobbyMountTrace]",
+        "onCreate:avatar"
+      ],
+      [
+        "[LobbyMountTrace]",
+        "onCreate:end"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":8,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882371971}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":8,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372002}"
+      ],
+      [
+        "[LobbyMountTrace]",
+        "after-defaults"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":9,\"name\":\"form:lobby/UINoticeBar\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372004}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":9,\"name\":\"form:lobby/UINoticeBar\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372004}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":9,\"name\":\"form:lobby/UINoticeBar\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372036}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":9,\"name\":\"form:lobby/UINoticeBar\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372069}"
+      ],
+      [
+        "[AooTransition]",
+        "aoo-transition-20260907-coordinator-1",
+        "target:ready-check",
+        {
+          "scene": "MainScene",
+          "sceneValid": true,
+          "canvasValid": true,
+          "canvasActive": true
+        }
+      ],
+      [
+        "[AooTransition]",
+        "aoo-transition-20260907-coordinator-1",
+        "target:after-draw"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":7,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1788882372136}"
+      ],
+      [
+        "[AooTransition]",
+        "aoo-transition-20260907-coordinator-1",
+        "overlay:destroy"
+      ],
+      [
+        "[AuthNavigation]",
+        "{\"operationId\":2,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":10,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372183}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":10,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372183}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":10,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372303}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":10,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372321}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":10,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1788882372354}"
+      ],
+      [
+        "[创建房间] 规则就绪",
+        {
+          "fieldCount": 7,
+          "rules": {
+            "playerCount": 2,
+            "roundCount": 8,
+            "operationTimeoutSeconds": 1000,
+            "firstPlayRule": "winner_first",
+            "bombScore": 5,
+            "playRule": [
+              "three_no_attachment",
+              "four_with_two",
+              "triple_ace_bomb",
+              "remove_three_four"
+            ],
+            "roomRestriction": []
+          }
+        }
+      ],
+      [
+        "[创建房间] 已接收按钮点击"
+      ],
+      [
+        "[创建房间] 开始提交",
+        {
+          "gameId": 8,
+          "gameCode": "CD201",
+          "playVersion": "1.0.0"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":11,\"name\":\"create-room:CD201\",\"message\":\"正在创建房间...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372518}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":11,\"name\":\"create-room:CD201\",\"message\":\"正在创建房间...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372518}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":11,\"name\":\"create-room:CD201\",\"message\":\"房间已创建，正在加载房间资源...\",\"progress\":0.12,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1788882372771}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372771}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在加载玩法资源...\",\"progress\":0.18,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372786}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.35,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372803}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.8,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372804}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在切换房间场景...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1788882372820}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372839}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":13,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372839}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":14,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372839}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":13,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372853}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":14,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372853}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":13,\"name\":\"prefab-preload:settlement/pdk/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372886}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":14,\"name\":\"prefab-preload:settlement/pdk/FinalSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372886}"
+      ],
+      [
+        "[SessionLifecycle] client-created",
+        {
+          "clientId": "ws-4",
+          "owner": "game"
+        }
+      ],
+      [
+        "[SessionLifecycle] connect",
+        {
+          "clientId": "ws-4",
+          "owner": "game",
+          "endpoint": "ws://127.0.0.1:8080/api/v2/gateway/ws"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"visible\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372892}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"begin\",\"id\":15,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372939}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":15,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372939}"
+      ],
+      [
+        "[CommonRoomState]",
+        {
+          "roomId": 532998,
+          "stateVersion": 0,
+          "serverSeq": 1,
+          "phase": "WAITING",
+          "operationId": "",
+          "turnSeat": -1,
+          "trickId": 0,
+          "lastActionCount": 0
+        }
+      ],
+      [
+        "[CommonRoomTurnState]",
+        {
+          "roomId": 532998,
+          "stateVersion": 0,
+          "trickId": 0,
+          "operationId": "",
+          "turnSeat": -1,
+          "trickReset": true,
+          "lastActionCount": 0,
+          "targetCards": [],
+          "selectedCards": [],
+          "hintCount": 0,
+          "playInFlight": false
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372939}"
+      ],
+      [
+        "[RoomDissolve] bound unified entry",
+        {
+          "form": "room/DissolveRoom"
+        }
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"progress\",\"id\":15,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372955}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":15,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1788882372987}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":12,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1788882373003}"
+      ],
+      [
+        "[AooPresentationTransition]",
+        "{\"action\":\"commit\",\"id\":11,\"name\":\"create-room:CD201\",\"message\":\"房间已创建，正在加载房间资源...\",\"progress\":0.12,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1788882373036}"
+      ]
+    ]
+  },
+  "clipboard": "",
+  "bubble": "",
+  "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-direct-share-retry-2026-09-08T15-45-49-969Z/01-web-share-success.png",
+  "assertions": {
+    "buttonPath": true,
+    "clipboard": false,
+    "bubble": false,
+    "noRuntimeErrors": false
+  },
+  "roomCleaned": true,
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

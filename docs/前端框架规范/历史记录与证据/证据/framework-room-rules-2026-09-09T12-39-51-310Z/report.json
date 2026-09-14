@@ -1,0 +1,576 @@
+{
+  "runId": "2026-09-09T12-39-51-310Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "pageUrl": "http://127.0.0.1:7456/",
+  "apiUrl": "http://127.0.0.1:8080",
+  "assertions": {
+    "CD201SmallSettlement": true,
+    "NJ201SmallSettlement": true,
+    "LS201SmallSettlement": true
+  },
+  "regions": {
+    "CD201": {
+      "fields": [
+        {
+          "key": "roomRestriction",
+          "label": "",
+          "options": [
+            {
+              "label": "IP限制",
+              "checked": false
+            },
+            {
+              "label": "GPS限制",
+              "checked": false
+            },
+            {
+              "label": "超时托管",
+              "checked": false
+            },
+            {
+              "label": "距离过近警告",
+              "checked": false
+            },
+            {
+              "label": "禁止互动",
+              "checked": false
+            },
+            {
+              "label": "禁言",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "playRule",
+          "label": "",
+          "options": [
+            {
+              "label": "三不带",
+              "checked": false
+            },
+            {
+              "label": "四带二",
+              "checked": true
+            },
+            {
+              "label": "3A算炸弹",
+              "checked": true
+            },
+            {
+              "label": "去掉3、4",
+              "checked": true
+            },
+            {
+              "label": "必须出黑桃3",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "rule_cd201_0001",
+          "label": "",
+          "options": [
+            {
+              "label": "小局结算弹窗",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "bombScore",
+          "label": "",
+          "options": [
+            {
+              "label": "5分",
+              "checked": true
+            },
+            {
+              "label": "10分",
+              "checked": false
+            },
+            {
+              "label": "20分",
+              "checked": false
+            },
+            {
+              "label": "30分",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "firstPlayRule",
+          "label": "",
+          "options": [
+            {
+              "label": "赢家先出",
+              "checked": true
+            },
+            {
+              "label": "黑桃3优先",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "operationTimeoutSeconds",
+          "label": "",
+          "options": [
+            {
+              "label": "1000秒",
+              "checked": true
+            },
+            {
+              "label": "15秒",
+              "checked": false
+            },
+            {
+              "label": "20秒",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "roundCount",
+          "label": "",
+          "options": [
+            {
+              "label": "8局",
+              "checked": true
+            },
+            {
+              "label": "12局",
+              "checked": false
+            },
+            {
+              "label": "16局",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "playerCount",
+          "label": "",
+          "options": [
+            {
+              "label": "2人",
+              "checked": true
+            },
+            {
+              "label": "3人",
+              "checked": false
+            }
+          ]
+        }
+      ],
+      "small": {
+        "key": "rule_cd201_0001",
+        "label": "",
+        "options": [
+          {
+            "label": "小局结算弹窗",
+            "checked": true
+          }
+        ]
+      },
+      "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T12-39-51-310Z/CD201-small-settlement.png"
+    },
+    "NJ201": {
+      "fields": [
+        {
+          "key": "roomRestriction",
+          "label": "",
+          "options": [
+            {
+              "label": "IP限制",
+              "checked": false
+            },
+            {
+              "label": "GPS限制",
+              "checked": false
+            },
+            {
+              "label": "5次不操作进入托管",
+              "checked": false
+            },
+            {
+              "label": "距离过近提示",
+              "checked": false
+            },
+            {
+              "label": "禁止互动",
+              "checked": false
+            },
+            {
+              "label": "禁言",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "playRule",
+          "label": "",
+          "options": [
+            {
+              "label": "三不带（任何时候可出）",
+              "checked": true
+            },
+            {
+              "label": "飞机不带（任何时候可出）",
+              "checked": true
+            },
+            {
+              "label": "四带二（只能带两张）",
+              "checked": true
+            },
+            {
+              "label": "3A算炸弹",
+              "checked": true
+            },
+            {
+              "label": "四个3直接赢",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "rule_nj201_0004",
+          "label": "",
+          "options": [
+            {
+              "label": "小局结算弹窗",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "bombScore",
+          "label": "",
+          "options": [
+            {
+              "label": "10分",
+              "checked": true
+            },
+            {
+              "label": "20分",
+              "checked": false
+            },
+            {
+              "label": "30分",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "rule_nj201_0003",
+          "label": "",
+          "options": [
+            {
+              "label": "只能带两张且不比较带牌",
+              "checked": true
+            },
+            {
+              "label": "只能带两张且比较带牌",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "rule_nj201_0002",
+          "label": "",
+          "options": [
+            {
+              "label": "只能带两张且不比较带牌",
+              "checked": true
+            },
+            {
+              "label": "只能带两张且比较带牌",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "rule_nj201_0001",
+          "label": "",
+          "options": [
+            {
+              "label": "每局必须出黑桃3",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "firstPlayRule",
+          "label": "",
+          "options": [
+            {
+              "label": "黑桃3优先出",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "operationTime",
+          "label": "",
+          "options": [
+            {
+              "label": "10秒",
+              "checked": true
+            },
+            {
+              "label": "15秒",
+              "checked": false
+            },
+            {
+              "label": "20秒",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "roundCount",
+          "label": "",
+          "options": [
+            {
+              "label": "8局",
+              "checked": true
+            },
+            {
+              "label": "12局",
+              "checked": false
+            },
+            {
+              "label": "16局",
+              "checked": false
+            }
+          ]
+        }
+      ],
+      "small": {
+        "key": "rule_nj201_0004",
+        "label": "",
+        "options": [
+          {
+            "label": "小局结算弹窗",
+            "checked": true
+          }
+        ]
+      },
+      "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T12-39-51-310Z/NJ201-small-settlement.png"
+    },
+    "LS201": {
+      "fields": [
+        {
+          "key": "roomRestriction",
+          "label": "",
+          "options": [
+            {
+              "label": "IP限制",
+              "checked": false
+            },
+            {
+              "label": "GPS限制",
+              "checked": false
+            },
+            {
+              "label": "超时托管",
+              "checked": false
+            },
+            {
+              "label": "距离过近警告",
+              "checked": false
+            },
+            {
+              "label": "禁止互动",
+              "checked": false
+            },
+            {
+              "label": "禁言",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "playRule",
+          "label": "",
+          "options": [
+            {
+              "label": "结算弹窗",
+              "checked": true
+            },
+            {
+              "label": "三带比带",
+              "checked": true
+            },
+            {
+              "label": "三带一",
+              "checked": true
+            },
+            {
+              "label": "四带二",
+              "checked": true
+            },
+            {
+              "label": "四张A,7",
+              "checked": true
+            },
+            {
+              "label": "全单,全顺,全连对,全对,全黑,全红,全大,全小",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "rule_ls201_0001",
+          "label": "",
+          "options": [
+            {
+              "label": "小局结算弹窗",
+              "checked": true
+            }
+          ]
+        },
+        {
+          "key": "robDealerRule",
+          "label": "",
+          "options": [
+            {
+              "label": "庄家先抢",
+              "checked": true
+            },
+            {
+              "label": "庄家后抢",
+              "checked": false
+            },
+            {
+              "label": "首局不抢",
+              "checked": false
+            },
+            {
+              "label": "不抢庄",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "jinHuaScore",
+          "label": "",
+          "options": [
+            {
+              "label": "1分",
+              "checked": true
+            },
+            {
+              "label": "2分",
+              "checked": false
+            },
+            {
+              "label": "3分",
+              "checked": false
+            },
+            {
+              "label": "4分",
+              "checked": false
+            },
+            {
+              "label": "5分",
+              "checked": false
+            },
+            {
+              "label": "不比",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "dealCardCount",
+          "label": "",
+          "options": [
+            {
+              "label": "8张(7-A)",
+              "checked": true
+            },
+            {
+              "label": "10张(5-A)",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "operationTime",
+          "label": "",
+          "options": [
+            {
+              "label": "1000秒",
+              "checked": true
+            },
+            {
+              "label": "15秒",
+              "checked": false
+            },
+            {
+              "label": "20秒",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "roundCount",
+          "label": "",
+          "options": [
+            {
+              "label": "8局",
+              "checked": true
+            },
+            {
+              "label": "12局",
+              "checked": false
+            },
+            {
+              "label": "16局",
+              "checked": false
+            }
+          ]
+        },
+        {
+          "key": "playerCount",
+          "label": "",
+          "options": [
+            {
+              "label": "2人",
+              "checked": true
+            },
+            {
+              "label": "3人",
+              "checked": false
+            },
+            {
+              "label": "4人",
+              "checked": false
+            }
+          ]
+        }
+      ],
+      "small": {
+        "key": "rule_ls201_0001",
+        "label": "",
+        "options": [
+          {
+            "label": "小局结算弹窗",
+            "checked": true
+          }
+        ]
+      },
+      "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T12-39-51-310Z/LS201-small-settlement.png"
+    }
+  },
+  "errors": [],
+  "preCleanup": null,
+  "failure": {
+    "message": "page.waitForFunction: Timeout 60000ms exceeded.",
+    "stack": "page.waitForFunction: Timeout 60000ms exceeded.\n    at waitScene (/Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:8:43)\n    at /Users/aoo/Code/Game/BCG/Aoo/Client/work/framework-room-rule-final-e2e.mjs:22:192"
+  },
+  "failureScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/framework-room-rules-2026-09-09T12-39-51-310Z/failure.png"
+}

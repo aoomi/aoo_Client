@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "types": [
+      "../../temp/declarations/cc.custom-macro",
+      "../../temp/declarations/jsb",
+      "../../temp/declarations/cc",
+      "../../temp/declarations/cc.env"
+    ]
+  },
+  "include": [
+    "../../assets/Common/Code/UI/**/*.ts",
+    "../../assets/Common/Code/Runtime/core/LifecycleScope.ts"
+  ]
+}

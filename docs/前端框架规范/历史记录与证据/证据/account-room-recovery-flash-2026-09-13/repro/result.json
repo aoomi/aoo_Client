@@ -1,0 +1,281 @@
+{
+  "frames": [
+    {
+      "i": 0,
+      "ms": 106,
+      "scene": "LoginScene",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 1,
+      "ms": 207,
+      "scene": "LoginScene",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 2,
+      "ms": 311,
+      "scene": "LoginScene",
+      "retained": true,
+      "nav": false
+    },
+    {
+      "i": 3,
+      "ms": 405,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": false
+    },
+    {
+      "i": 4,
+      "ms": 535,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": false
+    },
+    {
+      "i": 5,
+      "ms": 653,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": true
+    },
+    {
+      "i": 6,
+      "ms": 1168,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": true
+    },
+    {
+      "i": 7,
+      "ms": 1456,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": true
+    },
+    {
+      "i": 8,
+      "ms": 1706,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": true
+    },
+    {
+      "i": 9,
+      "ms": 1937,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": false
+    },
+    {
+      "i": 10,
+      "ms": 2057,
+      "scene": "GameRoom2D",
+      "retained": true,
+      "nav": false
+    },
+    {
+      "i": 11,
+      "ms": 2172,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 12,
+      "ms": 2314,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 13,
+      "ms": 2442,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 14,
+      "ms": 2571,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 15,
+      "ms": 2713,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    },
+    {
+      "i": 16,
+      "ms": 2836,
+      "scene": "GameRoom2D",
+      "retained": false,
+      "nav": false
+    }
+  ],
+  "useful": [
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789298206645}"
+    },
+    {
+      "type": "info",
+      "text": "[AuthNavigation] {\"operationId\":1,\"stage\":\"START\",\"accountId\":\"391\",\"navigationGeneration\":1}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789298206769}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在加载玩法资源...\",\"progress\":0.18,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789298206780}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.35,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789298206796}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在预加载房间场景...\",\"progress\":0.8,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789298206807}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在切换房间场景...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789298206822}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789298206858}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":4,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298206916}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":4,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298206916}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298207146}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":4,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298207707}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"cancel\",\"id\":4,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789298207707}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298207708}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298207708}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208191}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"cancel\",\"id\":5,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208193}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208193}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":6,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208208}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208224}"
+    },
+    {
+      "type": "info",
+      "text": "[AuthNavigation] {\"operationId\":1,\"stage\":\"ROOM_PRESENTED\",\"owner\":\"authenticated-route\",\"roomId\":577494,\"scene\":\"GameRoom2D\",\"navigationGeneration\":1}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208388}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":6,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208655}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":6,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208691}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":7,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208691}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":7,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208722}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":7,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208756}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":8,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208756}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":8,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208906}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":8,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208938}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":9,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208939}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":9,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298208989}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":9,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209022}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":10,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209022}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":10,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209122}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":10,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209155}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":11,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209156}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":11,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209223}"
+    },
+    {
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":11,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789298209256}"
+    }
+  ]
+}

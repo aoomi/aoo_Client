@@ -1,0 +1,42 @@
+{
+  "aydssMainScene": {
+    "SceneType": "aydssMainScene",
+    "Name": "主场景",
+    "ComponentName": "aydss_SceneMain",
+    "gamePrefab": "0",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  },
+  "aydssScene": {
+    "SceneType": "aydssScene",
+    "Name": "安岳斗十四麻将场景",
+    "ComponentName": "aydssScene",
+    "gamePrefab": "game/AYDSS/ui/UIAYDSSPlay",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "aydssVideoScene": {
+    "SceneType": "aydssVideoScene",
+    "Name": "安岳斗十四麻将回放场景",
+    "ComponentName": "aydssVideoScene",
+    "gamePrefab": "game/AYDSS/ui/UIAYDSSVideo",
+    "IsCanMove": 1,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "0"
+  },
+  "aydssLoginScene": {
+    "SceneType": "aydssLoginScene",
+    "Name": "登陆场景",
+    "ComponentName": "aydss_SceneLgin",
+    "gamePrefab": "aydss_UILogin",
+    "IsCanMove": 0,
+    "CameraMoveType": 0,
+    "SwitchImage": "0",
+    "BackGroundSound": "MainScene"
+  }
+}

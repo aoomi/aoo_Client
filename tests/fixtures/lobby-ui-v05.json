@@ -1,0 +1,20 @@
+{
+  "mainPrefab": "assets/Lobby/Prefab/NewMain.prefab",
+  "routedButtons": [
+    "btn_LoginOut", "btn_addGold", "btn_addQuanCard", "btn_addRoomCard",
+    "btn_advice", "btn_bangdingtuiguang", "btn_choujiang", "btn_club",
+    "btn_create_room", "btn_daili", "btn_fanxian", "btn_head", "btn_huodong",
+    "btn_join", "btn_joinClub", "btn_jubao", "btn_location", "btn_lxc",
+    "btn_more", "btn_pdk", "btn_qiandao", "btn_record", "btn_service",
+    "btn_set", "btn_shangjin", "btn_share", "btn_shiming", "btn_shop",
+    "btn_shouji", "btn_wanfa", "btn_zengsong"
+  ],
+  "nonActions": {
+    "logo": "brand image",
+    "btn_joindi": "join-button decoration",
+    "btn_lxcdi": "practice-button decoration",
+    "btn_mup": "more-panel decoration",
+    "btn_uploadImg_test": "inactive development-only control"
+  },
+  "states": ["loading", "empty", "failure", "success", "duplicate-click", "back", "destroy", "first-load"]
+}

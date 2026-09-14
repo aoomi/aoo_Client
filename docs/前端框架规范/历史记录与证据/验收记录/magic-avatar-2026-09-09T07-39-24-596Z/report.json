@@ -1,0 +1,108 @@
+{
+  "runId": "2026-09-09T07-39-24-596Z",
+  "previewUrl": "http://127.0.0.1:7456/",
+  "chrome": "Chrome/152.0.7977.83",
+  "assertions": {
+    "selfPanelOpened": true,
+    "selfDidNotOpenSettings": true,
+    "groupEffectPlayed": true,
+    "selfPanelClosed": true,
+    "groupTargetSent": true,
+    "noRuntimeErrors": true
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/self-player-panel.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-01.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-02.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-03.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-04.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-05.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-06.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-07.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-08.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-09.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-10.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-11.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-12.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-13.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-14.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/验收记录/magic-avatar-2026-09-09T07-39-24-596Z/magic-expression-15.png"
+  ],
+  "roomId": 402571,
+  "expressionScales": {
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 0.42,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1,
+    "15": 1
+  },
+  "selfHeadClick": {
+    "x": 102.81944444444444,
+    "y": 589.3888888888889,
+    "path": "GameRoom2D/Canvas/TableLayer/PDK_CommonRoom/Players/Sp_Seat_0/HeadButton"
+  },
+  "ownerErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "guestErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "ownerHttpFailures": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/71/71906fbc-fb71-4863-9e7f-f5826e13e1e5.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d@19ab3.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/71/71906fbc-fb71-4863-9e7f-f5826e13e1e5.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d@19ab3.json"
+    }
+  ],
+  "guestHttpFailures": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/71/71906fbc-fb71-4863-9e7f-f5826e13e1e5.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d.json"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:7456/assets/pdk-common-room/import/4e/4ea6c8dd-1da2-4fb6-9db1-75998bd41c4d@19ab3.json"
+    }
+  ],
+  "taskHttpFailures": []
+}

@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <link rel="icon" href="./favicon.ico" />
+        <meta charset="utf-8" />
+        <title><%=title%></title>
+        <meta
+            name="viewport"
+            content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="full-screen" content="yes" />
+        <meta name="screen-orientation" content="portrait" />
+        <meta name="x5-fullscreen" content="true" />
+        <meta name="360-fullscreen" content="true" />
+        <meta name="renderer" content="webkit" />
+        <meta name="force-rendering" content="webkit" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <link rel="stylesheet" type="text/css" href="./index.css" />
+        <link rel="preload" as="image" href="assets/Startup/native/f6/f60d7021-4ffc-4350-bc4e-c2b8afc4dd04.png" fetchpriority="high" />
+        <style>
+            html, body, #GameDiv, #Cocos3dGameContainer, #GameCanvas { background:#F2F1ED !important; }
+            #splash, .progress-bar { display:none !important; }
+            #aoo-startup-cover { position:fixed; inset:0; z-index:2147483647; display:grid; place-items:center; background:#F2F1ED url('assets/Startup/native/f6/f60d7021-4ffc-4350-bc4e-c2b8afc4dd04.png') center/cover no-repeat; pointer-events:auto; }
+            #aoo-startup-cover[hidden] { display:none !important; }
+            .aoo-startup-card { position:fixed; left:50%; bottom:30px; width:min(1200px,calc(100vw - 48px)); transform:translateX(-50%); text-align:center; }
+            .aoo-startup-status { min-height:20px; color:#fff; text-shadow:-0.5px -0.5px 0 #000,0.5px -0.5px 0 #000,-0.5px 0.5px 0 #000,0.5px 0.5px 0 #000; }
+            .aoo-startup-progress { height:6px; margin:12px 0 8px; overflow:hidden; border-radius:999px; background:rgba(0,0,0,.38); box-shadow:inset 0 0 0 1px rgba(0,0,0,.22); }
+            .aoo-startup-progress>i { display:block; width:100%; height:100%; background:#e8b341; transform:scaleX(0); transform-origin:left; animation:aoo-startup-first-motion 1.5s cubic-bezier(.2,.7,.3,1) forwards; will-change:transform; }
+            @keyframes aoo-startup-first-motion { to { transform:scaleX(.2); } }
+            .aoo-startup-retry { position:absolute; top:calc(100% + 36px); left:50%; transform:translateX(-50%); }
+        </style>
+    </head>
+    <body style="overflow: hidden;">
+        <%- include(cocosToolBar, {config: config}) %>
+        <div id="content" class="content" style="overflow: hidden;">
+            <div class="contentWrap">
+                <div id="GameDiv" class="wrapper">
+                    <div id="aoo-startup-cover" aria-hidden="false">
+                        <div class="aoo-startup-card"><div class="aoo-startup-status">正在加载中......</div><div class="aoo-startup-progress"><i></i></div><button class="aoo-startup-retry" type="button" hidden>返回并重试</button></div>
+                    </div>
+                    <div id="Cocos3dGameContainer">
+                        <canvas id="GameCanvas" tabindex="-1" style="background-color: '';"></canvas>
+                    </div>
+                    <div id="splash">
+                        <div class="progress-bar stripes"><span></span></div>
+                    </div>
+                    <div id="bulletin">
+                        <div id="sceneIsEmpty" class="inner"><%=tip_sceneIsEmpty%></div>
+                    </div>
+                    <div class="error" id="error">
+                        <div class="title">Error <i>(Please open the console to see detailed errors)</i></div>
+                        <div class="error-main"></div>
+                        <div class="error-stack"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%- include(cocosTemplate, {}) %>
+    </body>
+</html>
