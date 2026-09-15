@@ -204,10 +204,15 @@ export async function applyLoadingEnvironment(
     const apiBaseUrl = selection.isTestEnvironment
         ? testPreviewGatewayOrigin(configuredGateway, platform.location ?? globalThis.location)
         : configuredGateway;
+    const previewLocation = platform.location ?? globalThis.location;
+    const avatarBaseUrl = selection.isTestEnvironment && previewLocation?.hostname
+        ? `http://${previewLocation.hostname}:8765/`
+        : currentConfig.avatarBaseUrl;
     const runtimeConfig: RuntimePublicConfig = {
         ...currentConfig,
         environment,
         ...(apiBaseUrl ? { apiBaseUrl } : {}),
+        ...(avatarBaseUrl ? { avatarBaseUrl } : {}),
     };
     return {
         runtimeConfig,

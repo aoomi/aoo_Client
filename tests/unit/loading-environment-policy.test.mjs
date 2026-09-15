@@ -243,6 +243,7 @@ test('Creator LAN preview rewrites the loopback gateway to the phone-reachable M
         gatewayAddresses: ['http://127.0.0.1:8080'],
     }, {}, { location: { protocol: 'http:', hostname: '192.168.1.107', port: '7456' } });
     assert.equal(applied.runtimeConfig.apiBaseUrl, 'http://192.168.1.107:8080/');
+    assert.equal(applied.runtimeConfig.avatarBaseUrl, 'http://192.168.1.107:8765/');
     assert.equal(applied.runtimeConfig.environment, 'test');
 });
 
