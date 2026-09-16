@@ -2612,18 +2612,66 @@ export class LegacyClubMainController {
         let current: ClubRoom;
         try {
             current = await this.client.requestLobby<ClubRoom>('room.CBaseRoomConfig', {});
-        } catch {
-            this.waitingBackPending = false;
-            this.forms.closeAfterPointer(path);
-            return;
+        } catch (configError: unknown) {
+            if (this.isNoActiveRoomError(configError)) {
+                this.waitingBackPending = false;
+                console.info('[ClubBack] no-active-room', {
+                    clubId: this.clubId(), playerId: this.playerId, source: 'compat-error',
+                });
+                this.forms.closeAfterPointer(path);
+                return;
+            }
+            try {
+                current = await this.client.requestLobby<ClubRoom>('game.C1101GetRoomID', {});
+                console.info('[ClubBack] active-room-fallback-used', {
+                    clubId: this.clubId(), playerId: this.playerId,
+                    reason: configError instanceof Error ? configError.message : String(configError),
+                });
+            } catch (fallbackError: unknown) {
+                if (this.isNoActiveRoomError(fallbackError)) {
+                    this.waitingBackPending = false;
+                    console.info('[ClubBack] no-active-room', {
+                        clubId: this.clubId(), playerId: this.playerId, source: 'fallback-compat-error',
+                    });
+                    this.forms.closeAfterPointer(path);
+                    return;
+                }
+                const projected = this.projectedPlayerRoom();
+                if (projected) {
+                    current = projected;
+                    console.warn('[ClubBack] active-room-local-fallback', {
+                        clubId: this.clubId(), playerId: this.playerId,
+                        roomId: Number(projected.roomId ?? projected.roomID ?? 0),
+                        configError, fallbackError,
+                    });
+                } else {
+                    this.waitingBackPending = false;
+                    console.warn('[ClubBack] no-active-room', {
+                        clubId: this.clubId(), playerId: this.playerId,
+                        source: 'local-projection', configError, fallbackError,
+                    });
+                    this.forms.closeAfterPointer(path);
+                    return;
+                }
+            }
         }
         const roomId = Number(current.roomId ?? current.roomID ?? 0);
-        if (roomId > 0 && this.isWaitingEntry(current)) {
+        console.info('[ClubBack] active-room-checked', {
+            clubId: this.clubId(), playerId: this.playerId, roomId,
+        });
+        if (roomId > 0) {
             try {
                 await this.client.requestLobby<unknown>('room.CBaseExitRoom', { roomID: roomId });
                 this.waitingHandoffRoomId = 0;
                 await this.restoreAuthoritativeTemplates(this.clubId(), '退出等待房间后的桌面刷新');
+                console.info('[ClubBack] room-exited', {
+                    clubId: this.clubId(), playerId: this.playerId, roomId,
+                });
+                this.forms.closeAfterPointer(path);
             } catch (error: unknown) {
+                console.error('[ClubBack] room-exit-failed', {
+                    clubId: this.clubId(), playerId: this.playerId, roomId, error,
+                });
                 await this.forms.show('UIMessage_Drift', null, null,
                     error instanceof Error ? error.message : '退出等待房间失败，请重试');
             } finally {
@@ -2632,7 +2680,25 @@ export class LegacyClubMainController {
             return;
         }
         this.waitingBackPending = false;
+        console.info('[ClubBack] no-active-room', {
+            clubId: this.clubId(), playerId: this.playerId,
+        });
         this.forms.closeAfterPointer(path);
+    }
+
+    /** Legacy room services report an empty membership as an error instead of roomID=0. */
+    private isNoActiveRoomError(error: unknown): boolean {
+        const message = error instanceof Error ? error.message : String(error ?? '');
+        return /PLAYER_NOT_ROOM|玩家不在房间|player is not (?:in )?(?:a )?room|not a room member/i.test(message);
+    }
+
+    private projectedPlayerRoom(): ClubRoom | null {
+        const containsPlayer = (room: ClubRoom): boolean => Number(room.roomId ?? room.roomID ?? 0) > 0
+            && Array.isArray(room.posList)
+            && room.posList.some((position) => position && typeof position === 'object'
+                && Number((position as Record<string, unknown>).pid ?? 0) === this.playerId);
+        if (this.currentRoom && containsPlayer(this.currentRoom)) return this.currentRoom;
+        return this.rooms.find(containsPlayer) ?? null;
     }
 
     private blockInput(node: Node): void {

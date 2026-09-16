@@ -51,4 +51,14 @@ test('waiting entry supports changing and leaving the reserved seat', () => {
     assert.match(gateway, /public async joinWaiting/);
     assert.match(gateway, /public async leaveWaiting/);
     assert.match(club, /room\.CBaseExitRoom/);
+    assert.match(club, /const roomId = Number\(current\.roomId \?\? current\.roomID \?\? 0\);[\s\S]{0,500}if \(roomId > 0\)[\s\S]{0,300}room\.CBaseExitRoom/,
+        '亲友圈返回必须依据权威 roomId 退出当前房间');
+    assert.match(club, /room\.CBaseExitRoom[\s\S]{0,500}this\.forms\.closeAfterPointer\(path\)/,
+        '退出当前房间成功后必须继续返回大厅');
+    assert.match(club, /room\.CBaseRoomConfig[\s\S]{0,900}game\.C1101GetRoomID/,
+        'RoomConfig不可用时必须使用大厅启动查询作为房间号兜底');
+    assert.match(club, /projectedPlayerRoom\(\)[\s\S]{0,600}active-room-local-fallback/,
+        '两种查询都不可用时必须使用当前玩家的桌面座位投影判断是否需要退房');
+    assert.match(club, /source: 'local-projection'[\s\S]{0,300}this\.forms\.closeAfterPointer\(path\)/,
+        '查询不可用且桌面没有当前玩家座位时应直接返回大厅');
 });
