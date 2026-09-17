@@ -21,6 +21,7 @@ export class AuthSession {
         private readonly lastAccountStore: LastAccountStore,
         private readonly sessionStore: GuestSessionStore,
         private readonly resumeNetworkSession: () => void = () => undefined,
+        private readonly afterExplicitLogin: (account: AuthenticatedAccount) => Promise<void> = async () => undefined,
     ) {}
 
     public start(): void {
@@ -145,6 +146,8 @@ export class AuthSession {
         try {
             const authenticated = await this.gateway.loginWithPassword({ account, password });
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
+            await this.afterExplicitLogin(authenticated);
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
             this.lastAccountStore.save(account);
             this.saveSession(authenticated);
             this.currentAccount = authenticated;
@@ -168,6 +171,8 @@ export class AuthSession {
         const epoch = ++this.sessionEpoch;
         try {
             const authenticated = await this.gateway.registerWithPassword(identity, password, verificationCode);
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '注册已取消');
+            await this.afterExplicitLogin(authenticated);
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '注册已取消');
             this.lastAccountStore.save(identity);
             this.saveSession(authenticated);
@@ -196,6 +201,8 @@ export class AuthSession {
                     this.sessionStore.clear(); account = await this.gateway.registerGuest();
                 }
             } else account = await this.gateway.registerGuest();
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
+            await this.afterExplicitLogin(account);
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
             this.saveSession(account);
             this.lastAccountStore.save(account.account);

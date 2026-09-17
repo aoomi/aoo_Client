@@ -23,15 +23,21 @@ function createLogic(ruleOptions) {
   return new CommonPdkGameLogic({
     room: {
       GetRoomConfig: () => ({ ruleOptions }),
-      GetRoomPaiXing: () => false,
+      GetRoomPaiXing: (name) => {
+        const four = String(ruleOptions.fourAttachmentMode ?? 'DISABLED');
+        if (name === 'SiDaiEr') return four === 'SINGLES' || four === 'EITHER';
+        if (name === 'SiDaiYi') return ruleOptions.allowFourBombWithOne === true;
+        if (name === 'SiDaiSan') return ruleOptions.allowFourWithThree === true;
+        return false;
+      },
     },
   });
 }
 
 const regionalRules = {
-  CD201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER' },
-  NJ201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER' },
-  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'PAIRS' },
+  CD201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  NJ201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
 };
 
 test('three regional clients derive straight length from the authoritative snapshot', () => {
@@ -42,13 +48,60 @@ test('three regional clients derive straight length from the authoritative snaps
   }
 });
 
-test('Liangshan accepts triple-with-pair and rejects two scattered attachments', () => {
+test('Liangshan XQP rule accepts triple with one card, one pair, or two loose cards', () => {
   const logic = createLogic(regionalRules.LS201);
+  logic.ChangeSelectCard([103, 203, 303, 104]);
+  assert.equal(logic.GetCardType(), 6);
+
   logic.ChangeSelectCard([103, 203, 303, 104, 204]);
   assert.equal(logic.GetCardType(), 15);
 
   logic.ChangeSelectCard([103, 203, 303, 104, 205]);
+  assert.equal(logic.GetCardType(), 7);
+});
+
+test('Liangshan first-lead hand can hint AAA plus the required seven', () => {
+  const logic = createLogic(regionalRules.LS201);
+  logic.OutPokerCard([114, 214, 314, 113, 111, 211, 110, 107]);
+  assert.deepEqual(logic.GetSanDaiTip(6)[0], [114, 214, 314, 107]);
+});
+
+test('Liangshan JJJJKK can answer a lower triple-with-pair as either JJJKK or JJJJ bomb', () => {
+  const logic = createLogic({ ...regionalRules.LS201, compareTripleAttachments: false });
+  logic.OutPokerCard([111, 211, 311, 411, 113, 213]);
+  logic.SetCardData(15, [110, 210, 310, 109, 209]);
+
+  logic.ChangeSelectCard([111, 211, 311, 113, 213]);
+  assert.equal(logic.GetCardType(), 15);
+  assert.equal(logic.CheckCanOut(), true);
+
+  logic.ChangeSelectCard([111, 211, 311, 411]);
+  assert.equal(logic.GetCardType(), 11);
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('a lower triple body can never answer a higher triple body', () => {
+  const logic = createLogic({ ...regionalRules.LS201, compareTripleAttachments: false });
+  logic.OutPokerCard([105, 205, 305, 109, 209, 309, 113, 110]);
+  logic.SetCardData(7, [108, 208, 308, 106, 105]);
+
+  logic.ChangeSelectCard([105, 205, 305, 113, 110]);
   assert.equal(logic.GetCardType(), 0);
+  assert.equal(logic.CheckCanOut(), false);
+
+  logic.ChangeSelectCard([109, 209, 309, 113, 110]);
+  assert.equal(logic.GetCardType(), 7);
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('disabled four-with-three never classifies the seven-card whole hand', () => {
+  const logic = createLogic(regionalRules.LS201);
+  const hand = [111, 211, 311, 411, 113, 213, 107];
+  logic.OutPokerCard(hand);
+  logic.ClearCardData();
+  logic.ChangeSelectCard(hand);
+  assert.equal(logic.GetCardType(), 0);
+  assert.equal(logic.CheckCanOut(), false);
 });
 
 test('Chengdu and Neijiang attachment behavior also comes from ruleOptions', () => {
@@ -57,6 +110,69 @@ test('Chengdu and Neijiang attachment behavior also comes from ruleOptions', () 
     logic.ChangeSelectCard([103, 203, 303, 104, 205]);
     assert.equal(logic.GetCardType(), 7, gameCode);
   }
+});
+
+test('Chengdu compares triple-with-pair and arbitrary triple-with-two as one family', () => {
+  const logic = createLogic({
+    ...regionalRules.CD201,
+    compareTripleAttachments: false,
+  });
+  logic.SetCardData(15, [110, 210, 310, 114, 214]);
+  assert.equal(logic.GetLastCardType(), 15);
+
+  logic.ChangeSelectCard([113, 213, 313, 115, 114]);
+  assert.equal(logic.GetCardType(), 15);
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('pair-only mode rejects scattered attachments and accepts a higher triple with pair', () => {
+  const logic = createLogic({
+    minimumStraightLength: 3,
+    tripleAttachmentMode: 'PAIRS',
+    fourAttachmentMode: 'DISABLED',
+    compareTripleAttachments: false,
+  });
+  logic.SetCardData(15, [110, 210, 310, 114, 214]);
+
+  logic.ChangeSelectCard([113, 213, 313, 115, 114]);
+  assert.equal(logic.GetCardType(), 0);
+  logic.ChangeSelectCard([113, 213, 313, 112, 212]);
+  assert.equal(logic.GetCardType(), 15);
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('four-with-two hint is generated only when authoritative four attachments allow it', () => {
+  const hand = [114, 214, 113, 110, 210, 310, 410, 109];
+  const enabled = createLogic({
+    minimumStraightLength: 5,
+    tripleAttachmentMode: 'EITHER',
+    fourAttachmentMode: 'EITHER',
+  });
+  enabled.OutPokerCard([...hand]);
+  const hint = enabled.GetSiDaiTip(9)[0];
+  assert.equal(hint.length, 6);
+  assert.deepEqual(hint.slice(0, 4), [110, 210, 310, 410]);
+  enabled.ChangeSelectCard([110, 210, 310, 410, 114, 214]);
+  assert.equal(enabled.GetCardType(), 9);
+  enabled.OutPokerCard([114, 214, 113, 213, 110, 210, 310, 410, 109]);
+  const pairHint = enabled.GetSiDaiTip(20)[0];
+  assert.equal(pairHint.length, 8);
+  enabled.ChangeSelectCard([110, 210, 310, 410, 114, 214, 113, 213]);
+  assert.equal(enabled.GetCardType(), 20);
+
+  const disabled = createLogic({
+    minimumStraightLength: 5,
+    tripleAttachmentMode: 'EITHER',
+    fourAttachmentMode: 'DISABLED',
+  });
+  disabled.OutPokerCard([...hand]);
+  disabled.ChangeSelectCard([110, 210, 310, 410, 114, 214]);
+  assert.equal(disabled.GetCardType(), 0);
+
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  assert.match(controller, /const four = this\.fourAttachmentPermissions\(\)/);
+  assert.match(controller, /if \(four\.singles\) this\.pushTipCandidates\(candidates, this\.logic\.GetSiDaiTip\(9\)\)/);
 });
 
 test('common gameplay contains no regional branch or fixed five-card straight gate', () => {
@@ -80,10 +196,10 @@ test('common gameplay contains no regional branch or fixed five-card straight ga
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
   assert.match(runtime, /ruleOptions\.playedCardVisibility/);
   assert.match(runtime, /resolvePdkGameplayCapabilities\(this\.options\.gameCode\)/);
-  assert.match(capabilities, /retainPlayedCardsOnTable: false/);
-  assert.match(capabilities, /\[PDK_BUSINESS_CODES\.LIANGSHAN\].*retainPlayedCardsOnTable: true/);
+  assert.match(capabilities, /arrangementMode: 'disabled'/);
+  assert.match(capabilities, /\[PDK_BUSINESS_CODES\.LIANGSHAN\].*arrangementMode: 'enabled'/);
   assert.doesNotMatch(capabilities, /CD201|NJ201|LS201/);
-  assert.doesNotMatch(runtime, /retainPlayedCardsOnTable\?:/);
+  assert.doesNotMatch(runtime, /arrangementMode\?:/);
   assert.doesNotMatch(coordinator, /gameCode\s*===\s*['"](?:CD201|NJ201|LS201)['"]/);
 });
 
@@ -96,4 +212,13 @@ test('missing or malformed authoritative rules fail closed', () => {
   const malformed = createLogic({ minimumStraightLength: 2, tripleAttachmentMode: 'guess' });
   malformed.ChangeSelectCard([103, 104, 105]);
   assert.throws(() => malformed.CheckShunzi(), /minimumStraightLength 无效/);
+});
+
+test('only LS201 opts into the complete arrangement-area capability', () => {
+  const capabilities = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Regional/PdkGameplayCapabilities.ts'), 'utf8');
+  const enabledMappings = [...capabilities.matchAll(/\[[^\]]+\]:\s*Object\.freeze\(\{\s*arrangementMode:\s*'enabled'\s*\}\)/g)];
+  assert.equal(enabledMappings.length, 1);
+  assert.match(enabledMappings[0][0], /PDK_BUSINESS_CODES\.LIANGSHAN/);
+  assert.match(capabilities, /DEFAULT_PDK_GAMEPLAY_CAPABILITIES[\s\S]*arrangementMode:\s*'disabled'/);
 });

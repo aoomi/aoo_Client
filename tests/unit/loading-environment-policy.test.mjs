@@ -568,3 +568,19 @@ test('implementation has no broad clear, protected-login allowlist, old gateway 
     assert.doesNotMatch(bootstrapSource, /ServerDirectorySelector|区服：|installServerDirectorySelector/);
     assert.match(bootstrapSource, /bootstrapRuntime\.initialize\(\)/);
 });
+
+test('clear-local-data claims one authenticated authoritative room cleanup after explicit login', () => {
+    const clientBootstrap = fs.readFileSync(path.join(clientRoot, 'assets/Login/Code/Bootstrap/ClientBootstrap.ts'), 'utf8');
+    const authSource = fs.readFileSync(path.join(clientRoot, authPath), 'utf8');
+    const cleanup = fs.readFileSync(path.join(clientRoot,
+        'assets/Common/Code/Runtime/room/StuckRoomCleanupService.ts'), 'utf8');
+    assert.match(policySource, /claimRoomCleanup\(\)/);
+    assert.match(policySource, /releaseRoomCleanupClaim\(\)/);
+    assert.match(clientBootstrap, /claimRoomCleanup\(\)[\s\S]*StuckRoomCleanupService\(\)\.cleanup\(account\)/);
+    assert.match(clientBootstrap, /catch \(error: unknown\)[\s\S]*releaseRoomCleanupClaim\(\)[\s\S]*throw error/);
+    assert.match(authSource, /await this\.afterExplicitLogin\(authenticated\)/);
+    assert.match(authSource, /await this\.afterExplicitLogin\(account\)/);
+    assert.match(cleanup, /\/api\/v2\/hall\/rooms\/active/);
+    assert.match(cleanup, /\/api\/v2\/hall\/rooms\/\$\{roomId\}\/leave/);
+    assert.match(cleanup, /if \(confirmed\?\.active\) throw new Error/);
+});

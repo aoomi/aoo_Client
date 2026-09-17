@@ -155,20 +155,24 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     const totalPointList: number[] = [];
     const surplusCardList: number[][] = [];
     const playedCardList: number[][] = [];
+    const specialHandList: string[][] = [];
     const recordPosInfosList: Array<Record<string, unknown>> = [];
     for (let pos = 0; pos < playerCount; pos += 1) {
         const seat = record(seats[String(pos)]);
         const playerId = positiveInteger(seat.playerId) ? seat.playerId : 0;
         const cards = projectedSeatCards(seat, phase, pos);
+        // A finished round owns a new readiness lifecycle: only an explicit
+        // Continue in this settlement may light the badge. `seat.ready` can
+        // remain true from the round that just ended and must not leak through.
+        const readyState = phase === 'FINISHED' || phase === 'DIRECT_WIN'
+            ? Boolean(seat.continued) : Boolean(seat.ready);
         posList.push({
             pos,
             pid: playerId,
             playerCount,
             seatLimit: playerCount,
-            isReady: Boolean(seat.ready),
-            // 旧房间控制器以 roomReady 决定“准备/取消准备”的互斥显示；Authority 的
-            // seat.ready 是唯一权威来源，必须在适配边界显式投影，不能让 UI 自行推断。
-            roomReady: Boolean(seat.ready),
+            isReady: readyState,
+            roomReady: readyState,
             isContinue: Boolean(seat.continued),
             name: String(seat.name ?? (playerId > 0 ? `玩家${playerId}` : '')),
             headImageUrl: String(seat.headImageUrl ?? ''),
@@ -184,6 +188,8 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
         totalPointList.push(typeof seat.totalScore === 'number' ? seat.totalScore : 0);
         surplusCardList.push(cardValues(seat.remainingCards ?? cards));
         playedCardList.push(cardValues(seat.playedCards));
+        specialHandList.push(Array.isArray(seat.initialPatterns)
+            ? seat.initialPatterns.map(String).filter(Boolean) : []);
         recordPosInfosList.push({
             pos,
             playerId,
@@ -197,12 +203,48 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     const matchFinished = Boolean(source.matchFinished);
     const canContinue = Boolean(source.canContinue);
     const lastActions = Array.isArray(source.lastActions) ? source.lastActions : [];
+    const tableSnapshot = record(source.tableSnapshot);
+    const hasTableSnapshot = Object.keys(tableSnapshot).length > 0;
+    const snapshotComplete = integer(tableSnapshot.stateVersion)
+        && tableSnapshot.stateVersion === stateVersion
+        && integer(tableSnapshot.trickId) && integer(tableSnapshot.turnSeat)
+        && Array.isArray(tableSnapshot.operations)
+        && Array.isArray(tableSnapshot.trickOperations);
+    // A private hand and its public operation ledger are one authority commit.
+    // Never project a packet that combines versions: doing so can leave cards in
+    // the local hand after an automatic play while another client already shows
+    // those same cards on the table. Older services may omit tableSnapshot
+    // entirely, but once the field is present it must be complete and versioned
+    // with the surrounding room view.
+    if (hasTableSnapshot && !snapshotComplete) {
+        throw new Error(`CommonPdk 权威桌面快照不完整或版本不一致: room=${stateVersion}, table=${String(tableSnapshot.stateVersion)}`);
+    }
     const lastAction = record(lastActions.at(-1));
-    const currentTrick = record(source.currentTrick);
-    // Some authoritative pushes omit currentTrick while retaining the current
-    // trick's last play in lastActions. Project that play as the effective trick
-    // so response hints and the retained Liangshan table never become an empty lead.
-    const effectiveTrick = cardValues(currentTrick.cards).length > 0 ? currentTrick : lastAction;
+    const legacyTrick = record(source.currentTrick);
+    const snapshotComparison = record(tableSnapshot.comparison);
+    // Rolling deployment compatibility: the private hand is authoritative even
+    // when the currently running Poker service predates tableSnapshot. Rejecting
+    // the whole packet here leaves a player with an empty hand. Prefer the atomic
+    // snapshot when present; otherwise use the former currentTrick/lastActions
+    // projection until that service instance is restarted on the new contract.
+    const comparison = snapshotComplete
+        ? snapshotComparison
+        : cardValues(legacyTrick.cards).length > 0 ? legacyTrick : lastAction;
+    const operations = snapshotComplete && Array.isArray(tableSnapshot.operations)
+        ? tableSnapshot.operations : lastActions;
+    let committedPlayIndex = 0;
+    const normalizedOperations: Array<Record<string, unknown>> = operations.map((value) => {
+        const operation = record(value);
+        const isPlay = String(operation.action ?? '').toLowerCase() === 'play'
+            && cardValues(operation.cards).length > 0;
+        return { ...operation, playIndex: isPlay ? ++committedPlayIndex : 0 };
+    });
+    const trickOperations = snapshotComplete && Array.isArray(tableSnapshot.trickOperations)
+        ? tableSnapshot.trickOperations : lastActions;
+    // The comparison hand and ordered operation ledger come from one atomic
+    // server snapshot. A missing snapshot is a protocol error, never a cue to
+    // reconstruct public cards from legacy fields with different arrival order.
+    const effectiveTrick = comparison;
     const lastOpPos = integer(effectiveTrick.seat) ? effectiveTrick.seat : -1;
     const publicCards = cardValues(effectiveTrick.cards);
     const opType = legacyOperationType(effectiveTrick.opCardType ?? effectiveTrick.opType
@@ -217,7 +259,8 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     const activeRequiredFirstCard = integer(source.activeRequiredFirstCard) && source.activeRequiredFirstCard > 0
         ? source.activeRequiredFirstCard : 0;
     const runWaitSec = remainingOperationSeconds(operationDeadline, source.serverEpochMillis);
-    const authorityOperationId = String(source.operationId || operationDeadline.operationId || lastAction.operationId || '');
+    const tableLastOperation = record(tableSnapshot.lastOperation);
+    const authorityOperationId = String(source.operationId || operationDeadline.operationId || tableLastOperation.operationId || '');
     const set = {
         state,
         authorityPhase: phase,
@@ -251,6 +294,37 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
         matchFinished,
         canContinue,
         lastActions,
+        comparisonState: {
+            trickId: Number(comparison.trickId ?? tableSnapshot.trickId ?? 0),
+            leadSeat: Number(comparison.seat ?? -1),
+            cards: cardValues(comparison.cards),
+            cardType: legacyOperationType(comparison.cardType ?? comparison.type),
+            primaryRank: Number(comparison.primaryRank ?? 0),
+            operationId: String(comparison.operationId ?? ''),
+            playIndex: Number(normalizedOperations.find((value) =>
+                String(value.operationId ?? '') === String(comparison.operationId ?? ''))?.playIndex ?? 0),
+            stateVersion: Number(snapshotComplete ? tableSnapshot.stateVersion : stateVersion),
+        },
+        tablePhase: String(tableSnapshot.phase ?? ''),
+        tableDisplayMode: String(tableSnapshot.displayMode ?? ''),
+        passSeats: Array.isArray(tableSnapshot.passSeats)
+            ? tableSnapshot.passSeats.map(Number).filter(Number.isSafeInteger) : [],
+        tableLastOperation,
+        tableOperations: normalizedOperations,
+        seatPlayStates: trickOperations.map((value) => {
+            const play = record(value);
+            const normalized = normalizedOperations.find((operation) =>
+                String(operation.operationId ?? '') === String(play.operationId ?? ''));
+            return {
+                seat: Number(play.seat ?? -1),
+                action: String(play.action ?? ''),
+                operationId: String(play.operationId ?? ''),
+                playIndex: Number(normalized?.playIndex ?? 0),
+                trickId: Number(play.trickId ?? tableSnapshot.trickId ?? 0),
+                cards: cardValues(play.cards),
+                cardType: legacyOperationType(play.cardType ?? play.type),
+            };
+        }),
         trickId: integer(source.trickId) ? source.trickId : 0,
         trickReset: Boolean(source.trickReset),
         setEnd: {
@@ -258,6 +332,7 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
             totalPointList,
             surplusCardList,
             playedCardList,
+            specialHandList,
             playHistory: Array.isArray(source.playHistory) ? source.playHistory : [],
             replayCode: typeof source.replayCode === 'string' ? source.replayCode : '',
             replaySetId: integer(source.replaySetId) ? source.replaySetId : Math.max(0, roundNo - 1),

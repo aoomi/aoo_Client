@@ -30,6 +30,26 @@ test('Poker owns one complete family-default small settlement template', () => {
   assert.equal(names.includes('Btn_'), false, 'unnamed replay button must be migrated');
 });
 
+test('PDK small-settlement list content contains only the player item template', () => {
+  const prefab = JSON.parse(readFileSync(join(pokerSmall, 'SmallSettlement.prefab'), 'utf8'));
+  const node = (name) => prefab.findIndex((entry) => entry?.__type__ === 'cc.Node' && entry._name === name);
+  const contentIndex = node('Content');
+  const itemIndex = node('Item');
+  const specialHandsIndex = node('SpecialHands');
+  assert.deepEqual(prefab[contentIndex]._children.map((entry) => entry.__id__), [itemIndex]);
+  assert.equal(prefab[itemIndex]._children.some((entry) => entry.__id__ === specialHandsIndex), true);
+  assert.equal(prefab[specialHandsIndex]._parent.__id__, itemIndex);
+  const itemTransform = prefab[prefab[itemIndex]._components
+    .map((entry) => entry.__id__)
+    .find((id) => prefab[id]?.__type__ === 'cc.UITransform')];
+  const specialHandsTransform = prefab[prefab[specialHandsIndex]._components
+    .map((entry) => entry.__id__)
+    .find((id) => prefab[id]?.__type__ === 'cc.UITransform')];
+  assert.ok(Math.abs(prefab[specialHandsIndex]._lpos.y) <= itemTransform._contentSize.height / 2,
+    'SpecialHands must remain inside the player item instead of inheriting Content coordinates');
+  assert.equal(specialHandsTransform._contentSize.height, 50);
+});
+
 test('Poker small settlements use stable family aliases and one family default', () => {
   const files = Array.from(new Set(Object.values(registry.pokerSmallDefaultTemplates ?? {})));
   assert.deepEqual(Object.keys(registry.pokerSmallFamilyAliases ?? {}).sort(),
@@ -105,14 +125,19 @@ test('the one resolver owns default selection and PDK preloading order', () => {
   assert.match(resolver, /bundleName: 'paodekuai-common'/);
   assert.match(resolver, /assetPath: 'Prefab\/SmallSettlement'/);
   assert.match(resolver, /const defaultTemplateId = 'BigSettlement'/);
-  assert.match(resolver, /assetPath: isDefault \? 'Prefab\/BigSettlement_0'/);
+  assert.match(resolver, /assetPath: 'Prefab\/BigSettlement_0'/);
+  assert.match(resolver, /跑得快固定使用扑克公共大结算/);
+  assert.match(resolver, /跑得快固定使用公共小结算/);
+  assert.match(resolver, /const isPdk = alias === 'pdk' \|\| pdkGameCodes\.has\(request\.gameId\.trim\(\)\.toLowerCase\(\)\)/);
+  assert.match(resolver, /familyByGameId\.get\(gameId\.toUpperCase\(\)\)/);
+  assert.match(resolver, /categoryByGameId\.get\(gameId\.toUpperCase\(\)\)/);
   assert.match(resolver, /bundleFor\('Poker', kind\)/);
   assert.match(resolver, /\$\{kind\}Tpl_00/);
   assert.match(preloader, /await this\.load\(category, 'SmallSettle'\);\s*await this\.load\(category, 'BigSettle'\);/s);
   assert.match(preloader, /isPdkFamily\(playFamily\)/);
   assert.match(preloader, /this\.loadBundle\('poker-common'\)/);
   assert.match(preloader, /categoryForFamily\(playFamily\)/);
-  assert.match(resolver, /categoryByGameId\.get\(gameId\) \?\? categoryForFamily\(family\)/);
+  assert.match(resolver, /categoryByGameId\.get\(gameId\.toUpperCase\(\)\) \?\? categoryForFamily\(family\)/);
   assert.match(coordinator, /settlementTemplateResolver\.resolve/);
   assert.match(coordinator, /settlementBundlePreloader\.preloadForGame/);
   assert.match(coordinator, /settlement\/poker\/BigSettlement/);

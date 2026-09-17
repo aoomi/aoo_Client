@@ -71,6 +71,7 @@ export class CommonPdkGameSceneLauncher {
         private readonly onRoomClosed: () => void = () => undefined,
         private readonly navigateToLobby?: (target?: RoomReturnTarget) => Promise<void>,
         private readonly currentReplayCode: (roomId: number, setId: number) => Promise<string> = async () => '',
+        private readonly settlementHistory: (roomId: number) => Promise<unknown> = async () => ({}),
     ) {}
 
     public launch(ticket: LegacySubgameTicket, startupMask?: StartupSceneMask): Promise<void> {
@@ -217,7 +218,7 @@ export class CommonPdkGameSceneLauncher {
         const hallClient = connectionOwnership.hall as unknown as ProtocolClient;
         const coordinator = new CommonPdkSwitchCoordinator(
             this.account, this.playerId, hallClient, forms, placeholder, this.refreshRoomConnection,
-            this.leaveRoom, this.onRoomClosed, this.currentReplayCode,
+            this.leaveRoom, this.onRoomClosed, this.currentReplayCode, this.settlementHistory,
         );
         this.placeholder = placeholder;
         this.forms = forms;

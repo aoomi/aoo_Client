@@ -7,7 +7,6 @@ export type PdkAnimationFolderKey =
     | 'Straight' | 'Airplane' | 'ConsecutiveAirplane' | 'Shutout';
 
 export interface PdkAnimationDefinition {
-    readonly mountPath: string;
     readonly assetPath: string;
     readonly animationName: string;
     readonly sideAnimationName?: string;
@@ -18,20 +17,20 @@ export interface PdkAnimationDefinition {
 // PDK/Common/Spine. A region may replace presentation in its own boundary, but
 // must not copy or shadow this table for rules shared by every PDK variant.
 const DEFINITIONS: Readonly<Record<PdkAnimationFolderKey, PdkAnimationDefinition>> = Object.freeze({
-    Bomb: { mountPath: 'Boom_Ani', assetPath: 'Spine/zhadan/zhadan', animationName: 'lspdk_zd', aliases: ['Bomb', 'zhadan'] },
-    ConsecutivePairs: { mountPath: 'Liandui_Spine', assetPath: 'Spine/liandui/ddz_game_paixing_ld_ani', animationName: 'ddz_paixing_ld_ani', sideAnimationName: 'ddz_paixing_ld2_ani', aliases: ['ConsecutivePairs', 'liandui'] },
-    TripleWithoutAttachment: { mountPath: 'Sandaiyi_Spine', assetPath: 'Spine/sanbudai/sanbudai', animationName: 'animation', aliases: ['TripleWithoutAttachment', 'sanbudai'] },
-    TripleWithSingle: { mountPath: 'Sandaiyi_Spine', assetPath: 'Spine/sandaiyi/sandaiyi', animationName: 'animation', aliases: ['TripleWithSingle', 'sandaiyi'] },
-    TripleWithTwo: { mountPath: 'Sandaier', assetPath: 'Spine/sandaier/sandaier', animationName: 'animation', aliases: ['TripleWithTwo', 'sandaier'] },
-    TripleWithPair: { mountPath: 'Sandaier', assetPath: 'Spine/sandaiyidui/sidaidui', animationName: 'animation', aliases: ['TripleWithPair', 'sandaiyidui'] },
-    FourWithSingle: { mountPath: 'Sidaiyi', assetPath: 'Spine/sidaiyi/sidaiyi', animationName: 'animation', aliases: ['FourWithSingle', 'sidaiyi'] },
-    FourWithTwo: { mountPath: 'Sidaier', assetPath: 'Spine/sidaier/sidaiyi', animationName: 'animation', aliases: ['FourWithTwo', 'sidaier'] },
-    FourWithPair: { mountPath: 'Sidaier', assetPath: 'Spine/sidaiyidui/sidaidui', animationName: 'animation', aliases: ['FourWithPair', 'sidaiyidui'] },
-    FourWithThree: { mountPath: 'Sidaisan', assetPath: 'Spine/sidaisan/sidaisan', animationName: 'animation', aliases: ['FourWithThree', 'sidaisan'] },
-    Straight: { mountPath: 'Shunzi', assetPath: 'Spine/shunzi/ddz_game_paixing_sz_ani', animationName: 'ddz_paixing_sz_ani', sideAnimationName: 'ddz_paixing_sz2_ani', aliases: ['Straight', 'shunzi'] },
-    Airplane: { mountPath: 'Plane_Ani', assetPath: 'Spine/feiji/ddz_game_paixing_fjfeiji_ani', animationName: 'ddz_paixing_fjfeiji_ani', sideAnimationName: 'ddz_paixing_fjfeiji2_ani', aliases: ['Airplane', 'feiji'] },
-    ConsecutiveAirplane: { mountPath: 'Plane_Ani', assetPath: 'Spine/sanfeiji/ddz_game_paixing_cjfjfeiji_ani', animationName: 'ddz_paixing_fjfeiji_ani', sideAnimationName: 'ddz_paixing_fjfeiji2_ani', aliases: ['ConsecutiveAirplane', 'sanfeiji'] },
-    Shutout: { mountPath: 'Shut_Dow_Ani', assetPath: 'Spine/guanmen/guanmen', animationName: 'guanmen', aliases: ['Shutout', 'guanmen'] },
+    Bomb: { assetPath: 'Spine/zhadan/zhadan', animationName: 'lspdk_zd', aliases: ['Bomb', 'zhadan'] },
+    ConsecutivePairs: { assetPath: 'Spine/liandui/ddz_game_paixing_ld_ani', animationName: 'ddz_paixing_ld_ani', sideAnimationName: 'ddz_paixing_ld2_ani', aliases: ['ConsecutivePairs', 'liandui'] },
+    TripleWithoutAttachment: { assetPath: 'Spine/sanbudai/sanbudai', animationName: 'animation', aliases: ['TripleWithoutAttachment', 'sanbudai'] },
+    TripleWithSingle: { assetPath: 'Spine/sandaiyi/sandaiyi', animationName: 'animation', aliases: ['TripleWithSingle', 'sandaiyi'] },
+    TripleWithTwo: { assetPath: 'Spine/sandaier/sandaier', animationName: 'animation', aliases: ['TripleWithTwo', 'sandaier'] },
+    TripleWithPair: { assetPath: 'Spine/sandaiyidui/sidaidui', animationName: 'animation', aliases: ['TripleWithPair', 'sandaiyidui'] },
+    FourWithSingle: { assetPath: 'Spine/sidaiyi/sidaiyi', animationName: 'animation', aliases: ['FourWithSingle', 'sidaiyi'] },
+    FourWithTwo: { assetPath: 'Spine/sidaier/sidaiyi', animationName: 'animation', aliases: ['FourWithTwo', 'sidaier'] },
+    FourWithPair: { assetPath: 'Spine/sidaiyidui/sidaidui', animationName: 'animation', aliases: ['FourWithPair', 'sidaiyidui'] },
+    FourWithThree: { assetPath: 'Spine/sidaisan/sidaisan', animationName: 'animation', aliases: ['FourWithThree', 'sidaisan'] },
+    Straight: { assetPath: 'Spine/shunzi/ddz_game_paixing_sz_ani', animationName: 'ddz_paixing_sz_ani', sideAnimationName: 'ddz_paixing_sz2_ani', aliases: ['Straight', 'shunzi'] },
+    Airplane: { assetPath: 'Spine/feiji/ddz_game_paixing_fjfeiji_ani', animationName: 'ddz_paixing_fjfeiji_ani', sideAnimationName: 'ddz_paixing_fjfeiji2_ani', aliases: ['Airplane', 'feiji'] },
+    ConsecutiveAirplane: { assetPath: 'Spine/sanfeiji/ddz_game_paixing_cjfjfeiji_ani', animationName: 'ddz_paixing_fjfeiji_ani', sideAnimationName: 'ddz_paixing_fjfeiji2_ani', aliases: ['ConsecutiveAirplane', 'sanfeiji'] },
+    Shutout: { assetPath: 'Spine/guanmen/guanmen', animationName: 'guanmen', aliases: ['Shutout', 'guanmen'] },
 });
 
 const ALIAS_TO_KEY = new Map<string, PdkAnimationFolderKey>();

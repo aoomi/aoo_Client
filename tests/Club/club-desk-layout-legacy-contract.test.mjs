@@ -19,8 +19,16 @@ test('模板桌沿用 2.2.2 显式占位排布与标题优先级', () => {
         '实例化模板桌后必须关闭根节点定位 Widget');
     assert.match(source, /const column = Math\.floor\(index \/ 2\)/,
         '模板桌必须按旧版每列两桌计算列号');
-    assert.match(source, /node\.setPosition\(firstX \+ column \* columnStep, firstY - row \* rowStep, 0\)/,
-        '每张模板桌必须获得旧版两行横向分页坐标');
+    assert.match(source, /this\.activeClubDeskWidth\(node\)/,
+        '横向占位必须读取当前启用 Players_ 节点的真实宽度');
+    assert.match(source, /players\?\.getComponent\(UITransform\)\?\.contentSize\.width/,
+        'Creator 3.8 必须通过 UITransform.contentSize 读取 Players_ 宽度');
+    assert.match(source, /authoredWidth \* Math\.abs\(root\.scale\.x\)/,
+        'Players_ 设计宽度必须换算为大厅中的实际缩放宽度');
+    assert.match(source, /node\.setPosition\(columnCenters\[column\]/,
+        '每张模板桌必须按实际列宽获得两行横向分页坐标');
+    assert.match(source, /markTransform\.setContentSize\(roomListTransform\.contentSize\.width/,
+        '滚动视口必须收敛到 RoomList 可见宽度，不能把屏幕外区域算作可见区');
     assert.doesNotMatch(source, /roomLayout\.constraint = Layout\.Constraint\.FIXED_ROW/,
         '不得强制两行，否则第二行会落到大厅底栏后面');
     assert.match(source, /if \(roomName\) return roomName/,

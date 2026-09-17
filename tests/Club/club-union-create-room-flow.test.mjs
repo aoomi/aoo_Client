@@ -87,6 +87,14 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
     assert.match(lobby, /gameId: gameType, gameName, roomKey/,
         '外部玩法兜底也不得再产生缺少 gameName 的 handoff');
     assert.match(settings, /JoinGamePoint: entry/);
+    assert.match(selector, /gameDisplayName: this\.selectedGame\.displayName/);
+    assert.match(selector, /classificationName: this\.selectedGame\.classificationName/);
+    assert.match(settings, /String\(config\.roomName \?\? ''\)\.trim\(\) \|\| this\.defaultRoomName\(baseScore\)/,
+        '新模板房名称必须由玩法名称和底分自动生成，编辑已有模板时保留原名称');
+    assert.match(settings, /displayName\.startsWith\(classificationName\)[\s\S]*displayName\.slice\(classificationName\.length\)\.trim\(\)/,
+        '自动房间名必须移除地区前缀，例如凉山跑得快生成跑得快2分');
+    assert.match(settings, /`\$\{playName\}\$\{baseScore\}分`/);
+    assert.match(settings, /\[ClubRoomFee\] form-ready/);
     assert.match(settings, /deskColor:/);
     assert.match(settings, /rule,/);
     assert.equal(node(settingsPrefab, 'ClubRoomFee')?._name, 'ClubRoomFee');
@@ -102,7 +110,7 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
     assert.match(formManager, /EditBox\.InputMode\.PHONE_NUMBER/);
     for (const field of [
         'UIClubPromoterAdd/EditBox', 'UIForbidAddUser/EditBox', 'UIForbidGameAddUser/EditBox',
-        'ClubPromoterLevelAdd/EditBox', 'UIPromoterXIaShuAdd/EditBox', 'UIPromoterXiaShuList/EditBox',
+        'UIClubPromoterLevelAdd/EditBox', 'UIPromoterXIaShuAdd/EditBox', 'UIPromoterXiaShuList/EditBox',
         'UIUnionYaoQing/EditBox', 'UIYaoQing/EditBox',
     ]) assert.ok(formManager.includes(`'${field}'`), `${field} 必须使用 Common Numpad`);
     assert.equal(settingsMeta.uuid, 'aa957b46-d867-4e72-9c32-9774f4e53a10');

@@ -9,6 +9,8 @@ import { NetworkRuntime } from '../Network/NetworkRuntime';
 import { SceneRouter } from '../Navigation/SceneRouter';
 import { RoomRecoveryStore } from '../../../Common/Code/Runtime/room/RoomRecoveryStore';
 import { sessionLifecycle } from '../../../Common/Code/Runtime/network/LegacyWebSocketClient';
+import { currentAooLoadingBootState } from './LoadingEnvironmentPolicy';
+import { StuckRoomCleanupService } from '../../../Common/Code/Runtime/room/StuckRoomCleanupService';
 
 export interface ClientServices {
     readonly auth: AuthSession;
@@ -35,6 +37,16 @@ export function startClientServices(): ClientServices {
         new LastAccountStore(storage),
         new GuestSessionStore(storage),
         () => sessionLifecycle.resumeAfterExplicitLogin(),
+        async (account) => {
+            const bootState = currentAooLoadingBootState();
+            if (!bootState.claimRoomCleanup()) return;
+            try {
+                await new StuckRoomCleanupService().cleanup(account);
+            } catch (error: unknown) {
+                bootState.releaseRoomCleanupClaim();
+                throw error;
+            }
+        },
     );
     const network = new NetworkRuntime();
     const roomRecovery = new RoomRecoveryStore(storage);

@@ -123,6 +123,7 @@ export class AooLoadingBootState {
     private clearRequested = false;
     private cleanupPromise: Promise<AooLocalDataCleanupResult> | null = null;
     private authResetClaimed = false;
+    private roomCleanupClaimed = false;
     private launchSelection: LoadingEnvironmentSelection | null = null;
 
     public constructor(bootId = createBootId()) {
@@ -152,6 +153,18 @@ export class AooLoadingBootState {
         if (!this.clearRequested || this.authResetClaimed) return false;
         this.authResetClaimed = true;
         return true;
+    }
+
+    /** The next explicit authenticated login owns one authoritative stuck-room cleanup. */
+    public claimRoomCleanup(): boolean {
+        if (!this.clearRequested || this.roomCleanupClaimed) return false;
+        this.roomCleanupClaimed = true;
+        return true;
+    }
+
+    /** A failed authoritative cleanup must remain retryable on the next explicit login. */
+    public releaseRoomCleanupClaim(): void {
+        if (this.clearRequested) this.roomCleanupClaimed = false;
     }
 
     /**

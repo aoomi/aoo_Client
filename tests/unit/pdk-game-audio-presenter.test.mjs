@@ -32,7 +32,7 @@ test('every registered announcement exists for both genders with meta', () => {
 
 test('controller plays only newly presented authoritative actions and legacy OpCard events', () => {
     assert.match(controller, /if \(animate\) \{[\s\S]*this\.playGameOperation\(entry\.dataSeat, actionType, values\)/);
-    assert.match(controller, /event === 'OpCard'[\s\S]*this\.playGameOperation\(Number\(packet\.pos \?\? packet\.opPos\), opType/);
+    assert.match(controller, /event === 'OpCard'[\s\S]*const dataSeat = Number\(packet\.pos \?\? packet\.opPos\)[\s\S]*this\.playGameOperation\(dataSeat, opType/);
     assert.match(controller, /const actionKey = this\.authorityActionKey\(latest\);[\s\S]*this\.tableActionIds\.add\(actionKey\);[\s\S]*this\.playGameOperation\(dataSeat, actionType, cards\)/);
     assert.match(controller, /private authorityActionKey[\s\S]*if \(operationId\) return operationId;[\s\S]*cards\.map\(Number\)\.join/);
     assert.match(controller, /String\(action\.action\) === 'pass' \? 1/);

@@ -2,7 +2,7 @@ import{requireChoice,requireIntegerRange,uniqueChoices}from'../../Common/Code/Re
 import type{PdkRegionalRoomProfile,PdkRoomRulePayload}from'../../Common/Code/Regional/PdkRegionalRoomProfile';
 import{PDK_BUSINESS_CODES}from'../../Common/Code/Regional/PdkBusinessCodes';
 
-export type LiangshanPlayRule='compare_attachments'|'triple_with_one'|'four_with_two'|'four_aces'|'four_configured_rank'|'all_single'|'full_consecutive_pairs'|'all_big'|'all_small'|'all_red'|'all_black'|'full_straight'|'all_pair';
+export type LiangshanPlayRule='compare_attachments'|'triple_with_one'|'four_with_two'|'four_ace_rank'|'all_special_patterns'|'four_aces'|'four_configured_rank'|'all_single'|'full_consecutive_pairs'|'all_big'|'all_small'|'all_red'|'all_black'|'full_straight'|'all_pair';
 export type LiangshanRoomRestriction='ip_limit'|'gps_limit'|'timeout_auto_play'|'distance_warning'|'interaction_forbidden'|'chat_muted';
 export interface LiangshanPdkRoomInput{
  playerCount:2|3|4;roundCount:8|12|16;operationTime:number;dealCardCount:8|10;
@@ -10,7 +10,7 @@ export interface LiangshanPdkRoomInput{
  robDealerRule:'dealer_first'|'dealer_last'|'first_round_no_compete'|'no_compete';
  playRule:readonly LiangshanPlayRule[];roomRestriction:readonly LiangshanRoomRestriction[];
 }
-const PLAY:readonly LiangshanPlayRule[]=['compare_attachments','triple_with_one','four_with_two','four_aces','four_configured_rank','all_single','full_consecutive_pairs','all_big','all_small','all_red','all_black','full_straight','all_pair'];
+const PLAY:readonly LiangshanPlayRule[]=['compare_attachments','triple_with_one','four_with_two','four_ace_rank','all_special_patterns','four_aces','four_configured_rank','all_single','full_consecutive_pairs','all_big','all_small','all_red','all_black','full_straight','all_pair'];
 const RESTRICTIONS:readonly LiangshanRoomRestriction[]=['ip_limit','gps_limit','timeout_auto_play','distance_warning','interaction_forbidden','chat_muted'];
 
 export const LS201_PROFILE:PdkRegionalRoomProfile<LiangshanPdkRoomInput>={
@@ -18,6 +18,12 @@ export const LS201_PROFILE:PdkRegionalRoomProfile<LiangshanPdkRoomInput>={
  provinceCode:'sichuan',cityCode:'liangshan',xqpArea:9,xqpGameType:5,
  providerKey:'native-pdk-LS201',commonRuntime:'PDK/Common',
  roomRuleWorkbook:'开房规则表/跑得快/凉山跑得快.xlsx',
+ settlementSpecialHands:{
+  bundleName:'paodekuai-liangshan',atlasPath:'Atlas/PdkSmallTrends',
+  frameByPattern:{FOUR_ACES:'img_sza',FOUR_CONFIGURED_RANK_5:'img_sz5',FOUR_CONFIGURED_RANK_7:'img_sz7',ALL_SINGLES:'img_qdan',
+   FULL_STRAIGHT:'img_qlian',FULL_CONSECUTIVE_PAIRS:'img_qld',ALL_PAIRS:'img_qdui',
+   ALL_BLACK:'img_qhei',ALL_RED:'img_qhong',ALL_BIG:'img_qda',ALL_SMALL:'img_qxiao'}
+ },
  toImmutableRules(input):PdkRoomRulePayload{return{
   playerCount:requireChoice(input.playerCount,[2,3,4],'playerCount'),
   roundCount:requireChoice(input.roundCount,[8,12,16],'roundCount'),

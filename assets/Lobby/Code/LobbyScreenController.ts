@@ -8,7 +8,7 @@ import { ProtocolClient } from '../../Common/Code/Runtime/network/ProtocolClient
 import { JoinRoomController } from './JoinRoomController';
 import { LobbySessionService } from './LobbySessionService';
 import { LobbyTopBarController } from './LobbyTopBarController';
-import { HallRoomGateway, type HallRoomPreparation } from './HallRoomGateway';
+import { HallRoomGateway } from './HallRoomGateway';
 import { PlaySelectorController } from '../../Modules/CreateRoom/Code/PlaySelectorController';
 import { LobbyClubEntryController } from './ClubList/LobbyClubEntryController';
 import {
@@ -19,6 +19,9 @@ import type {
     LegacySubgameTicket,
 } from '../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import { CommonPdkGameSceneLauncher } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher';
+import { CommonPdkRuntimeEntry } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntimeEntry';
+import { createProductionGameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntries';
+import type { GameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntryRegistry';
 import { ScjymjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/scjymj/ScjymjSwitchCoordinator';
 import { HzmjSwitchCoordinator } from '../../Games/Mahjong/Packs/Pack01/Code/Runtime/hzmj/HzmjSwitchCoordinator';
 import { A3pkSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/a3pk/A3pkSwitchCoordinator';
@@ -80,7 +83,8 @@ export class LobbyScreenController {
     private clubEntry: LobbyClubEntryController | null = null;
     private subgame: CommonPdkSwitchCoordinator | null = null;
     private commonPdkSceneLauncher: CommonPdkGameSceneLauncher | null = null;
-    private readonly pendingRoomPrewarms = new Map<number, HallRoomPreparation>();
+    private commonPdkRuntimeEntry: CommonPdkRuntimeEntry | null = null;
+    private gameRuntimeEntries: GameRuntimeEntryRegistry | null = null;
     private scjymj: ScjymjSwitchCoordinator | null = null;
     private hzmj: HzmjSwitchCoordinator | null = null;
     private a3pk: A3pkSwitchCoordinator | null = null;
@@ -102,7 +106,9 @@ export class LobbyScreenController {
     private readonly viewportCapturedMainForms = new WeakSet<Node>();
     private readonly formScopedDisposers: Map<string, Array<() => void>> = new Map();
     private enteringRoom = false;
-    private waitingHandoffRetryTimer = 0;
+    private waitingReadyRoomId = 0;
+    private waitingReadyAttempt = 0;
+    private waitingReadyTimer = 0;
     private readonly mainButtonTapGuard = new Map<string, number>();
     private readonly backTapGuard = new Map<string, number>();
     private readonly systemCloseTapGuard = new Map<string, number>();
@@ -203,7 +209,16 @@ export class LobbyScreenController {
         this.hallRoomGateway = hallRoomGateway;
         this.joinRoomController = new JoinRoomController(this.forms, hallRoomGateway, handoff => {
             this.forms?.close('common/Numpad');
-            this.forms?.get('UILobbyMain')?.node.emit('open-authoritative-subgame', handoff);
+            // The room's clubId describes ownership, not how this player reached it.
+            // A room-number join from the game lobby must return to the game lobby even
+            // when the selected room belongs to a club. Never infer navigation origin
+            // from authoritative room metadata at this boundary.
+            this.forms?.get('UILobbyMain')?.node.emit('open-authoritative-subgame', {
+                ...handoff,
+                entryOrigin: 'GAME_LOBBY',
+                fromClub: false,
+                returnContext: {},
+            });
         });
         this.joinRoomController.install();
         await this.forms.onSceneDidEnter();
@@ -253,6 +268,14 @@ export class LobbyScreenController {
         this.socialController = new SocialController(main.node, new SocialGateway(this.socialApi), error => this.showProductionError(error));
         this.socialController.install();
         this.nodeDisposers.push(this.client.on('social.notice.changed', body => main.node.emit('social.notice.changed', body)));
+        // A full waiting room is a Hall-session transition, not a ClubMain widget
+        // transition. Keep one owner for ticket issuance and scene navigation so
+        // server retries, desk refreshes and prefab lifecycles cannot race by
+        // issuing several single-use tickets for the same player.
+        this.nodeDisposers.push(this.client.on('club.waiting_room_ready', body => {
+            const roomId = Number((body as { roomId?: unknown } | null)?.roomId ?? 0);
+            if (roomId > 0) this.queueWaitingRoomReady(roomId);
+        }));
         this.shareController = new ShareInviteController(main.node, new ShareInviteGateway(this.socialApi), error => this.showProductionError(error));
         this.shareController.install();
         this.deepLinkRuntime = new InviteDeepLinkRuntime(main.node, this.socialApi, () => true, () => true, () => undefined);
@@ -290,10 +313,25 @@ export class LobbyScreenController {
             () => this.clearRoomNavigationContext(),
             this.navigateToLobby,
             async (roomId, setId) => (await hallRoomGateway.currentReplayCode(roomId, setId)).code,
+            roomId => hallRoomGateway.historyDetail(roomId),
         );
+        this.subgame = new CommonPdkSwitchCoordinator(
+            this.account, this.role.playerId, this.client, this.forms, main.node,
+            roomId => hallRoomGateway.refreshRoomConnection(roomId),
+            roomId => hallRoomGateway.leave(roomId),
+            () => this.clearRoomNavigationContext(),
+            async (roomId, setId) => (await hallRoomGateway.currentReplayCode(roomId, setId)).code,
+            roomId => hallRoomGateway.historyDetail(roomId),
+        );
+        this.commonPdkRuntimeEntry = new CommonPdkRuntimeEntry(this.commonPdkSceneLauncher, this.subgame);
+        this.gameRuntimeEntries = createProductionGameRuntimeEntryRegistry({
+            pdk: this.commonPdkRuntimeEntry,
+            lobbyNode: main.node,
+            playerId: this.role.playerId,
+        });
         // Start before create-room controls and club restoration are mounted, so
         // the first visible desk click can use the parsed room scene immediately.
-        void this.commonPdkSceneLauncher.prewarmDefaultRoom().catch(() => undefined);
+        void this.commonPdkRuntimeEntry.preload().catch(() => undefined);
         this.playSelector = new PlaySelectorController(
             this.forms, main.node, top, hallRoomGateway,
             packet => this.enterAuthoritativeSubgame(packet as LegacySubgameTicket),
@@ -306,10 +344,7 @@ export class LobbyScreenController {
             const roomId = Number((payload as { roomId?: unknown })?.roomId ?? 0);
             if (!Number.isSafeInteger(roomId) || roomId <= 0) return;
             void hallRoomGateway.prepare(roomId)
-                .then(preparation => {
-                    if (this.commonPdkSceneLauncher) return this.commonPdkSceneLauncher.prewarm(preparation);
-                    this.pendingRoomPrewarms.set(roomId, preparation);
-                })
+                .then(preparation => this.commonPdkSceneLauncher?.prewarm(preparation))
                 .catch(() => undefined);
         });
         this.clubEntry = new LobbyClubEntryController(
@@ -323,17 +358,6 @@ export class LobbyScreenController {
             if (!restored) main.node.active = true;
             else startupMessage = '';
         }
-        this.subgame = new CommonPdkSwitchCoordinator(
-            this.account, this.role.playerId, this.client, this.forms, main.node,
-            roomId => hallRoomGateway.refreshRoomConnection(roomId),
-            roomId => hallRoomGateway.leave(roomId),
-            () => this.clearRoomNavigationContext(),
-            async (roomId, setId) => (await hallRoomGateway.currentReplayCode(roomId, setId)).code,
-        );
-        for (const preparation of this.pendingRoomPrewarms.values()) {
-            void this.commonPdkSceneLauncher.prewarm(preparation).catch(() => undefined);
-        }
-        this.pendingRoomPrewarms.clear();
         this.scjymj = new ScjymjSwitchCoordinator(
             this.account,
             this.client,
@@ -433,16 +457,16 @@ export class LobbyScreenController {
         });
         new ReplayCodeController(this.forms, this.client, value => hallRoomGateway.resolveReplayCode(value), (target) => {
             if (target.type === 'SHORT') void this.forms?.show('pdk/AuthoritativeReplay', { roomId: target.roomId, setId: target.setId });
-            else if (target.gameName === 'pdk') void this.subgame?.enterReplay(target.playBackCode);
-            else this.subgame?.enterExternalReplay(target);
+            else if (target.gameName === 'pdk') void this.commonPdkRuntimeEntry?.enterReplay(target);
+            else this.commonPdkRuntimeEntry?.enterExternalReplay(target);
         }).install();
         this.onNode(main.node, 'legacy-open-replay-code', () => { void this.forms?.show('UIReplayCode'); });
         this.onNode(main.node, 'legacy-club-open-replay', (target) => {
             const replay = target as { gameName?: unknown; playBackCode?: unknown };
             const gameName = String(replay.gameName ?? '').toLowerCase();
             const playBackCode = String(replay.playBackCode ?? '');
-            if (gameName === 'pdk') void this.subgame?.enterReplay(playBackCode);
-            else this.subgame?.enterExternalReplay({ gameName, playBackCode });
+            if (gameName === 'pdk') void this.commonPdkRuntimeEntry?.enterReplay({ gameName, playBackCode });
+            else this.commonPdkRuntimeEntry?.enterExternalReplay({ gameName, playBackCode });
         });
         this.onNode(main.node, 'open-authoritative-subgame', (ticket) => {
             void this.enterAuthoritativeSubgame(ticket as LegacySubgameTicket).catch((error: unknown) => {
@@ -454,7 +478,7 @@ export class LobbyScreenController {
             void this.enterRoom(String(room.roomKey ?? ''), Number(room.gameId ?? 0),
                 Number(room.clubId ?? 0), String(room.gameName ?? ''), Number(room.unionId ?? 0),
                 Number(room.roomId ?? 0), Boolean((room as LegacySubgameTicket & { waitingEntry?: boolean }).waitingEntry),
-                Boolean((room as LegacySubgameTicket & { forceEnter?: boolean }).forceEnter));
+                room as LegacySubgameTicket & Record<string, unknown>);
         });
         this.onNode(main.node, 'legacy-room-operation-failed', (packet) => {
             this.enteringRoom = false;
@@ -502,8 +526,6 @@ export class LobbyScreenController {
         this.formLoading = false;
         if (this.formLoadingTimer) globalThis.clearTimeout(this.formLoadingTimer);
         this.formLoadingTimer = 0;
-        if (this.waitingHandoffRetryTimer) globalThis.clearTimeout(this.waitingHandoffRetryTimer);
-        this.waitingHandoffRetryTimer = 0;
         this.forms.close('UILobbyDownload');
         this.forms.close('UIWaitForm');
         if (!this.startupOptions.skipRoomRecovery) await this.restoreRoomAfterReload(hallRoomGateway);
@@ -515,14 +537,11 @@ export class LobbyScreenController {
     }
 
     private async enterAuthoritativeSubgame(handoff: LegacySubgameTicket): Promise<void> {
-        const playFamily = String(handoff.playFamily ?? '').trim().toLowerCase().replace(/[:_]/g, '-');
         this.rememberRoomRecoveryIntent(handoff);
         try {
-            // Hall 的目录 familyCode 是唯一分流依据。具体 gameId/gameName 只是玩法实例，
-            // 不能用地区玩法简称决定房间实现，否则新增跑得快变体会再次落入旧切换链。
-            if (playFamily === 'poker-pao-de-kuai') {
-                if (!this.commonPdkSceneLauncher) throw new Error('跑得快房间启动器尚未就绪，请重试');
-                await this.commonPdkSceneLauncher.launch(handoff);
+            const runtimeEntry = this.gameRuntimeEntries?.resolveUnique(handoff);
+            if (runtimeEntry) {
+                await runtimeEntry.enter(handoff);
                 return;
             }
             if (!this.subgame) throw new Error('游戏房间启动器尚未就绪，请重试');
@@ -532,20 +551,97 @@ export class LobbyScreenController {
         }
     }
 
-    private async restoreRoomAfterReload(hallRoomGateway: HallRoomGateway): Promise<void> {
-        const intent = this.roomRecovery?.load(this.recoveryAccountId());
-        if (!intent || this.enteringRoom) return;
+    private queueWaitingRoomReady(roomId: number): void {
+        if (!Number.isSafeInteger(roomId) || roomId <= 0) return;
+        if (this.waitingReadyRoomId !== roomId) {
+            this.waitingReadyRoomId = roomId;
+            this.waitingReadyAttempt = 0;
+        }
+        if (this.waitingReadyTimer) return;
+        const run = (): void => {
+            this.waitingReadyTimer = 0;
+            void this.consumeWaitingRoomReady(roomId);
+        };
+        this.waitingReadyTimer = globalThis.setTimeout(run, this.enteringRoom ? 100 : 0);
+    }
+
+    private async consumeWaitingRoomReady(roomId: number): Promise<void> {
+        if (this.disposed || this.waitingReadyRoomId !== roomId) return;
+        if (this.enteringRoom) {
+            this.queueWaitingRoomReady(roomId);
+            return;
+        }
         this.enteringRoom = true;
+        const attempt = ++this.waitingReadyAttempt;
         try {
-            const handoff = await hallRoomGateway.join(intent.roomId);
+            const handoff = await this.hallRoomGateway?.activeRoom();
+            if (!handoff || Number(handoff.roomId) !== roomId) {
+                this.waitingReadyRoomId = 0;
+                return;
+            }
+            if (handoff.waitingFull !== true) throw new Error('权威满员状态尚未可见');
+            console.info('[LobbyWaitingRoomReady] handoff-started', {
+                roomId, playerId: this.role.playerId, attempt,
+            });
             await this.enterAuthoritativeSubgame({
                 ...handoff,
-                roomKey: intent.roomKey ?? handoff.roomId,
-                clubId: intent.clubId,
-                unionId: intent.unionId,
-                fromClub: intent.fromClub,
-                entryOrigin: intent.entryOrigin,
-                returnContext: intent.returnContext,
+                roomKey: roomId,
+                clubId: handoff.clubId,
+                fromClub: true,
+                entryOrigin: 'CLUB',
+                returnContext: { clubId: handoff.clubId },
+            });
+            this.waitingReadyRoomId = 0;
+            this.waitingReadyAttempt = 0;
+        } catch (error: unknown) {
+            console.warn('[LobbyWaitingRoomReady] handoff-retry', {
+                roomId, playerId: this.role.playerId, attempt,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+            if (attempt < 10 && this.waitingReadyRoomId === roomId) {
+                this.waitingReadyTimer = globalThis.setTimeout(() => {
+                    this.waitingReadyTimer = 0;
+                    void this.consumeWaitingRoomReady(roomId);
+                }, Math.min(1000, attempt * 100));
+            } else {
+                this.waitingReadyRoomId = 0;
+            }
+        } finally {
+            this.enteringRoom = false;
+        }
+    }
+
+    private async restoreRoomAfterReload(hallRoomGateway: HallRoomGateway): Promise<void> {
+        const intent = this.roomRecovery?.load(this.recoveryAccountId());
+        if (this.enteringRoom) return;
+        this.enteringRoom = true;
+        try {
+            // Local recovery intent is only navigation context. Hall/Authority own
+            // membership. A cleared cache, reload, or scene reconstruction must not
+            // expose an interactive lobby while the same account is still JOINED in
+            // an authoritative room; that contradictory UI later causes
+            // HALL_ALREADY_IN_ANOTHER_ROOM on the next join.
+            const authoritative = intent ? null : await hallRoomGateway.activeRoom();
+            if (!intent && !authoritative) {
+                this.enteringRoom = false;
+                return;
+            }
+            const roomId = Number(intent?.roomId ?? authoritative?.roomId ?? 0);
+            const handoff = intent ? await hallRoomGateway.join(roomId) : authoritative!;
+            console.info('[RoomMembershipBoundary] restoring-authoritative-room', {
+                roomId,
+                playerId: this.role.playerId,
+                recoverySource: intent ? 'LOCAL_INTENT' : 'HALL_ACTIVE_ROOM',
+                entryOrigin: intent?.entryOrigin ?? 'GAME_LOBBY',
+            });
+            await this.enterAuthoritativeSubgame({
+                ...handoff,
+                roomKey: intent?.roomKey ?? handoff.roomId,
+                clubId: intent?.clubId ?? handoff.clubId,
+                unionId: intent?.unionId,
+                fromClub: intent?.fromClub ?? false,
+                entryOrigin: intent?.entryOrigin ?? 'GAME_LOBBY',
+                returnContext: intent?.returnContext ?? {},
             });
         } catch (error: unknown) {
             this.clearRoomRecoveryIntent();
@@ -644,7 +740,6 @@ export class LobbyScreenController {
             'UILobbyInvite',
             'UILobbyRoomCopy',
             'UILobbyPractice',
-            'UILobbyRecordDetail',
             'UILobbyUserRecord',
             'UIWenJuan',
             'UILobbyGift',
@@ -911,6 +1006,9 @@ export class LobbyScreenController {
         this.disposed = true;
         this.lifecycleEpoch += 1;
         this.tokenRefreshPending = null;
+        if (this.waitingReadyTimer) globalThis.clearTimeout(this.waitingReadyTimer);
+        this.waitingReadyTimer = 0;
+        this.waitingReadyRoomId = 0;
         for (const cleanup of this.formScopedDisposers.values()) {
             for (const dispose of cleanup) dispose();
         }
@@ -943,9 +1041,10 @@ export class LobbyScreenController {
         this.lobbySettings = null;
         this.productionBridge?.destroy();
         this.productionBridge = null;
-        this.subgame?.destroy();
+        this.gameRuntimeEntries?.destroy();
+        this.gameRuntimeEntries = null;
+        this.commonPdkRuntimeEntry = null;
         this.subgame = null;
-        this.commonPdkSceneLauncher?.destroy();
         this.commonPdkSceneLauncher = null;
         this.scjymj?.destroy();
         this.scjymj = null;
@@ -999,26 +1098,11 @@ export class LobbyScreenController {
         unionId = 0,
         existingRoomId = 0,
         waitingEntry = false,
-        forceEnter = false,
+        selectedDesk?: LegacySubgameTicket & Record<string, unknown>,
     ): Promise<void> {
         const epoch = this.lifecycleEpoch;
         if (!roomKey) return;
-        if (this.enteringRoom) {
-            // XQP waiting entry treats the full-room notification as a durable
-            // wake-up. The last player's seat request is often still completing
-            // when that notification arrives, so dropping it here permanently
-            // strands that player in the club. Keep one retry alive until the
-            // current seat/switch transaction releases the entry gate.
-            if (waitingEntry && forceEnter && !this.waitingHandoffRetryTimer) {
-                this.waitingHandoffRetryTimer = globalThis.setTimeout(() => {
-                    this.waitingHandoffRetryTimer = 0;
-                    if (!this.isActiveEpoch(epoch)) return;
-                    void this.enterRoom(roomKey, gameType, clubId, gameName, unionId,
-                        existingRoomId, waitingEntry, forceEnter);
-                }, 100);
-            }
-            return;
-        }
+        if (this.enteringRoom) return;
         const stableGameCode = gameName.trim().toUpperCase();
         const isRegionalPdk = stableGameCode === 'CD201'
             || stableGameCode === 'NJ201' || stableGameCode === 'LS201';
@@ -1040,18 +1124,19 @@ export class LobbyScreenController {
         };
         try {
             if (waitingEntry && this.hallRoomGateway) {
-                const current = await this.client.request<{ roomID?: unknown }>('room.CBaseRoomConfig', {});
-                const currentRoomId = Number(current?.roomID ?? 0);
-                const enterCurrentWaitingRoom = existingRoomId > 0 && currentRoomId === existingRoomId;
-                // A full-room notification belongs to one concrete waiting room.
-                // If it arrives after a desk switch, silently discard it instead
-                // of leaving the new desk and trying to enter the dissolved old one.
-                if (forceEnter && !enterCurrentWaitingRoom) {
-                    this.enteringRoom = false;
-                    return;
-                }
-                if (!forceEnter && !enterCurrentWaitingRoom) {
-                    const changedDesk = currentRoomId > 0;
+                const current = await this.client.request<Record<string, unknown>>('room.CBaseRoomConfig', {});
+                const currentRoomId = Number(current?.roomID ?? current?.roomId ?? 0);
+                const sameSelectedDesk = currentRoomId > 0 && this.sameWaitingDesk(current, selectedDesk);
+                const enterCurrentWaitingRoom = currentRoomId > 0
+                    && (currentRoomId === existingRoomId || sameSelectedDesk);
+                if (enterCurrentWaitingRoom && existingRoomId <= 0) existingRoomId = currentRoomId;
+                console.info('[ClubWaitingDesk] tap-routing', {
+                    clubId, playerId: this.role.playerId,
+                    currentRoomId, selectedRoomId: existingRoomId,
+                    sameSelectedDesk, action: enterCurrentWaitingRoom ? 'ENTER' : currentRoomId > 0 ? 'SWITCH' : 'SEAT',
+                });
+                if (!enterCurrentWaitingRoom) {
+                    const changedDesk = currentRoomId > 0 && !sameSelectedDesk;
                     if (changedDesk) {
                         await this.hallRoomGateway.leaveWaiting(currentRoomId);
                     }
@@ -1069,13 +1154,13 @@ export class LobbyScreenController {
                         await this.forms?.show('UIMessage_Drift', null, null, '换桌成功');
                     }
                     // Waiting entry keeps the player in the club after seating.
-                    // Show the dedicated current-seat panel immediately; direct
-                    // entry never reaches this branch and continues to the game.
+                    // RoomDetails now belongs to ClubMain, so ask its controller to
+                    // reveal the embedded node instead of loading a second prefab.
                     try {
                         const waitingRoom = await this.client.request<Record<string, unknown>>(
                             'room.CBaseRoomConfig', {});
                         if (Number(waitingRoom.roomID ?? waitingRoom.roomId ?? waitingRoomId) > 0) {
-                            await this.forms?.show('ui/club/UIClubInRoom', waitingRoom);
+                            this.mainNode.emit('legacy-club-show-current-room', waitingRoom);
                         }
                     } catch {
                         // The seat has already been committed. A transient detail
@@ -1100,9 +1185,9 @@ export class LobbyScreenController {
                 // full-room transition and can leave both launchers behind the
                 // navigation cover. Resume only the committed membership and issue
                 // an independent one-time game ticket for each player.
-                const handoff = waitingEntry && forceEnter
-                    ? await this.hallRoomGateway.resumeWaiting(roomId)
-                    : await this.hallRoomGateway.join(roomId);
+                const handoff = existingRoomId <= 0 && clubId > 0
+                        ? await this.hallRoomGateway.resumeCommittedClubEntry(roomId)
+                        : await this.hallRoomGateway.join(roomId);
                 await this.enterAuthoritativeSubgame({
                     ...handoff,
                     roomKey: roomId,
@@ -1125,6 +1210,20 @@ export class LobbyScreenController {
         }
         if (!this.isActiveEpoch(epoch)) return;
         this.enteringRoom = false;
+    }
+
+    /** A template desk and its instantiated waiting room are the same clickable desk. */
+    private sameWaitingDesk(current: Record<string, unknown>,
+        selected?: LegacySubgameTicket & Record<string, unknown>): boolean {
+        if (!selected) return false;
+        const currentTag = Number(current.tagId ?? current.configId ?? 0);
+        const selectedTag = Number(selected.tagId ?? selected.configId ?? 0);
+        if (currentTag > 0 && selectedTag > 0) return currentTag === selectedTag;
+        const currentTemplate = String(current.templateCode ?? current.clubTemplateCode ?? '').trim();
+        const selectedTemplate = String(selected.templateCode ?? selected.clubTemplateCode ?? '').trim();
+        if (currentTemplate && selectedTemplate) return currentTemplate === selectedTemplate;
+        return Number(current.gameId ?? 0) === Number(selected.gameId ?? 0)
+            && String(current.roomName ?? '').trim() === String(selected.roomName ?? '').trim();
     }
 
     private roomEntryMessage(reason: unknown): string {

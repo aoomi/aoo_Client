@@ -31,6 +31,7 @@ const categoryByGameId = new Map(CATALOG_FAMILY_BINDINGS.map((binding) => {
     return [binding.code, category] as const;
 }).filter((entry): entry is readonly [string, SettlementCardCategory] => entry[1] !== null));
 const familyByGameId = new Map(CATALOG_FAMILY_BINDINGS.map((binding) => [binding.code, binding.family] as const));
+const pdkGameCodes = new Set(['cd201', 'nj201', 'ls201']);
 const pokerFamilyAlias: Readonly<Record<string, string>> = {
     'pao-de-kuai': 'pdk', 'compare-hand': 'zjh', betting: 'nn', landlord: 'ddz',
     climbing: 'climbing', '510k': '510k', 'generic-card-round': 'generic_card_round', 'trick-taking': 'trick_taking',
@@ -66,8 +67,8 @@ export class SettlementTemplateResolver {
 
     public resolve(request: SettlementTemplateRequest): SettlementTemplateRoute {
         const gameId = request.gameId.trim().toLowerCase();
-        const family = this.canonicalFamily(request.playFamily?.trim() || familyByGameId.get(gameId) || '');
-        const category = categoryByGameId.get(gameId) ?? categoryForFamily(family);
+        const family = this.canonicalFamily(request.playFamily?.trim() || familyByGameId.get(gameId.toUpperCase()) || '');
+        const category = categoryByGameId.get(gameId.toUpperCase()) ?? categoryForFamily(family);
         if (!category) throw new Error(`未配置结算牌类: ${request.gameId}`);
         const kind = kindFor(request.settlementType);
         if (category === 'Poker' && kind === 'SmallSettle') return this.resolvePokerSmall(request, family);
@@ -103,26 +104,24 @@ export class SettlementTemplateResolver {
     private resolvePokerSmall(request: SettlementTemplateRequest, family: string): SettlementTemplateRoute {
         const key = family.startsWith('poker:') ? family.slice('poker:'.length) : family;
         const alias = pokerFamilyAlias[key];
-        if (!alias) throw new Error(`扑克小结算缺少可识别玩法族: ${family || request.gameId}`);
+        const isPdk = alias === 'pdk' || pdkGameCodes.has(request.gameId.trim().toLowerCase());
+        if (!alias && !isPdk) throw new Error(`扑克小结算缺少可识别玩法族: ${family || request.gameId}`);
         const kind: SettlementKind = 'SmallSettle';
         const defaultTemplateId = 'SmallSettlement';
         const bundleName = bundleFor('Poker', kind);
-        if (alias === 'pdk') {
+        if (isPdk) {
             const configured = request.configuredTemplateId?.trim() ?? '';
-            const isDefault = configured.length === 0 || configured === defaultTemplateId;
-            if (isDefault) {
-                return {
-                    category: 'Poker', kind, bundleName: 'paodekuai-common',
-                    templateId: defaultTemplateId,
-                    defaultTemplateId, isDefault: true,
-                    assetPath: 'Prefab/SmallSettlement',
-                };
+            // PDK owns one canonical small-settlement prefab. Historical numeric
+            // template ids belong to the old shared catalog and are not native
+            // paths inside the PDK bundle.
+            if (configured.length > 0 && configured !== defaultTemplateId) {
+                this.warn(request, 'Poker', kind, configured, '跑得快固定使用公共小结算，忽略旧模板标识', 'paodekuai-common');
             }
             return {
-                category: 'Poker', kind, bundleName,
-                templateId: configured,
-                defaultTemplateId, isDefault: false,
-                assetPath: pokerAssetPath(kind, configured),
+                category: 'Poker', kind, bundleName: 'paodekuai-common',
+                templateId: defaultTemplateId,
+                defaultTemplateId, isDefault: true,
+                assetPath: 'Prefab/SmallSettlement',
             };
         }
         const configured = request.configuredTemplateId?.trim() ?? '';
@@ -140,20 +139,24 @@ export class SettlementTemplateResolver {
     private resolvePokerBig(request: SettlementTemplateRequest, family: string): SettlementTemplateRoute {
         const key = family.startsWith('poker:') ? family.slice('poker:'.length) : family;
         const alias = pokerFamilyAlias[key];
-        if (!alias) throw new Error(`扑克大结算缺少可识别玩法族: ${family || request.gameId}`);
+        const isPdk = alias === 'pdk' || pdkGameCodes.has(request.gameId.trim().toLowerCase());
+        if (!alias && !isPdk) throw new Error(`扑克大结算缺少可识别玩法族: ${family || request.gameId}`);
         const kind: SettlementKind = 'BigSettle';
         const defaultTemplateId = 'BigSettlement';
         const bundleName = bundleFor('Poker', kind);
-        if (alias === 'pdk') {
+        if (isPdk) {
             const configured = request.configuredTemplateId?.trim() ?? '';
-            const isDefault = configured.length === 0 || configured === defaultTemplateId || configured === 'FinalSettlement';
-            if (configured === 'FinalSettlement') this.warn(request, 'Poker', kind, configured, '旧跑得快大结算别名已迁移到扑克公共默认预制体', bundleName);
+            // PDK's registry contract points every regional variant at the one
+            // Poker public final-settlement prefab. Never turn a legacy catalog
+            // id (for example BigSettleTpl_110) into a native form path.
+            if (configured.length > 0 && configured !== defaultTemplateId) {
+                this.warn(request, 'Poker', kind, configured, '跑得快固定使用扑克公共大结算，忽略旧模板标识', bundleName);
+            }
             return {
                 category: 'Poker', kind, bundleName,
-                templateId: isDefault ? defaultTemplateId : configured,
-                defaultTemplateId, isDefault,
-                assetPath: isDefault ? 'Prefab/BigSettlement_0'
-                    : pokerAssetPath(kind, configured),
+                templateId: defaultTemplateId,
+                defaultTemplateId, isDefault: true,
+                assetPath: 'Prefab/BigSettlement_0',
             };
         }
         const configured = request.configuredTemplateId?.trim() ?? '';

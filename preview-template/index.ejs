@@ -1,3 +1,10 @@
+<%
+    const aooPreviewVersion = 'aoo-preview-' + Date.now();
+    const versionPreviewMarkup = markup => String(markup).replace(
+        /(<script\b[^>]*\bsrc=["'])([^"']+)(["'])/gi,
+        (all, prefix, source, suffix) => `${prefix}${source}${source.includes('?') ? '&' : '?'}aooPreview=${aooPreviewVersion}${suffix}`,
+    );
+%>
 <html>
     <head>
         <link rel="icon" href="./favicon.ico" />
@@ -19,9 +26,26 @@
 
         <link rel="stylesheet" type="text/css" href="./index.css" />
         <link rel="preload" as="image" href="assets/Startup/native/f6/f60d7021-4ffc-4350-bc4e-c2b8afc4dd04.png" fetchpriority="high" />
+        <script>
+            (() => {
+                const previewPorts = new Set(['7456', '7457', '7458', '7459', '7460', '5173', '5188']);
+                if (location.protocol !== 'http:' || !previewPorts.has(location.port)) return;
+                const aooPreviewVersion = '<%= aooPreviewVersion %>';
+                window.__aoo_RUNTIME_CONFIG__ = {
+                    ...(window.__aoo_RUNTIME_CONFIG__ || {}),
+                    environment: 'test',
+                    apiBaseUrl: `http://${location.hostname}:8080/`,
+                    avatarBaseUrl: `http://${location.hostname}:8765/`,
+                };
+                Object.defineProperty(window, '__aoo_CREATOR_LAN_PREVIEW__', {
+                    value: true, configurable: false, enumerable: false, writable: false,
+                });
+                window.__aoo_PREVIEW_VERSION__ = aooPreviewVersion;
+            })();
+        </script>
         <style>
             html, body, #GameDiv, #Cocos3dGameContainer, #GameCanvas { background:#F2F1ED !important; }
-            #splash, .progress-bar { display:none !important; }
+            #splash, .progress-bar { display: none !important; }
             #aoo-startup-cover { position:fixed; inset:0; z-index:2147483647; display:grid; place-items:center; background:#F2F1ED url('assets/Startup/native/f6/f60d7021-4ffc-4350-bc4e-c2b8afc4dd04.png') center/cover no-repeat; pointer-events:auto; }
             #aoo-startup-cover[hidden] { display:none !important; }
             .aoo-startup-card { position:fixed; left:50%; bottom:30px; width:min(1200px,calc(100vw - 48px)); transform:translateX(-50%); text-align:center; }
@@ -29,6 +53,7 @@
             .aoo-startup-progress { height:6px; margin:12px 0 8px; overflow:hidden; border-radius:999px; background:rgba(0,0,0,.38); box-shadow:inset 0 0 0 1px rgba(0,0,0,.22); }
             .aoo-startup-progress>i { display:block; width:100%; height:100%; background:#e8b341; transform:scaleX(0); transform-origin:left; animation:aoo-startup-first-motion 1.5s cubic-bezier(.2,.7,.3,1) forwards; will-change:transform; }
             @keyframes aoo-startup-first-motion { to { transform:scaleX(.2); } }
+            @media (prefers-reduced-motion: reduce) { .aoo-startup-progress>i { animation:none; transform:scaleX(.2); } }
             .aoo-startup-retry { position:absolute; top:calc(100% + 36px); left:50%; transform:translateX(-50%); }
         </style>
     </head>
@@ -43,7 +68,7 @@
                     <div id="Cocos3dGameContainer">
                         <canvas id="GameCanvas" tabindex="-1" style="background-color: '';"></canvas>
                     </div>
-                    <div id="splash">
+                    <div id="splash" aria-hidden="true">
                         <div class="progress-bar stripes"><span></span></div>
                     </div>
                     <div id="bulletin">
@@ -57,6 +82,6 @@
                 </div>
             </div>
         </div>
-        <%- include(cocosTemplate, {}) %>
+        <%- versionPreviewMarkup(include(cocosTemplate, {})) %>
     </body>
 </html>

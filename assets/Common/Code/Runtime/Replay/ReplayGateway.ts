@@ -2,8 +2,8 @@ import { ProductionApiClient } from '../Activity/ProductionApiClient';
 export class ReplayGateway {
     private static readonly pendingChunks = new Map<string, Promise<unknown>>();
     public constructor(private readonly api: ProductionApiClient) {}
-    public history(beforeRoomId = 0, limit = 20, startAt = 0, endAt = 0): Promise<unknown> {
-        return this.api.get('/api/v2/hall/history', { beforeRoomId, limit, startAt, endAt });
+    public history(beforeRoomId = 0, limit = 20, startAt = 0, endAt = 0, clubId = 0): Promise<unknown> {
+        return this.api.get('/api/v2/hall/history', { beforeRoomId, limit, startAt, endAt, clubId });
     }
     public room(roomId: string): Promise<unknown> { return this.api.get(`/api/v2/hall/history/${encodeURIComponent(roomId)}`); }
     public currentReplayCode(roomId: string, setId: string): Promise<unknown> {

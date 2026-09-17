@@ -1,6 +1,7 @@
 import {
     AssetManager,
     Button,
+    Color,
     EditBox,
     EventTouch,
     Label,
@@ -11,11 +12,13 @@ import {
     Sprite,
     SpriteFrame,
     Toggle,
+    Tween,
     UITransform,
     Widget,
     assetManager,
     instantiate,
     sys,
+    tween,
 } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import {
@@ -26,7 +29,6 @@ import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/L
 import { NumpadService } from '../../../Common/Code/Runtime/ui/NumpadService';
 import type { NumpadHandle } from '../../../Common/Code/Runtime/ui/NumpadService';
 import { LegacyClubRecordListController } from './LegacyClubRecordListController';
-import { LegacyRecordAllResultController } from './LegacyRecordAllResultController';
 import type { ClubTopBarPort } from './ClubTopBarPort';
 import { LegacyClubMemberController } from './LegacyClubMemberController';
 import { LegacyClubMessageController } from './LegacyClubMessageController';
@@ -45,13 +47,18 @@ import { adaptClubMainLandscape, adaptClubModalLandscape } from './LegacyClubLan
 import { ClubBoxController } from './ClubBox/ClubBoxController';
 import type { ClubBoxOperation } from './ClubBox/ClubBoxController';
 import { ClubBoxGateway } from './ClubBox/ClubBoxGateway';
-import { PlayerAvatarService } from '../../../Common/Code/UI/PlayerAvatarService';
+import { CommonHeadController } from '../../../Common/Code/UI/CommonHeadController';
 import { AssetLoader } from '../../../Common/Code/UI/Infrastructure';
 import { COMMON_ASSET_BUNDLE, COMMON_HEAD_ASSET } from '../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
 import { UnifiedScroll, UnifiedScrollDirection } from '../../../Common/Code/UI/UnifiedScroll';
 
 const CLUB_DESK_PREFAB = { bundle: 'club', path: 'Prefab/ClubDesk' } as const;
 const COMMON_HEAD_PREFAB = { bundle: COMMON_ASSET_BUNDLE, path: COMMON_HEAD_ASSET } as const;
+
+// This cache intentionally lives only for the current JavaScript process. Reopening
+// ClubMain restores the player's last explicit game tab, while a page refresh or
+// process restart naturally returns to “全部” without leaving persistent storage.
+const CLUB_GAME_TAB_SESSION_CACHE = new Map<string, string>();
 
 interface ClubSkinSpriteSpec {
     label: string;
@@ -226,8 +233,12 @@ export class LegacyClubMainController {
     private activePath = '';
     private club: LegacyClubDetail | null = null;
     private rooms: ClubRoom[] = [];
+    private selectedGameFilter = '';
     private selectedRoomFilter: ClubRoom | null = null;
-    private roomForm: LegacyForm | null = null;
+    private favoriteTabsOpen = false;
+    private favoriteListClosedX = 0;
+    private roomTabsClosedX = 0;
+    private roomDetails: Node | null = null;
     private currentRoom: ClubRoom | null = null;
     private skinForm: LegacyForm | null = null;
     private selectedBackground = -1;
@@ -237,7 +248,7 @@ export class LegacyClubMainController {
     private inviteEpoch = 0;
     private quickJoinEpoch = 0;
     private switchPending = false;
-    private hideOpenedRooms = true;
+    private hideFullRooms = true;
     private switchingClubId = 0;
     private clubBoxController: ClubBoxController | null = null;
     private clubBoxNumpad: NumpadHandle | null = null;
@@ -252,6 +263,7 @@ export class LegacyClubMainController {
     private commonHeadPrefabLoading: Promise<Prefab | null> | null = null;
     private assetLoadGeneration = 0;
     private roomRenderEpoch = 0;
+    private prewarmedClubId = 0;
     private templateRestoreGeneration = 0;
     private visualEpoch = 0;
     private memberController: LegacyClubMemberController | null = null;
@@ -265,8 +277,6 @@ export class LegacyClubMainController {
     private clubCentRefreshPending = false;
     private activeRoomRefreshTimer: ReturnType<typeof setInterval> | null = null;
     private activeRoomRefreshPending = false;
-    private waitingHandoffRoomId = 0;
-    private waitingHandoffRetryTimer: ReturnType<typeof setTimeout> | null = null;
     private waitingBackPending = false;
 
     public constructor(
@@ -291,36 +301,18 @@ export class LegacyClubMainController {
         this.managementController.install();
         this.clubCentController = new LegacyClubCentController(this.forms, this.client);
         this.clubCentController.install();
-        this.promotionController = new LegacyClubPromotionController(this.forms, this.client, this.playerId);
+        this.promotionController = new LegacyClubPromotionController(this.forms, this.client, this.playerId, this.mainNode);
         this.promotionController.install();
         this.roomManagementController = new LegacyClubRoomManagementController(this.forms, this.client);
         this.roomManagementController.install();
         new LegacyClubRecordListController(this.forms, this.client, this.playerId, this.mainNode).install();
-        new LegacyClubRecordUserDayController(this.forms, this.client, this.playerId).install();
+        new LegacyClubRecordUserDayController(this.forms, this.client, this.playerId, this.mainNode).install();
         new LegacyClubPlayerRecordController(this.forms, this.client).install();
-        new LegacyClubRecordUserController(this.forms, this.client).install();
+        new LegacyClubRecordUserController(this.forms, this.client, this.mainNode).install();
         new LegacyClubReportController(this.forms, this.client).install();
         new LegacyUnionClubReportController(this.forms, this.client).install();
         new LegacyUnionManagerController(this.forms, this.client).install();
-        new LegacyRecordAllResultController(
-            this.forms, this.client, this.mainNode, this.playerName, this.top,
-        ).install();
-        if (this.activeForm && this.club) {
-            const playName = this.findMainNode(this.activeForm, 'Lb_PlayName');
-            if (playName) this.setDescendantLabel(playName, 'Lb_PlayName', '全部玩法');
-        }
         populateAuthoritativeGameNames(this.gameNames);
-        this.forms.register('ui/club/UIClubInRoom', {
-            zOrder: 8,
-            lifecycle: {
-                onCreate: (form) => { adaptClubModalLandscape(form.node); this.bindCurrentRoom(form); },
-                onShow: (form, room) => { adaptClubModalLandscape(form.node); this.showCurrentRoom(form, room as ClubRoom); },
-                onClose: () => {
-                    this.roomForm = null;
-                    this.currentRoom = null;
-                },
-            },
-        });
         this.forms.register('ui/club/UIQuickJoinRoom', {
             zOrder: 9,
             lifecycle: {
@@ -373,11 +365,23 @@ export class LegacyClubMainController {
         this.disposers.push(this.client.on('club.waiting_room_ready', (body) => {
             const ready = body && typeof body === 'object' ? body as Record<string, unknown> : {};
             const roomId = Number(ready.roomId ?? 0);
-            if (!this.activeForm || roomId <= 0 || this.waitingHandoffRoomId === roomId) return;
-            // The targeted server push is the primary synchronization path. Re-read
-            // current membership so a stale or duplicated push can never move a player.
-            void this.enterCurrentWaitingRoomWhenFull(roomId);
+            if (!this.activeForm || roomId <= 0) return;
+            // LobbyScreenController owns the single ticket/navigation transaction.
+            // ClubMain only refreshes its presentation and must never issue a second
+            // handoff for the same single-use ticket boundary.
+            console.info('[ClubWaitingDesk] ready-observed', {
+                clubId: this.clubId(), playerId: this.playerId, roomId,
+            });
         }));
+        const showCurrentRoomDetails = (body: unknown): void => {
+            if (!this.activeForm || !body || typeof body !== 'object') return;
+            const room = body as ClubRoom;
+            this.mergeCurrentWaitingRoom(room);
+            this.openCurrentRoomDetails(room);
+        };
+        this.mainNode.on('legacy-club-show-current-room', showCurrentRoomDetails);
+        this.disposers.push(() => this.mainNode.isValid
+            && this.mainNode.off('legacy-club-show-current-room', showCurrentRoomDetails));
         const refreshRooms = (body: unknown): void => this.replaceRooms(body);
         this.mainNode.on('legacy-club-rooms-refreshed', refreshRooms);
         this.disposers.push(() => {
@@ -396,7 +400,6 @@ export class LegacyClubMainController {
         this.switchingClubId = 0;
         this.stopClubCentRefresh();
         this.stopActiveRoomRefresh();
-        this.clearWaitingHandoffRetry();
         this.closeClubBox();
         this.roomDetailPending.clear();
         this.memberController?.dispose();
@@ -421,7 +424,7 @@ export class LegacyClubMainController {
         this.activeForm = null;
         this.club = null;
         this.rooms = [];
-        this.roomForm = null;
+        this.roomDetails = null;
         this.currentRoom = null;
         this.clubDeskPrefab = null;
         this.clubDeskPrefabLoading = null;
@@ -440,6 +443,11 @@ export class LegacyClubMainController {
         const leftPanelButton = node('ClubSwitcher')?.getComponent(Button);
         if (leftPanelButton) leftPanelButton.enabled = false;
         this.bindClubBack(node('Btn_Back'), path);
+        const roomDetails = node('RoomDetails');
+        if (roomDetails) {
+            roomDetails.active = false;
+            this.bindCurrentRoom(roomDetails);
+        }
         const show = (nodeName: string, formPath: string, ...args: unknown[]) => {
             this.onClick(node(nodeName), () => { void this.forms.show(formPath, ...args); });
         };
@@ -504,9 +512,24 @@ export class LegacyClubMainController {
         this.onClick(node('Btn_ShowPlayFilter'), () => this.togglePanel(form, 'PlayFilter'));
         const hideRoomToggle = node('HideRoomToggle')?.getComponent(Toggle) ?? null;
         if (hideRoomToggle) {
-            this.hideOpenedRooms = hideRoomToggle.isChecked;
+            const noSelect = hideRoomToggle.node.getChildByName('NoSelect');
+            const checkmark = hideRoomToggle.node.getChildByName('YesSelect');
+            const checkmarkSprite = checkmark?.getComponent(Sprite) ?? null;
+            if (checkmarkSprite) hideRoomToggle.checkMark = checkmarkSprite;
+            // This filter is opt-in on every ClubMain opening. Keeping the reset here
+            // also protects the authored default when an older prefab cache is loaded.
+            hideRoomToggle.isChecked = false;
+            this.hideFullRooms = hideRoomToggle.isChecked;
+            if (noSelect) noSelect.active = !this.hideFullRooms;
+            if (checkmark) checkmark.active = this.hideFullRooms;
             const change = () => {
-                this.hideOpenedRooms = hideRoomToggle.isChecked;
+                this.hideFullRooms = hideRoomToggle.isChecked;
+                if (noSelect) noSelect.active = !this.hideFullRooms;
+                if (checkmark) checkmark.active = this.hideFullRooms;
+                console.info('[ClubRoomFilter] hide-opened-change', {
+                    clubId: this.clubId(), checked: this.hideFullRooms,
+                    fullRoomCount: this.rooms.filter((room) => this.isFullRoom(room)).length,
+                });
                 this.renderRooms();
             };
             hideRoomToggle.node.on(Toggle.EventType.TOGGLE, change);
@@ -533,11 +556,32 @@ export class LegacyClubMainController {
             const checkmark = node('Btn_AllPlay')?.getChildByName('Checkmark') ?? null;
             if (checkmark) checkmark.active = !checkmark.active;
         });
-        this.onClick(node('Btn_All'), () => {
-            this.selectedRoomFilter = null;
-            this.markSelected(node('Btn_All'));
-            this.renderRooms();
-        });
+        const tabsButton = node('Btn_Tabs');
+        const favoriteList = node('FavoriteList');
+        const roomTabs = node('RoomTabs');
+        const gameTabs = node('GameTabs');
+        const gameTabsButton = gameTabs?.getComponent(Button) ?? null;
+        if (gameTabsButton) gameTabsButton.enabled = false;
+        this.favoriteTabsOpen = false;
+        if (favoriteList) {
+            this.favoriteListClosedX = favoriteList.position.x;
+            favoriteList.setPosition(this.favoriteListClosedX, favoriteList.position.y, favoriteList.position.z);
+        }
+        if (roomTabs) {
+            this.roomTabsClosedX = roomTabs.position.x;
+            roomTabs.setPosition(this.roomTabsClosedX, roomTabs.position.y, roomTabs.position.z);
+        }
+        this.onClick(tabsButton, () => this.setFavoriteTabsOpen(!this.favoriteTabsOpen));
+        const closeFavoriteTabs = (event: EventTouch): void => {
+            // GameTabs owns FavoriteList, RoomTabs and Btn_Tabs. Interaction anywhere
+            // inside that complete control remains open; only a true outside tap
+            // dismisses the drawer. Btn_Tabs still toggles through its own listener.
+            if (!this.favoriteTabsOpen || this.nodeContains(gameTabs, event.target as Node)) return;
+            this.setFavoriteTabsOpen(false);
+        };
+        form.node.on(Node.EventType.TOUCH_END, closeFavoriteTabs, this, true);
+        this.disposers.push(() => form.node.isValid
+            && form.node.off(Node.EventType.TOUCH_END, closeFavoriteTabs, this, true));
         this.onClick(node('Btn_CloseTable'), () => this.active(form, 'TableList', false));
         this.onClick(node('btn_room_last'), () => this.scrollRooms(-1));
         this.onClick(node('btn_room_next'), () => this.scrollRooms(1));
@@ -549,7 +593,6 @@ export class LegacyClubMainController {
             'ui/club/UIUnionNone',
             'ui/club/ClubFind',
             'ui/club/UIClubStore',
-            'UILobbyRecordResult',
             'ui/club_2/Skin2UnionRankZhongZhi',
             'ui/club/UIClubRoomJoin', 'ui/club/UIClubRoomPassword',
             'ui/club_2/Skin2UnionManagerZhongZhi',
@@ -1040,6 +1083,12 @@ export class LegacyClubMainController {
             : Number(room.occupiedCount ?? 0);
     }
 
+    private isFullRoom(room: ClubRoom): boolean {
+        const playerNum = Number(room.playerNum ?? 0);
+        return Number(room.roomId ?? room.roomID ?? 0) > 0
+            && playerNum > 0 && this.occupiedRoomSeats(room) >= playerNum;
+    }
+
     private sameRoomTemplate(room: ClubRoom, template: ClubRoom): boolean {
         const roomTag = Number(room.tagId ?? room.configId ?? 0);
         const templateTag = Number(template.tagId ?? template.configId ?? 0);
@@ -1294,7 +1343,7 @@ export class LegacyClubMainController {
                 if (index >= 0) this.rooms[index] = { ...saved[0], ...this.rooms[index] };
                 else this.rooms.push(saved[0]);
             }
-            this.renderRoomFilter();
+            this.renderRoomTabs();
             this.renderRooms();
             return true;
         } catch (error: unknown) {
@@ -1552,8 +1601,6 @@ export class LegacyClubMainController {
             String(this.club.name ?? ''));
         this.setDescendantLabel(form.node, this.findMainNode(form, 'Lb_ClubId') ? 'Lb_ClubId' : 'clubId',
             `ID:${this.club.clubsign ?? ''}`);
-        this.setDescendantLabel(form.node, this.findMainNode(form, 'Lb_PlayName') ? 'Lb_PlayName' : 'lb_cityName',
-            '全部玩法');
         const userInfo = this.findMainNode(form, 'Player');
         if (userInfo) {
             this.setDescendantLabel(userInfo, userInfo.getChildByName('Lb_Name') ? 'Lb_Name' : 'lb_name', this.playerName);
@@ -1565,8 +1612,13 @@ export class LegacyClubMainController {
         this.startActiveRoomRefresh();
         this.applyTable(this.selectedTable);
         this.refreshQuickJoinLabel();
+        this.selectedGameFilter = this.cachedGameTabSelection();
         this.selectedRoomFilter = null;
-        this.renderRoomFilter();
+        console.info('[ClubRoomTabs] restore-game-selection', {
+            clubId: this.clubId(), playerId: this.playerId,
+            selectedGame: this.selectedGameFilter || 'all',
+        });
+        this.renderRoomTabs();
         this.renderRooms();
         // The entry context is only the currently instantiated room projection. In
         // 2.2.2 Event_InitClubRoom always followed it with InitNullTable, which reads
@@ -1579,7 +1631,7 @@ export class LegacyClubMainController {
     private openClubRecord(): void {
         // Records owns its loading lifecycle; route through the module controller
         // instead of mounting its prefab directly from Club.
-        this.mainNode.emit('legacy-open-records', { source: 'CLUB' });
+        this.mainNode.emit('legacy-open-records', { source: 'CLUB', clubId: this.clubId() });
     }
 
     private applyClubModeVisibility(form: LegacyForm): void {
@@ -1587,7 +1639,8 @@ export class LegacyClubMainController {
         const minister = this.clubMinister();
         const isCaptain = this.isCaptain();
         const canManageRooms = this.canManageRooms();
-        this.active(form, 'RoomFilter', isUnion);
+        this.active(form, 'RoomFilter', false);
+        this.active(form, 'GameTabs', true);
         this.active(form, 'TableList', false);
         this.active(form, 'Event', isUnion);
         this.active(form, 'Btn_Record', !isUnion);
@@ -1669,6 +1722,23 @@ export class LegacyClubMainController {
         return 0;
     }
 
+    private gameTabSessionKey(): string {
+        return `${this.playerId}:${this.clubId()}`;
+    }
+
+    private cachedGameTabSelection(): string {
+        return CLUB_GAME_TAB_SESSION_CACHE.get(this.gameTabSessionKey()) ?? '';
+    }
+
+    private saveGameTabSelection(gameCode: string): void {
+        this.selectedGameFilter = gameCode;
+        CLUB_GAME_TAB_SESSION_CACHE.set(this.gameTabSessionKey(), gameCode);
+        console.info('[ClubRoomTabs] cache-game-selection', {
+            clubId: this.clubId(), playerId: this.playerId,
+            selectedGame: gameCode || 'all',
+        });
+    }
+
     private currentClubContext(): LegacyClubDetail & { id: number; clubId: number; unionId: number } {
         const clubId = this.clubId();
         return { ...(this.club ?? {}), id: clubId, clubId, unionId: Number(this.club?.unionId ?? 0) };
@@ -1682,6 +1752,7 @@ export class LegacyClubMainController {
         this.clearSwitchListeners();
         this.stopClubCentRefresh();
         this.stopActiveRoomRefresh();
+        this.closeCurrentRoomDetails();
         this.activeForm = null;
         this.activePath = '';
         this.club = null;
@@ -1750,7 +1821,6 @@ export class LegacyClubMainController {
             // Waiting clients must use their own authoritative room membership as
             // the handoff source. Relying only on the shared desk snapshot made the
             // last joiner enter while an earlier waiter could remain in the lobby.
-            await this.enterCurrentWaitingRoomWhenFull();
             if (!this.activeForm || this.clubId() !== clubId) return;
             const unionId = Number(this.club?.unionId ?? 0);
             const packet = unionId > 0 ? 'union.CUnionGetAllRoomMin' : 'club.CClubGetAllRoomMin';
@@ -1760,10 +1830,6 @@ export class LegacyClubMainController {
             const next = this.mergeLobbyRooms(templates, this.activeRoomArray(result));
             if (this.roomSnapshotKey(next) === this.roomSnapshotKey(this.rooms)) return;
             this.rooms = next;
-            // 满员是房间状态迁移，不应依赖桌子 Prefab 的异步加载/渲染完成。
-            // 先按权威座位快照触发当前玩家进房，再刷新桌面表现，保证所有客户端
-            // 在最后一个座位提交后同一轮轮询内进入房间。
-            this.enterFullWaitingRoom();
             this.renderRooms();
         } catch {
             // Pushes remain the primary path. Preserve the last confirmed desk list
@@ -1771,43 +1837,6 @@ export class LegacyClubMainController {
         } finally {
             this.activeRoomRefreshPending = false;
         }
-    }
-
-    private async enterCurrentWaitingRoomWhenFull(expectedRoomId = 0): Promise<void> {
-        let current: ClubRoom & { occupiedCount?: number; waitingFull?: boolean };
-        try {
-            current = await this.client.requestLobby<ClubRoom & {
-                occupiedCount?: number;
-                waitingFull?: boolean;
-            }>('room.CBaseRoomConfig', {});
-        } catch {
-            // A transient Hall reconnect must not prevent the independent desk-list
-            // refresh below; the next one-second tick retries this authoritative check.
-            return;
-        }
-        const roomId = Number(current.roomId ?? current.roomID ?? 0);
-        // A ready event can arrive after the player has switched desks. Pin push
-        // handling to its source room so the stale event cannot enter/dissolve the
-        // player's newly selected waiting room.
-        if (expectedRoomId > 0 && roomId !== expectedRoomId) return;
-        const playerNum = Number(current.playerNum ?? 0);
-        const occupiedCount = Number(current.occupiedCount ?? 0);
-        const waitingFull = current.waitingFull === true || String(current.waitingFull) === 'true'
-            || (playerNum > 0 && occupiedCount >= playerNum);
-        if (roomId <= 0 || !this.isWaitingEntry(current)
-            || !waitingFull || this.waitingHandoffRoomId === roomId) return;
-        this.waitingHandoffRoomId = roomId;
-        this.mainNode.emit('legacy-club-join-room', {
-            ...current,
-            roomId,
-            roomKey: roomId,
-            gameName: this.roomGameCode(current) || current.gameName,
-            clubId: current.clubId ?? this.club?.id,
-            unionId: this.club?.unionId,
-            waitingEntry: true,
-            forceEnter: true,
-        });
-        this.armWaitingHandoffRetry(roomId);
     }
 
     private roomSnapshotKey(rooms: ClubRoom[]): string {
@@ -1830,11 +1859,13 @@ export class LegacyClubMainController {
     private async checkCurrentRoom(): Promise<void> {
         try {
             const room = await this.client.requestLobby<ClubRoom>('room.CBaseRoomConfig', {});
-            // UIClubInRoom is the waiting-entry seat panel. Direct-entry games
-            // navigate straight to their game scene and must never open this form.
+            // RoomDetails is the waiting-entry seat panel embedded in ClubMain.
+            // Direct-entry games navigate straight to their game scene and must
+            // never reveal this node.
             if (Number(room.roomID ?? room.roomId ?? 0) > 0
                 && this.isWaitingEntry(room) && this.activeForm) {
-                await this.forms.show('ui/club/UIClubInRoom', room);
+                this.mergeCurrentWaitingRoom(room);
+                this.openCurrentRoomDetails(room);
                 this.mainNode.emit('legacy-club-current-room', room);
             }
         } catch { /* The normal not-in-room response is intentionally silent. */ }
@@ -1843,6 +1874,21 @@ export class LegacyClubMainController {
     private replaceRooms(body: unknown): void {
         if (!this.activeForm || !this.matchesClub(body)) return;
         void this.restoreAuthoritativeTemplates(this.clubId(), '俱乐部模板推送刷新');
+    }
+
+    /** Immediately project a committed waiting seat onto its desk; do not wait for the next poll/push. */
+    private mergeCurrentWaitingRoom(room: ClubRoom): void {
+        const roomId = Number(room.roomId ?? room.roomID ?? 0);
+        if (roomId <= 0) return;
+        const templates = this.rooms.filter((item) => Number(item.roomId ?? item.roomID ?? 0) <= 0);
+        const active = this.rooms.filter((item) => Number(item.roomId ?? item.roomID ?? 0) > 0
+            && Number(item.roomId ?? item.roomID ?? 0) !== roomId);
+        this.rooms = this.mergeLobbyRooms(templates, [room, ...active]);
+        console.info('[ClubWaitingDesk] seated-room-projected', {
+            clubId: this.clubId(), playerId: this.playerId, roomId,
+            occupiedCount: this.occupiedRoomSeats(room),
+        });
+        this.renderRooms();
     }
 
     private refreshRoomsFromTemplatePush(body: unknown): void {
@@ -1900,10 +1946,9 @@ export class LegacyClubMainController {
             this.rooms.push(candidate);
         }
         if (this.currentRoom && String(this.currentRoom.roomKey) === String(roomKey)) {
-            if (candidate.isClose === true) this.forms.close('ui/club/UIClubInRoom');
-            else if (this.roomForm) this.showCurrentRoom(this.roomForm, { ...this.currentRoom, ...candidate });
+            if (candidate.isClose === true) this.closeCurrentRoomDetails();
+            else if (this.roomDetails) this.showCurrentRoom(this.roomDetails, { ...this.currentRoom, ...candidate });
         }
-        this.enterFullWaitingRoom();
         this.renderRooms();
     }
 
@@ -1935,6 +1980,23 @@ export class LegacyClubMainController {
     }
 
     private renderClubDesks(mark: Node, layout: Node, prefab: Prefab, commonHeadPrefab: Prefab | null): void {
+        // The migrated mark Widget still carries a legacy -320 right offset, making
+        // the ScrollView 1600 wide inside a 1280-wide RoomList. Its last 320 pixels
+        // are outside the usable UI and ScrollView therefore stops before the final
+        // desk is fully visible. Keep the viewport inside its actual RoomList.
+        const roomListTransform = mark.parent?.getComponent(UITransform) ?? null;
+        const markTransform = mark.getComponent(UITransform);
+        const markWidget = mark.getComponent(Widget);
+        if (roomListTransform && markTransform) {
+            if (markWidget) markWidget.enabled = false;
+            markTransform.setContentSize(roomListTransform.contentSize.width, markTransform.contentSize.height);
+            const viewTransform = mark.getChildByName('view')?.getComponent(UITransform) ?? null;
+            const viewWidget = viewTransform?.node.getComponent(Widget) ?? null;
+            if (viewWidget) viewWidget.enabled = false;
+            if (viewTransform) viewTransform.setContentSize(
+                roomListTransform.contentSize.width, viewTransform.contentSize.height,
+            );
+        }
         const roomScroll = UnifiedScroll.ensure(mark, UnifiedScrollDirection.Horizontal);
         const unifiedScroll = mark.getComponent(UnifiedScroll);
         const roomLayout = layout.getComponent(Layout);
@@ -1953,19 +2015,30 @@ export class LegacyClubMainController {
             child.destroy();
         }
         const seen = new Set<string>();
-        const filteredRooms = this.selectedRoomFilter
-            ? this.rooms.filter((room) => this.sameRoomTemplate(room, this.selectedRoomFilter as ClubRoom))
+        const renderedDeskWidths: number[] = [];
+        const gameRooms = this.selectedGameFilter
+            ? this.rooms.filter((room) => this.gameFilterKey(room) === this.selectedGameFilter)
             : this.rooms;
-        // 2.2.2 的“隐藏已开房间”只隐藏已经开始牌局的实体桌。
-        // 玩家刚坐下但 setId 仍为 0 的等待桌必须继续显示，并与永久模板桌并存。
-        const visibleRooms = this.hideOpenedRooms
-            ? filteredRooms.filter((room) => Number(room.setId ?? 0) <= 0)
+        const filteredRooms = this.selectedRoomFilter
+            ? gameRooms.filter((room) => this.sameRoomTemplate(room, this.selectedRoomFilter as ClubRoom))
+            : gameRooms;
+        // The authored toggle says “隐藏已满房间”. Waiting entity desks must remain
+        // visible so their occupied seats and avatars are actionable from the club.
+        const visibleRooms = this.hideFullRooms
+            ? filteredRooms.filter((room) => !this.isFullRoom(room))
             : filteredRooms;
         for (const room of visibleRooms) {
             const key = `${Number(room.roomId ?? 0) > 0 ? 'room' : 'template'}:${String(room.roomKey ?? '')}`;
             if (!key || seen.has(key)) continue;
             const roomId = Number(room.roomId ?? room.roomID ?? 0);
-            if (Number.isSafeInteger(roomId) && roomId > 0) {
+            const activeClubId = this.clubId();
+            // Only the first authoritative room in a club primes the shared room
+            // family. Every desk of the same family resolves to the same bundles;
+            // warming all entity rooms on each one-second refresh saturated both
+            // the Hall API and Creator's decode queue and delayed the actual tap.
+            if (activeClubId > 0 && this.prewarmedClubId !== activeClubId
+                && Number.isSafeInteger(roomId) && roomId > 0) {
+                this.prewarmedClubId = activeClubId;
                 this.mainNode.emit('legacy-club-prewarm-room', { roomId });
             }
             const node = instantiate(prefab);
@@ -1982,6 +2055,7 @@ export class LegacyClubMainController {
             const deskWidget = node.getComponent(Widget);
             if (deskWidget) deskWidget.enabled = false;
             node.setScale(0.7, 0.7, 1);
+            renderedDeskWidths.push(this.activeClubDeskWidth(node));
             this.setDescendantLabel(node, 'GameName', this.roomDisplayName(room));
             this.setDescendantLabel(node, 'RoundInfo', `${room.setId ?? 0}/${room.setCount ?? 0}`);
             this.renderDeskPlayers(node, room, commonHeadPrefab);
@@ -2042,61 +2116,221 @@ export class LegacyClubMainController {
         const deskNodes = layout.children;
         // These are the effective 2.2.2 placeholder coordinates from
         // ClubMain: two rows per column, then paginate to the right.
-        const columnStep = 317;
         const rowStep = 215;
-        const firstX = 193.5;
         const firstY = -162.5;
         const columnCount = Math.ceil(deskNodes.length / 2);
-        const viewportWidth = layout.parent?.getComponent(UITransform)?.width ?? 1066;
-        const contentWidth = Math.max(viewportWidth, firstX * 2 + Math.max(0, columnCount - 1) * columnStep);
+        const horizontalGap = 37;
+        const horizontalPadding = 54;
+        const columnWidths = Array.from({ length: columnCount }, (_, column) => Math.max(
+            renderedDeskWidths[column * 2] ?? 0,
+            renderedDeskWidths[column * 2 + 1] ?? 0,
+        ));
+        const columnCenters: number[] = [];
+        let nextColumnX = horizontalPadding;
+        for (const width of columnWidths) {
+            columnCenters.push(nextColumnX + width / 2);
+            nextColumnX += width + horizontalGap;
+        }
+        const viewportWidth = markTransform?.contentSize.width
+            ?? layout.parent?.getComponent(UITransform)?.contentSize.width ?? 1066;
+        const contentWidth = Math.max(viewportWidth,
+            nextColumnX - (columnCount > 0 ? horizontalGap : 0) + horizontalPadding);
         if (contentTransform) contentTransform.setContentSize(contentWidth, 550);
         deskNodes.forEach((node, index) => {
             const column = Math.floor(index / 2);
             const row = index % 2;
-            node.setPosition(firstX + column * columnStep, firstY - row * rowStep, 0);
+            node.setPosition(columnCenters[column] ?? horizontalPadding, firstY - row * rowStep, 0);
         });
         mark.getComponent(ScrollView)?.scrollToLeft(0, false);
         this.setCollectionState(mark, seen.size > 0 ? 'content' : 'empty');
-        this.enterFullWaitingRoom();
     }
 
-    private renderRoomFilter(): void {
+    private renderRoomTabs(): void {
         const form = this.activeForm;
         if (!form) return;
-        const filter = this.findMainNode(form, 'RoomFilter');
-        const list = filter ? this.findDescendant(filter, 'PlayList') : null;
-        const content = list ? this.findDescendant(list, 'Content') : null;
-        const template = content?.getChildByName('Btn_Play') ?? null;
-        if (!content || !template) return;
-        this.clearRoomFilterListeners();
-        for (const child of [...content.children]) {
-            if (child !== template) child.destroy();
+        const gameTabs = this.findMainNode(form, 'GameTabs');
+        const roomTabs = this.findMainNode(form, 'RoomTabs');
+        const gameTemplate = gameTabs ? this.findDescendant(gameTabs, 'Btn_Game') : null;
+        const gameContent = gameTabs ? this.findDescendant(gameTabs, 'Content') : null;
+        const roomContent = roomTabs ? this.findDescendant(roomTabs, 'Content') : null;
+        const roomTemplate = roomContent?.getChildByName('Btn_Play') ?? null;
+        if (!gameTabs || !roomTabs || !gameTemplate || !gameContent || !roomContent || !roomTemplate) {
+            console.error('[ClubRoomTabs] missing-node', {
+                clubId: this.clubId(), gameTabs: Boolean(gameTabs), roomTabs: Boolean(roomTabs),
+                gameTemplate: Boolean(gameTemplate), gameContent: Boolean(gameContent),
+                roomContent: Boolean(roomContent), roomTemplate: Boolean(roomTemplate),
+            });
+            return;
         }
-        template.active = false;
+        this.clearRoomFilterListeners();
+        for (const child of [...gameContent.children]) child.destroy();
+        for (const child of [...roomContent.children]) {
+            if (child !== roomTemplate) child.destroy();
+        }
+        gameTemplate.active = false;
+        roomTemplate.active = true;
+        this.setLabel(roomTemplate, 'Label', '全部');
+        const selectAllRooms = () => this.showAllRoomsForSelectedGame();
+        roomTemplate.on(Button.EventType.CLICK, selectAllRooms);
+        this.roomFilterDisposers.push(() => roomTemplate.isValid
+            && roomTemplate.off(Button.EventType.CLICK, selectAllRooms));
         const templates = this.rooms.filter((room) => Number(room.roomId ?? room.roomID ?? 0) <= 0);
+        const games = new Map<string, ClubRoom>();
+        for (const room of templates) games.set(this.gameFilterKey(room), room);
+        if (templates.length > 0 && this.selectedGameFilter && !games.has(this.selectedGameFilter)) {
+            this.saveGameTabSelection('');
+        }
+        const allGame = instantiate(gameTemplate);
+        allGame.name = 'Btn_Game_All';
+        allGame.active = true;
+        this.setLabel(allGame, 'Label', '全部');
+        const selectAllGames = () => {
+            this.saveGameTabSelection('');
+            this.selectedRoomFilter = null;
+            this.renderRoomTabs();
+            this.renderRooms();
+        };
+        allGame.on(Button.EventType.CLICK, selectAllGames);
+        this.roomFilterDisposers.push(() => allGame.isValid
+            && allGame.off(Button.EventType.CLICK, selectAllGames));
+        gameContent.addChild(allGame);
+        this.setTabSelected(allGame, !this.selectedGameFilter);
+        for (const [key, room] of games) {
+            const item = instantiate(gameTemplate);
+            item.name = `Btn_Game_${key.replace(/[^A-Za-z0-9]/g, '')}`;
+            item.active = true;
+            this.setLabel(item, 'Label', this.gameDisplayName(room));
+            const listener = () => {
+                this.saveGameTabSelection(key);
+                this.selectedRoomFilter = null;
+                this.renderRoomTabs();
+                this.renderRooms();
+            };
+            item.on(Button.EventType.CLICK, listener);
+            this.roomFilterDisposers.push(() => item.isValid && item.off(Button.EventType.CLICK, listener));
+            gameContent.addChild(item);
+            this.setTabSelected(item, key === this.selectedGameFilter);
+        }
+        gameContent.getComponent(Layout)?.updateLayout();
+
         const unique = new Map<string, ClubRoom>();
-        for (const room of templates) unique.set(this.roomFilterKey(room), room);
+        for (const room of templates) {
+            if (!this.selectedGameFilter || this.gameFilterKey(room) === this.selectedGameFilter) {
+                unique.set(this.roomFilterKey(room), room);
+            }
+        }
         const selectedKey = this.selectedRoomFilter ? this.roomFilterKey(this.selectedRoomFilter) : '';
         this.selectedRoomFilter = selectedKey ? unique.get(selectedKey) ?? null : null;
         for (const [key, room] of unique) {
-            const item = instantiate(template);
+            const item = instantiate(roomTemplate);
             item.name = `Btn_Play_${key.replace(/[^A-Za-z0-9]/g, '')}`;
             item.active = true;
             this.setLabel(item, 'Label', this.roomDisplayName(room));
             const listener = () => {
                 this.selectedRoomFilter = room;
-                this.markSelected(item);
+                this.renderRoomTabs();
                 this.renderRooms();
             };
             item.on(Button.EventType.CLICK, listener);
             this.roomFilterDisposers.push(() => {
                 if (item.isValid) item.off(Button.EventType.CLICK, listener);
             });
-            content.addChild(item);
-            if (key === selectedKey) this.markSelected(item);
+            roomContent.addChild(item);
+            this.setTabSelected(item, key === selectedKey);
         }
-        content.getComponent(Layout)?.updateLayout();
-        if (!this.selectedRoomFilter && filter) this.markSelected(this.findDescendant(filter, 'Btn_All'));
+        this.setTabSelected(roomTemplate, !this.selectedRoomFilter);
+        roomContent.getComponent(Layout)?.updateLayout();
+        console.info('[ClubRoomTabs] rendered', {
+            clubId: this.clubId(), gameCount: games.size, roomCount: unique.size,
+            selectedGame: this.selectedGameFilter || 'all',
+            selectedRoom: this.selectedRoomFilter ? this.roomFilterKey(this.selectedRoomFilter) : 'all',
+        });
+    }
+
+    private setTabSelected(node: Node, selected: boolean): void {
+        const indicator = node.getChildByName('Icon_Selected') ?? node.getChildByName('on');
+        if (indicator) indicator.active = selected;
+        if (node.name === 'Btn_Play' || node.name.startsWith('Btn_Play_')) {
+            // The two authored children are the replaceable visual contract.
+            const noSelect = node.getChildByName('NoSelect');
+            const yesSelect = node.getChildByName('YesSelect');
+            const label = node.getChildByName('Label')?.getComponent(Label) ?? null;
+            const selectToggle = node.getComponent(Toggle);
+            if (noSelect) noSelect.active = !selected;
+            if (yesSelect) yesSelect.active = selected;
+            if (label) label.color = selected
+                ? new Color(111, 57, 12, 255)
+                : new Color(255, 255, 255, 255);
+            if (selectToggle) selectToggle.isChecked = selected;
+        }
+    }
+
+    private showAllRoomsForSelectedGame(): void {
+        this.selectedRoomFilter = null;
+        const roomCount = this.selectedGameFilter
+            ? this.rooms.filter((room) => this.gameFilterKey(room) === this.selectedGameFilter).length
+            : this.rooms.length;
+        console.info('[ClubRoomTabs] select-all-rooms', {
+            clubId: this.clubId(), selectedGame: this.selectedGameFilter || 'all', roomCount,
+        });
+        this.renderRoomTabs();
+        this.renderRooms();
+    }
+
+    private setFavoriteTabsOpen(open: boolean): void {
+        const form = this.activeForm;
+        const favoriteList = form ? this.findMainNode(form, 'FavoriteList') : null;
+        const roomTabs = form ? this.findMainNode(form, 'RoomTabs') : null;
+        if (!favoriteList) return;
+        const width = favoriteList.getComponent(UITransform)?.width ?? 250;
+        this.favoriteTabsOpen = open;
+        Tween.stopAllByTarget(favoriteList);
+        if (roomTabs) Tween.stopAllByTarget(roomTabs);
+        tween(favoriteList).to(0.2, {
+            position: favoriteList.position.clone().set(this.favoriteListClosedX + (open ? width : 0),
+                favoriteList.position.y, favoriteList.position.z),
+        }, { easing: 'quadOut' }).start();
+        if (roomTabs) {
+            tween(roomTabs).to(0.2, {
+                position: roomTabs.position.clone().set(this.roomTabsClosedX + (open ? width : 0),
+                    roomTabs.position.y, roomTabs.position.z),
+            }, { easing: 'quadOut' }).start();
+        }
+        console.info('[ClubRoomTabs] favorite-list', {
+            clubId: this.clubId(), open, roomTabsFollowing: Boolean(roomTabs), offsetX: open ? width : 0,
+        });
+    }
+
+    private nodeContains(root: Node | null, target: Node | null): boolean {
+        for (let current = target; current; current = current.parent) {
+            if (current === root) return true;
+        }
+        return false;
+    }
+
+    private gameFilterKey(room: ClubRoom): string {
+        // Active-room projections may only carry the shared numeric gameId. Regional
+        // variants such as CD201 and LS201 can therefore not be distinguished from
+        // that field alone. Resolve the active desk through its authoritative room
+        // template first so a selected gameplay never absorbs another region's desks.
+        if (Number(room.roomId ?? room.roomID ?? 0) > 0) {
+            const template = this.rooms.find((candidate) =>
+                Number(candidate.roomId ?? candidate.roomID ?? 0) <= 0
+                && this.sameRoomTemplate(room, candidate));
+            if (template) {
+                const templateGameCode = this.resolveCatalogGameCode(template);
+                if (templateGameCode) return templateGameCode;
+            }
+        }
+        const gameCode = this.resolveCatalogGameCode(room);
+        return gameCode || `Game${Number(room.gameId ?? 0)}`;
+    }
+
+    private gameDisplayName(room: ClubRoom): string {
+        const gameCode = this.resolveCatalogGameCode(room);
+        const catalogName = gameCode ? CATALOG_GAME_METADATA[gameCode]?.displayName : undefined;
+        return String(catalogName ?? this.gameNames.get(Number(room.gameId ?? 0))
+            ?? room.gameName ?? room.gameCode ?? '');
     }
 
     private roomFilterKey(room: ClubRoom): string {
@@ -2113,7 +2347,11 @@ export class LegacyClubMainController {
 
     /** Waiting entry is opt-in by stable business code; every unlisted game stays direct. */
     private isWaitingEntry(room: ClubRoom): boolean {
-        return this.roomGameCode(room) === 'LS201';
+        // CBaseRoomConfig may return only roomId/tagId and the shared numeric
+        // gameId after the player has occupied a seat. Resolve that compact
+        // projection through its club template as well; otherwise LS201 is
+        // mistaken for a direct-entry game and RoomDetails stays hidden.
+        return this.gameFilterKey(room) === 'LS201';
     }
 
     private roomGameCode(room: ClubRoom): string {
@@ -2122,53 +2360,6 @@ export class LegacyClubMainController {
         return String(this.gameNames.get(Number(room.gameId ?? 0)) ?? room.gameName ?? '').trim().toUpperCase();
     }
 
-    private enterFullWaitingRoom(): void {
-        const room = this.rooms.find((item) => {
-            if (Number(item.roomId ?? 0) <= 0 || !this.isWaitingEntry(item)) return false;
-            const positions = Array.isArray(item.posList) ? item.posList : [];
-            const occupied = positions.filter((position) =>
-                Number((position as Record<string, unknown> | undefined)?.pid ?? 0) > 0);
-            return occupied.some((position) => Number((position as Record<string, unknown>).pid) === this.playerId)
-                && Number(item.playerNum ?? 0) > 0 && occupied.length >= Number(item.playerNum);
-        });
-        const roomId = Number(room?.roomId ?? 0);
-        if (!room || roomId <= 0) {
-            this.waitingHandoffRoomId = 0;
-            return;
-        }
-        if (this.waitingHandoffRoomId === roomId) return;
-        this.waitingHandoffRoomId = roomId;
-        this.mainNode.emit('legacy-club-join-room', {
-            ...room,
-            gameName: this.roomGameCode(room) || room.gameName,
-            clubId: this.club?.id,
-            unionId: this.club?.unionId,
-            waitingEntry: true,
-            forceEnter: true,
-        });
-        this.armWaitingHandoffRetry(roomId);
-    }
-
-    /**
-     * A room-ready push is a durable condition, not a one-shot edge. Navigation can
-     * temporarily lose its ticket or scene transition while the Hall membership is
-     * already committed. Release the local duplicate guard and re-read the player's
-     * authoritative room until the club form actually closes on successful handoff.
-     */
-    private armWaitingHandoffRetry(roomId: number): void {
-        this.clearWaitingHandoffRetry();
-        this.waitingHandoffRetryTimer = globalThis.setTimeout(() => {
-            this.waitingHandoffRetryTimer = null;
-            if (!this.activeForm || this.waitingHandoffRoomId !== roomId) return;
-            this.waitingHandoffRoomId = 0;
-            void this.enterCurrentWaitingRoomWhenFull(roomId);
-        }, 1000);
-    }
-
-    private clearWaitingHandoffRetry(): void {
-        if (this.waitingHandoffRetryTimer !== null) globalThis.clearTimeout(this.waitingHandoffRetryTimer);
-        this.waitingHandoffRetryTimer = null;
-    }
 
     private renderDeskPlayers(root: Node, room: ClubRoom, commonHeadPrefab: Prefab | null): void {
         const seats: Node[] = [];
@@ -2197,23 +2388,21 @@ export class LegacyClubMainController {
                 commonHead.name = 'CommonHead';
                 commonHead.setPosition(0, 0, 0);
                 playerAnchor.addChild(commonHead);
-                for (const name of ['Game', 'List', 'Stat']) {
-                    const variant = commonHead.getChildByName(name);
-                    if (variant) variant.active = name === 'Stat';
-                }
             }
-            const playerState = commonHead?.getChildByName('Stat') ?? null;
+            const headController = commonHead ? commonHead.getComponent(CommonHeadController) : null;
+            if (commonHead && !headController) throw new Error('CommonHead 缺少 CommonHeadController');
+            const playerState = headController ? headController.useVariant('Stat') : null;
             if (emptyState) emptyState.active = !occupied;
             if (playerState) {
                 playerState.active = occupied;
                 if (occupied) {
                     const playerId = Number(player?.pid ?? 0);
-                    this.setDescendantLabel(playerState, 'Nickname', String(player?.name ?? ''));
-                    const avatar = this.findDescendant(playerState, 'Avatar')?.getComponent(Sprite) ?? null;
+                    this.setDescendantLabel(playerState, 'Lb_PlayerName', String(player?.name ?? ''));
                     const onlineState = this.findDescendant(playerState, 'OnlineState');
                     const online = player?.online ?? player?.isOnline ?? false;
                     if (onlineState) onlineState.active = online === true || Number(online) === 1;
-                    void PlayerAvatarService.assign(avatar, playerId,
+                    if (!headController) throw new Error('已占用座位缺少 CommonHeadController');
+                    void headController.showPlayerAvatar(playerId,
                         String(player?.headImageUrl ?? player?.iconUrl ?? player?.avatarUrl ?? ''));
                 }
             }
@@ -2279,6 +2468,15 @@ export class LegacyClubMainController {
             matched ||= players.active;
         }
         return matched;
+    }
+
+    private activeClubDeskWidth(root: Node): number {
+        const variants = root.getChildByName('Variants');
+        const shape = variants?.children.find((child) => child.active) ?? null;
+        const players = shape?.children.find((child) => child.active && child.name.startsWith('Players_')) ?? null;
+        const authoredWidth = players?.getComponent(UITransform)?.contentSize.width
+            ?? root.getComponent(UITransform)?.contentSize.width ?? 0;
+        return Math.max(1, authoredWidth * Math.abs(root.scale.x));
     }
 
     private resolveCatalogGameCode(room: ClubRoom): string {
@@ -2374,38 +2572,56 @@ export class LegacyClubMainController {
         return true;
     }
 
-    private bindCurrentRoom(form: LegacyForm): void {
-        this.blockInput(form.node);
-        this.onClick(form.find('data/btn_exitroom'), () => { void this.exitCurrentRoom(); });
-        this.onClick(form.find('data/btn_goroom'), () => this.goCurrentRoom());
-        this.onClick(form.find('data/btn_showmore'), () => {
-            const userList = form.find('data/mask/userlist');
+    private bindCurrentRoom(root: Node): void {
+        this.blockInput(root);
+        this.onClick(this.find(root, 'btn_exitroom'), () => { void this.exitCurrentRoom(); });
+        this.onClick(this.find(root, 'btn_goroom'), () => this.goCurrentRoom());
+        this.onClick(this.find(root, 'btn_showmore'), () => {
+            const userList = this.find(root, 'mask/userlist');
             if (userList) userList.active = !userList.active;
         });
     }
 
-    private showCurrentRoom(form: LegacyForm, room: ClubRoom): void {
-        this.roomForm = form;
+    private openCurrentRoomDetails(room: ClubRoom): void {
+        const root = this.activeForm ? this.findMainNode(this.activeForm, 'RoomDetails') : null;
+        if (!root) {
+            console.error('[ClubRoomDetails] missing-node', {
+                clubId: this.clubId(), roomId: Number(room.roomId ?? room.roomID ?? 0),
+            });
+            return;
+        }
+        root.active = true;
+        this.showCurrentRoom(root, room);
+    }
+
+    private closeCurrentRoomDetails(): void {
+        if (this.roomDetails?.isValid) this.roomDetails.active = false;
+        this.roomDetails = null;
+        this.currentRoom = null;
+    }
+
+    private showCurrentRoom(root: Node, room: ClubRoom): void {
+        this.roomDetails = root;
         this.currentRoom = room;
-        this.setLabel(form.node, 'data/table/lb_roomName', String(room.roomName ?? ''));
-        this.setLabel(form.node, 'data/table/game_name',
+        this.setLabel(root, 'table/lb_roomName', String(room.roomName ?? ''));
+        this.setLabel(root, 'table/game_name',
             String(room.gameName ?? this.gameNames.get(Number(room.gameId ?? 0)) ?? room.gameId ?? ''));
-        this.setLabel(form.node, 'data/table/bg_key/key', String(room.tagId ?? room.roomKey ?? ''));
-        this.setLabel(form.node, 'data/table/jushu', `第${room.setId ?? 0}/${room.setCount ?? 0}局  ${room.playerNum ?? 0}人`);
+        this.setLabel(root, 'table/bg_key/key', String(room.tagId ?? room.roomKey ?? ''));
+        this.setLabel(root, 'table/jushu', `第${room.setId ?? 0}/${room.setCount ?? 0}局  ${room.playerNum ?? 0}人`);
         const positions = Array.isArray(room.posList) ? room.posList as Array<Record<string, unknown>> : [];
         let seated = 0;
         for (let index = 0; index < 8; index += 1) {
             const player = positions[index];
-            const user = form.find(`data/mask/userlist/user${index + 1}`);
+            const user = this.find(root, `mask/userlist/user${index + 1}`);
             const occupied = Number(player?.pid ?? 0) > 0;
             if (user) user.active = occupied;
             if (occupied) {
                 seated += 1;
-                this.setLabel(form.node, `data/mask/userlist/user${index + 1}/lb_name`, String(player?.name ?? ''));
+                this.setLabel(root, `mask/userlist/user${index + 1}/lb_name`, String(player?.name ?? ''));
             }
         }
         const words = ['', '一', '两', '三', '四', '五', '六', '七', '八'];
-        this.setLabel(form.node, 'data/btn_showmore/lb_num',
+        this.setLabel(root, 'btn_showmore/lb_num',
             seated === Number(room.playerNum ?? 0) ? '满座' : `${words[seated] ?? seated}人落座`);
     }
 
@@ -2425,7 +2641,7 @@ export class LegacyClubMainController {
         }
         try {
             await this.client.request<unknown>('room.CBaseExitRoom', { roomID: room.roomId, posIndex });
-            this.forms.close('ui/club/UIClubInRoom');
+            this.closeCurrentRoomDetails();
             this.mainNode.emit('legacy-out-room', {});
         } catch {
             await this.forms.show('UIMessage_Drift', null, null, '退出房间失败,请进入房间操作：error02');
@@ -2539,9 +2755,12 @@ export class LegacyClubMainController {
             Event: 'bottom/unionNode',
             Btn_EventRecord: 'bottom/unionNode/btn_unionRecord',
             Btn_EventRoom: 'bottom/unionNode/btn_unionRoomList',
-            RoomFilter: 'bottom/wanfa_select',
-            Btn_All: 'bottom/wanfa_select/btn_all',
-            Btn_Play: 'bottom/wanfa_select/wanfa_list/view/content/btn_game',
+            GameTabs: 'GameTabs',
+            Btn_Tabs: 'GameTabs/FavoriteList/Btn_Tabs',
+            FavoriteList: 'GameTabs/FavoriteList',
+            RoomTabs: 'GameTabs/RoomTabs',
+            Btn_Game: 'GameTabs/FavoriteList/ScrollView/Viewport/Btn_Game',
+            Btn_Play: 'GameTabs/RoomTabs/View/Content/Btn_Play',
             TableList: 'bottom/wanfa_select/table_list',
             Btn_CloseTable: 'bottom/wanfa_select/table_list/btn_closeTable',
             Btn_AllPlay: 'left_wanfa/btn_quanwan',
@@ -2621,6 +2840,9 @@ export class LegacyClubMainController {
                 this.forms.closeAfterPointer(path);
                 return;
             }
+            // Some deployed compatibility gateways do not expose RoomConfig while
+            // the stable lobby bootstrap query remains available. Fall back to the
+            // latter before treating the check as a transport failure.
             try {
                 current = await this.client.requestLobby<ClubRoom>('game.C1101GetRoomID', {});
                 console.info('[ClubBack] active-room-fallback-used', {
@@ -2659,10 +2881,11 @@ export class LegacyClubMainController {
         console.info('[ClubBack] active-room-checked', {
             clubId: this.clubId(), playerId: this.playerId, roomId,
         });
+        // Club back owns the current membership regardless of how much game
+        // identity the compact room projection retained after returning from play.
         if (roomId > 0) {
             try {
                 await this.client.requestLobby<unknown>('room.CBaseExitRoom', { roomID: roomId });
-                this.waitingHandoffRoomId = 0;
                 await this.restoreAuthoritativeTemplates(this.clubId(), '退出等待房间后的桌面刷新');
                 console.info('[ClubBack] room-exited', {
                     clubId: this.clubId(), playerId: this.playerId, roomId,

@@ -163,7 +163,7 @@ export class CommonPdkRecordController {
                 hitArea: transform?.getBoundingBoxToWorld() ?? null };
         });
         console.info('[PDK BigSettlement binding]', JSON.stringify({
-            bundle: 'poker-common', asset: 'Prefab/BigSettle/BigSettlement', uuid: prefab?.uuid ?? '',
+            bundle: 'poker-common', asset: 'Prefab/BigSettlement_0', uuid: prefab?.uuid ?? '',
             instanceRoot: form.node.name, details,
         }));
     }

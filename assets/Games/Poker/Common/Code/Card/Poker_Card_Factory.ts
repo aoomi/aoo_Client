@@ -1,4 +1,4 @@
-import { instantiate, Node, Prefab, SpriteAtlas, SpriteFrame } from 'cc';
+import { instantiate, isValid, Node, Prefab, SpriteAtlas, SpriteFrame } from 'cc';
 import { AssetLoader } from '../../../../../Common/Code/UI/Infrastructure';
 import { Poker_Card_Face, Poker_Card_Presenter, Poker_Card_Skin, Poker_Card_Suit } from './Poker_Card_Presenter';
 
@@ -26,6 +26,7 @@ export class Poker_Card_Factory {
         disabled = false,
     ): Promise<Node> {
         const card = instantiate(await this.loadPrefab());
+        this.prepareGameplayCard(card);
         const presenter = card.getComponent(Poker_Card_Presenter);
         if (!presenter) {
             card.destroy();
@@ -49,14 +50,17 @@ export class Poker_Card_Factory {
     }
 
     private async loadPrefab(): Promise<Prefab> {
-        if (this.prefab) return this.prefab;
+        if (this.prefab && isValid(this.prefab, true)) return this.prefab;
+        this.prefab = null;
         const bundle = await this.assets.bundle(POKER_CARD_BUNDLE);
         this.prefab = await this.assets.load(POKER_CARD_ASSET, Prefab, bundle);
+        if (!isValid(this.prefab, true)) throw new Error(`Poker card prefab is invalid: ${POKER_CARD_ASSET}`);
         return this.prefab;
     }
 
     private async loadSkin(): Promise<Poker_Card_Skin> {
-        if (this.skin) return this.skin;
+        if (this.skin && Object.values(this.skin).every(frame => isValid(frame, true))) return this.skin;
+        this.skin = null;
         // Poker_Card 属于 poker-common；其现存图集位于 Common 的唯一公共 Bundle，
         // 因此必须按真实归属加载，不能恢复已删除的独立卡牌 Bundle。
         const bundle = await this.assets.bundle(POKER_CARD_ATLAS_BUNDLE);
@@ -68,6 +72,21 @@ export class Poker_Card_Factory {
             disabledMask: this.requireAtlasFrame(atlas, 'card_front_out'),
         };
         return this.skin;
+    }
+
+    /** Reject selector-only authoring content if a prefab is accidentally polluted. */
+    private prepareGameplayCard(card: Node): void {
+        const gameplayChildren = new Set(['Card_Front', 'Card_Back', 'Selected_Mask', 'Disabled_Mask']);
+        for (const child of [...card.children]) {
+            if (gameplayChildren.has(child.name)) continue;
+            child.removeFromParent();
+            child.destroy();
+        }
+        const deckPresenter = card.getComponent('Poker_Deck_Presenter');
+        if (deckPresenter) {
+            deckPresenter.enabled = false;
+            deckPresenter.destroy();
+        }
     }
 
     private requireAtlasFrame(atlas: SpriteAtlas, name: string): SpriteFrame {

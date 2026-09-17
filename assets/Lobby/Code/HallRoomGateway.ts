@@ -47,6 +47,8 @@ export interface HallRoomHandoff {
     authorityRoute: string; gameTicket: string; bundleName: string; sceneName: string;
     playFamily: string; smallSettleTemplate?: string; bigSettleTemplate?: string;
     ruleSnapshot?: Record<string, unknown>; ruleFields?: readonly HallRoomRuleField[];
+    clubId?: number; state?: string; playerNum?: number; occupiedCount?: number; waitingFull?: boolean;
+    roundNo?: number; roundLimit?: number;
 }
 export interface HallRoomPreparation {
     room: { roomId:number; gameId:number; playVersion:string; route:string; bundleName:string; sceneName:string; rules?:Record<string,unknown> };
@@ -58,6 +60,8 @@ export interface HallActiveRoom {
     route?: string; bundleName?: string; sceneName?: string; playFamily?: string;
     smallSettleTemplate?: string; bigSettleTemplate?: string;
     rules?: Record<string, unknown>;
+    clubId?: number; playerNum?: number; occupiedCount?: number; waitingFull?: boolean;
+    roundNo?: number; roundLimit?: number;
 }
 export interface HallRoomConnectionTicket {
     authorityRoute: string;
@@ -174,16 +178,30 @@ export class HallRoomGateway {
         return this.handoffFromRoom({
             roomId: Number(room.roomId), gameId: Number(room.gameId), playVersion: String(room.playVersion ?? ''),
             route: String(room.route ?? ''), bundleName: String(room.bundleName ?? ''), sceneName: String(room.sceneName ?? ''),
-            rules: room.rules,
+            rules: room.rules, clubId: Number(room.clubId ?? 0), state: String(room.state ?? ''),
+            playerNum: Number(room.playerNum ?? 0), occupiedCount: Number(room.occupiedCount ?? 0),
+            waitingFull: room.waitingFull === true, roundNo: Number(room.roundNo ?? 0),
+            roundLimit: Number(room.roundLimit ?? 0),
         }, '活动房间玩法当前不可用，请联系房主重新创建');
     }
-    /** Obtain a fresh game ticket for an already committed waiting seat without joining twice. */
-    public async resumeWaiting(roomId: number): Promise<HallRoomHandoff> {
-        const active = await this.activeRoom();
-        if (!active || Number(active.roomId) !== roomId) {
-            throw new Error('等待房间状态已变化，请返回亲友圈重试');
+    /**
+     * Complete a handoff after the legacy club-template transaction has already
+     * created the room and committed this player's seat. Re-running join() would
+     * first query membership that the same transaction just wrote, then fetch
+     * metadata and finally issue a ticket. The room read and one-time ticket have
+     * no ordering dependency, so keep only those two authoritative reads and run
+     * them together on the click path.
+     */
+    public async resumeCommittedClubEntry(roomId: number): Promise<HallRoomHandoff> {
+        if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) {
+            throw new Error('俱乐部房间号无效，请重新点击桌子');
         }
-        return active;
+        const [prepared, ticket] = await Promise.all([
+            this.prepare(roomId),
+            this.issueRoomTicket(roomId, resolveRuntimeEndpoints().hallWebSocketUrl),
+        ]);
+        return this.handoff(prepared.room, prepared.game.gameCode, prepared.game.familyCode,
+            prepared.configuration.ui, ticket);
     }
     public async refreshRoomConnection(roomId: number): Promise<HallRoomConnectionTicket> {
         if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) throw new Error('房间号无效，无法重连');
@@ -237,6 +255,26 @@ export class HallRoomGateway {
         return this.handoff({ ...room, rules }, gameCode, selected.familyCode, configuration.ui);
     }
     private async joinOnce(roomId: number, location?: HallAdmissionLocation): Promise<HallRoomHandoff> {
+        // A return to lobby presentation can complete just before every shared
+        // desk projection observes the leave. If Hall still owns this player's
+        // seat in the selected room, resume that exact membership instead of
+        // issuing a second join that can be rejected as ROOM_FULL.
+        const active = await this.api.get<HallActiveRoom>('/api/v2/hall/rooms/active');
+        const activeRoomId = Number(active.roomId ?? 0);
+        if (active.active) {
+            if (activeRoomId !== roomId) {
+                throw new Error(`当前仍在房间 ${activeRoomId}，请先退出`);
+            }
+            return this.handoffFromRoom({
+                roomId: activeRoomId,
+                gameId: Number(active.gameId),
+                playVersion: String(active.playVersion ?? ''),
+                route: String(active.route ?? ''),
+                bundleName: String(active.bundleName ?? ''),
+                sceneName: String(active.sceneName ?? ''),
+                rules: active.rules,
+            }, '活动房间玩法当前不可用，请联系房主重新创建');
+        }
         await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/join`, this.locationBody(location), ProductionApiClient.operationKey(`room-join:${roomId}`));
         // Warm metadata may already be ready before the click. Only seat mutation
         // and the one-time ticket are deliberately kept on the interaction path.
@@ -259,7 +297,7 @@ export class HallRoomGateway {
             ProductionApiClient.operationKey(`room-waiting-leave:${roomId}:${this.playerId}:${Date.now()}`));
     }
     private async handoffFromRoom(
-        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>},
+        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number},
         unavailableMessage: string,
         ticket?: HallRoomConnectionTicket,
     ): Promise<HallRoomHandoff> {
@@ -270,7 +308,7 @@ export class HallRoomGateway {
         return this.handoff(room, selected.gameCode, selected.familyCode, configuration.ui, ticket);
     }
     private async handoff(
-        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>},
+        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number},
         gameCode: string,
         playFamily: string,
         ui: HallRoomConfiguration['ui'],
@@ -284,7 +322,10 @@ export class HallRoomGateway {
             ruleSnapshot: room.rules ? { ...room.rules } : undefined,
             ruleFields: Array.isArray(ui.fields) ? ui.fields.map((field) => ({ ...field })) : undefined,
             smallSettleTemplate: ui.smallSettleTemplate?.trim() || undefined,
-            bigSettleTemplate: ui.bigSettleTemplate?.trim() || undefined };
+            bigSettleTemplate: ui.bigSettleTemplate?.trim() || undefined,
+            clubId: room.clubId || undefined, state: room.state,
+            playerNum: room.playerNum, occupiedCount: room.occupiedCount, waitingFull: room.waitingFull,
+            roundNo: room.roundNo, roundLimit: room.roundLimit };
     }
     private async issueRoomTicket(roomId: number, fallbackRoute: string): Promise<HallRoomConnectionTicket> {
         const ticket = await this.api.mutate<{ticket:string;route:string}>('POST', `/api/v2/hall/rooms/${roomId}/ticket`, {

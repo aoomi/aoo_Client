@@ -1,6 +1,12 @@
 export type PdkRoomRuleValue=string|number|boolean|ReadonlyArray<string|number>;
 export type PdkRoomRulePayload=Readonly<Record<string,PdkRoomRuleValue>>;
 
+export interface PdkSettlementSpecialHandsProfile{
+ readonly bundleName:string;
+ readonly atlasPath:string;
+ readonly frameByPattern:Readonly<Record<string,string>>;
+}
+
 export interface PdkRegionalRoomProfile<Input>{
  readonly gameId:number;
  readonly gameCode:string;
@@ -13,6 +19,7 @@ export interface PdkRegionalRoomProfile<Input>{
  readonly providerKey:string;
  readonly commonRuntime:'PDK/Common';
  readonly roomRuleWorkbook:string;
+ readonly settlementSpecialHands?:PdkSettlementSpecialHandsProfile;
  toImmutableRules(input:Input):PdkRoomRulePayload;
 }
 

@@ -108,8 +108,13 @@ export class LoginScreenBootstrap extends Component {
         // of its 1280px content area; SHOW_ALL would letterbox that design and
         // prevent Top/Bottom/Left/Right widgets from reaching wide-screen edges.
         view.setDesignResolutionSize(1280, 720, ResolutionPolicy.FIXED_HEIGHT);
-        const sceneName = director.getScene()?.name ?? 'BootStrap';
+        const sceneName = director.getScene()?.name || 'UnnamedScene';
+        // Creator Preview can deserialize the currently opened scene with an
+        // empty runtime name even though the scene asset is named BootStrap.
+        // BootstrapStatus is exclusive to the authored startup canvas, so it
+        // is the stable ownership marker when the editor omits the scene name.
         const isBootstrapScene = sceneName === 'BootStrap'
+            || Boolean(this.node.getChildByName('BootstrapStatus'))
             || Boolean(this.node.getChildByName('ErrorPanel') && this.node.getChildByName('ProgressTrack'));
         const loadingRuntime = globalThis as LoadingRuntimeState;
         const loadingBoot = currentAooLoadingBootState();

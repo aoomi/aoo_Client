@@ -20,6 +20,10 @@ export interface LegacySubgameTicket {
     sceneName?: string;
     ruleSnapshot?: Record<string, unknown>;
     ruleFields?: readonly Record<string, unknown>[];
+    state?: string;
+    playerNum?: number;
+    occupiedCount?: number;
+    waitingFull?: boolean;
 }
 
 export interface LegacyExternalSubgameHandoff extends LegacySubgameTicket {

@@ -10,7 +10,7 @@ import { resolveRuntimeEndpoints } from '../../../../../../Common/Code/Runtime/c
 import { CommonPdkRuntime } from './CommonPdkRuntime';
 import { isPdkBusinessCode } from '../Regional/PdkBusinessCodes';
 import { CommonPdkPlayController } from './CommonPdkPlayController';
-import { COMMON_ROOM_FORM, CommonRoomNodePath, DISSOLVE_ROOM_FORM, PDK_ROOM_FORM } from './Room/PdkRoomNodePaths';
+import { COMMON_ROOM_FORM, CommonRoomNodePath, DISSOLVE_ROOM_FORM, PDK_ROOM_FORM, POKER_CARD_SELECTION_FORM } from './Room/PdkRoomNodePaths';
 import { CommonPdkResultController } from './CommonPdkResultController';
 import { CommonPdkDissolveController } from './CommonPdkDissolveController';
 import { CommonPdkRecordController } from './CommonPdkRecordController';
@@ -30,6 +30,9 @@ import type {
     LegacySubgameTicket,
 } from '../../../../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import type { HallRoomConnectionTicket } from '../../../../../../Lobby/Code/HallRoomGateway';
+import { Poker_Deck_Presenter, type PokerDeckSelectionSubmit } from '../../../../Common/Code/Card/Poker_Deck_Presenter';
+import { PDK_BUSINESS_CODES } from '../Regional/PdkBusinessCodes';
+import { LS201PlayedCardFlow } from '../../../LSPDK/Code/LS201PlayedCardFlow';
 
 interface GameServerInfo {
     isStart?: boolean;
@@ -39,6 +42,7 @@ interface GameServerInfo {
 }
 
 const COMMON_SETTINGS_FORM = 'room/SettingsPanel';
+const AUTO_PLAY_FORM = 'room/AutoPlay';
 
 export class CommonPdkSwitchCoordinator {
     private gameClient: ProtocolClient | null = null;
@@ -70,11 +74,62 @@ export class CommonPdkSwitchCoordinator {
     private disposed = false;
     private leavePending: Promise<void> | null = null;
     private terminalStateVersion = -1;
+    private autoPlayVisible = false;
+    private autoPlayCancelButton: Node | null = null;
+    private readonly onCancelAutoPlay = (): void => { void this.cancelAutoPlay(); };
     private roomUiGeneration = 0;
     private roomCapabilities: GameCapabilities = getGameCapabilities('');
+    private cardSelectionRoot: Node | null = null;
+    private readonly onCardSelectionSubmit = (detail: PokerDeckSelectionSubmit): void => {
+        void this.submitCardSelection(detail);
+    };
+    private readonly onCardSelectionClose = (): void => {
+        this.forms.closeAfterPointer(POKER_CARD_SELECTION_FORM);
+    };
 
     public isInGameSession(): boolean {
         return this.inGame;
+    }
+
+    private bindAutoPlay(root: Node): void {
+        const button = root.getChildByName('btn_cancel');
+        if (!button || this.autoPlayCancelButton === button) return;
+        this.unbindAutoPlay();
+        this.autoPlayCancelButton = button;
+        button.on(Button.EventType.CLICK, this.onCancelAutoPlay, this);
+    }
+
+    private unbindAutoPlay(): void {
+        this.autoPlayCancelButton?.off(Button.EventType.CLICK, this.onCancelAutoPlay, this);
+        this.autoPlayCancelButton = null;
+    }
+
+    private syncAutoPlay(active: boolean): void {
+        if (this.autoPlayVisible === active) return;
+        this.autoPlayVisible = active;
+        if (active) {
+            void this.forms.show(AUTO_PLAY_FORM).catch((error: unknown) => {
+                this.autoPlayVisible = false;
+                console.error('[CommonPdkTrusteeship] 托管界面加载失败', error);
+            });
+            return;
+        }
+        this.forms.close(AUTO_PLAY_FORM);
+    }
+
+    private async cancelAutoPlay(): Promise<void> {
+        const runtime = this.runtime;
+        if (!runtime) return;
+        const roomId = Number(runtime.getRoom().GetRoomProperty('key') ?? 0);
+        const seat = runtime.getRoomPosManager().GetClientPos();
+        await runtime.action('trusteeship', 'common.room.trusteeship_req', {
+            roomID: roomId,
+            pos: seat,
+            trusteeship: false,
+        }).catch((error: unknown) => {
+            console.error('[CommonPdkTrusteeship] 取消托管失败', { roomId, seat, error });
+            void this.showMessage(error instanceof Error ? error.message : '取消托管失败');
+        });
     }
 
     private async openRoomForm(path: string, label: string): Promise<void> {
@@ -138,6 +193,7 @@ export class CommonPdkSwitchCoordinator {
         },
         private readonly onExplicitLeave: () => void = () => undefined,
         private readonly currentReplayCode: (roomId: number, setId: number) => Promise<string> = async () => '',
+        private readonly settlementHistory: (roomId: number) => Promise<unknown> = async () => ({}),
     ) {
         // PDK can be entered from lobby, club, reconnect, or replay recovery.
         // Own this logical registration here so every path resolves to the
@@ -182,6 +238,16 @@ export class CommonPdkSwitchCoordinator {
                 onDestroy: () => this.dissolveController?.destroy(),
             },
         });
+        this.forms.register(AUTO_PLAY_FORM, {
+            zOrder: 34,
+            modal: false,
+            presentationOwnedExternally: true,
+            lifecycle: {
+                onCreate: (form) => this.bindAutoPlay(form.node),
+                onShow: (form) => this.bindAutoPlay(form.node),
+                onDestroy: () => this.unbindAutoPlay(),
+            },
+        });
         this.forms.register(PDK_ROOM_FORM, {
             zOrder: 20,
             // PDK_CommonRoom 是桌面根容器，不是弹窗；若沿用 zOrder>0 的默认模态，
@@ -200,6 +266,16 @@ export class CommonPdkSwitchCoordinator {
                 },
                 onClose: () => { if (!this.inGame) this.lobbyNode.active = true; },
                 onDestroy: () => this.playController?.destroy(),
+            },
+        });
+        this.forms.register(POKER_CARD_SELECTION_FORM, {
+            zOrder: 42,
+            modal: true,
+            lifecycle: {
+                onCreate: (form) => this.bindCardSelectionForm(form),
+                onShow: (form, context) => this.showCardSelectionForm(form, context),
+                onClose: () => this.unbindCardSelectionForm(),
+                onDestroy: () => this.unbindCardSelectionForm(),
             },
         });
         this.registerSmallSettlementForm('settlement/poker/SmallSettlement');
@@ -295,20 +371,44 @@ export class CommonPdkSwitchCoordinator {
             // Decode the two mandatory room prefabs while the Game WebSocket is
             // connecting. They have no dependency on authoritative room data;
             // keeping them after connect/enter made CPU time add to network time.
-            const roomFormsReady = Promise.all([
-                this.forms.preload(COMMON_ROOM_FORM),
-                this.forms.preload(PDK_ROOM_FORM),
-            ]).then<unknown>(() => null, (error: unknown) => error);
+            const roomFormsReady = this.preloadRequiredRoomForms(roomId)
+                .then<unknown>(() => null, (error: unknown) => error);
             const showRoomLayersWhenReady = async (): Promise<void> => {
                 const preloadError = await roomFormsReady;
                 if (preloadError) throw preloadError;
                 await this.showRoomLayers();
             };
-            const gameClient = createOwnedGameClient();
+            let gameClient = createOwnedGameClient();
             this.gameClient = gameClient;
             gameClient.setWsTicket(gameTicket);
             gameClient.bindRoomAuthority(roomId, playVersion);
-            await gameClient.connect(authorityRoute);
+            try {
+                await gameClient.connect(authorityRoute);
+            } catch (firstConnectError: unknown) {
+                // Game tickets are single-use. During a full-table fan-out, an old
+                // recovery attempt can consume the ticket immediately before this
+                // socket opens. Refresh only this player's committed membership and
+                // retry once with a new client so other seats remain independent.
+                gameClient.close();
+                const refreshed = await this.refreshRoomConnectionWithRetry(roomId, 'AUTHORITY_TICKET_REFRESH');
+                console.warn('[CommonPdkRoomEntry] authority-ticket-refresh', {
+                    roomId, playerId: Number(this.account.accountId ?? this.playerId),
+                    reason: firstConnectError instanceof Error ? firstConnectError.message : String(firstConnectError),
+                });
+                gameClient = createOwnedGameClient();
+                this.gameClient = gameClient;
+                gameClient.setWsTicket(refreshed.gameTicket);
+                gameClient.bindRoomAuthority(roomId, playVersion);
+                await gameClient.connect(refreshed.authorityRoute || authorityRoute);
+            }
+            // Every seated member receives an independent ticket and connection. Once this
+            // authority boundary succeeds, leave the club surface immediately for every
+            // client; waiting until PDK_ROOM_FORM.onShow lets a slower prefab decode strand
+            // an already-connected player visually in ClubMain while the last joiner enters.
+            this.lobbyNode.active = false;
+            console.info('[CommonPdkRoomEntry] authority-connected', {
+                roomId, playerId: Number(this.account.accountId ?? this.playerId), gameCode,
+            });
             setGameRoomReconnectRecipe(roomId, playVersion, this.refreshRoomConnection);
             const authorityPlayerId = Number(this.account.accountId ?? this.playerId);
             let roomLayersPending: Promise<void> | null = null;
@@ -362,7 +462,23 @@ export class CommonPdkSwitchCoordinator {
                     if (event === 'CommonPdk_PosContinueGame') {
                         this.settlementPresentationGeneration += 1;
                         this.forms.close(this.smallSettlementForm);
-                        this.playController?.clearCompletedRound();
+                        const current = runtime.getRoomSet().GetRoomSetInfo() ?? {};
+                        const phase = String(current.authorityPhase ?? '').toUpperCase();
+                        // A timely continue acknowledgement clears the completed
+                        // round immediately. A delayed legacy acknowledgement may
+                        // arrive after the next deal and must not erase that hand.
+                        const presentationMutation = phase === 'COMPETE_DEALER' || phase === 'PLAYING'
+                            ? 'SKIP_ACTIVE_ROUND' : 'CLEAR_COMPLETED_ROUND';
+                        if (presentationMutation === 'CLEAR_COMPLETED_ROUND') {
+                            this.playController?.clearCompletedRound();
+                        }
+                        console.info('[CommonRoomContinueAck]', {
+                            roomId: Number(runtime.getRoom().GetRoomProperty('key') ?? 0),
+                            stateVersion: Number(runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+                            operationId: String((current.operationDeadline as Record<string, unknown> | undefined)?.operationId ?? ''),
+                            phase,
+                            presentationMutation,
+                        });
                     }
                     if (event === 'CommonPdk_StartVoteDissolve') {
                         if (!this.roomCapabilities.supportsDissolve) return;
@@ -437,6 +553,10 @@ export class CommonPdkSwitchCoordinator {
                 ticket.entryOrigin === 'UNION' || Number(ticket.unionId ?? ticket.returnContext?.unionId ?? 0) > 0,
                 ticket.ruleSnapshot,
                 ticket.ruleFields,
+                (active) => this.syncAutoPlay(active),
+                (targetSeat) => { void this.openCardSelection(targetSeat); },
+                runtime.getGameCode() === PDK_BUSINESS_CODES.LIANGSHAN
+                    ? new LS201PlayedCardFlow() : undefined,
             );
             this.playController = play;
             this.chatController = this.roomCapabilities.supportsChat
@@ -454,11 +574,13 @@ export class CommonPdkSwitchCoordinator {
                 this.bigSettlementForm,
                 (message) => { void this.showMessage(message); },
                 this.currentReplayCode,
+                this.settlementHistory,
+                () => this.playController?.clearCompletedRound(),
             );
             this.dissolveController = this.roomCapabilities.supportsDissolve ? new CommonPdkDissolveController(
                 runtime,
                 (message) => { void this.showMessage(message); },
-                () => this.forms.close(DISSOLVE_ROOM_FORM),
+                () => this.forms.closeAfterPointer(DISSOLVE_ROOM_FORM),
             ) : null;
             this.shareController = new CommonPdkShareController(runtime, (request) => {
                 this.lobbyNode.emit('legacy-share-request', request);
@@ -486,11 +608,22 @@ export class CommonPdkSwitchCoordinator {
         } catch (error: unknown) {
             this.inGame = false;
             this.sourceTicket = null;
-            let message = error instanceof Error ? error.message : '进入游戏失败';
+            // The visual boundary above is optimistic only after authority connection. Any
+            // later initialization failure must reveal the Hall again before recovery feedback.
+            this.lobbyNode.active = true;
+            console.error('[CommonPdkRoomEntryFailed]', {
+                roomId,
+                playerId: Number(this.account.accountId ?? this.playerId),
+                gameCode,
+                playVersion,
+                reason: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+            }, error);
+            let message = this.roomEntryFailureMessage(error);
             try {
                 await this.recoverHall();
             } catch (recoveryError: unknown) {
-                const detail = recoveryError instanceof Error ? recoveryError.message : '大厅恢复失败';
+                const normalizedRecovery = this.roomEntryFailureMessage(recoveryError);
+                const detail = normalizedRecovery === '进入游戏失败' ? '大厅恢复失败' : normalizedRecovery;
                 message = `${message}；${detail}`;
             }
             await this.showMessage(message);
@@ -517,6 +650,65 @@ export class CommonPdkSwitchCoordinator {
             this.playController?.onShow();
         }
         await this.playController?.waitForInitialPresentation();
+    }
+
+    /** A cold Safari preview can fail one bundle request while the next request succeeds. */
+    private async preloadRequiredRoomForms(roomId: number): Promise<void> {
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+            try {
+                await Promise.all([
+                    this.forms.preload(COMMON_ROOM_FORM),
+                    this.forms.preload(PDK_ROOM_FORM),
+                ]);
+                if (attempt > 1) console.info('[CommonPdkRoomLoadRecovered]', {
+                    stage: 'REQUIRED_ROOM_FORMS', roomId, attempt,
+                });
+                return;
+            } catch (error: unknown) {
+                lastError = error;
+                console.warn('[CommonPdkRoomLoadRetry]', {
+                    stage: 'REQUIRED_ROOM_FORMS', roomId, attempt,
+                    reason: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+                }, error);
+                if (attempt < 2) await this.roomLoadRetryDelay();
+            }
+        }
+        throw lastError;
+    }
+
+    private async refreshRoomConnectionWithRetry(
+        roomId: number,
+        stage: string,
+    ): Promise<HallRoomConnectionTicket> {
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+            try {
+                const ticket = await this.refreshRoomConnection(roomId);
+                if (attempt > 1) console.info('[CommonPdkRoomLoadRecovered]', { stage, roomId, attempt });
+                return ticket;
+            } catch (error: unknown) {
+                lastError = error;
+                console.warn('[CommonPdkRoomLoadRetry]', {
+                    stage, roomId, attempt,
+                    reason: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+                }, error);
+                if (attempt < 2) await this.roomLoadRetryDelay();
+            }
+        }
+        throw lastError;
+    }
+
+    private roomLoadRetryDelay(): Promise<void> {
+        return new Promise<void>((resolve) => globalThis.setTimeout(resolve, 300));
+    }
+
+    private roomEntryFailureMessage(error: unknown): string {
+        const message = error instanceof Error ? error.message.trim() : '';
+        if (/load failed|failed to fetch|network(?:error| request failed)|fetch failed|aborterror/i.test(message)) {
+            return '房间资源或网络加载失败，请重新进入房间';
+        }
+        return message || '进入游戏失败';
     }
 
     private async preloadDeferredRoomForms(gameCode: string, playFamily: string | undefined): Promise<void> {
@@ -578,6 +770,12 @@ export class CommonPdkSwitchCoordinator {
 
     private requestLeave(reason: string): void {
         void this.leave(reason).catch((error: unknown) => {
+            const roomId = Number(this.sourceTicket?.roomId ?? this.sourceTicket?.roomID ?? 0);
+            console.error('[AooRoomExit] navigation_failed', {
+                reason,
+                roomId: Number.isSafeInteger(roomId) && roomId > 0 ? roomId : undefined,
+                message: error instanceof Error ? error.message : String(error),
+            });
             void this.showMessage(error instanceof Error ? error.message : '退出房间失败，请重试');
         });
     }
@@ -596,6 +794,10 @@ export class CommonPdkSwitchCoordinator {
                 ?? this.runtime?.getRoom().GetRoomProperty('settlementPresentation')
                 ?? this.runtime?.getRoom().GetRoomConfig()?.ruleOptions?.settlementPresentation,
         };
+        // History belongs to the connected room session, not to the modal. Record
+        // the terminal payload before de-duplication or presentation delays can
+        // skip opening SmallSettlement for this round.
+        this.resultController?.recordSettlement(payload);
         if (!finalSettlement) this.lastSmallSettlementPayload = this.cloneSettlementPayload(payload);
         const roomId = Number(payload.roomId ?? this.runtime?.getRoom().GetRoomProperty('roomId')
             ?? this.runtime?.getRoom().GetRoomProperty('key') ?? 0);
@@ -643,6 +845,7 @@ export class CommonPdkSwitchCoordinator {
             const latestSetEnd = this.runtime?.getRoomSet().GetRoomSetProperty('setEnd');
             if (latestSetEnd && typeof latestSetEnd === 'object' && !Array.isArray(latestSetEnd)) {
                 payload = { ...payload, ...latestSetEnd as Record<string, unknown> };
+                this.resultController?.recordSettlement(payload);
                 this.lastSmallSettlementPayload = this.cloneSettlementPayload(payload);
             }
             // FLOATING is selected by the authoritative room rule. The server's
@@ -654,17 +857,10 @@ export class CommonPdkSwitchCoordinator {
                 this.settlementShownKey = key;
                 return;
             }
-            // 浮动结算在最后一局也不能重新退回阻塞式小结算；权威状态已标记
-            // 整场结束时直接展示总结算，并携带同一局的回放码与规则快照。
-            if (settlementPresentation === 'FLOATING' && (matchFinished || finalSettlement)) {
-                payload = await this.withReplayCode(payload, roomId, roundNo);
-                if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
-                await this.forms.show(this.bigSettlementForm, payload);
-                if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
-                this.forms.close(this.smallSettlementForm);
-                this.settlementShownKey = key;
-                return;
-            }
+            // The terminal round is still a completed round and must be visible as
+            // roundLimit/roundLimit in SmallSettlement. BigSettlement is opened by
+            // its summary button afterwards; skipping this screen leaves history at
+            // 7/8 and makes the final hand appear unrecorded.
             payload = await this.withReplayCode(payload, roomId, roundNo);
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             await this.forms.show(this.smallSettlementForm, payload);
@@ -745,13 +941,17 @@ export class CommonPdkSwitchCoordinator {
         const source = this.sourceTicket;
         const roomId = Number(source?.roomId ?? source?.roomID ?? 0);
         const authorityAlreadyExited = reason === 'authority-left' || reason === 'pdk-room-dissolved'
-            || reason === 'waiting-room-expired';
+            || reason === 'waiting-room-expired' || reason === 'room-not-found'
+            || reason === 'reconnect-room-failed';
+        console.info('[AooRoomExit] begin', { reason, roomId, authorityAlreadyExited });
         if (Number.isSafeInteger(roomId) && roomId > 0) {
             try {
                 // Hall owns the canonical room lifecycle and verifies the active-room state
-                // after the mutation. Sending the retired game dispatch first races its own
-                // socket close: a successful leave can surface as a transport failure and
-                // prevent navigation from ever running.
+                // after the mutation. When Authority has already reported that the room is
+                // gone (including a terminal reconnect failure), another Hall leave can only
+                // race the removed route and surface HALL_INTERNAL_ERROR. Skip that redundant
+                // mutation so the terminal signal can never block navigation away from the
+                // retired room screen.
                 if (!authorityAlreadyExited) await this.leaveRoom(roomId);
                 this.onExplicitLeave();
             } catch (error: unknown) {
@@ -806,6 +1006,9 @@ export class CommonPdkSwitchCoordinator {
         this.externalSwitchGeneration += 1;
         this.dissolveVoteActive = false;
         this.unbindDissolveEntry();
+        this.autoPlayVisible = false;
+        this.unbindAutoPlay();
+        this.forms.close(AUTO_PLAY_FORM);
         this.runtime?.destroy();
         this.runtime = null;
         this.playController?.destroy();
@@ -835,6 +1038,8 @@ export class CommonPdkSwitchCoordinator {
     private async recoverHall(reconnect = true): Promise<void> {
         const game = this.gameClient;
         this.dissolveVoteActive = false;
+        this.autoPlayVisible = false;
+        this.forms.close(AUTO_PLAY_FORM);
         this.runtime?.destroy();
         this.runtime = null;
         this.playController?.destroy();
@@ -986,6 +1191,86 @@ export class CommonPdkSwitchCoordinator {
             this.forms.close(DISSOLVE_ROOM_FORM);
             void this.showMessage(error instanceof Error ? error.message : '申请解散失败，请重试');
         });
+    }
+
+    private async openCardSelection(targetSeat: number): Promise<void> {
+        const runtime = this.runtime;
+        if (!runtime || !this.inGame) return;
+        const player = runtime.getRoomPosManager().GetPlayerInfoByPos(targetSeat) as Record<string, unknown> | undefined;
+        const targetPlayerId = Number(player?.pid ?? 0);
+        if (!Number.isSafeInteger(targetPlayerId) || targetPlayerId <= 0) {
+            await this.showMessage('该座位当前没有玩家');
+            return;
+        }
+        const ruleOptions = runtime.getRoom().GetRoomConfig()?.ruleOptions;
+        if (!ruleOptions || typeof ruleOptions !== 'object' || Array.isArray(ruleOptions)) {
+            await this.showMessage('当前玩法牌堆配置缺失');
+            return;
+        }
+        const deckCards = (ruleOptions as Record<string, unknown>).deckCards;
+        if (!Array.isArray(deckCards)) {
+            await this.showMessage('当前玩法牌堆配置缺失');
+            return;
+        }
+        await this.forms.show(POKER_CARD_SELECTION_FORM, {
+            gameCode: runtime.getGameCode(), targetPlayerId, targetSeat,
+            // PDK 属于整局一次发完类，因此不显示 CurrentRound / NextRound。
+            dealFlow: 'DEAL_ONCE', deckCards: deckCards.map(Number),
+        });
+    }
+
+    private bindCardSelectionForm(form: LegacyForm): void {
+        if (this.cardSelectionRoot === form.node) return;
+        this.unbindCardSelectionForm();
+        this.cardSelectionRoot = form.node;
+        form.node.on('poker-card-selection-submit', this.onCardSelectionSubmit, this);
+        form.node.on('poker-card-selection-close', this.onCardSelectionClose, this);
+    }
+
+    private showCardSelectionForm(form: LegacyForm, context: unknown): void {
+        this.bindCardSelectionForm(form);
+        if (!context || typeof context !== 'object' || Array.isArray(context)) {
+            throw new Error('扑克选牌上下文缺失');
+        }
+        const presenter = form.node.getComponent(Poker_Deck_Presenter);
+        if (!presenter) throw new Error('PokerTest 缺少 Poker_Deck_Presenter');
+        presenter.configure(context as Parameters<Poker_Deck_Presenter['configure']>[0]);
+    }
+
+    private unbindCardSelectionForm(): void {
+        this.cardSelectionRoot?.off('poker-card-selection-submit', this.onCardSelectionSubmit, this);
+        this.cardSelectionRoot?.off('poker-card-selection-close', this.onCardSelectionClose, this);
+        this.cardSelectionRoot = null;
+    }
+
+    private async submitCardSelection(detail: PokerDeckSelectionSubmit): Promise<void> {
+        const runtime = this.runtime;
+        if (!runtime || !this.inGame) return;
+        const roomId = Number(runtime.getRoomManager().GetEnterRoomID());
+        console.info('[PokerCardSelection] submit', {
+            roomId, gameCode: detail.gameCode, targetPlayerId: detail.targetPlayerId,
+            targetSeat: detail.targetSeat, dealStage: detail.dealStage, cardCount: detail.cards.length,
+        });
+        try {
+            await runtime.action(`cardSelection:${detail.targetSeat}`, `poker.${runtime.getGameCode()}.dispatch`, {
+                action: 'selectCards',
+                payload: {
+                    roomId, targetPlayerId: detail.targetPlayerId, targetSeat: detail.targetSeat,
+                    dealStage: detail.dealStage,
+                    // Confirm submits the complete local selection once. REPLACE
+                    // keeps repeated confirmations idempotent and supports clearing.
+                    selectionMode: 'REPLACE',
+                    cards: [...detail.cards],
+                },
+            });
+            this.forms.closeAfterPointer(POKER_CARD_SELECTION_FORM);
+            await this.showMessage('OK了');
+        } catch (error: unknown) {
+            console.error('[PokerCardSelection] submit failed', {
+                roomId, targetPlayerId: detail.targetPlayerId, targetSeat: detail.targetSeat, error,
+            });
+            await this.showMessage(error instanceof Error ? error.message : '选牌设置失败');
+        }
     }
 
     private roomMediaClient(): CommonPdkMediaClient | null {

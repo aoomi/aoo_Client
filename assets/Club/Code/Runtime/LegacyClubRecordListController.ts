@@ -301,16 +301,14 @@ export class LegacyClubRecordListController {
     private openDetail(row: Node): void {
         const record = this.rowRecords.get(row);
         if (!record) return;
-        if (Number(record.gameType) === 8 || Number(record.gameType) === 629) {
-            this.lobbyNode.emit('legacy-replay-room', {
-                roomId: record.roomID,
-                source: 'CLUB',
-                returnForm: 'ui/club/UIClubRecordList',
-            });
-            return;
-        }
-        void this.forms.show('UILobbyRecordResult', record.roomID, this.players(record.playerList),
-            record.gameType, record.unionId, record.roomKey, 1);
+        // Every gameplay family owns its settlement presentation. Record detail
+        // therefore enters the shared authoritative history boundary and lets
+        // the catalog resolve that game's real SmallSettlement prefab.
+        this.lobbyNode.emit('legacy-replay-room', {
+            roomId: record.roomID,
+            source: 'CLUB',
+            returnForm: 'ui/club/UIClubRecordList',
+        });
     }
 
     private markType(form: LegacyForm): void {

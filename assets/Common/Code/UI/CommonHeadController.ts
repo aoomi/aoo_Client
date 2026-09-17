@@ -1,4 +1,4 @@
-import { _decorator, assetManager, Animation, AssetManager, Color, Component, Label, Node, Sprite, sp, UITransform, view } from 'cc';
+import { _decorator, assetManager, Animation, AssetManager, Color, Component, Label, Node, Sprite, SpriteFrame, sp, UITransform, view } from 'cc';
 import { PlayerAvatarService } from './PlayerAvatarService';
 
 const { ccclass } = _decorator;
@@ -20,6 +20,7 @@ export class CommonHeadController extends Component {
     private faceAnimation: Node | null = null;
     private emojiGeneration = 0;
     private avatarGeneration = 0;
+    private readonly authoredAvatarFrames = new Map<Sprite, SpriteFrame | null>();
     private readyOffsetX = 0;
     private voiceTimer: number | undefined;
 
@@ -110,10 +111,40 @@ export class CommonHeadController extends Component {
 
     public async showPlayerAvatar(playerId: number, headImageUrl = ''): Promise<void> {
         this.cacheNodes();
+        this.captureAuthoredAvatars();
         const generation = ++this.avatarGeneration;
         const frame = await PlayerAvatarService.frame(playerId, headImageUrl).catch(() => null);
         if (!frame || generation !== this.avatarGeneration || !this.node.isValid) return;
         for (const sprite of this.avatarSprites()) sprite.spriteFrame = frame;
+    }
+
+    /**
+     * 游戏位置始终保留 CommonHead/Game；无人时只隐藏玩家数据，不能隐藏公共头像节点。
+     * 这样所有接入公共头像的玩法都使用同一套空座表现。
+     */
+    public showGamePlayer(occupied: boolean): void {
+        const game = this.useVariant('Game');
+        const playerInfo = this.required('Game/Head/PlayerInfo');
+        playerInfo.active = occupied;
+        if (!occupied) {
+            this.avatarGeneration += 1;
+            this.captureAuthoredAvatars();
+            for (const [sprite, frame] of this.authoredAvatarFrames) {
+                if (sprite.isValid) sprite.spriteFrame = frame;
+            }
+            for (const name of ['Lb_PlayerName', 'Lb_PlayerScore']) {
+                const label = playerInfo.getChildByName(name)?.getComponent(Label);
+                if (label) label.string = '';
+            }
+            this.showReady(false);
+            this.hideTransientEffects();
+        }
+        game.active = true;
+    }
+
+    private captureAuthoredAvatars(): void {
+        if (this.authoredAvatarFrames.size > 0) return;
+        for (const sprite of this.avatarSprites()) this.authoredAvatarFrames.set(sprite, sprite.spriteFrame);
     }
 
     private cacheNodes(): void {

@@ -21,3 +21,8 @@ test('legacy regionless PDK write requests fail before transport dispatch', () =
     assert.match(protocol, /route\.canonicalMsgId === 'poker\.pdk\.dispatch'/);
     assert.match(protocol, /旧 pdk 写协议已停用/);
 });
+
+test('transport errors retain stable gateway codes for terminal room recovery', () => {
+    const transport = read('assets/Common/Code/Runtime/network/LegacyWebSocketClient.ts');
+    assert.match(transport, /return `\$\{detail\}（\$\{packet\.errorCode\}）`/);
+});

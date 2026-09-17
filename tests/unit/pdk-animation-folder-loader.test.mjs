@@ -50,12 +50,13 @@ test('PDK animation registry maps protocol card types to Common/Spine SkeletonDa
     assert.match(controller, /playOperation\(opType\)/);
 });
 
-test('PDK room prefab contains the shared card-pattern animation mount nodes', () => {
+test('PDK room prefab gives every seat one shared card-pattern animation mount', () => {
     const prefab = JSON.parse(readFileSync(prefabPath, 'utf8'));
-    const names = new Set(prefab.filter((entry) => entry?.__type__ === 'cc.Node').map((entry) => entry._name));
-    for (const mount of ['Boom_Ani', 'Liandui_Spine', 'Sandaiyi_Spine', 'Sandaier', 'Sidaiyi', 'Sidaier', 'Sidaisan', 'Shunzi', 'Plane_Ani', 'Shut_Dow_Ani']) {
-        assert.equal(names.has(mount), true, `${mount} mount missing`);
-    }
+    const nodes = prefab.filter((entry) => entry?.__type__ === 'cc.Node');
+    assert.equal(nodes.filter((entry) => entry._name === 'Play_CardSpine').length, 4);
+    const resolver = readFileSync(join(runtimeRoot, 'PdkAnimationResolver.ts'), 'utf8');
+    assert.match(resolver, /Players\/Play_\$\{physicalSlot\}\/Spine\/Play_CardSpine/);
+    assert.doesNotMatch(resolver, /definition\.mountPath/);
 });
 
 test('deal and outgoing-card animations do not replay history or carry card shadows', () => {
@@ -91,7 +92,7 @@ test('local play compacts the surviving hand without a Layout jump frame', () =>
     const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
     const compact = controller.slice(
         controller.indexOf('private buildHandCompactionPlan'),
-        controller.indexOf('private schedulePublicCardsClear'),
+        controller.indexOf('private markPublicCardsShown'),
     );
     assert.match(compact, /removedBefore \+ selectedCount \/ 2/);
     assert.match(compact, /tween\(card\)\.by\(HAND_COMPACT_DURATION_SECONDS/);
@@ -108,11 +109,12 @@ test('deal, light effects, trick cleanup, and More menu follow explicit UI bound
     assert.doesNotMatch(authority, /renderHand\(this\.shouldAnimateDeal/);
     assert.match(controller, /to === 'PLAYING'[\s\S]*renderHand\(this\.shouldAnimateDeal\(setInfo\)\)/);
     const clear = controller.slice(
-        controller.indexOf('private schedulePublicCardsClear'),
+        controller.indexOf('private clearPublicCardsForTurn'),
         controller.indexOf('private prepareOwnFlightCards'),
     );
-    assert.match(clear, /if \(this\.runtime\.retainPlayedCardsOnTable\(\)\) return/);
-    assert.match(clear, /clearPublicCards\(\);\s*this\.clearTableCards\(\)/);
+    assert.match(clear, /COMPLETED_TRICK_HOLD_MS - \(Date\.now\(\) - shownAt\)/);
+    assert.match(clear, /this\.clearPublicCardsForSeat\(dataSeat\)/);
+    assert.doesNotMatch(clear, /animatePublicCardsClear\(\)/);
     assert.match(controller, /getBoundingBoxToWorld\(\)[\s\S]*toggleMoreMenu\(\)/);
     assert.match(controller, /menu\.setSiblingIndex\(this\.view\.root\.children\.length - 1\)/);
     assert.match(resolver, /EVENT_AFTER_UPDATE/);

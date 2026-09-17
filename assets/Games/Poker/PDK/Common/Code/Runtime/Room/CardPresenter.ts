@@ -14,6 +14,12 @@ export class CardPresenter {
 
     public async create(parent: Node, cardValue: number, selected = false, onClick?: () => void): Promise<Node> {
         const card = await this.cards.create(parent, cardValue, undefined, selected);
+        const presenter = card.getComponent(Poker_Card_Presenter);
+        if (!presenter) throw new Error('Poker_Card instance is missing Poker_Card_Presenter');
+        // PDK represents selection only by raising the physical card. Never let
+        // the common poker prefab's Selected_Mask/Disabled_Mask follow a card
+        // into Out_Card or Table_Cards.
+        presenter.setPdkVisualState(selected, false);
         if (onClick) {
             const button = card.getComponent(Button) ?? card.addComponent(Button);
             button.transition = Button.Transition.NONE;
@@ -67,6 +73,10 @@ export class CardPresenter {
     public preview(card: Node, preview: boolean): void {
         if (!card.isValid) return;
         card.getComponent(Poker_Card_Presenter)?.setPdkPreview(preview);
+    }
+
+    public isSelected(card: Node): boolean {
+        return card.isValid && this.selectedStates.get(card) === true;
     }
 
     /** Layout owns the initial x/y placement, so cache bases only after it has settled. */

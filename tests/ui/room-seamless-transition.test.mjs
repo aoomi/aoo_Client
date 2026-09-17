@@ -103,13 +103,32 @@ test('room transitions avoid serial bundle loads and duplicate exit-frame commit
     const deferredStart = coordinator.indexOf('private async preloadDeferredRoomForms');
     const enter = coordinator.slice(enterStart, deferredStart);
     assert.ok(enter.indexOf('await gameClient.connect(authorityRoute)') < enter.indexOf('await runtime.enterRoom(roomId)'));
-    assert.ok(enter.indexOf('this.forms.preload(COMMON_ROOM_FORM)') < enter.indexOf('await gameClient.connect(authorityRoute)'));
-    assert.ok(enter.indexOf('this.forms.preload(PDK_ROOM_FORM)') < enter.indexOf('await gameClient.connect(authorityRoute)'));
+    assert.ok(enter.indexOf('await gameClient.connect(authorityRoute)') < enter.indexOf('this.lobbyNode.active = false'));
+    assert.match(enter, /catch \(firstConnectError: unknown\)[\s\S]{0,900}refreshRoomConnectionWithRetry\(roomId, 'AUTHORITY_TICKET_REFRESH'\)[\s\S]{0,900}gameClient\.connect\(refreshed\.authorityRoute \|\| authorityRoute\)/,
+        '满员并发切换遇到一次性票据拒绝时，必须为当前玩家独立刷新票据并有界重连');
+    assert.ok(enter.indexOf('this.lobbyNode.active = false') < enter.indexOf('await runtime.enterRoom(roomId)'),
+        '每个玩家连接权威房间后必须立即离开亲友圈界面，不能等待房间 Prefab 展示');
+    assert.match(enter, /catch \(error: unknown\)[\s\S]*this\.lobbyNode\.active = true/,
+        '房间初始化失败后必须恢复大厅界面');
+    assert.ok(enter.indexOf('this.preloadRequiredRoomForms(roomId)') < enter.indexOf('await gameClient.connect(authorityRoute)'));
     assert.match(enter, /const showRoomLayersWhenReady = async/);
     assert.match(enter, /roomLayersPending \?\?= showRoomLayersWhenReady\(\)/);
     assert.ok(enter.indexOf("this.lobbyNode.emit('common-pdk-room-ready'") < enter.indexOf('this.preloadDeferredRoomForms('));
     assert.doesNotMatch(enter.slice(0, enter.indexOf("this.lobbyNode.emit('common-pdk-room-ready'")),
         /settlementBundlePreloader\.preload/);
+});
+
+test('PDK room cold-load failures retry once and never expose Safari Load failed', () => {
+    const coordinator = fs.readFileSync(path.join(root,
+        'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
+    const preload = coordinator.slice(coordinator.indexOf('private async preloadRequiredRoomForms'),
+        coordinator.indexOf('private async refreshRoomConnectionWithRetry'));
+    assert.match(preload, /attempt <= 2/);
+    assert.match(preload, /this\.forms\.preload\(COMMON_ROOM_FORM\)/);
+    assert.match(preload, /this\.forms\.preload\(PDK_ROOM_FORM\)/);
+    assert.match(coordinator, /\[CommonPdkRoomLoadRetry\]/);
+    assert.match(coordinator, /load failed\|failed to fetch/);
+    assert.match(coordinator, /房间资源或网络加载失败，请重新进入房间/);
 });
 
 test('room admission reuses lobby metadata and parallelizes post-join requests', () => {

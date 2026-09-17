@@ -194,6 +194,10 @@ export class CommonPdkRuntime {
         return this.room;
     }
 
+    public getPlayerId(): number {
+        return this.options.playerId;
+    }
+
     public getRoomManager(): CommonPdkRoomManager {
         return this.manager;
     }
@@ -206,8 +210,12 @@ export class CommonPdkRuntime {
         return this.roomSet;
     }
 
-    public retainPlayedCardsOnTable(): boolean {
-        if (!resolvePdkGameplayCapabilities(this.options.gameCode).retainPlayedCardsOnTable) return false;
+    public getGameCode(): PdkBusinessCode {
+        return this.options.gameCode;
+    }
+
+    public arrangementEnabled(): boolean {
+        if (resolvePdkGameplayCapabilities(this.options.gameCode).arrangementMode !== 'enabled') return false;
         const ruleOptions = this.room.GetRoomConfig()?.ruleOptions;
         if (!ruleOptions || typeof ruleOptions !== 'object') {
             throw new Error('CommonPdk 权威 ruleOptions 缺失');
@@ -276,6 +284,22 @@ export class CommonPdkRuntime {
 
     public reconcileAuthority(): void {
         this.scheduleAuthorityReconcile();
+    }
+
+    /** Consumes the authoritative terminal marker returned to the final dissolve voter. */
+    public acceptDissolveVoteResult(result: unknown): boolean {
+        if (this.disposed || !result || typeof result !== 'object' || Array.isArray(result)) return false;
+        const body = result as Record<string, unknown>;
+        const phase = String(body.phase ?? '').toUpperCase();
+        if (body.roomTerminal !== true && body.dissolved !== true && phase !== 'DISSOLVED') return false;
+        const stateVersion = Number(body.stateVersion ?? this.authorityStateVersion + 1);
+        this.options.onEvent?.('CommonPdk_DissolveRoom', {
+            roomId: Number(body.roomId ?? this.authorityRoomId),
+            operationId: String(body.operationId ?? ''),
+            stateVersion: Number.isSafeInteger(stateVersion) ? stateVersion : this.authorityStateVersion + 1,
+            reason: String(body.roomTerminalReason ?? body.dissolveReason ?? 'ROOM_DISSOLVED'),
+        });
+        return true;
     }
 
     public competeDealer(compete: boolean): Promise<unknown> {
@@ -378,16 +402,17 @@ export class CommonPdkRuntime {
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error ?? '');
             const dissolve = this.room.GetRoomProperty('dissolve');
-            if (!this.disposed && dissolve && typeof dissolve === 'object'
-                && /authentication required|player is not seated|room not found|room route not found|request_not_found|\b1002\b|\b3001\b/i.test(message)) {
+            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message);
+            const revokedMember = /authentication required|player (?:is )?not (?:a room member|seated)|\b1002\b/i.test(message);
+            if (!this.disposed && (terminalRoom || (dissolve && typeof dissolve === 'object' && revokedMember))) {
                 // 2.2.2 used the server's Dissolve broadcast as the sole terminal
                 // boundary. Protocol V2 may remove the room before the final push is
-                // delivered; a failed authoritative lookup during an active ballot is
-                // the equivalent server-owned terminal result, never a vote guess.
+                // delivered. A definitive room terminal response remains authoritative
+                // even after the local ballot payload has been cleared by an earlier ack.
                 this.options.onEvent?.('CommonPdk_DissolveRoom', {
                     roomId,
                     stateVersion: this.authorityStateVersion + 1,
-                    reason: 'ROOM_AUTHORITY_REVOKED',
+                    reason: terminalRoom ? 'ROOM_DISSOLVED' : 'ROOM_AUTHORITY_REVOKED',
                 });
                 return;
             }
@@ -424,7 +449,7 @@ export class CommonPdkRuntime {
         const { view, snapshot } = projectCommonPdkAuthoritativeView(packet, this.options.playerId);
         const deadlineForFingerprint = view.operationDeadline && typeof view.operationDeadline === 'object'
             ? view.operationDeadline as Record<string, unknown> : {};
-        const latestActionForFingerprint = Array.isArray(view.lastActions) ? view.lastActions.at(-1) : null;
+        const latestActionForFingerprint = view.tableLastOperation;
         const latestActionRecord = latestActionForFingerprint && typeof latestActionForFingerprint === 'object'
             ? latestActionForFingerprint as Record<string, unknown> : {};
         const seatFingerprint = Object.entries(view.seats ?? {})
@@ -439,7 +464,7 @@ export class CommonPdkRuntime {
             view.currentSeat,
             Number(view.trickId ?? 0),
             String(view.operationId || deadlineForFingerprint.operationId || latestActionRecord.operationId || ''),
-            Array.isArray(view.lastActions) ? view.lastActions.length : 0,
+            Array.isArray(view.tableOperations) ? view.tableOperations.length : 0,
             seatFingerprint,
         ].join('|');
         if (!force && view.roomId === this.authorityRoomId) {
@@ -461,7 +486,7 @@ export class CommonPdkRuntime {
         this.authorityPhase = view.phase;
         const deadline = view.operationDeadline && typeof view.operationDeadline === 'object'
             ? view.operationDeadline as Record<string, unknown> : {};
-        const lastActionValue = Array.isArray(view.lastActions) ? view.lastActions.at(-1) : null;
+        const lastActionValue = view.tableLastOperation;
         const lastAction = lastActionValue && typeof lastActionValue === 'object'
             ? lastActionValue as Record<string, unknown> : {};
         const authorityOperationId = String(view.operationId || deadline.operationId || lastAction.operationId || '');
@@ -473,7 +498,7 @@ export class CommonPdkRuntime {
             operationId: authorityOperationId,
             turnSeat: view.currentSeat,
             trickId: Number(view.trickId ?? 0),
-            lastActionCount: Array.isArray(view.lastActions) ? view.lastActions.length : 0,
+            tableOperationCount: Array.isArray(view.tableOperations) ? view.tableOperations.length : 0,
         });
         this.options.onEvent?.('CommonPdk_AuthoritativeState', view);
         if (Boolean(view.dissolved)) {

@@ -1,4 +1,4 @@
-import { Button, EventMouse, EventTouch, Label, Node, UITransform } from 'cc';
+import { BlockInputEvents, Button, Color, EventMouse, EventTouch, Graphics, Label, Node, UITransform } from 'cc';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 
 export class CommonPdkDissolveController {
@@ -9,6 +9,7 @@ export class CommonPdkDissolveController {
     private requestGeneration = 0;
     private inputRoot: Node | null = null;
     private lastVotePointerAt = 0;
+    private lastClosePointerAt = 0;
     private readonly onRefuse = (): void => this.voteFromPointer(false);
     private readonly onAgree = (): void => this.voteFromPointer(true);
     private readonly onClose = (): void => this.close();
@@ -17,7 +18,8 @@ export class CommonPdkDissolveController {
         for (const [path, agree] of [['Btn_Reject', false], ['Btn_Agree', true]] as const) {
             const node = this.node(path);
             const button = node?.getComponent(Button);
-            if (button?.interactable && node?.getComponent(UITransform)?.hitTest(location)) {
+            if (button?.interactable && node?.activeInHierarchy
+                && node.getComponent(UITransform)?.hitTest(location)) {
                 this.voteFromPointer(agree);
                 return;
             }
@@ -38,20 +40,21 @@ export class CommonPdkDissolveController {
         if (this.root) {
             this.unbindVoteButton('Btn_Reject', this.onRefuse);
             this.unbindVoteButton('Btn_Agree', this.onAgree);
-            this.node('Bg_Header/Btn_Close')?.off(Button.EventType.CLICK, this.onClose, this);
-            this.inputRoot?.off(Node.EventType.TOUCH_END, this.onFormPointerEnd, this, true);
-            this.inputRoot?.off(Node.EventType.MOUSE_UP, this.onFormPointerEnd, this, true);
+            this.unbindPointerButton('Btn_Close', this.onClose);
+            this.bindInputRoot(null);
         }
         this.root = root;
+        this.ensureModalMask();
         this.root.active = false;
         this.bindVoteButton('Btn_Reject', this.onRefuse);
         this.bindVoteButton('Btn_Agree', this.onAgree);
+        this.bindPointerButton('Btn_Close', this.onClose);
         this.bindInputRoot(root);
-        this.node('Bg_Header/Btn_Close')?.on(Button.EventType.CLICK, this.onClose, this);
     }
 
     public onShow(): void {
         if (this.disposed || !this.root?.isValid) return;
+        this.ensureModalMask();
         this.root.active = true;
         this.render();
         globalThis.clearInterval(this.timer);
@@ -67,6 +70,36 @@ export class CommonPdkDissolveController {
             // observe the authoritative room revocation promptly.
             this.runtime.reconcileAuthority();
         }, 500);
+    }
+
+    /** Full-screen modal shield. It is deliberately the first sibling so the
+     * dialog buttons remain clickable while every uncovered room area is blocked. */
+    private ensureModalMask(): void {
+        if (!this.root?.isValid) return;
+        let mask = this.root.getChildByName('ModalMask');
+        if (!mask) {
+            mask = new Node('ModalMask');
+            mask.layer = this.root.layer;
+            mask.addComponent(UITransform);
+            mask.addComponent(Graphics);
+            mask.addComponent(BlockInputEvents);
+            mask.parent = this.root;
+        }
+        mask.setSiblingIndex(0);
+        const parentSize = this.root.parent?.getComponent(UITransform)?.contentSize;
+        const rootSize = this.root.getComponent(UITransform)?.contentSize;
+        const width = Math.max(parentSize?.width ?? 0, rootSize?.width ?? 0, 1280);
+        const height = Math.max(parentSize?.height ?? 0, rootSize?.height ?? 0, 720);
+        mask.getComponent(UITransform)?.setContentSize(width, height);
+        const graphics = mask.getComponent(Graphics);
+        if (graphics) {
+            graphics.clear();
+            graphics.fillColor = new Color(0, 0, 0, 90);
+            graphics.rect(-width / 2, -height / 2, width, height);
+            graphics.fill();
+        }
+        mask.setPosition(0, 0, 0);
+        mask.active = true;
     }
 
     public onVote(dissolve: any): void {
@@ -101,10 +134,8 @@ export class CommonPdkDissolveController {
         this.requestGeneration += 1;
         this.unbindVoteButton('Btn_Reject', this.onRefuse);
         this.unbindVoteButton('Btn_Agree', this.onAgree);
-        this.node('Bg_Header/Btn_Close')?.off(Button.EventType.CLICK, this.onClose, this);
-        this.inputRoot?.off(Node.EventType.TOUCH_END, this.onFormPointerEnd, this, true);
-        this.inputRoot?.off(Node.EventType.MOUSE_UP, this.onFormPointerEnd, this, true);
-        this.inputRoot = null;
+        this.unbindPointerButton('Btn_Close', this.onClose);
+        this.bindInputRoot(null);
         globalThis.clearInterval(this.timer);
         this.timer = 0;
         if (this.root?.isValid) this.root.active = false;
@@ -156,16 +187,28 @@ export class CommonPdkDissolveController {
         this.interactable('Btn_Reject', false);
         this.interactable('Btn_Agree', false);
         const event = agree ? 'common.room.dissolve_agree_req' : 'common.room.dissolve_refuse_req';
+        console.info('[RoomDissolveVote] submit', { roomId, agree, generation });
         void this.runtime.action('dissolve-vote', event, { roomID: roomId })
-            .then(() => {
+            .then((result) => {
+                console.info('[RoomDissolveVote] accepted', { roomId, agree, generation });
                 // The vote acknowledgement is not a room snapshot. As in 2.2.2,
-                // leaving is driven only by the authoritative dissolve result;
-                // reconcile immediately in case the terminal push raced teardown.
-                if (agree) this.runtime.reconcileAuthority();
+                // leaving is driven only by the authoritative dissolve result. The
+                // final voter receives that terminal marker in the response itself;
+                // other voters normally receive the state push. Reconcile only when
+                // the response was non-terminal in case that push raced teardown.
+                if (agree && !this.runtime.acceptDissolveVoteResult(result)) this.runtime.reconcileAuthority();
             })
             .catch((error: unknown) => {
                 if (this.disposed || generation !== this.requestGeneration) return;
-                this.showMessage(error instanceof Error ? error.message : '投票失败，请重试');
+                console.error('[RoomDissolveVote] failed', { roomId, agree, generation, error });
+                const message = error instanceof Error ? error.message : String(error ?? '');
+                if (/room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message)) {
+                    // The ballot may become terminal before this seat receives its final
+                    // push. Reconcile immediately instead of reviving an obsolete dialog.
+                    this.runtime.reconcileAuthority();
+                    return;
+                }
+                this.showMessage(message || '投票失败，请重试');
                 this.render();
             });
     }
@@ -182,6 +225,10 @@ export class CommonPdkDissolveController {
     }
 
     private bindVoteButton(path: string, listener: () => void): void {
+        this.bindPointerButton(path, listener);
+    }
+
+    private bindPointerButton(path: string, listener: () => void): void {
         const node = this.node(path);
         if (!node) return;
         node.on(Button.EventType.CLICK, listener, this);
@@ -190,6 +237,10 @@ export class CommonPdkDissolveController {
     }
 
     private unbindVoteButton(path: string, listener: () => void): void {
+        this.unbindPointerButton(path, listener);
+    }
+
+    private unbindPointerButton(path: string, listener: () => void): void {
         const node = this.node(path);
         if (!node) return;
         node.off(Button.EventType.CLICK, listener, this);
@@ -197,6 +248,10 @@ export class CommonPdkDissolveController {
         node.off(Node.EventType.MOUSE_UP, listener, this);
     }
 
+    /**
+     * Safari/Web Preview 偶尔不合成 Button.CLICK。弹窗根节点在捕获阶段按真实
+     * UITransform 命中投票按钮，和按钮自身监听共享 voteFromPointer 去重。
+     */
     private bindInputRoot(root: Node | null): void {
         if (this.inputRoot === root) return;
         this.inputRoot?.off(Node.EventType.TOUCH_END, this.onFormPointerEnd, this, true);
@@ -213,6 +268,9 @@ export class CommonPdkDissolveController {
     }
 
     private close(): void {
+        const now = Date.now();
+        if (now - this.lastClosePointerAt < 180) return;
+        this.lastClosePointerAt = now;
         this.hide();
         this.closeForm();
     }

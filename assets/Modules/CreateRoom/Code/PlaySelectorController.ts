@@ -399,6 +399,8 @@ export class PlaySelectorController {
             ...rules,
             gameId: this.selectedGame.gameId,
             gameCode: this.selectedGame.gameCode,
+            gameDisplayName: this.selectedGame.displayName,
+            classificationName: this.selectedGame.classificationName,
             playVersion: this.selectedGame.playVersion,
         });
     }

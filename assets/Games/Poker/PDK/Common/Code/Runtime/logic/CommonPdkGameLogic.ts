@@ -73,6 +73,28 @@ export class CommonPdkGameLogic {
         return mode === 'PAIRS' || mode === 'EITHER';
     }
 
+    private ComparesTripleAttachments(): boolean {
+        return this.GetAuthoritativeRuleOptions().compareTripleAttachments === true;
+    }
+
+    private GetFourAttachmentMode(): 'DISABLED' | 'SINGLES' | 'PAIRS' | 'EITHER' {
+        const value = String(this.GetAuthoritativeRuleOptions().fourAttachmentMode ?? '');
+        if (value !== 'DISABLED' && value !== 'SINGLES' && value !== 'PAIRS' && value !== 'EITHER') {
+            throw new Error('CommonPdk 权威 fourAttachmentMode 无效');
+        }
+        return value;
+    }
+
+    private AllowsFourSingles(): boolean {
+        const mode = this.GetFourAttachmentMode();
+        return mode === 'SINGLES' || mode === 'EITHER';
+    }
+
+    private AllowsFourPairs(): boolean {
+        const mode = this.GetFourAttachmentMode();
+        return mode === 'PAIRS' || mode === 'EITHER';
+    }
+
     public InitHandCard(){
         this.handCardList = [];
         this.selectCardList = [];
@@ -167,12 +189,10 @@ export class CommonPdkGameLogic {
         }
         if(!cardList.length) return;
 
-        if(this.lastCardType == 0 || opCardType == 11){
-            this.lastCardType = opCardType;
-        }
-        
-        console.log("this.lastCardTyp =="+this.lastCardType);
-        this.lastCardList = cardList;
+        // comparisonState is an atomic authority snapshot. Never combine its
+        // cards with a type retained from an older play.
+        this.lastCardType = Number(opCardType);
+        this.lastCardList = cardList.map(Number);
     }
 
     public ClearCardData(){
@@ -366,6 +386,7 @@ export class CommonPdkGameLogic {
 
     //如果最后首发只有三带 可以不带牌出
     public CheckLastThree(tag, lastCard){
+        // 牌型值仅参与规则判定；不要把合法枚举当成控制台错误输出。
         if(this.lastCardType == 0){
             if(this.selectCardList.length != lastCard ||
                 this.handCardList.length != lastCard) return false;
@@ -498,23 +519,17 @@ export class CommonPdkGameLogic {
                 return false;
             }
         }
-        /*else if(tag == 8){
-            //没有四带一的玩法 不检测
-            if(!this.CheckLastThree(4, 5) && this.lastCardType == 0){
-                if(!this.Room.GetRoomPaiXing('SiDaiYi')) return false;
-            }
-
-        }*/
-        else if(tag == 9 || tag == 20){
-            //没有四带二的玩法 不检测
-            if(!this.Room.GetRoomPaiXing('SiDaiEr')){
-                return false;
-            }
+        else if(tag == 8){
+            if(this.GetAuthoritativeRuleOptions().allowFourBombWithOne !== true) return false;
+        }
+        else if(tag == 9){
+            if(!this.AllowsFourSingles()) return false;
+        }
+        else if(tag == 20){
+            if(!this.AllowsFourPairs()) return false;
         }
         else if(tag == 10){
-            if(!this.Room.GetRoomPaiXing('SiDaiSan')){
-                return false;
-            }
+            if(this.GetAuthoritativeRuleOptions().allowFourWithThree !== true) return false;
         }
         
         
@@ -523,53 +538,19 @@ export class CommonPdkGameLogic {
         
         let lastCardValue = 0;
         let myCardValue = 0;
-        let tempArrA = [];
-        let tempArrB = [];
-
-        for(let i=0; i < this.lastCardList.length; i++){
-            let poker = this.lastCardList[i];
-            let samePoker = this.GetSameValue(this.lastCardList, poker);
-            if((tag >= 5 && tag <= 7) || tag==15){
-                if(samePoker.length >= 3){
-                    this.RegularCard(tempArrA, samePoker, 3);
-                    //tempArrA = samePoker;
-                    break;
-                }
+        const tripleFamily = (tag >= 5 && tag <= 7) || tag == 15;
+        const bodySize = tripleFamily ? 3 : 4;
+        const findBody = (cards) => {
+            for(let i = 0; i < cards.length; i++){
+                const samePoker = this.GetSameValue(cards, cards[i]);
+                if(samePoker.length >= bodySize) return samePoker.slice(0, bodySize);
             }
-            else if(tag >= 8 && tag <= 10){
-                if(samePoker.length >= 4){
-                    this.RegularCard(tempArrA, samePoker, 4);
-                    //tempArrA = samePoker;
-                    break;
-                }
-            }
-        }
-
-        for(let i=0; i < pokers.length; i++){
-            let poker = pokers[i];
-            let samePoker = this.GetSameValue(pokers, poker);
-            if((tag >= 5 && tag <= 7) || tag==15){
-                if(samePoker.length >= 3){
-                    this.RegularCard(tempArrB, samePoker, 3);
-                    tempArrB = samePoker;
-                    break;
-                }
-            }
-            else if(tag >= 8 && tag <= 10 || tag == 20){
-                if(samePoker.length >= 4){
-                    this.RegularCard(tempArrB, samePoker, 4);
-                    tempArrB = samePoker;
-                    break;
-                }
-            }
-        }
-        if(tempArrA.length){
-            lastCardValue = this.GetCardValue(tempArrA[0]);
-        }
-        
-        if(tempArrB.length){
-            myCardValue = this.GetCardValue(tempArrB[0]);
-        }
+            return [];
+        };
+        const targetBody = findBody(this.lastCardList);
+        const candidateBody = findBody(pokers);
+        if(targetBody.length) lastCardValue = this.GetCardValue(targetBody[0]);
+        if(candidateBody.length) myCardValue = this.GetCardValue(candidateBody[0]);
         if(lastCardValue && lastCardValue != 0){
             if(this.lastCardList.length != pokers.length && handPokers.length > pokers.length){
                 return false;
@@ -578,7 +559,7 @@ export class CommonPdkGameLogic {
                 return false;
             }
         }
-        if(tempArrB.length){
+        if(candidateBody.length){
             if(tag == 5){
                 if(pokers.length == 3){
                     return true;
@@ -610,20 +591,19 @@ export class CommonPdkGameLogic {
                     return true;
                 }
             }
-            else if(tag == 20){ //四带一对
-                console.log(tag,pokers)
+            else if(tag == 20){ //四带两对
                 let isDui = false;
+                let pairRanks = [];
                 for(let i = 0; i < pokers.length; i++){
                     let poker = pokers[i];
                     let samePoker = this.GetSameValue(pokers,poker);
-                    console.log('是否有一对',samePoker)
                     if(samePoker.length==2){
-                        //有一对
-                        isDui = true;
-                        break;
+                        let value = this.GetCardValue(poker);
+                        if(pairRanks.indexOf(value) == -1) pairRanks.push(value);
                     }
                 }
-                if((pokers.length == 6 && isDui==true) || ( this.handCardList.length==pokers.length && pokers.length<6 && pokers.length>=3)){
+                isDui = pairRanks.length == 2;
+                if((pokers.length == 8 && isDui==true) || ( this.handCardList.length==pokers.length && pokers.length<8 && pokers.length>=4)){
                     //最后一手。三不带或者三带一都能出
                     return true;
                 }
@@ -1246,7 +1226,6 @@ export class CommonPdkGameLogic {
         // if(this.CheckSanDaiSiDai(20,isSelectCard)){
         //     return 20;
         // }
-        console.log(this.lastCardType)
         if(this.lastCardType == 0){
             if(this.CheckOneCard(isSelectCard)){
                 return 2;  //单牌
@@ -1326,9 +1305,16 @@ export class CommonPdkGameLogic {
         }
         else if((this.lastCardType == 5) || (this.lastCardType == 6) || (this.lastCardType == 7) ||
                 (this.lastCardType == 8) || (this.lastCardType == 9) || (this.lastCardType == 10) || (this.lastCardType == 15) || (this.lastCardType == 20)){
-                //补了一个三带一对
-                console.error(this.lastCardType)
-                if(this.CheckSanDaiSiDai(this.lastCardType,isSelectCard)){
+                // 成都等“不比较附件”的 EITHER 房间把三带一对与三带任意两张
+                // 视为同一五张比较族。候选仍保留自身真实牌型，比较时只看
+                // 三张主体；PAIRS 房间继续严格要求一对附件。
+                if((this.lastCardType == 7 || this.lastCardType == 15)
+                    && !this.ComparesTripleAttachments()
+                    && this.GetTripleAttachmentMode() === 'EITHER'){
+                    bCheck = this.CheckSanDaiSiDai(7,isSelectCard)
+                        || this.CheckSanDaiSiDai(15,isSelectCard);
+                }
+                else if(this.CheckSanDaiSiDai(this.lastCardType,isSelectCard)){
                     bCheck = true;
                 }
         }
@@ -1347,7 +1333,14 @@ export class CommonPdkGameLogic {
                 bCheck = true;
             }
         }else if(this.lastCardType >= 16 && this.lastCardType<=19){
-            if(this.CheckSanDaiFeiJi(this.lastCardType,isSelectCard)){
+            if((this.lastCardType >= 16 && this.lastCardType <= 18)
+                && !this.ComparesTripleAttachments()
+                && this.GetTripleAttachmentMode() === 'EITHER'){
+                bCheck = this.CheckSanDaiFeiJi(16,isSelectCard)
+                    || this.CheckSanDaiFeiJi(17,isSelectCard)
+                    || this.CheckSanDaiFeiJi(18,isSelectCard);
+            }
+            else if(this.CheckSanDaiFeiJi(this.lastCardType,isSelectCard)){
                 bCheck = true;
             }
         }
@@ -1361,7 +1354,6 @@ export class CommonPdkGameLogic {
 
     public CheckCanOut(){
         let cardType=this.GetCardType();
-        console.log('牌型',cardType,this.lastCardType)
         if(cardType==0){
             return false;
         }
@@ -1892,11 +1884,11 @@ export class CommonPdkGameLogic {
         }else if(lastCardType == 9){
             this.GetOtherCard(sitiaos, 2,isSelectCard);
         }
-        else if(this.lastCardType == 10){
-            this.GetOtherCard(zhadans,3,isSelectCard);
+        else if(lastCardType == 10){
+            this.GetOtherCard(sitiaos,3,isSelectCard);
         }else if(lastCardType == 20){
-            //获取其他牌一对
-            this.GetOtherCardDui(sitiaos, 2,isSelectCard);
+            // 四带两对需要补足四张附件。
+            this.GetOtherCardDui(sitiaos, 4,isSelectCard);
         }
         return sitiaos;
     }
@@ -1949,8 +1941,12 @@ export class CommonPdkGameLogic {
         else if(this.lastCardType == 7){
             this.GetOtherCard(santiaos,2,isSelectCard);
         }else if(this.lastCardType == 15){
-            //获取其他牌一对
-            this.GetOtherCardDui(santiaos,2,isSelectCard);
+            if(!this.ComparesTripleAttachments() && this.GetTripleAttachmentMode() === 'EITHER'){
+                this.GetOtherCard(santiaos,2,isSelectCard);
+            }else{
+                // 必须带一样时只允许补一对。
+                this.GetOtherCardDui(santiaos,2,isSelectCard);
+            }
         }
         this.GetZhaDanEx(santiaos,isSelectCard);
         return santiaos;

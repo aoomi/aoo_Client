@@ -257,7 +257,7 @@ test('public PDK controller refreshes seats, public cards and deadline clock fro
   assert.match(adapterController, /renderHeads\(\)\.catch/);
   assert.match(adapterController, /renderHead\(entry\.dataSeat, entry\.physicalSlot, player/);
   assert.match(adapterController, /this\.setRemainingCardCount\(entry\.physicalSlot, count\)/);
-  assert.match(adapterController, /Players\/Play_\$\{physicalSlot\}\/Head\/Count/);
+  assert.match(adapterController, /Players\/Play_\$\{physicalSlot\}\/Head\/RemainingCount/);
   assert.match(adapterController, /restorePublicCards\(setInfo\)/);
   assert.match(adapterController, /startClockFromSetInfo\(setInfo\)/);
   assert.match(adapterController, /deadlineEpochMillis/);
@@ -275,6 +275,31 @@ test('round settlement distinguishes one round finished from whole match finishe
   assert.match(result, /private matchFinished\(\): boolean/);
   assert.match(result, /Authority 的 FINISHED 表示“一局结束”/);
   assert.doesNotMatch(result, /Number\(room\.GetRoomProperty\('state'\)\)\s*===\s*2/);
+});
+
+test('PDK round history is collected from authority before modal presentation filtering', () => {
+  const result = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts'), 'utf8');
+  const coordinator = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
+  assert.match(result, /public recordSettlement\(payload: Record<string, unknown>\)/);
+  assert.match(result, /settlementHistory\.set\(roundNo, payload\)/);
+  assert.match(result, /availableRounds:/);
+  const record = coordinator.indexOf('this.resultController?.recordSettlement(payload)');
+  const duplicateGate = coordinator.indexOf("if (key === this.settlementPendingKey || key === this.settlementShownKey) return;");
+  assert.ok(record >= 0 && duplicateGate >= 0 && record < duplicateGate);
+  assert.match(coordinator, /latestSetEnd[\s\S]*recordSettlement\(payload\)/);
+  assert.match(result, /loadSettlementHistory\(roomId\)/);
+  assert.match(result, /stage: 'HYDRATED'/);
+  assert.match(result, /pointList,[\s\S]*totalPointList: \[\.\.\.totals\]/);
+  const sceneRouter = readFileSync(join(clientRoot,
+    'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
+  const lobby = readFileSync(join(clientRoot,
+    'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');
+  assert.match(sceneRouter, /roomId => gateway\.historyDetail\(roomId\)/);
+  assert.match(lobby, /roomId => hallRoomGateway\.historyDetail\(roomId\)/);
+  assert.match(result, /if \(previous\) previous\.interactable = currentIndex > 0/);
+  assert.match(result, /if \(next\) next\.interactable = currentIndex >= 0 && currentIndex < rounds\.length - 1/);
 });
 
 test('PDK small settlement renders authoritative remaining cards with the common card prefab', () => {

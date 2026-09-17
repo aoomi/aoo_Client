@@ -31,11 +31,42 @@ test('dissolve applicant has no agree or reject actions', () => {
   assert.match(dissolve, /this\.active\('Btn_Agree', canVote\)/);
 });
 
+test('vote actions keep button listeners and a deduplicated preview pointer fallback', () => {
+  assert.match(dissolve, /node\.on\(Button\.EventType\.CLICK, listener, this\)/);
+  assert.match(dissolve, /node\.on\(Node\.EventType\.TOUCH_END, listener, this\)/);
+  assert.match(dissolve, /node\.on\(Node\.EventType\.MOUSE_UP, listener, this\)/);
+  assert.match(dissolve, /onFormPointerEnd/);
+  assert.match(dissolve, /node\.getComponent\(UITransform\)\?\.hitTest\(location\)/);
+  assert.match(dissolve, /this\.inputRoot\?\.on\(Node\.EventType\.TOUCH_END, this\.onFormPointerEnd, this, true\)/);
+  assert.match(dissolve, /now - this\.lastVotePointerAt < 180/);
+});
+
+test('dissolve modal blocks the room and consumes the closing pointer transaction', () => {
+  assert.match(dissolve, /new Node\('ModalMask'\)[\s\S]*mask\.addComponent\(BlockInputEvents\)/);
+  assert.match(dissolve, /mask\.setSiblingIndex\(0\)/);
+  assert.match(dissolve, /Math\.max\(parentSize\?\.width[\s\S]*1280\)/);
+  assert.match(dissolve, /graphics\.fillColor = new Color\(0, 0, 0, 90\)/);
+  assert.doesNotMatch(dissolve, /root\.addComponent\(BlockInputEvents\)/);
+  assert.match(dissolve, /bindPointerButton\('Btn_Close', this\.onClose\)/);
+  assert.match(coordinator, /new CommonPdkDissolveController\([\s\S]*forms\.closeAfterPointer\(DISSOLVE_ROOM_FORM\)/);
+});
+
+test('the final voter consumes the authoritative terminal response before fallback reconciliation', () => {
+  assert.match(dissolve, /\.then\(\(result\) =>/);
+  assert.match(dissolve, /acceptDissolveVoteResult\(result\)/);
+  assert.match(runtime, /body\.roomTerminal !== true[\s\S]*phase !== 'DISSOLVED'/);
+  assert.match(runtime, /CommonPdk_DissolveRoom/);
+  assert.match(runtime, /const terminalRoom = \/room \(\?:is \)\?dissolved/);
+  assert.match(runtime, /room \(\?:not found\|does not exist\)/);
+  assert.doesNotMatch(runtime, /\\b3008\\b/);
+  assert.match(dissolve, /room \(\?:is \)\?dissolved[\s\S]*this\.runtime\.reconcileAuthority\(\)/);
+});
+
 test('dissolve follows the 2.2.2 authoritative terminal event instead of guessing from votes', () => {
   assert.doesNotMatch(dissolve, /allOccupiedSeatsAgreed|terminalHandled|onDissolved/);
-  assert.match(dissolve, /if \(agree\) this\.runtime\.reconcileAuthority\(\)/);
+  assert.match(dissolve, /if \(agree && !this\.runtime\.acceptDissolveVoteResult\(result\)\) this\.runtime\.reconcileAuthority\(\)/);
   assert.doesNotMatch(dissolve, /applyActionAuthority\(result\)/);
-    assert.match(runtime, /player is not seated\|room not found\|room route not found\|request_not_found\|\\b1002\\b\|\\b3001\\b/);
+  assert.match(runtime, /terminalRoom \|\| \(dissolve && typeof dissolve === 'object' && revokedMember\)/);
   assert.match(coordinator, /event === 'CommonPdk_DissolveRoom'[\s\S]*requestLeave\('pdk-room-dissolved'\)/);
 });
 
@@ -52,6 +83,8 @@ test('dissolve return retains the live room frame before teardown and has no one
 test('user exit uses the single Hall lifecycle and cannot be blocked by a closing game socket', () => {
   const leave = coordinator.slice(coordinator.indexOf('private async performLeave'), coordinator.indexOf('public destroy'));
   assert.match(leave, /if \(!authorityAlreadyExited\) await this\.leaveRoom\(roomId\)/);
+  assert.match(leave, /reason === 'room-not-found'/);
+  assert.match(leave, /reason === 'reconnect-room-failed'/);
   assert.doesNotMatch(leave, /CNJPDKExitRoom|runtime\.action\('leave-room'/);
 });
 

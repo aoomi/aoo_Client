@@ -29,11 +29,26 @@ export class JoinRoomController {
             showFromCenter: true,
             lifecycle: {
                 onCreate: form => this.bind(form),
-                onShow: () => { this.epoch += 1; this.resolving = false; this.reset(); },
+                onShow: form => {
+                    // The form manager caches Common/Numpad across game-room
+                    // round trips. Rebind when this lobby controller did not
+                    // create that cached instance, otherwise every key keeps
+                    // the disposed controller's removed listener.
+                    if (this.form !== form || !this.numpad) this.bind(form);
+                    this.epoch += 1;
+                    this.resolving = false;
+                    this.reset();
+                },
                 onClose: () => { this.epoch += 1; this.resolving = false; },
                 onDestroy: () => this.dispose(),
             },
         });
+        // Common/Numpad may already be cached by the persistent form manager
+        // when the lobby is recreated after leaving a game room. Its original
+        // onCreate callback will not run a second time, so transfer the existing
+        // node to this controller immediately.
+        const cached = this.forms.get(FORM_PATH);
+        if (cached?.node.isValid) this.bind(cached);
     }
 
     public cancelPending(): void {

@@ -15,13 +15,13 @@ test('PDK uses one authoritative 2/3/4-player seat profile', () => {
   assert.match(source, /requirePdkPlayerCount/);
 });
 
-test('an authoritative empty seat removes its cached public head and invalidates pending loads', () => {
+test('an authoritative empty position retains the public game head and hides player data', () => {
   const source = readFileSync(join(sourceRoot, 'SeatPresenter.ts'), 'utf8');
-  assert.match(source, /Number\(players\[entry\.dataSeat\]\?\.pid \?\? 0\) <= 0\) this\.clearHead/);
+  assert.match(source, /controller\.showGamePlayer\(playerId > 0\)/);
   assert.match(source, /revision !== this\.headRevisions\.get\(dataSeat\)/);
-  assert.match(source, /mount\.active = false/);
-  assert.match(source, /head\.destroy\(\)/);
   assert.match(source, /this\.headPlayerIds\.delete\(dataSeat\)/);
+  assert.doesNotMatch(source, /mount\.active = false/);
+  assert.doesNotMatch(source, /head\.destroy\(\)/);
 });
 
 test('public PDK room exposes only common authority operations in the base layer', () => {

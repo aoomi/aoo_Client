@@ -1,4 +1,4 @@
-import { Button, instantiate, Label, Layout, Node, Prefab, UITransform, Vec3 } from 'cc';
+import { Button, instantiate, Label, Layout, Node, Prefab, Sprite, SpriteAtlas, UITransform, Vec3 } from 'cc';
 import { StaticList } from '../../../../../../Common/Code/UI/StaticList';
 import { AssetLoader } from '../../../../../../Common/Code/UI/Infrastructure';
 import { CommonHeadController } from '../../../../../../Common/Code/UI/CommonHeadController';
@@ -8,6 +8,7 @@ import { CardPresenter } from './Room/CardPresenter';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import { legacyPlatformBridge } from '../../../../../../Common/Code/Runtime/platform/LegacyPlatformBridge';
 import { formatPdkRuleSummary } from '../Rules/PdkRuleSummaryFormatter';
+import { resolvePdkRegionalProfile } from '../Regional/PdkRegionalProfileRegistry';
 
 const PDK_SMALL_SETTLEMENT_FORM = 'settlement/poker/SmallSettlement';
 const PDK_BIG_SETTLEMENT_FORM = 'settlement/poker/BigSettlement';
@@ -22,12 +23,19 @@ interface ResultPlayer {
 export class CommonPdkResultController {
     private form: LegacyForm | null = null;
     private setEnd: Record<string, unknown> = {};
+    private viewSetEnd: Record<string, unknown> = {};
+    private settlementRoomId = 0;
+    private displayedRoundNo = 0;
+    private readonly settlementHistory = new Map<number, Record<string, unknown>>();
+    private settlementHistoryRequestRoomId = 0;
+    private settlementHistoryRequest: Promise<void> | null = null;
     private openedFromRoomButton = false;
     private readonly cards = new CardPresenter();
     private readonly assets = new AssetLoader();
     private readonly headRevisions = new WeakMap<Node, number>();
     private readonly remainingCardRevisions = new WeakMap<Node, number>();
     private readonly playedCardRevisions = new WeakMap<Node, number>();
+    private readonly specialHandRevisions = new WeakMap<Node, number>();
     private continueInFlight = false;
     private continueRoundKey = '';
     private replayCode = '';
@@ -40,6 +48,8 @@ export class CommonPdkResultController {
     private readonly finalSettlementClick = () => { void this.showBigSettlement(); };
     private readonly returnLobbyClick = () => this.requestLeave('result-exit');
     private readonly shareClick = () => { void this.shareReplay(); };
+    private readonly previousPageClick = () => this.changeSettlementPage(-1);
+    private readonly nextPageClick = () => this.changeSettlementPage(1);
 
     public constructor(
         private readonly runtime: CommonPdkRuntime,
@@ -50,6 +60,8 @@ export class CommonPdkResultController {
         private readonly bigSettlementForm = PDK_BIG_SETTLEMENT_FORM,
         private readonly showMessage: (message: string) => void = () => undefined,
         private readonly loadReplayCode: (roomId: number, setId: number) => Promise<string> = async () => '',
+        private readonly loadSettlementHistory: (roomId: number) => Promise<unknown> = async () => ({}),
+        private readonly clearCompletedRoundVisuals: () => void = () => undefined,
     ) {}
 
     public onCreate(form: LegacyForm): void {
@@ -61,6 +73,9 @@ export class CommonPdkResultController {
     public onShow(setEnd?: unknown): void {
         if (this.form) this.bindButtons(this.form);
         this.setEnd = (setEnd ?? this.runtime.getRoomSet().GetRoomSetProperty('setEnd') ?? {}) as Record<string, unknown>;
+        this.recordSettlement(this.setEnd);
+        this.viewSetEnd = this.setEnd;
+        this.displayedRoundNo = this.numberValue(this.setEnd.roundNo);
         this.openedFromRoomButton = this.setEnd.openedFromRoomButton === true;
         if (this.form?.node) {
             (this.form.node as Node & { __pdkRoomButtonReview?: boolean }).__pdkRoomButtonReview = this.openedFromRoomButton;
@@ -68,6 +83,7 @@ export class CommonPdkResultController {
         const replayCode = String(this.setEnd.replayCode ?? '');
         this.replayCode = /^(?:\d{6}|\d{7}|\d{8}|\d{11})$/.test(replayCode) ? replayCode : '';
         this.render();
+        void this.hydrateSettlementHistory();
         this.startAutoContinue();
         if (!this.replayCode) void this.refreshReplayCode();
     }
@@ -90,6 +106,8 @@ export class CommonPdkResultController {
         this.bindButton(form, 'Bottom/Btn/Btn_Final', this.finalSettlementClick, true);
         this.bindButton(form, 'Bottom/Btn/Btn_Return', this.returnLobbyClick);
         this.bindButton(form, 'Bottom/Btn_Share', this.shareClick);
+        this.bindButton(form, 'Bottom/Page/Btn_Previous', this.previousPageClick);
+        this.bindButton(form, 'Bottom/Page/Btn_Next', this.nextPageClick);
     }
 
     private bindButton(form: LegacyForm, path: string, handler: () => void, pointerEndFallback = false): void {
@@ -115,6 +133,8 @@ export class CommonPdkResultController {
             ['Bottom/Btn/Btn_Final', this.finalSettlementClick],
             ['Bottom/Btn/Btn_Return', this.returnLobbyClick],
             ['Bottom/Btn_Share', this.shareClick],
+            ['Bottom/Page/Btn_Previous', this.previousPageClick],
+            ['Bottom/Page/Btn_Next', this.nextPageClick],
         ];
         for (const [path, handler] of bindings) {
             const node = form.find(path);
@@ -133,15 +153,17 @@ export class CommonPdkResultController {
             .sort((left, right) => left.dataSeat - right.dataSeat);
         const roomEnded = this.matchFinished();
         this.text('Top/Lb_RoomId', `房号:${room.GetRoomProperty('key') ?? ''}`);
-        this.text('Top/Lb_Time', this.date(this.setEnd.startTime));
+        this.text('Top/Lb_Time', this.date(this.viewSetEnd.startTime));
         this.text('Top/Lb_PlaybackCode', this.replayCode ? `回放码:${this.replayCode}` : '回放码:获取失败');
-        const roundNo = this.numberValue(this.setEnd.roundNo ?? room.GetRoomProperty('setID'));
+        const display = this.viewSetEnd;
+        const roundNo = this.numberValue(display.roundNo ?? room.GetRoomProperty('setID'));
         const roundLimit = this.numberValue(this.setEnd.roundLimit ?? room.GetRoomConfigByProperty('setCount'));
         this.text('Bottom/Page/Label', `${roundNo}/${roundLimit}`);
+        this.updatePageButtons();
         const config = room.GetRoomConfig() ?? {};
         this.text('Bottom/Bg_Rule/Label', formatPdkRuleSummary(
-            this.setEnd.ruleSnapshot ?? config.ruleSnapshot ?? config.ruleOptions ?? config,
-            this.setEnd.ruleFields ?? config.ruleFields,
+            display.ruleSnapshot ?? config.ruleSnapshot ?? config.ruleOptions ?? config,
+            display.ruleFields ?? config.ruleFields,
         ));
         this.active('Bottom/Btn_Share', Boolean(this.replayCode));
         this.active('Top/Btn_Replay', false);
@@ -158,6 +180,128 @@ export class CommonPdkResultController {
         const list = this.node('PlayerList/Content')?.getComponent(StaticList);
         if (!list) throw new Error('SmallSettlement 缺少 StaticList');
         list.setData(players, (item, entry) => this.renderPlayer(item, entry));
+    }
+
+    /**
+     * Keep every authoritative completed round for the lifetime of this room.
+     * Collection is driven by the settlement event, not by whether the modal was
+     * eventually mounted: floating presentation and duplicate-terminal filtering
+     * must never create holes in 1..currentRound pagination.
+     */
+    public recordSettlement(payload: Record<string, unknown>): void {
+        const roomId = this.numberValue(payload.roomId ?? this.runtime.getRoomManager().GetEnterRoomID());
+        const roundNo = this.numberValue(payload.roundNo);
+        if (roomId <= 0 || roundNo <= 0) return;
+        if (this.settlementRoomId !== roomId) {
+            this.settlementHistory.clear();
+            this.settlementRoomId = roomId;
+        }
+        this.settlementHistory.set(roundNo, payload);
+        console.info('[PdkSettlementHistory]', {
+            roomId,
+            roundNo,
+            availableRounds: [...this.settlementHistory.keys()].sort((left, right) => left - right),
+        });
+    }
+
+    /** Restore completed rounds after refresh/reconnect from Hall's durable history. */
+    private hydrateSettlementHistory(): Promise<void> {
+        const roomId = this.numberValue(this.setEnd.roomId
+            ?? this.runtime.getRoomManager().GetEnterRoomID());
+        if (roomId <= 0) return Promise.resolve();
+        if (this.settlementHistoryRequest && this.settlementHistoryRequestRoomId === roomId) {
+            return this.settlementHistoryRequest;
+        }
+        this.settlementHistoryRequestRoomId = roomId;
+        this.settlementHistoryRequest = this.loadSettlementHistory(roomId).then((raw) => {
+            const envelope = this.objectValue(raw);
+            const detail = this.objectValue(envelope.data ?? envelope);
+            const rounds = Array.isArray(detail.rounds) ? detail.rounds : [];
+            const players = this.runtime.getRoomPosManager().GetRoomAllPlayerInfo() ?? {};
+            const seatByPlayer = new Map<number, number>();
+            const seatCount = Math.max(0, ...Object.keys(players).map(Number).filter(Number.isSafeInteger)) + 1;
+            Object.entries(players).forEach(([seat, value]) => {
+                const player = this.objectValue(value);
+                const playerId = Number(player.pid ?? player.playerId ?? 0);
+                if (playerId > 0) seatByPlayer.set(playerId, Number(seat));
+            });
+            const totals = Array.from({ length: seatCount }, () => 0);
+            for (const rawRound of rounds) {
+                const round = this.objectValue(rawRound);
+                const roundNo = this.numberValue(round.roundNo);
+                if (roundNo <= 0) continue;
+                const pointList = Array.from({ length: seatCount }, () => 0);
+                const settlement = this.objectValue(round.settlement);
+                const entries = Array.isArray(settlement.entries) ? settlement.entries : [];
+                for (const rawEntry of entries) {
+                    const entry = this.objectValue(rawEntry);
+                    const seat = seatByPlayer.get(Number(entry.playerId ?? 0));
+                    if (seat === undefined) continue;
+                    const delta = Number(entry.scoreDelta ?? 0);
+                    pointList[seat] = Number.isFinite(delta) ? delta : 0;
+                    totals[seat] += pointList[seat];
+                }
+                if (this.settlementHistory.has(roundNo)) continue;
+                this.recordSettlement({
+                    ...this.setEnd,
+                    roomId,
+                    roundNo,
+                    pointList,
+                    totalPointList: [...totals],
+                    surplusCardList: Array.from({ length: seatCount }, () => []),
+                    playedCardList: Array.from({ length: seatCount }, () => []),
+                    playHistory: [],
+                    replayCode: String(round.replayCode ?? ''),
+                    startTime: round.settledAt,
+                    ruleSnapshot: detail.ruleSnapshot,
+                    ruleFields: detail.ruleFields,
+                    matchFinished: roundNo >= this.numberValue(this.setEnd.roundLimit),
+                });
+            }
+            console.info('[PdkSettlementHistory]', {
+                roomId,
+                stage: 'HYDRATED',
+                responseKeys: Object.keys(envelope),
+                roundCount: rounds.length,
+                availableRounds: [...this.settlementHistory.keys()].sort((left, right) => left - right),
+            });
+            if (this.form) this.render();
+        }).catch((error: unknown) => {
+            console.warn('[PdkSettlementHistory] hydrate failed', {
+                roomId,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+        }).finally(() => {
+            this.settlementHistoryRequest = null;
+        });
+        return this.settlementHistoryRequest;
+    }
+
+    private changeSettlementPage(direction: -1 | 1): void {
+        const rounds = [...this.settlementHistory.keys()].sort((left, right) => left - right);
+        const currentIndex = rounds.indexOf(this.displayedRoundNo);
+        const targetIndex = currentIndex + direction;
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= rounds.length) return;
+        const targetRound = rounds[targetIndex];
+        const target = this.settlementHistory.get(targetRound);
+        if (!target) return;
+        this.displayedRoundNo = targetRound;
+        this.viewSetEnd = target;
+        console.info('[PdkSettlementPage]', {
+            roomId: this.settlementRoomId,
+            roundNo: targetRound,
+            latestRoundNo: this.numberValue(this.setEnd.roundNo),
+        });
+        this.render();
+    }
+
+    private updatePageButtons(): void {
+        const rounds = [...this.settlementHistory.keys()].sort((left, right) => left - right);
+        const currentIndex = rounds.indexOf(this.displayedRoundNo);
+        const previous = this.node('Bottom/Page/Btn_Previous')?.getComponent(Button);
+        const next = this.node('Bottom/Page/Btn_Next')?.getComponent(Button);
+        if (previous) previous.interactable = currentIndex > 0;
+        if (next) next.interactable = currentIndex >= 0 && currentIndex < rounds.length - 1;
     }
 
     private async refreshReplayCode(): Promise<void> {
@@ -186,8 +330,8 @@ export class CommonPdkResultController {
 
     private renderPlayer(item: Node, entry: ResultPlayer): void {
         const { dataSeat, player } = entry;
-        const point = Number(this.indexed(this.setEnd.pointList, dataSeat) ?? 0);
-        const total = Number(this.indexed(this.setEnd.totalPointList, dataSeat) ?? point);
+        const point = Number(this.indexed(this.viewSetEnd.pointList, dataSeat) ?? 0);
+        const total = Number(this.indexed(this.viewSetEnd.totalPointList, dataSeat) ?? point);
         const remainingSource = this.remainingCardSource(dataSeat);
         const remaining = this.remainingCards(remainingSource);
         const remainingCount = this.remainingCount(remainingSource, remaining);
@@ -212,8 +356,53 @@ export class CommonPdkResultController {
         this.nodeActive(item, 'RemCards/Total', total !== point);
         this.nodeText(item, 'RemCards/Total/Lb_Lose', total < 0 ? String(total) : '');
         this.nodeText(item, 'RemCards/Total/Lb_Win', total >= 0 ? `+${total}` : '');
-        this.nodeActive(item, 'Pattern', false);
-        this.nodeActive(item, 'CloseDoor', Boolean(this.indexed(this.setEnd.closeDoorList, dataSeat)));
+        void this.renderSpecialHands(item, dataSeat).catch((error: unknown) => {
+            console.error('[PdkSettlementSpecialHands] render failed', {
+                gameCode: this.runtime.getGameCode(), dataSeat, error,
+            });
+        });
+        this.nodeActive(item, 'CloseDoor', Boolean(this.indexed(this.viewSetEnd.closeDoorList, dataSeat)));
+    }
+
+    private async renderSpecialHands(item: Node, dataSeat: number): Promise<void> {
+        const mount = this.nodeAt(item, 'SpecialHands');
+        if (!mount) return;
+        const revision = (this.specialHandRevisions.get(item) ?? 0) + 1;
+        this.specialHandRevisions.set(item, revision);
+        for (const child of [...mount.children]) child.destroy();
+        const rawPatterns = this.indexed(this.viewSetEnd.specialHandList, dataSeat);
+        const patterns = Array.isArray(rawPatterns) ? rawPatterns.map(String).filter(Boolean) : [];
+        const profile = resolvePdkRegionalProfile(this.runtime.getGameCode())?.settlementSpecialHands;
+        const frames = profile ? patterns.map((pattern) => profile.frameByPattern[pattern]).filter(Boolean) : [];
+        mount.active = frames.length > 0;
+        if (!profile || frames.length === 0) return;
+        const bundle = await this.assets.bundle(profile.bundleName);
+        const atlas = await this.assets.load(profile.atlasPath, SpriteAtlas, bundle);
+        if (!item.isValid || !mount.isValid || this.specialHandRevisions.get(item) !== revision) return;
+        const nodes = frames.flatMap((frameName) => {
+            const frame = atlas.getSpriteFrame(frameName);
+            if (!frame) return [];
+            const node = new Node(frameName);
+            const size = frame.originalSize;
+            node.addComponent(UITransform).setContentSize(size.width, size.height);
+            node.addComponent(Sprite).spriteFrame = frame;
+            mount.addChild(node);
+            return [node];
+        });
+        const gap = 4;
+        const widths = nodes.map((node) => node.getComponent(UITransform)?.contentSize.width ?? 0);
+        const total = widths.reduce((sum, width) => sum + width, 0) + Math.max(0, nodes.length - 1) * gap;
+        let x = -total / 2;
+        nodes.forEach((node, index) => {
+            const width = widths[index];
+            node.setPosition(x + width / 2, 0, 0);
+            x += width + gap;
+        });
+        mount.active = nodes.length > 0;
+        console.info('[PdkSettlementSpecialHands]', {
+            roomId: this.settlementRoomId, roundNo: this.displayedRoundNo,
+            gameCode: this.runtime.getGameCode(), dataSeat, patterns, frames,
+        });
     }
 
     private async renderPlayerHead(item: Node, player: Record<string, unknown>): Promise<void> {
@@ -344,22 +533,35 @@ export class CommonPdkResultController {
         const slot = instantiate(template);
         slot.name = name;
         slot.active = true;
-        parent.addChild(slot);
-        const card = await this.cards.create(slot, value);
-        const slotSize = slot.getComponent(UITransform)?.contentSize;
-        const cardSize = card.getComponent(UITransform)?.contentSize;
-        const scaleX = slotSize && cardSize && cardSize.width > 0
-            ? slotSize.width / cardSize.width
-            : 1;
-        const scaleY = slotSize && cardSize && cardSize.height > 0
-            ? slotSize.height / cardSize.height
-            : 1;
-        card.setPosition(0, 0, 0);
-        // Width and height are both authored controls. Do not preserve the
-        // source prefab aspect ratio here, otherwise changing only one axis in
-        // SmallSettlement/Card appears to have no effect at runtime.
-        card.setScale(scaleX, scaleY, 1);
-        return slot;
+        try {
+            // Build the complete card while the slot is detached. Settlement can
+            // rerender during bundle loading (history hydration/replay-code refresh);
+            // attaching first would let the newer render destroy this slot and the
+            // resumed factory would then add a child to an invalid Cocos node.
+            const card = await this.cards.create(slot, value);
+            if (!parent.isValid) {
+                slot.destroy();
+                return slot;
+            }
+            parent.addChild(slot);
+            const slotSize = slot.getComponent(UITransform)?.contentSize;
+            const cardSize = card.getComponent(UITransform)?.contentSize;
+            const scaleX = slotSize && cardSize && cardSize.width > 0
+                ? slotSize.width / cardSize.width
+                : 1;
+            const scaleY = slotSize && cardSize && cardSize.height > 0
+                ? slotSize.height / cardSize.height
+                : 1;
+            card.setPosition(0, 0, 0);
+            // Width and height are both authored controls. Do not preserve the
+            // source prefab aspect ratio here, otherwise changing only one axis in
+            // SmallSettlement/Card appears to have no effect at runtime.
+            card.setScale(scaleX, scaleY, 1);
+            return slot;
+        } catch (error) {
+            if (slot.isValid) slot.destroy();
+            throw error;
+        }
     }
 
     private renderedWidth(template: Node | null): number {
@@ -368,7 +570,7 @@ export class CommonPdkResultController {
     }
 
     private playedHands(dataSeat: number): Array<{ playIndex: number; cards: number[] }> {
-        const history = Array.isArray(this.setEnd.playHistory) ? this.setEnd.playHistory : [];
+        const history = Array.isArray(this.viewSetEnd.playHistory) ? this.viewSetEnd.playHistory : [];
         const hands = history.flatMap((value, order) => {
             const item = value && typeof value === 'object' ? value as Record<string, unknown> : {};
             if (Number(item.seat) !== dataSeat || !Array.isArray(item.cards)) return [];
@@ -377,12 +579,12 @@ export class CommonPdkResultController {
             return [{ playIndex, cards: this.remainingCards(item.cards) as number[] }];
         });
         if (hands.length > 0) return hands;
-        const legacy = this.remainingCards(this.indexed(this.setEnd.playedCardList, dataSeat));
+        const legacy = this.remainingCards(this.indexed(this.viewSetEnd.playedCardList, dataSeat));
         return legacy.length > 0 ? [{ playIndex: 1, cards: [...legacy] }] : [];
     }
 
     private remainingCardSource(dataSeat: number): unknown {
-        return this.indexed(this.setEnd.surplusCardList, dataSeat) ?? this.indexed(this.setEnd.remainCards, dataSeat) ?? [];
+        return this.indexed(this.viewSetEnd.surplusCardList, dataSeat) ?? this.indexed(this.viewSetEnd.remainCards, dataSeat) ?? [];
     }
 
     private remainingCards(source: unknown): readonly number[] {
@@ -444,6 +646,10 @@ export class CommonPdkResultController {
         this.continueRoundKey = roundKey;
         const button = this.node('Bottom/Btn/Btn_Continue')?.getComponent(Button);
         if (button) button.interactable = false;
+        // Continue is the visual lifetime boundary of the completed round. Clear
+        // synchronously on the accepted click, before closing the modal or waiting
+        // for the network acknowledgement, so the old table cannot flash through.
+        this.clearCompletedRoundVisuals();
         void this.runtime.action('continue', 'common.room.continue_req', { roomID: roomId }).then(() => {
             this.forms.close(this.smallSettlementForm);
         }).catch((error: unknown) => {
@@ -567,5 +773,9 @@ export class CommonPdkResultController {
     private numberValue(value: unknown): number {
         const number = Number(value);
         return Number.isSafeInteger(number) ? number : 0;
+    }
+    private objectValue(value: unknown): Record<string, unknown> {
+        return value && typeof value === 'object' && !Array.isArray(value)
+            ? value as Record<string, unknown> : {};
     }
 }

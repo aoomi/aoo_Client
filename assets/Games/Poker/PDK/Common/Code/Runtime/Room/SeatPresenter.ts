@@ -93,24 +93,19 @@ export class SeatPresenter {
         private readonly onHeadClick: (dataSeat: number) => void = () => undefined,
     ) {}
 
-    public apply(playerCount: PdkPlayerCount, localSeat: number, players: Readonly<Record<number, PdkSeatPlayer>>): readonly PdkSeatEntry[] {
+    public apply(playerCount: PdkPlayerCount, localSeat: number, _players: Readonly<Record<number, PdkSeatPlayer>>): readonly PdkSeatEntry[] {
         const entries = createSeatEntries(playerCount, localSeat);
         const active = new Set(entries.map((entry) => entry.physicalSlot));
         for (let slot = 0; slot < 4; slot += 1) this.seat(slot).active = active.has(slot);
         for (const entry of entries) {
             const seat = this.seat(entry.physicalSlot);
             seat.active = true;
-            if (Number(players[entry.dataSeat]?.pid ?? 0) <= 0) this.clearHead(entry.dataSeat, entry.physicalSlot);
         }
         return entries;
     }
 
     public async renderHead(dataSeat: number, physicalSlot: number, player: PdkSeatPlayer = {}, context: PdkHeadContext = {}): Promise<Node | null> {
         const playerId = Number(player.pid ?? 0);
-        if (playerId <= 0) {
-            this.clearHead(dataSeat, physicalSlot);
-            return null;
-        }
         const generation = this.generation;
         const revision = (this.headRevisions.get(dataSeat) ?? 0) + 1;
         this.headRevisions.set(dataSeat, revision);
@@ -128,7 +123,6 @@ export class SeatPresenter {
             for (const child of [...mount.children]) {
                 if (child.name === 'CommonHead') child.destroy();
             }
-            seat.getChildByName('HeadButton')?.destroy();
             mount.addChild(created);
             const mountSize = mount.getComponent(UITransform)?.contentSize;
             const headTransform = created.getComponent(UITransform);
@@ -137,6 +131,19 @@ export class SeatPresenter {
                 created.setScale(new Vec3(scale, scale, 1));
             }
             this.heads.set(dataSeat, created);
+            head = created;
+        }
+        if (!head) throw new Error(`公共头像实例化失败: ${dataSeat}`);
+        const controller = head.getComponent(CommonHeadController);
+        if (!controller) throw new Error('CommonHead 缺少 CommonHeadController 组件');
+        controller.showGamePlayer(playerId > 0);
+        if (playerId <= 0) {
+            this.headPlayerIds.delete(dataSeat);
+            seat.getChildByName('HeadButton')?.destroy();
+            return head;
+        }
+        if (!seat.getChildByName('HeadButton')) {
+            const mountSize = mount.getComponent(UITransform)?.contentSize;
             const headButton = new Node('HeadButton');
             headButton.layer = mount.layer;
             headButton.addComponent(UITransform).setContentSize(mountSize?.width ?? 80, mountSize?.height ?? 80);
@@ -145,33 +152,15 @@ export class SeatPresenter {
             headButton.setPosition(mount.position);
             // 本机手牌触摸区覆盖头像下半部；按钮必须作为座位最后一个子节点，才能优先接收头像点击。
             seat.addChild(headButton);
-            head = created;
         }
-        if (!head) throw new Error(`公共头像实例化失败: ${dataSeat}`);
         const previousPlayerId = this.headPlayerIds.get(dataSeat);
         if (previousPlayerId !== undefined && previousPlayerId !== playerId) {
             head.getComponent(CommonHeadController)?.hideTransientEffects();
         }
         this.headPlayerIds.set(dataSeat, playerId);
         this.applyHeadState(head, player, context);
-        await head.getComponent(CommonHeadController)?.showPlayerAvatar(playerId, String(player.headImageUrl ?? ''));
+        await controller.showPlayerAvatar(playerId, String(player.headImageUrl ?? ''));
         return head;
-    }
-
-    /** 权威座位已空时必须销毁旧头像，避免异步加载完成后把离房玩家重新挂回座位。 */
-    public clearHead(dataSeat: number, physicalSlot: number): void {
-        this.headRevisions.set(dataSeat, (this.headRevisions.get(dataSeat) ?? 0) + 1);
-        const seat = this.seat(physicalSlot);
-        const mount = this.child(seat, 'Head');
-        mount.active = false;
-        seat.getChildByName('HeadButton')?.destroy();
-        const head = this.heads.get(dataSeat);
-        if (head?.isValid) {
-            head.getComponent(CommonHeadController)?.hideTransientEffects();
-            head.destroy();
-        }
-        this.heads.delete(dataSeat);
-        this.headPlayerIds.delete(dataSeat);
     }
 
     public showQuickText(dataSeat: number, text: string): void {

@@ -1,6 +1,7 @@
 export const COMMON_ROOM_FORM = 'room/CommonRoom';
 export const DISSOLVE_ROOM_FORM = 'room/DissolveRoom';
 export const PDK_ROOM_FORM = 'pdk/PDK_CommonRoom';
+export const POKER_CARD_SELECTION_FORM = 'poker/CardSelection';
 
 export const CommonRoomNodePath = Object.freeze({
     turnActions: 'TurnActions',

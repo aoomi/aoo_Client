@@ -77,19 +77,15 @@
         "height": 19,
         "rawWidth": 19,
         "rawHeight": 19,
-        "borderTop": 8,
-        "borderBottom": 8,
-        "borderLeft": 8,
-        "borderRight": 8,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
         "pivotY": 0.5,
         "meshType": 0,
-        "isUuid": true,
-        "imageUuidOrDatabaseUri": "cb33a36c-96a3-4cb2-b457-c50386b6d27b@6c48a",
-        "atlasUuid": "",
-        "trimType": "custom",
         "vertices": {
           "rawPosition": [
             -9.5,
@@ -143,7 +139,11 @@
             9.5,
             0
           ]
-        }
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "cb33a36c-96a3-4cb2-b457-c50386b6d27b@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
       },
       "ver": "1.0.12",
       "imported": true,

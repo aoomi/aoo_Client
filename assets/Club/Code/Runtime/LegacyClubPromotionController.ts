@@ -21,10 +21,11 @@ interface PromotionRow {
 interface PromotionResult { clubPromotionLevelItemList?: PromotionRow[]; showList?: number[]; showListSecond?: number[]; dateType?: number[] }
 interface RecordPlayer { pid?: number; name?: string; point?: number; clubCent?: number }
 interface PromotionRecord { roomKey?: number | string; roomID?: number; gameType?: number; configName?: string; roomState?: number; endTime?: string | number; roomCard?: number; clubCard?: number; unionId?: number; roomSportsConsume?: number; playerList?: string | RecordPlayer[] }
+interface LegacyListEnvelope<T> { items?: T[]; list?: T[] }
 
 export class LegacyClubPromotionController {
     private readonly disposers: Array<() => void> = [];
-    private readonly rowDisposers: Array<() => void> = [];
+    private readonly rowDisposers = new Map<Node, Array<() => void>>();
     private context: PromotionContext = {};
     private form: LegacyForm | null = null;
     private type = 0;
@@ -50,12 +51,13 @@ export class LegacyClubPromotionController {
         private readonly forms: LegacyFormManager,
         private readonly client: ProtocolClient,
         private readonly playerId: number,
+        private readonly lobbyNode: Node,
     ) {}
 
     public install(): void {
         for (const path of ['ui/club/ClubPromoters', 'ui/club_2/UIPromoterAllManager_2']) this.forms.register(path, { zOrder: 9, lifecycle: {
             onCreate: (form) => this.bindManager(form, path), onShow: (form, value) => this.showManager(form, value),
-            onClose: () => { this.form = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.form = null; },
         }});
         for (const [path, level] of [['ui/club/UIClubPromoterAdd', false], ['ui/club/UIClubPromoterLevelAdd', true]] as Array<[string, boolean]>) this.forms.register(path, { zOrder: 10, lifecycle: {
             onCreate: (form) => this.bindAdd(form, path, level), onShow: (form, value) => this.showAdd(form, value),
@@ -65,28 +67,28 @@ export class LegacyClubPromotionController {
         }});
         this.forms.register('ui/club/UIPromoterXiaShuList', { zOrder: 10, lifecycle: {
             onCreate: (form) => this.bindSubordinates(form), onShow: (form, value) => this.showSubordinates(form, value),
-            onClose: () => { this.form = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.form = null; },
         }});
         this.forms.register('ui/club/UIPromoterXIaShuAdd', { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindSubordinateAdd(form), onShow: (form, value) => this.showSubordinateAdd(form, value),
         }});
         this.forms.register('ui/club/UIPromoterRecordUser', { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindRecords(form), onShow: (form, value) => this.showRecords(form, value),
-            onClose: () => { this.recordForm = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.recordForm = null; },
         }});
         this.forms.register('ui/club/UIPromoterSetActive', { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindActive(form), onShow: (form, value) => this.showActive(form, value),
         }});
         this.forms.register('ui/club/UIPromoterSetActiveDetail', { zOrder: 12, lifecycle: {
             onCreate: (form) => this.bindActiveDetail(form), onShow: (form, value) => this.showActiveDetail(form, value),
-            onClose: () => { this.activeForm = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.activeForm = null; },
         }});
         this.forms.register('ui/club/UIPromoterSetActiveNum', { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindActiveNum(form), onShow: (form, value) => this.showActiveNum(form, value),
         }});
         this.forms.register('ui/club/UIPromoterSetActiveReport', { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindActiveReport(form), onShow: (form, value) => this.showActiveReport(form, value),
-            onClose: () => { this.activeForm = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.activeForm = null; },
         }});
         for (const path of ['ui/club/UISetClubCentWarning', 'ui/club_2/UISetClubCentWarning_2']) this.forms.register(path, { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindWarning(form, path), onShow: (form, value) => this.showWarning(form, path, value),
@@ -96,7 +98,7 @@ export class LegacyClubPromotionController {
         }});
         for (const path of ['ui/club/UIPromoterAllReport', 'ui/club_2/UIPromoterAllReport_2']) this.forms.register(path, { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindAllReport(form, path), onShow: (form, value) => this.showAllReport(form, path, value),
-            onClose: () => { this.activeForm = null; this.clearRows(); },
+            onClose: (form) => { this.clearRows(form.node); this.activeForm = null; },
         }});
         for (const path of ['ui/club/ClubPromoterView', 'ui/club_2/UIPromoterShowSetting_2']) this.forms.register(path, { zOrder: 11, lifecycle: {
             onCreate: (form) => this.bindShowSetting(form, path), onShow: (form, value) => this.showShowSetting(form, value),
@@ -104,11 +106,11 @@ export class LegacyClubPromotionController {
         this.forms.register('ui/club/UIPromoterPowerOp', { zOrder: 11, lifecycle: { onCreate: (form) => this.bindPower(form), onShow: (form, value) => this.showPower(form, value) }});
         this.forms.register('ui/club/UIClubPromotionDetail', { zOrder: 11, lifecycle: { onCreate: (form) => this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIClubPromotionDetail')), onShow: (form, value) => this.showPromotionDetail(form, value) }});
         this.forms.register('ui/club/UIPromoterSM', { zOrder: 11, lifecycle: { onCreate: (form) => this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterSM')) }});
-        this.forms.register('ui/club/UIPromoterMsg', { zOrder: 11, lifecycle: { onCreate: (form) => this.bindPromotionMsg(form), onShow: (form, value) => this.showPromotionMsg(form, value), onClose: () => { this.activeForm = null; this.clearRows(); } }});
+        this.forms.register('ui/club/UIPromoterMsg', { zOrder: 11, lifecycle: { onCreate: (form) => this.bindPromotionMsg(form), onShow: (form, value) => this.showPromotionMsg(form, value), onClose: (form) => { this.clearRows(form.node); this.activeForm = null; } }});
         this.forms.register('ui/club/UIPromoterManager', { zOrder: 10, lifecycle: { onCreate: (form) => this.bindPromotionManager(form), onShow: (_form, value) => { this.context = this.value(value); } }});
         for (const [path, self] of [['ui/club/UIUserSetBaoMingFei', false], ['ui/club/UIUserSelfBaoMingFei', true]] as Array<[string, boolean]>) this.forms.register(path, { zOrder: 12, lifecycle: { onCreate: (form) => this.bindShare(form, path, self), onShow: (form, value) => this.showShare(form, value, self) }});
-        this.forms.register('ui/club/UIUserSetBaoMingFeiDetail', { zOrder: 12, lifecycle: { onCreate: (form) => this.bindShareDetail(form), onShow: (form, value) => this.showShareDetail(form, value), onClose: () => { this.activeForm = null; this.clearRows(); } }});
-        this.forms.register('ui/club/UIUserSetSection', { zOrder: 12, lifecycle: { onCreate: (form) => this.bindSection(form), onShow: (form, value) => this.showSection(form, value), onClose: () => { this.activeForm = null; this.clearRows(); } }});
+        this.forms.register('ui/club/UIUserSetBaoMingFeiDetail', { zOrder: 12, lifecycle: { onCreate: (form) => this.bindShareDetail(form), onShow: (form, value) => this.showShareDetail(form, value), onClose: (form) => { this.clearRows(form.node); this.activeForm = null; } }});
+        this.forms.register('ui/club/UIUserSetSection', { zOrder: 12, lifecycle: { onCreate: (form) => this.bindSection(form), onShow: (form, value) => this.showSection(form, value), onClose: (form) => { this.clearRows(form.node); this.activeForm = null; } }});
         this.forms.register('ui/club/UIUserChangeSection', { zOrder: 13, lifecycle: { onCreate: (form) => this.bindChangeSection(form), onShow: (form, value) => this.showChangeSection(form, value) }});
         this.forms.register('ui/club/UIUserSetReservedBaoMingFei', { zOrder: 13, lifecycle: { onCreate: (form) => this.bindReserved(form), onShow: (form, value) => this.showReserved(form, value) }});
     }
@@ -118,8 +120,8 @@ export class LegacyClubPromotionController {
     private bindManager(form: LegacyForm, path: string): void {
         this.click(form.node, 'btn_close', () => this.forms.close(path));
         this.click(form.node, 'btn_search', () => { void this.load(); });
-        this.click(form.node, 'btn_commonOp', () => { this.type = -1; void this.load(); });
-        for (let i = 0; i <= 6; i += 1) this.click(form.node, `btn_tian${i}`, () => { this.type = i; void this.load(); });
+        this.click(form.node, 'btn_commonOp', () => this.selectManagerPeriod(-1));
+        for (let i = 0; i <= 6; i += 1) this.click(form.node, `btn_tian${i}`, () => this.selectManagerPeriod(i));
         this.click(form.node, 'btn_addPromoter', () => { void this.forms.show('ui/club/UIClubPromoterLevelAdd', this.context); });
         this.click(form.node, 'btn_yaoqing', () => { void this.forms.show('ui/club/UIClubPromoterAdd', this.context); });
         this.click(form.node, 'btn_setShowData', () => { void this.forms.show(Number(this.context.skinType ?? 0) === 2 ? 'ui/club_2/UIPromoterShowSetting_2' : 'ui/club/ClubPromoterView', this.context); });
@@ -131,7 +133,39 @@ export class LegacyClubPromotionController {
         const creator = Number(this.context.minister ?? 0) === 2;
         this.active(form.node, 'btn_addPromoter', creator); this.active(form.node, 'btn_setShowData', creator);
         this.active(form.node, 'btn_yaoqing', !creator && Number(this.context.invite ?? 0) !== 0);
+        this.updateManagerDates();
+        this.updateManagerPeriodState();
         void this.load();
+    }
+
+    private selectManagerPeriod(type: number): void {
+        if (this.type === type) return;
+        this.type = type;
+        this.updateManagerPeriodState();
+        console.info('[ClubPromotion] manager-period-selected', { clubId: this.clubId(), type });
+        void this.load();
+    }
+
+    private updateManagerPeriodState(): void {
+        const root = this.form?.node; if (!root) return;
+        const common = this.desc(root, 'btn_commonOp');
+        if (common) { this.active(common, 'on', this.type === -1); this.active(common, 'off', this.type !== -1); }
+        for (let index = 0; index <= 6; index += 1) {
+            const button = this.desc(root, `btn_tian${index}`); if (!button) continue;
+            this.active(button, 'on', this.type === index);
+            this.active(button, 'off', this.type !== index);
+        }
+    }
+
+    private updateManagerDates(): void {
+        const root = this.form?.node; if (!root) return;
+        for (let index = 3; index <= 6; index += 1) {
+            const button = this.desc(root, `btn_tian${index}`); if (!button) continue;
+            const date = new Date(Date.now() - index * 86400000);
+            const text = `${date.getMonth() + 1}月${date.getDate()}日`;
+            this.label(this.desc(button, 'on') ?? button, 'lb', text);
+            this.label(this.desc(button, 'off') ?? button, 'lb', text);
+        }
     }
 
     private async load(): Promise<void> {
@@ -143,14 +177,10 @@ export class LegacyClubPromotionController {
     }
 
     private render(rows: PromotionRow[]): void {
-        const form = this.form; const content = form ? this.desc(form.node, 'content') : null; const demo = form ? this.desc(form.node, 'demo') : null; if (!content || !demo) return;
-        this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
-        const orderedRows = [...rows].sort((left, right) => {
-            const leftSelf = Number(left.pid ?? 0) === this.playerId;
-            const rightSelf = Number(right.pid ?? 0) === this.playerId;
-            return leftSelf === rightSelf ? 0 : leftSelf ? -1 : 1;
-        });
-        for (const row of orderedRows) { const node = instantiate(demo); node.name = String(row.pid ?? 0); node.active = true;
+        const form = this.form; if (!form) return; const scope = form.node; const content = this.desc(scope, 'content'); const demo = this.desc(scope, 'demo'); if (!content || !demo) return;
+        this.clearRows(scope); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
+        console.info('[ClubPromotion] manager-list-render', { clubId: this.clubId(), rowCount: rows.length, selfPid: Number(rows[0]?.pid ?? 0) });
+        for (const [index, row] of rows.entries()) { const node = instantiate(demo); node.name = String(row.pid ?? 0); node.active = true;
             this.label(node, 'lb_userName', String(row.name ?? '')); this.label(node, 'lb_userId', `ID:${row.pid ?? ''}`); this.label(node, 'lb_playerNum', String(row.number ?? 0));
             this.label(node, 'lb_jushu', String(row.setCount ?? 0)); this.label(node, 'lb_costSp', String(row.entryFee ?? 0)); this.label(node, 'lb_actualEntryFee', String(row.actualEntryFee ?? 0));
             this.label(node, 'lb_bili', Number(row.shareType ?? 0) === 1 ? String(row.shareFixedValue ?? 0) : `${row.shareValue ?? 0}%`); this.label(node, 'lb_scorePoint', String(row.scorePoint ?? 0)); this.label(node, 'lb_curSportPoint', String(row.clubCent ?? 0)); this.label(node, 'lb_sumSportPoint', String(row.sumClubCent ?? 0));
@@ -160,33 +190,32 @@ export class LegacyClubPromotionController {
                 name: row.name,
                 onChanged: (remarkName: string) => this.label(node, 'lb_userName', remarkName),
             };
-            this.rowClick(node, 'Avatar', () => { void this.forms.show('UILobbyRemark', remarkContext); });
-            this.rowClick(node, 'lb_userName', () => { void this.forms.show('UILobbyRemark', remarkContext); });
-            // 所有身份的本人行都只展示数据，且不绑定任何展开事件。
-            // 不再把服务端返回的第一条误判为本人。
-            const isSelf = pid === this.playerId
+            this.rowClick(scope, node, 'Avatar', () => { void this.forms.show('UILobbyRemark', remarkContext); });
+            this.rowClick(scope, node, 'lb_userName', () => { void this.forms.show('UILobbyRemark', remarkContext); });
+            // 服务端队长列表的首行固定为当前用户；显示ID可能与登录身份字段不同，不能只依赖ID判断。
+            const isSelf = index === 0 || pid === this.playerId
                 || pid === Number(this.context.promotionManagePid ?? 0)
                 || pid === Number(this.context.partnerPid ?? 0);
             if (isSelf) {
                 this.active(node, 'btn_ShowBtn', false); this.active(node, 'btn_control', false);
                 this.setManagerRowExpanded(node, false); content.addChild(node); continue;
             }
-            this.rowClick(node, 'btn_ShowBtn', () => this.toggleManagerRow(node)); this.rowClick(node, 'btn_control', () => this.toggleManagerRow(node));
-            this.action(control, 'btn_setClubCent', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => { void this.openSportsPoint(row); });
-            this.action(control, 'btn_setPromoter', Number(row.level ?? 0) <= 0, () => { void this.appoint(pid, 0); }); this.action(control, 'btn_cancelPromoter', Number(row.level ?? 0) > 0, () => { void this.confirmAction('取消后该队长下的成员归属将变化，确定取消吗？', () => this.appoint(pid, 1)); });
-            this.action(control, 'btn_delPromoter', Number(this.context.minister ?? 0) === 2 && pid !== Number(this.context.promotionManagePid ?? 0), () => { void this.confirmAction('确定移除该队长并踢出俱乐部吗？', () => this.remove(pid)); });
-            this.action(control, 'btn_xiaji', Number(row.level ?? 0) > 0, () => { void this.forms.show('ui/club/UIPromoterXiaShuList', { ...this.context, partnerPid: pid }); });
-            this.action(control, 'btn_changePromoter', Number(this.context.minister ?? 0) === 2, () => { void this.openChangePromoter(row); });
-            this.action(control, 'btn_record', pid !== Number(this.context.pid ?? 0), () => { void this.forms.show('ui/club/UIPromoterRecordUser', { ...this.context, pid, partnerPid: 0 }); });
-            this.action(control, 'btn_jjdz', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => {
+            this.rowClick(scope, node, 'btn_ShowBtn', () => this.toggleManagerRow(node)); this.rowClick(scope, node, 'btn_control', () => this.toggleManagerRow(node));
+            this.action(scope, control, 'btn_setClubCent', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => { void this.openSportsPoint(row); });
+            this.action(scope, control, 'btn_setPromoter', Number(row.level ?? 0) <= 0, () => { void this.appoint(pid, 0); }); this.action(scope, control, 'btn_cancelPromoter', Number(row.level ?? 0) > 0, () => { void this.confirmAction('取消后该队长下的成员归属将变化，确定取消吗？', () => this.appoint(pid, 1)); });
+            this.action(scope, control, 'btn_delPromoter', Number(this.context.minister ?? 0) === 2 && pid !== Number(this.context.promotionManagePid ?? 0), () => { void this.confirmAction('确定移除该队长并踢出俱乐部吗？', () => this.remove(pid)); });
+            this.action(scope, control, 'btn_xiaji', Number(row.level ?? 0) > 0, () => { void this.forms.show('ui/club/UIPromoterXiaShuList', { ...this.context, partnerPid: pid }); });
+            this.action(scope, control, 'btn_changePromoter', Number(this.context.minister ?? 0) === 2, () => { void this.openChangePromoter(row); });
+            this.action(scope, control, 'btn_record', pid !== Number(this.context.pid ?? 0), () => { void this.forms.show('ui/club/UIPromoterRecordUser', { ...this.context, pid, partnerPid: 0 }); });
+            this.action(scope, control, 'btn_jjdz', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => {
                 void this.forms.show('ui/club/ClubScoreRecord', { ...this.context, pid });
             });
-            this.action(control, 'btn_ClubCentWarning', Number(this.context.unionId ?? 0) > 0 && Number(row.level ?? 0) > 0, () => { void this.openWarning(row, false); });
-            this.action(control, 'btn_spWarningPersonal', Number(this.context.unionId ?? 0) > 0, () => { void this.openWarning(row, true); });
-            this.action(control, 'btn_bmffc', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => { void this.openShare(row, false); }); this.action(control, 'btn_selfFenCheng', pid === Number(this.context.pid ?? 0), () => { void this.openShare(row, true); });
-            this.action(control, 'btn_baobiao', true, () => { void this.forms.show(Number(this.context.skinType ?? 0) === 2 ? 'ui/club_2/UIPromoterAllReport_2' : 'ui/club/UIPromoterAllReport', { ...this.context, pid }); });
-            this.action(control, 'btn_powerOp', Number(this.context.minister ?? 0) === 2, () => { void this.openPower(row); });
-            this.action(control, 'btn_Examine', Number(row.examineStatus ?? 0) === 1, () => { void this.confirmAction(`确认审核该队长当前总积分 ${row.totalPoint ?? 0}？`, () => this.examine(row)); });
+            this.action(scope, control, 'btn_ClubCentWarning', Number(this.context.unionId ?? 0) > 0 && Number(row.level ?? 0) > 0, () => { void this.openWarning(row, false); });
+            this.action(scope, control, 'btn_spWarningPersonal', Number(this.context.unionId ?? 0) > 0, () => { void this.openWarning(row, true); });
+            this.action(scope, control, 'btn_bmffc', Number(this.context.unionId ?? 0) > 0 && pid !== Number(this.context.pid ?? 0), () => { void this.openShare(row, false); }); this.action(scope, control, 'btn_selfFenCheng', pid === Number(this.context.pid ?? 0), () => { void this.openShare(row, true); });
+            this.action(scope, control, 'btn_baobiao', true, () => { void this.forms.show(Number(this.context.skinType ?? 0) === 2 ? 'ui/club_2/UIPromoterAllReport_2' : 'ui/club/UIPromoterAllReport', { ...this.context, pid }); });
+            this.action(scope, control, 'btn_powerOp', Number(this.context.minister ?? 0) === 2, () => { void this.openPower(row); });
+            this.action(scope, control, 'btn_Examine', Number(row.examineStatus ?? 0) === 1, () => { void this.confirmAction(`确认审核该队长当前总积分 ${row.totalPoint ?? 0}？`, () => this.examine(row)); });
             content.addChild(node);
         }
         content.getComponent(Layout)?.updateLayout();
@@ -238,7 +267,30 @@ export class LegacyClubPromotionController {
 
     private bindAdd(form: LegacyForm, path: string, level: boolean): void { this.click(form.node, 'btn_close', () => this.forms.close(path)); this.click(form.node, 'btn_search', () => { void this.findAdd(form, level); }); this.click(form.node, 'btn_hehuo_add', () => { void this.commitAdd(path, level); }); this.click(form.node, 'btn_hehuo_yaoqing', () => { void this.commitAdd(path, level); }); }
     private showAdd(form: LegacyForm, value: unknown): void { this.context = this.value(value); this.selectedPid = 0; const edit = this.desc(form.node, 'EditBox')?.getComponent(EditBox); if (edit) edit.string = ''; this.active(form.node, 'user', false); this.active(form.node, 'btn_hehuo_add', false); this.active(form.node, 'btn_hehuo_yaoqing', false); }
-    private async findAdd(form: LegacyForm, level: boolean): Promise<void> { const text = this.desc(form.node, 'EditBox')?.getComponent(EditBox)?.string.trim() ?? ''; if (!/^\d+$/.test(text)) { await this.tip('请输入纯数字的成员ID'); return; } const protocol = level ? 'club.CClubPromotionLevelPidInfo' : 'club.CClubPromotionPidInfo'; try { const result = await this.client.request<{ player?: { pid?: number; name?: string }; sign?: boolean }>(protocol, { clubId: this.clubId(), pid: Number(text) }); this.selectedPid = Number(result.player?.pid ?? 0); this.active(form.node, 'user', true); this.label(form.node, 'name', String(result.player?.name ?? '')); this.label(form.node, 'id', `ID:${this.selectedPid}`); this.active(form.node, result.sign ? 'btn_hehuo_add' : 'btn_hehuo_yaoqing', true); } catch (e) { await this.tip(e instanceof Error ? e.message : '查找成员失败'); } }
+    private async findAdd(form: LegacyForm, level: boolean): Promise<void> {
+        const text = this.desc(form.node, 'EditBox')?.getComponent(EditBox)?.string.trim() ?? '';
+        const clubId = this.clubId();
+        if (!/^\d+$/.test(text)) {
+            console.warn('[ClubPromotion] add-search-invalid', { clubId, level, inputLength: text.length });
+            await this.tip('请输入纯数字的成员ID');
+            return;
+        }
+        const pid = Number(text);
+        const protocol = level ? 'club.CClubPromotionLevelPidInfo' : 'club.CClubPromotionPidInfo';
+        console.info('[ClubPromotion] add-search-start', { clubId, pid, level, protocol });
+        try {
+            const result = await this.client.request<{ player?: { pid?: number; name?: string }; sign?: boolean }>(protocol, { clubId, pid });
+            this.selectedPid = Number(result.player?.pid ?? 0);
+            console.info('[ClubPromotion] add-search-success', { clubId, pid: this.selectedPid, level, sign: Boolean(result.sign) });
+            this.active(form.node, 'user', true);
+            this.label(form.node, 'name', String(result.player?.name ?? ''));
+            this.label(form.node, 'id', `ID:${this.selectedPid}`);
+            this.active(form.node, result.sign ? 'btn_hehuo_add' : 'btn_hehuo_yaoqing', true);
+        } catch (error: unknown) {
+            console.error('[ClubPromotion] add-search-failed', { clubId, pid, level, protocol, error });
+            await this.tip(error instanceof Error ? error.message : '查找成员失败');
+        }
+    }
     private async commitAdd(path: string, level: boolean): Promise<void> { if (!this.selectedPid) return; const protocol = level ? 'club.CClubPromotionLevelPidAdd' : 'club.CClubPromotionPidAdd'; try { await this.client.request(protocol, { clubId: this.clubId(), pid: this.selectedPid }); this.forms.close(path); await this.load(); await this.tip('操作成功'); } catch (e) { await this.tip(e instanceof Error ? e.message : '添加队长失败'); } }
 
     private bindSet(form: LegacyForm, path: string): void { this.click(form.node, 'btn_close', () => this.forms.close(path)); this.click(form.node, 'btn_search', () => { void this.findParent(form); }); this.click(form.node, 'btn_sure', () => { void this.confirmAction('修改从属后原数据归属会发生变化，确定修改吗？', () => this.saveParent(form, path)); }); }
@@ -267,11 +319,11 @@ export class LegacyClubPromotionController {
         try {
             const rows = await this.client.request<Array<{ pid?: number; name?: string; curActiveValue?: number }>>('club.CClubSubordinateList', { clubId: this.clubId(), pageNum: this.type, pid: Number(this.context.partnerPid ?? 0), query });
             const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'hehuo_demo'); if (!content || !demo) return;
-            this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
+            this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
             for (const row of rows) { const node = instantiate(demo); node.name = String(row.pid ?? 0); node.active = true; this.label(node, 'name', String(row.name ?? '')); this.label(node, 'id', `ID:${row.pid ?? ''}`); this.label(node, 'lb_active', String(row.curActiveValue ?? 0));
                 const pid = Number(row.pid ?? 0); const isOwner = pid === Number(this.context.partnerPid ?? 0); this.active(node, 'btn_hehuo_xiugai', !isOwner);
-                this.rowClick(node, 'btn_hehuo_xiugai', () => { if (Number(this.context.partnerPid ?? 0) === Number(this.context.promotionManagePid ?? -1)) void this.confirmAction('确定删除该下属关系吗？', () => this.removeSubordinate(pid)); else void this.forms.show('ui/club/ClubPromoterSet', { ...this.context, pid, player: row }); });
-                this.rowClick(node, 'btn_hehuo_zhanji', () => { void this.forms.show('ui/club/UIPromoterRecordUser', { ...this.context, pid, partnerPid: this.context.partnerPid }); }); content.addChild(node); }
+                this.rowClick(form.node, node, 'btn_hehuo_xiugai', () => { if (Number(this.context.partnerPid ?? 0) === Number(this.context.promotionManagePid ?? -1)) void this.confirmAction('确定删除该下属关系吗？', () => this.removeSubordinate(pid)); else void this.forms.show('ui/club/ClubPromoterSet', { ...this.context, pid, player: row }); });
+                this.rowClick(form.node, node, 'btn_hehuo_zhanji', () => { void this.forms.show('ui/club/UIPromoterRecordUser', { ...this.context, pid, partnerPid: this.context.partnerPid }); }); content.addChild(node); }
             content.getComponent(Layout)?.updateLayout(); const page = this.desc(form.node, 'page'); if (page) this.label(page, 'lb', String(this.type));
         } catch (error: unknown) { await this.tip(error instanceof Error ? error.message : '获取下属列表失败'); }
     }
@@ -308,14 +360,23 @@ export class LegacyClubPromotionController {
 
     private async loadRecords(): Promise<void> {
         const form = this.recordForm; if (!form) return;
-        try { const rows = await this.client.request<PromotionRecord[]>('club.CClubPromotionPersonalRecord', { ...this.recordPacket(), pageNum: this.recordPage }); this.renderRecords(rows); this.recordPageLabel(); }
-        catch (error: unknown) { await this.tip(error instanceof Error ? error.message : '获取推广战绩失败'); }
+        const packet: Record<string, number> = { ...this.recordPacket(), pageNum: this.recordPage };
+        console.info('[ClubPromotion] record-list-start', { ...packet, protocol: 'club.CClubPromotionPersonalRecord' });
+        try {
+            const result = await this.client.request<PromotionRecord[] | LegacyListEnvelope<PromotionRecord>>('club.CClubPromotionPersonalRecord', packet);
+            const rows = this.listRows(result);
+            this.renderRecords(rows); this.recordPageLabel();
+            console.info('[ClubPromotion] record-list-success', { clubId: packet.clubId, pid: packet.pid, pageNum: packet.pageNum, rowCount: rows.length });
+        } catch (error: unknown) {
+            console.warn('[ClubPromotion] record-list-failed', { clubId: packet.clubId, pid: packet.pid, pageNum: packet.pageNum, message: error instanceof Error ? error.message : String(error) });
+            await this.tip(error instanceof Error ? error.message : '获取推广战绩失败');
+        }
     }
 
     private renderRecords(rows: PromotionRecord[]): void {
-        const form = this.recordForm; const content = form ? this.desc(form.node, 'layout') : null; const demo = form ? this.desc(form.node, 'demo') : null; if (!content || !demo) return;
-        this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
-        rows.forEach((record, index) => { const node = instantiate(demo); node.name = `record${index}`; node.active = true; this.label(node, 'room_key', String(record.roomKey ?? '')); this.label(node, 'lb_gameName', record.configName || `游戏${record.gameType ?? ''}`); this.label(node, 'lb_roomState', Number(record.roomState ?? 0) === 1 ? '游戏中' : ''); this.label(node, 'datetime', Number(record.roomState ?? 0) === 1 ? '' : String(record.endTime ?? '')); const card = Number(record.roomCard ?? 0) > 0 ? Number(record.roomCard ?? 0) : Number(record.clubCard ?? 0); this.label(node, 'lb_card', `X${card}`); this.active(node, 'icon_fk', Number(record.roomCard ?? 0) > 0); this.active(node, 'icon_qk', Number(record.roomCard ?? 0) <= 0); this.active(node, 'icon_ClubCent', Number(record.unionId ?? 0) > 0); this.label(node, 'lb_ClubCent', Number(record.unionId ?? 0) > 0 ? `X${record.roomSportsConsume ?? 0}` : ''); this.renderRecordPlayers(node, this.players(record.playerList)); this.rowClick(node, 'btn_record_info', () => { void this.forms.show('UILobbyRecordResult', record); }); content.addChild(node); });
+        const form = this.recordForm; if (!form) return; const scope = form.node; const content = this.desc(scope, 'layout'); const demo = this.desc(scope, 'demo'); if (!content || !demo) return;
+        this.clearRows(scope); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
+        rows.forEach((record, index) => { const node = instantiate(demo); node.name = `record${index}`; node.active = true; this.label(node, 'room_key', String(record.roomKey ?? '')); this.label(node, 'lb_gameName', record.configName || `游戏${record.gameType ?? ''}`); this.label(node, 'lb_roomState', Number(record.roomState ?? 0) === 1 ? '游戏中' : ''); this.label(node, 'datetime', Number(record.roomState ?? 0) === 1 ? '' : String(record.endTime ?? '')); const card = Number(record.roomCard ?? 0) > 0 ? Number(record.roomCard ?? 0) : Number(record.clubCard ?? 0); this.label(node, 'lb_card', `X${card}`); this.active(node, 'icon_fk', Number(record.roomCard ?? 0) > 0); this.active(node, 'icon_qk', Number(record.roomCard ?? 0) <= 0); this.active(node, 'icon_ClubCent', Number(record.unionId ?? 0) > 0); this.label(node, 'lb_ClubCent', Number(record.unionId ?? 0) > 0 ? `X${record.roomSportsConsume ?? 0}` : ''); this.renderRecordPlayers(node, this.players(record.playerList)); this.rowClick(scope, node, 'btn_record_info', () => this.lobbyNode.emit('legacy-replay-room', { roomId: Number(record.roomID ?? 0), source: 'CLUB', returnForm: 'ui/club/UIClubPromotionRecord' })); content.addChild(node); });
         content.getComponent(Layout)?.updateLayout();
     }
 
@@ -334,7 +395,7 @@ export class LegacyClubPromotionController {
 
     private bindActiveDetail(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterSetActiveDetail')); this.click(form.node, 'btn_cancel', () => this.forms.close('ui/club/UIPromoterSetActiveDetail')); this.click(form.node, 'btn_save', () => { void this.saveActiveDetail(form); }); }
     private showActiveDetail(form: LegacyForm, value: unknown): void { this.activeForm = form; this.activeContext = this.value(value) as PromotionContext & PromotionRow; this.activePage = 1; this.activeItems = []; void this.loadActiveDetail(true); }
-    private async loadActiveDetail(refresh: boolean): Promise<void> { const form = this.activeForm; if (!form) return; try { const rows = await this.client.request<Array<{ configId?: number; configName?: string; gameId?: number; size?: number; value?: number }>>('club.CClubPromotionCalcActiveList', { clubId: this.activeClubId(), pid: Number(this.activeContext.pid ?? 0), pageNum: this.activePage }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; if (refresh) { this.clearRows(); this.activeItems = []; for (const child of [...content.children]) if (child !== demo) child.destroy(); } demo.active = false; for (const row of rows) { if (this.activeItems.some((item) => item.configId === row.configId)) continue; this.activeItems.push({ configId: row.configId, value: row.value }); const node = instantiate(demo); node.name = String(row.configId ?? 0); node.active = true; this.label(node, 'lb_roomName', row.configName || `游戏${row.gameId ?? ''}`); this.label(node, 'lb_roomCount', String(row.size ?? 0)); const edit = this.desc(node, 'scorePercentEditBox')?.getComponent(EditBox); if (edit) edit.string = String(row.value ?? 0); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取活跃计算明细失败'); } }
+    private async loadActiveDetail(refresh: boolean): Promise<void> { const form = this.activeForm; if (!form) return; try { const rows = await this.client.request<Array<{ configId?: number; configName?: string; gameId?: number; size?: number; value?: number }>>('club.CClubPromotionCalcActiveList', { clubId: this.activeClubId(), pid: Number(this.activeContext.pid ?? 0), pageNum: this.activePage }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; if (refresh) { this.clearRows(form.node); this.activeItems = []; for (const child of [...content.children]) if (child !== demo) child.destroy(); } demo.active = false; for (const row of rows) { if (this.activeItems.some((item) => item.configId === row.configId)) continue; this.activeItems.push({ configId: row.configId, value: row.value }); const node = instantiate(demo); node.name = String(row.configId ?? 0); node.active = true; this.label(node, 'lb_roomName', row.configName || `游戏${row.gameId ?? ''}`); this.label(node, 'lb_roomCount', String(row.size ?? 0)); const edit = this.desc(node, 'scorePercentEditBox')?.getComponent(EditBox); if (edit) edit.string = String(row.value ?? 0); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取活跃计算明细失败'); } }
     private async saveActiveDetail(form: LegacyForm): Promise<void> { const content = this.desc(form.node, 'layout'); const changed: Array<{ configId: number; value: number }> = []; for (const node of content?.children ?? []) { if (node.name === 'demo') continue; const value = this.numericNode(node, 'scorePercentEditBox'); if (value < 0) { await this.tip('活跃计算值请输入大于等于0的数字'); return; } const configId = Number(node.name); const old = this.activeItems.find((item) => Number(item.configId) === configId); if (Number(old?.value ?? 0) !== value) changed.push({ configId, value }); } if (!changed.length) { await this.tip('没有需要保存的修改'); return; } try { await this.client.request('club.CClubPromotionCalcActiveBatch', { clubId: this.activeClubId(), pid: Number(this.activeContext.pid ?? 0), promotionCalcActiveItemList: changed }); this.forms.close('ui/club/UIPromoterSetActiveDetail'); await this.tip('保存成功'); } catch (e) { await this.tip(e instanceof Error ? e.message : '保存活跃计算失败'); } }
 
     private bindActiveNum(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterSetActiveNum')); this.click(form.node, 'btn_Add', () => { void this.changeActiveNum(form, 0); }); this.click(form.node, 'btn_Del', () => { void this.changeActiveNum(form, 1); }); }
@@ -343,7 +404,7 @@ export class LegacyClubPromotionController {
 
     private bindActiveReport(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterSetActiveReport')); }
     private showActiveReport(form: LegacyForm, value: unknown): void { this.activeForm = form; this.activeContext = this.value(value) as PromotionContext & PromotionRow; void this.loadActiveReport(); }
-    private async loadActiveReport(): Promise<void> { const form = this.activeForm; if (!form) return; try { const rows = await this.client.request<Array<{ dateTime?: string; value?: number }>>('club.CClubPromotionActiveReportForm', { clubId: this.activeClubId(), pid: Number(this.activeContext.pid ?? 0) }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.label(node, 'lb_date', String(row.dateTime ?? '')); this.label(node, 'lb_active', String(row.value ?? 0)); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取活跃报表失败'); } }
+    private async loadActiveReport(): Promise<void> { const form = this.activeForm; if (!form) return; try { const rows = await this.client.request<Array<{ dateTime?: string; value?: number }>>('club.CClubPromotionActiveReportForm', { clubId: this.activeClubId(), pid: Number(this.activeContext.pid ?? 0) }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.label(node, 'lb_date', String(row.dateTime ?? '')); this.label(node, 'lb_active', String(row.value ?? 0)); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取活跃报表失败'); } }
 
     private activeClubId(): number { return Number(this.activeContext.id ?? this.activeContext.clubId ?? 0); }
     private numeric(form: LegacyForm, name: string): number { return this.numericNode(form.node, name); }
@@ -352,7 +413,22 @@ export class LegacyClubPromotionController {
 
     private bindAllReport(form: LegacyForm, path: string): void { this.click(form.node, 'btn_close', () => this.forms.close(path)); }
     private showAllReport(form: LegacyForm, path: string, value: unknown): void { this.activeForm = form; this.activeContext = this.value(value) as PromotionContext & PromotionRow; void this.loadAllReport(path); }
-    private async loadAllReport(path: string): Promise<void> { const form = this.activeForm; if (!form) return; const packet: Record<string, unknown> = { clubId: this.activeClubId() }; const pid = Number(this.activeContext.pid ?? 0); if (pid > 0) packet.pid = pid; try { const rows = await this.client.request<Array<Record<string, unknown>>>('club.CClubPromotionLevelReportForm', packet); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.label(node, 'lb_date', String(row.dateTime ?? '')); this.label(node, 'lb_jushu', String(row.setCount ?? 0)); this.label(node, 'lb_dayingjia', String(row.winner ?? 0)); this.label(node, 'lb_costZuan', String(row.consume ?? 0)); this.label(node, 'lb_sumTable', String(row.table ?? 0)); if (path.includes('club_2')) { this.label(node, 'lb_costSP', String(row.promotionShareValue ?? 0)); this.label(node, 'lb_zhongZhiTotalPoint', String(row.zhongZhiTotalPoint ?? 0)); this.label(node, 'lb_lastSumScore', String(row.zhongZhiFinalTotalPoint ?? 0)); } else { this.label(node, 'lb_costSP', String(row.entryFee ?? 0)); this.label(node, 'lb_winlostSP', String(row.clubCentConsume ?? 0)); this.label(node, 'lb_sumScore', String(row.sumClubCent ?? 0)); } content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取推广总报表失败'); } }
+    private async loadAllReport(path: string): Promise<void> {
+        const form = this.activeForm; if (!form) return;
+        const packet: Record<string, unknown> = { clubId: this.activeClubId() }; const pid = Number(this.activeContext.pid ?? 0); if (pid > 0) packet.pid = pid;
+        console.info('[ClubPromotion] report-list-start', { clubId: packet.clubId, pid: packet.pid ?? 0, protocol: 'club.CClubPromotionLevelReportForm' });
+        try {
+            const result = await this.client.request<Array<Record<string, unknown>> | LegacyListEnvelope<Record<string, unknown>>>('club.CClubPromotionLevelReportForm', packet);
+            const rows = this.listRows(result); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return;
+            this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false;
+            for (const row of rows) { const node = instantiate(demo); node.active = true; this.label(node, 'lb_date', String(row.dateTime ?? '')); this.label(node, 'lb_jushu', String(row.setCount ?? 0)); this.label(node, 'lb_dayingjia', String(row.winner ?? 0)); this.label(node, 'lb_costZuan', String(row.consume ?? 0)); this.label(node, 'lb_sumTable', String(row.table ?? 0)); if (path.includes('club_2')) { this.label(node, 'lb_costSP', String(row.promotionShareValue ?? 0)); this.label(node, 'lb_zhongZhiTotalPoint', String(row.zhongZhiTotalPoint ?? 0)); this.label(node, 'lb_lastSumScore', String(row.zhongZhiFinalTotalPoint ?? 0)); } else { this.label(node, 'lb_costSP', String(row.entryFee ?? 0)); this.label(node, 'lb_winlostSP', String(row.clubCentConsume ?? 0)); this.label(node, 'lb_sumScore', String(row.sumClubCent ?? 0)); } content.addChild(node); }
+            content.getComponent(Layout)?.updateLayout();
+            console.info('[ClubPromotion] report-list-success', { clubId: packet.clubId, pid: packet.pid ?? 0, rowCount: rows.length });
+        } catch (error: unknown) {
+            console.warn('[ClubPromotion] report-list-failed', { clubId: packet.clubId, pid: packet.pid ?? 0, message: error instanceof Error ? error.message : String(error) });
+            await this.tip(error instanceof Error ? error.message : '获取推广总报表失败');
+        }
+    }
 
     private bindShowSetting(form: LegacyForm, path: string): void {
         // 2.22 Prefab 根节点遗留的全屏 Button 会抢占子 Toggle 的输入命中；该按钮没有业务事件。
@@ -395,7 +471,7 @@ export class LegacyClubPromotionController {
     private openShareDetail(path: string, detailType: number): void { this.forms.close(path); void this.forms.show('ui/club/UIUserSetBaoMingFeiDetail', { ...this.shareContext, opClubId: this.clubId(), opPid: this.shareContext.pid, detailType }); }
     private bindShareDetail(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIUserSetBaoMingFeiDetail')); this.click(form.node, 'btn_cancel', () => this.forms.close('ui/club/UIUserSetBaoMingFeiDetail')); this.click(form.node, 'btn_save', () => { void this.saveShareDetail(form); }); this.click(form.node, 'btn_reservedValue', () => { void this.openReserved(form); }); }
     private showShareDetail(form: LegacyForm, value: unknown): void { this.activeForm = form; this.shareContext = this.value(value) as typeof this.shareContext; void this.loadShareDetail(form); }
-    private async loadShareDetail(form: LegacyForm): Promise<void> { const type = Number(this.shareContext.detailType ?? 0); const protocol = this.shareContext.isSelf ? 'club.CClubPromotionShareChangeListSelfInfo' : 'club.CClubPromotionShareChangeList'; try { const rows = await this.client.request<Array<Record<string, unknown>>>(protocol, { clubId: this.clubId(), pid: Number(this.shareContext.pid ?? 0), pageNum: 1, type }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.name = String(row.configId ?? 0); node.active = true; this.label(node, 'lb_roomName', String(row.configName ?? '')); this.label(node, 'lb_roomCount', String(row.size ?? 0)); this.label(node, 'lb_allowValue', String(row.allowValue ?? '')); const edit = this.desc(node, 'scorePercentEditBox'); edit && (edit.active = !this.shareContext.isSelf); const box = edit?.getComponent(EditBox); if (box) box.string = String(row.changeFlag ? row.value ?? 0 : type === 1 ? this.shareContext.shareFixedValue ?? 0 : this.shareContext.shareValue ?? 0); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取房间分成列表失败'); } }
+    private async loadShareDetail(form: LegacyForm): Promise<void> { const type = Number(this.shareContext.detailType ?? 0); const protocol = this.shareContext.isSelf ? 'club.CClubPromotionShareChangeListSelfInfo' : 'club.CClubPromotionShareChangeList'; try { const rows = await this.client.request<Array<Record<string, unknown>>>(protocol, { clubId: this.clubId(), pid: Number(this.shareContext.pid ?? 0), pageNum: 1, type }); const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.name = String(row.configId ?? 0); node.active = true; this.label(node, 'lb_roomName', String(row.configName ?? '')); this.label(node, 'lb_roomCount', String(row.size ?? 0)); this.label(node, 'lb_allowValue', String(row.allowValue ?? '')); const edit = this.desc(node, 'scorePercentEditBox'); edit && (edit.active = !this.shareContext.isSelf); const box = edit?.getComponent(EditBox); if (box) box.string = String(row.changeFlag ? row.value ?? 0 : type === 1 ? this.shareContext.shareFixedValue ?? 0 : this.shareContext.shareValue ?? 0); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取房间分成列表失败'); } }
     private async saveShareDetail(form: LegacyForm): Promise<void> { if (this.shareContext.isSelf) { this.forms.close('ui/club/UIUserSetBaoMingFeiDetail'); return; } const content = this.desc(form.node, 'layout'); const items: Array<{ configId: number; value: number }> = []; for (const node of content?.children ?? []) { if (node.name === 'demo') continue; const value = this.numericNode(node, 'scorePercentEditBox'); if (value < 0) { await this.tip('请输入大于等于0的数字'); return; } items.push({ configId: Number(node.name), value }); } if (!items.length) return; try { await this.client.request('club.CClubPromotionShareChangeBatch', { clubId: this.clubId(), pid: Number(this.shareContext.pid ?? 0), type: Number(this.shareContext.detailType ?? 0), promotionCalcActiveItemList: items }); this.forms.close('ui/club/UIUserSetBaoMingFeiDetail'); await this.tip('保存成功'); } catch (e) { await this.tip(e instanceof Error ? e.message : '保存房间分成失败'); } }
     private shareDetailValues(form: LegacyForm): Array<{ configId: number; value: number }> { const items: Array<{ configId: number; value: number }> = []; for (const node of this.desc(form.node, 'layout')?.children ?? []) { if (node.name === 'demo') continue; const value = this.numericNode(node, 'scorePercentEditBox'); if (value >= 0) items.push({ configId: Number(node.name), value }); } return items; }
     private async openReserved(form: LegacyForm): Promise<void> { try { const result = await this.client.request<Record<string, unknown>>('club.CClubReservedValueInfo', { clubId: this.clubId(), pid: Number(this.shareContext.pid ?? 0) }); await this.forms.show('ui/club/UIUserSetReservedBaoMingFei', { ...this.shareContext, ...result, promotionCalcActiveItemList: this.shareDetailValues(form) }); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取预留值失败'); } }
@@ -406,7 +482,7 @@ export class LegacyClubPromotionController {
     private bindSection(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIUserSetSection')); this.click(form.node, 'btn_cancel', () => this.forms.close('ui/club/UIUserSetSection')); this.click(form.node, 'btn_save', () => { void this.saveSection(); }); this.click(form.node, 'btn_oneKey', () => { void this.forms.show('ui/club/UIUserChangeSection', { ...this.sectionContext, unionSectionId: -1, shareToSelfValue: this.sectionContext.minAllowShareToValue ?? 0 }); }); }
     private showSection(form: LegacyForm, value: unknown): void { this.activeForm = form; this.sectionContext = this.value(value) as typeof this.sectionContext; this.sectionContext.opClubId = Number(this.sectionContext.opClubId ?? this.clubId()); this.sectionContext.opPid = Number(this.sectionContext.opPid ?? this.shareContext.pid ?? 0); void this.loadSection(); }
     private async loadSection(): Promise<void> { const form = this.activeForm; if (!form) return; try { const result = await this.client.request<{ promotionShareSectionItems?: Array<Record<string, unknown>>; minAllowShareToValue?: number }>('club.CClubPromotionSectionChangeList', { clubId: this.clubId(), opClubId: Number(this.sectionContext.opClubId ?? 0), opPid: Number(this.sectionContext.opPid ?? 0), pageNum: 1, isShowSelf: Boolean(this.sectionContext.isSelf), unionFlag: Number(this.sectionContext.unionFlag ?? 0), unionId: 0 }); this.sectionItems = result.promotionShareSectionItems ?? []; this.sectionContext.minAllowShareToValue = Number(result.minAllowShareToValue ?? 0); this.renderSection(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取分成区间失败'); } }
-    private renderSection(): void { const form = this.activeForm; if (!form) return; const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; this.sectionItems.forEach((row, index) => { const node = instantiate(demo); node.name = String(row.unionSectionId ?? index); node.active = true; const end = Number(row.endValue ?? 0); this.label(node, 'lb_index', String(index + 1)); this.label(node, 'lb_section', `(${row.beginValue ?? 0},${end === -1 ? '∞' : end}]`); this.label(node, 'lb_allowShareToValue', String(row.allowShareToValue ?? 0)); this.label(node, 'lb_shareToSelfValue', String(row.shareToSelfValue ?? 0)); const own = Number(row.shareToSelfValue ?? 0); this.label(node, 'lb_renJunValue', `人均:(${(own / 2).toFixed(2)},${(own / 3).toFixed(2)},${(own / 4).toFixed(2)},${(own / 10).toFixed(2)})`); this.action(node, 'btn_change', !this.sectionContext.isSelf, () => { void this.forms.show('ui/club/UIUserChangeSection', { ...this.sectionContext, ...row }); }); content.addChild(node); }); content.getComponent(Layout)?.updateLayout(); }
+    private renderSection(): void { const form = this.activeForm; if (!form) return; const content = this.desc(form.node, 'layout'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; this.sectionItems.forEach((row, index) => { const node = instantiate(demo); node.name = String(row.unionSectionId ?? index); node.active = true; const end = Number(row.endValue ?? 0); this.label(node, 'lb_index', String(index + 1)); this.label(node, 'lb_section', `(${row.beginValue ?? 0},${end === -1 ? '∞' : end}]`); this.label(node, 'lb_allowShareToValue', String(row.allowShareToValue ?? 0)); this.label(node, 'lb_shareToSelfValue', String(row.shareToSelfValue ?? 0)); const own = Number(row.shareToSelfValue ?? 0); this.label(node, 'lb_renJunValue', `人均:(${(own / 2).toFixed(2)},${(own / 3).toFixed(2)},${(own / 4).toFixed(2)},${(own / 10).toFixed(2)})`); this.action(form.node, node, 'btn_change', !this.sectionContext.isSelf, () => { void this.forms.show('ui/club/UIUserChangeSection', { ...this.sectionContext, ...row }); }); content.addChild(node); }); content.getComponent(Layout)?.updateLayout(); }
     private async saveSection(): Promise<void> { if (this.sectionContext.isSelf) { this.forms.close('ui/club/UIUserSetSection'); return; } const items = this.sectionItems.map((row) => ({ unionSectionId: Number(row.unionSectionId ?? 0), shareToSelfValue: Number(row.shareToSelfValue ?? 0), beginValue: Number(row.beginValue ?? 0), endValue: Number(row.endValue ?? 0) })); try { await this.client.request('club.CClubPromotionShareSectionChangeBatch', { opClubId: Number(this.sectionContext.opClubId ?? 0), opPid: Number(this.sectionContext.opPid ?? 0), promotionSectionCalcActiveItems: items }); this.forms.close('ui/club/UIUserSetSection'); await this.tip('保存成功'); } catch (e) { await this.tip(e instanceof Error ? e.message : '保存分成区间失败'); } }
     private bindChangeSection(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIUserChangeSection')); this.click(form.node, 'btn_reset', () => this.resetSectionNumber(form)); this.click(form.node, 'btn_save', () => this.commitSectionNumber(form)); void this.attachNumpad(form); }
     private showChangeSection(form: LegacyForm, value: unknown): void { this.sectionContext = { ...this.sectionContext, ...(this.value(value) as typeof this.sectionContext) }; this.active(form.node, 'lb_xiaji', Number(this.sectionContext.unionSectionId ?? 0) !== -1); this.active(form.node, 'lb_xiajiNum', Number(this.sectionContext.unionSectionId ?? 0) !== -1); this.resetSectionNumber(form); }
@@ -434,7 +510,7 @@ export class LegacyClubPromotionController {
     private bindPromotionManager(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterManager')); this.click(form.node, 'btn_PromoterList', () => { void this.forms.show(Number(this.context.skinType ?? 0) === 2 ? 'ui/club_2/UIPromoterAllManager_2' : 'ui/club/ClubPromoters', this.context); }); this.click(form.node, 'btn_PromoterXiaShuList', () => { void this.forms.show('ui/club/UIPromoterXiaShuList', this.context); }); this.click(form.node, 'btn_PromoterMsg', () => { void this.forms.show('ui/club/UIPromoterMsg', this.context); }); }
     private bindPromotionMsg(form: LegacyForm): void { this.click(form.node, 'btn_close', () => this.forms.close('ui/club/UIPromoterMsg')); const types: Array<[string, number]> = [['btn_msg_all', 0], ['btn_msg_add', 1], ['btn_msg_del', 2], ['btn_msg_union', 3], ['btn_msg_club', 4], ['btn_msg_xiashu', 5]]; for (const [name, type] of types) this.click(form.node, name, () => { void this.loadPromotionMsg(form, type); }); this.click(form.node, 'btn_search', () => { void this.loadPromotionMsg(form, 0); }); }
     private showPromotionMsg(form: LegacyForm, value: unknown): void { this.activeForm = form; this.activeContext = this.value(value) as PromotionContext & PromotionRow; void this.loadPromotionMsg(form, 0); }
-    private async loadPromotionMsg(form: LegacyForm, type: number): Promise<void> { const query = this.desc(form.node, 'execPidEditBox')?.getComponent(EditBox)?.string.trim() ?? ''; try { const rows = await this.client.request<Array<Record<string, unknown>>>('club.CClubPromotionDynamic', { clubId: this.activeClubId(), unionId: Number(this.activeContext.unionId ?? 0), pageNum: 1, type, pid: Number(this.activeContext.partnerPid ?? this.activeContext.pid ?? 0), query }); const content = this.desc(form.node, 'content'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.rich(node, 'lb_message', String(row.message ?? row.msg ?? row.content ?? '')); this.label(node, 'lb_time', String(row.time ?? row.createTime ?? '')); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取推广动态失败'); } }
+    private async loadPromotionMsg(form: LegacyForm, type: number): Promise<void> { const query = this.desc(form.node, 'execPidEditBox')?.getComponent(EditBox)?.string.trim() ?? ''; try { const rows = await this.client.request<Array<Record<string, unknown>>>('club.CClubPromotionDynamic', { clubId: this.activeClubId(), unionId: Number(this.activeContext.unionId ?? 0), pageNum: 1, type, pid: Number(this.activeContext.partnerPid ?? this.activeContext.pid ?? 0), query }); const content = this.desc(form.node, 'content'); const demo = this.desc(form.node, 'demo'); if (!content || !demo) return; this.clearRows(form.node); for (const child of [...content.children]) if (child !== demo) child.destroy(); demo.active = false; for (const row of rows) { const node = instantiate(demo); node.active = true; this.rich(node, 'lb_message', String(row.message ?? row.msg ?? row.content ?? '')); this.label(node, 'lb_time', String(row.time ?? row.createTime ?? '')); content.addChild(node); } content.getComponent(Layout)?.updateLayout(); } catch (e) { await this.tip(e instanceof Error ? e.message : '获取推广动态失败'); } }
 
     private async openWarning(row: PromotionRow, personal: boolean): Promise<void> {
         const skin2 = Number(this.context.skinType ?? 0) === 2; const path = skin2 ? 'ui/club_2/UISetClubCentWarning_2' : 'ui/club/UISetClubCentWarning';
@@ -468,10 +544,19 @@ export class LegacyClubPromotionController {
     private signedNumber(form: LegacyForm, name: string): number { const text = this.desc(form.node, name)?.getComponent(EditBox)?.string.trim() ?? ''; return /^-?\d+(?:\.\d+)?$/.test(text) ? Number(text) : Number.NaN; }
 
     private async confirmAction(message: string, action: () => Promise<void>): Promise<void> { const form = await this.forms.show('UIMessage', null, null, message); if (!form) return; const sure = this.desc(form.node, 'btnSure'); const cancel = this.desc(form.node, 'btnCancel'); if (cancel) { cancel.active = true; cancel.once(Button.EventType.CLICK, () => this.forms.close('UIMessage')); } sure?.once(Button.EventType.CLICK, () => { this.forms.close('UIMessage'); void action(); }); }
-    private action(root: Node | null, name: string, active: boolean, fn: () => void): void { const node = root ? this.desc(root, name) : null; if (!node) return; node.active = active; this.rowClick(root!, name, fn); }
-    private rowClick(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.rowDisposers.push(() => node.off(Button.EventType.CLICK, fn)); }
-    private clearRows(): void { for (const dispose of this.rowDisposers.splice(0)) dispose(); }
+    private action(scope: Node, root: Node | null, name: string, active: boolean, fn: () => void): void { const node = root ? this.desc(root, name) : null; if (!node) return; node.active = active; this.rowClick(scope, root!, name, fn); }
+    private rowClick(scope: Node, root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); const disposers = this.rowDisposers.get(scope) ?? []; disposers.push(() => node.off(Button.EventType.CLICK, fn)); this.rowDisposers.set(scope, disposers); }
+    private clearRows(scope?: Node): void {
+        const entries = scope ? [[scope, this.rowDisposers.get(scope) ?? []] as const] : [...this.rowDisposers.entries()];
+        for (const [owner, disposers] of entries) { for (const dispose of disposers) dispose(); this.rowDisposers.delete(owner); }
+    }
     private value(value: unknown): PromotionContext { return value && typeof value === 'object' ? value as PromotionContext : {}; }
+    private listRows<T>(value: T[] | LegacyListEnvelope<T>): T[] {
+        if (Array.isArray(value)) return value;
+        if (Array.isArray(value.items)) return value.items;
+        if (Array.isArray(value.list)) return value.list;
+        return [];
+    }
     private clubId(): number { return Number(this.context.id ?? this.context.clubId ?? 0); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }

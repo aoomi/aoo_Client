@@ -23,7 +23,7 @@ test('callers can force inherited lobby queries through the hall domain', () => 
 
 test('authoritative room state pushes stay in the room domain', () => {
     assert.match(source, /event === 'common\.room\.state_push'/);
-    assert.match(source, /directRoomState \? envelope\.body : wrapper\.payload/);
+    assert.match(source, /directRoomEvent \? envelope\.body : wrapper\.payload/);
     assert.doesNotMatch(source, /common\.room\.state_push[^\n]+hall\.dispatch/);
 });
 

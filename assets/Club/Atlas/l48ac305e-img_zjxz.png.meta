@@ -69,11 +69,11 @@
       "userData": {
         "trimThreshold": 1,
         "rotated": false,
-        "offsetX": 0,
+        "offsetX": -3,
         "offsetY": 0,
         "trimX": 0,
         "trimY": 0,
-        "width": 108,
+        "width": 102,
         "height": 101,
         "rawWidth": 108,
         "rawHeight": 101,
@@ -86,22 +86,18 @@
         "pivotX": 0.5,
         "pivotY": 0.5,
         "meshType": 0,
-        "isUuid": true,
-        "imageUuidOrDatabaseUri": "391a2e13-9deb-4ef6-a820-8b68041f225a@6c48a",
-        "atlasUuid": "",
-        "trimType": "custom",
         "vertices": {
           "rawPosition": [
-            -54,
+            -51,
             -50.5,
             0,
-            54,
+            51,
             -50.5,
             0,
-            -54,
+            -51,
             50.5,
             0,
-            54,
+            51,
             50.5,
             0
           ],
@@ -116,34 +112,38 @@
           "uv": [
             0,
             101,
-            108,
+            102,
             101,
             0,
             0,
-            108,
+            102,
             0
           ],
           "nuv": [
             0,
             0,
-            1,
+            0.9444444444444444,
             0,
             0,
             1,
-            1,
+            0.9444444444444444,
             1
           ],
           "minPos": [
-            -54,
+            -51,
             -50.5,
             0
           ],
           "maxPos": [
-            54,
+            51,
             50.5,
             0
           ]
-        }
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "391a2e13-9deb-4ef6-a820-8b68041f225a@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
       },
       "ver": "1.0.12",
       "imported": true,

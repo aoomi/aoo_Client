@@ -152,6 +152,33 @@ export class SceneRouter {
             return 'LOGIN_REQUIRED';
         }
         const savedRoute = hostRouteStore.load(String(account.accountId));
+        const waitingClubRoom = activeRoom?.gameName?.trim().toUpperCase() === 'LS201'
+            && Number(activeRoom.roundNo ?? 0) <= 0
+            && activeRoom.waitingFull !== true && activeRoom.state !== 'PLAYING';
+        if (activeRoom && waitingClubRoom) {
+            // LS201 owns a lobby-side waiting state. Refresh/restart must restore
+            // ClubMain + RoomDetails; only a full-room event or an explicit second
+            // desk tap is allowed to cross into GameRoom2D.
+            this.roomRecovery.clear(String(account.accountId));
+            const savedClubId = savedRoute?.name === 'club' ? savedRoute.clubId : 0;
+            const clubId = Number(activeRoom.clubId ?? savedClubId ?? 0);
+            const waitingStartup = { restoreLastClubBeforeShow: true, restoreClubId: clubId || undefined,
+                skipRoomRecovery: true };
+            console.info('[StartupRoomRecovery] waiting-club-room-held', {
+                roomId: activeRoom.roomId, clubId, gameCode: activeRoom.gameName,
+                occupiedCount: activeRoom.occupiedCount, playerNum: activeRoom.playerNum,
+            });
+            if (presentation === 'MOUNT_CURRENT') {
+                await this.mountLobby(account, role, parent, waitingStartup);
+                await this.waitForTargetPresentation();
+                await this.releaseStartupTransition();
+                return 'LOBBY_MOUNTED';
+            }
+            await this.preloadLobbyPresentation(report);
+            if (!current()) return this.discardLateNavigation(operationId, 'WAITING_CLUB_PRELOAD');
+            await this.presentLobbyScene(account, role, operationId, waitingStartup);
+            return 'NAVIGATED';
+        }
         if (!activeRoom) {
             this.roomRecovery.clear(String(account.accountId));
             const savedStartup = savedRoute?.name === 'club'
@@ -190,6 +217,31 @@ export class SceneRouter {
             await this.releaseStartupTransition();
         } catch (error: unknown) {
             if (!current()) return this.discardLateNavigation(operationId, 'ROOM_RECOVERY_FAILURE');
+            // An active Hall membership and an interactive lobby are mutually
+            // exclusive states. If the authoritative room cannot be restored,
+            // complete the ordinary Hall/Authority leave transaction before the
+            // lobby is exposed. The previous fallback only cleared local cache,
+            // leaving the account JOINED and causing every later room entry to be
+            // rejected as HALL_ALREADY_IN_ANOTHER_ROOM.
+            let cleanupError: unknown = null;
+            try {
+                await gateway.leave(Number(activeRoom.roomId));
+                console.info('[RoomMembershipBoundary] recovery-failed-room-left', {
+                    roomId: activeRoom.roomId,
+                    playerId: role.playerId,
+                    operationId,
+                });
+            } catch (leaveFailure: unknown) {
+                cleanupError = leaveFailure;
+                console.error('[RoomMembershipBoundary] recovery-failed-leave-failed', {
+                    roomId: activeRoom.roomId,
+                    playerId: role.playerId,
+                    operationId,
+                    recoveryError: error instanceof Error ? error.message : String(error),
+                    leaveError: leaveFailure instanceof Error ? leaveFailure.message : String(leaveFailure),
+                });
+            }
+            if (cleanupError) throw cleanupError;
             this.roomRecovery.clear(String(account.accountId));
             this.gameLauncher?.destroy();
             this.gameLauncher = null;
@@ -469,6 +521,8 @@ export class SceneRouter {
             id => gateway.leave(id),
             async () => { this.roomRecovery.clear(String(account.accountId)); },
             target => this.returnFromRoom(account, role, target),
+            async (roomId, setId) => (await gateway.currentReplayCode(roomId, setId)).code,
+            roomId => gateway.historyDetail(roomId),
         );
         await this.gameLauncher.launch(handoff, { node: parent, report });
     }

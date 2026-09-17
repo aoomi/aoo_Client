@@ -19,6 +19,9 @@ test('refresh queues every registered and module-routed form after the current s
         'shared room forms must load before optional registered pages');
     assert.match(manager, /includeModules \? listModulePrefabForms\(\) : \[\]/);
     assert.match(manager, /preloadRefreshSurface\(includeModules = true, concurrency = 1\)/);
+    assert.match(manager, /await this\.waitForBackgroundWarmupSlot\(\)/);
+    assert.match(manager, /requestIdleCallback/);
+    assert.match(manager, /this\.deferBackgroundWarmup\(1_200\)/);
     assert.doesNotMatch(lobby, /await refreshSurfaceWarmup/);
     assert.match(lobby, /setTimeout\(\(\) => \{ void this\.forms\?\.preloadRefreshSurface\(true, 1\); \}, 0\)/);
 });
