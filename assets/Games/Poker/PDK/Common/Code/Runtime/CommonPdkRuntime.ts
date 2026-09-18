@@ -68,6 +68,8 @@ export class CommonPdkRuntime {
     private disposed = false;
     private terminalStateVersion = -1;
     private resumePending: Promise<void> | null = null;
+    private roomRestoreRetryTimer = 0;
+    private roomRestoreAttempt = 0;
     private authorityReconcilePending: Promise<void> | null = null;
     private authorityReconcileTimer = 0;
 
@@ -227,6 +229,10 @@ export class CommonPdkRuntime {
         return visibility === 'ALL_IN_ORDER';
     }
 
+    public currentPlayArrowEnabled(): boolean {
+        return resolvePdkGameplayCapabilities(this.options.gameCode).currentPlayArrow === 'enabled';
+    }
+
     public supportsManualStart(): boolean {
         return typeof this.options.manualStart === 'function';
     }
@@ -318,6 +324,8 @@ export class CommonPdkRuntime {
         this.disposed = true;
         if (this.authorityReconcileTimer) globalThis.clearTimeout(this.authorityReconcileTimer);
         this.authorityReconcileTimer = 0;
+        if (this.roomRestoreRetryTimer) globalThis.clearTimeout(this.roomRestoreRetryTimer);
+        this.roomRestoreRetryTimer = 0;
         for (const dispose of this.disposers.splice(0)) dispose();
         this.manager.OnReload();
         this.pendingActions.clear();
@@ -430,12 +438,45 @@ export class CommonPdkRuntime {
             if (this.disposed) return;
             this.applyAuthoritativePacket(packet, true);
             if (Number(this.manager.GetEnterRoomID()) !== roomId) throw new Error('重连房间信息不一致');
+            this.roomRestoreAttempt = 0;
+            if (this.roomRestoreRetryTimer) globalThis.clearTimeout(this.roomRestoreRetryTimer);
+            this.roomRestoreRetryTimer = 0;
             this.options.onEvent?.('CommonPdk_Reconnected', { roomID: roomId });
             this.options.onRoomReady?.(this.room);
         } catch (error: unknown) {
             if (this.disposed) return;
-            this.options.onMessage?.(error instanceof Error ? error.message : '恢复牌局失败');
-            this.options.onExit?.('reconnect-room-failed');
+            const message = error instanceof Error ? error.message : String(error ?? '');
+            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message);
+            if (terminalRoom) {
+                console.info('[CommonPdkReconnect] authoritative-room-terminal', {
+                    roomId,
+                    playerId: this.options.playerId,
+                    operationId: 'ROOM_SNAPSHOT_RESTORE',
+                    stateVersion: this.authorityStateVersion,
+                    reason: message,
+                });
+                this.options.onExit?.('room-not-found');
+                return;
+            }
+            const attempt = ++this.roomRestoreAttempt;
+            if (attempt === 1) this.options.onMessage?.('连接恢复失败，正在自动重试');
+            if (attempt <= 3 || attempt % 12 === 0) {
+                console.warn('[CommonPdkReconnect] transient-restore-failed', {
+                    roomId,
+                    playerId: this.options.playerId,
+                    operationId: 'ROOM_SNAPSHOT_RESTORE',
+                    stateVersion: this.authorityStateVersion,
+                    attempt,
+                    retryDelayMs: Math.min(5_000, 250 * (2 ** Math.min(attempt - 1, 5))),
+                    error: message,
+                });
+            }
+            if (this.roomRestoreRetryTimer) return;
+            const retryDelayMs = Math.min(5_000, 250 * (2 ** Math.min(attempt - 1, 5)));
+            this.roomRestoreRetryTimer = globalThis.setTimeout(() => {
+                this.roomRestoreRetryTimer = 0;
+                void this.restoreRoomAfterReconnect();
+            }, retryDelayMs);
         }
     }
 
@@ -500,7 +541,14 @@ export class CommonPdkRuntime {
             trickId: Number(view.trickId ?? 0),
             tableOperationCount: Array.isArray(view.tableOperations) ? view.tableOperations.length : 0,
         });
-        this.options.onEvent?.('CommonPdk_AuthoritativeState', view);
+        const liveDealBoundary = previousPhase !== view.phase
+            && (Boolean(previousPhase) || !force)
+            && (view.phase === 'PLAYING' || view.phase === 'COMPETE_DEALER');
+        this.options.onEvent?.('CommonPdk_AuthoritativeState', {
+            ...view,
+            staticRestore: force,
+            dealBoundary: liveDealBoundary,
+        });
         if (Boolean(view.dissolved)) {
             if (this.terminalStateVersion >= 0 && view.stateVersion <= this.terminalStateVersion) return;
             this.terminalStateVersion = view.stateVersion;
@@ -522,6 +570,8 @@ export class CommonPdkRuntime {
             const setEnd = {
                 ...rawSetEnd,
                 roomId: view.roomId,
+                roundNo: view.roundNo,
+                shuffleSequence: view.shuffleSequence,
                 stateVersion: view.stateVersion,
                 operationId: authorityOperationId,
                 authorityPhase: view.phase,
@@ -540,12 +590,17 @@ export class CommonPdkRuntime {
                 this.options.onEvent?.('RoomEnd', roomEnd);
             }
         }
-        if (previousPhase && previousPhase !== view.phase) {
+        // A live create/join response may already be the first PLAYING snapshot.
+        // It has no previous phase, but it is still the authoritative deal
+        // boundary and must drive the shared deal animation once. A forced
+        // restore is a static projection and must never replay that animation.
+        if (previousPhase !== view.phase && (Boolean(previousPhase) || !force)) {
             this.options.onEvent?.('CommonPdk_AuthoritativePhaseChanged', {
                 roomId: view.roomId,
                 from: previousPhase,
                 to: view.phase,
                 stateVersion: view.stateVersion,
+                staticRestore: force,
             });
         }
     }

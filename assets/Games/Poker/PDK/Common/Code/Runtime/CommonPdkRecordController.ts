@@ -1,9 +1,14 @@
-import { Button, instantiate, isValid, Label, Node, UITransform } from 'cc';
+import { Button, instantiate, isValid, Label, Node, Prefab, UITransform, Vec3 } from 'cc';
+import { AssetLoader } from '../../../../../../Common/Code/UI/Infrastructure';
+import { CommonHeadController } from '../../../../../../Common/Code/UI/CommonHeadController';
 import type { LegacyForm } from '../../../../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { COMMON_ASSET_BUNDLE, COMMON_HEAD_ASSET } from '../../../../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import type { CommonPdkShareController } from './CommonPdkShareController';
 
 export class CommonPdkRecordController {
+    private readonly assets = new AssetLoader();
+    private readonly headRevisions = new WeakMap<Node, number>();
     private form: LegacyForm | null = null;
     private terminalPayload: Record<string, unknown> = {};
     private continuing = false;
@@ -79,7 +84,9 @@ export class CommonPdkRecordController {
         this.active('BottomBar/FinishedActions', false);
         const bestIndex = infos.findIndex((item: any) => Number(item?.point ?? 0) === maxPoint);
         const bestPlayer = bestIndex >= 0 ? players[bestIndex] : undefined;
-        this.text('BestWinnerPanel/BestWinnerHead/NickNameBackground/BestWinnerNameLabel', String(bestPlayer?.name ?? ''));
+        const bestHead = this.node('BestWinnerPanel/BestWinnerHead');
+        if (bestHead) bestHead.active = Boolean(bestPlayer);
+        if (bestHead && bestPlayer) void this.renderPlayerHead(bestHead, bestPlayer, '大赢家');
         this.text('BestWinnerPanel/BestWinnerScoreLabel', Number.isFinite(maxPoint)
             ? (maxPoint > 0 ? `+${maxPoint}` : String(maxPoint)) : '');
         // FinalSettlement is only opened after the authority marks the match finished.
@@ -108,7 +115,9 @@ export class CommonPdkRecordController {
             if (!player) continue;
             const root = item ? this.pathOf(item) : '';
             const point = Number(info.point ?? 0);
-            this.text(`${root}/Head/NickNameBackground/PlayerNameLabel`, String(player.name ?? ''));
+            const headMount = item?.getChildByName('Head');
+            if (!headMount) throw new Error(`BigSettlement 玩家条目缺少 Head 挂点: ${index}`);
+            void this.renderPlayerHead(headMount, player, `玩家列表${index}`);
             this.text(`${root}/Statistics/WinCount/WinCountLabel`, String(info.winCount ?? 0));
             this.text(`${root}/Statistics/LoseCount/LoseCountLabel`, String(info.loseCount ?? 0));
             this.active(`${root}/TotalScore/TotalWinScoreLabel`, point > 0);
@@ -116,6 +125,38 @@ export class CommonPdkRecordController {
             this.text(`${root}/TotalScore/TotalWinScoreLabel`, point > 0 ? `+${point}` : '');
             this.text(`${root}/TotalScore/TotalLoseScoreLabel`, point <= 0 ? String(point) : '');
         }
+    }
+
+    /** 大结算与小结算共用 CommonHead/List，禁止再维护独立头像遮罩和地址加载链路。 */
+    private async renderPlayerHead(mount: Node, player: Record<string, unknown>, source: string): Promise<void> {
+        const revision = (this.headRevisions.get(mount) ?? 0) + 1;
+        this.headRevisions.set(mount, revision);
+        let head = mount.getChildByName('CommonHead');
+        if (!head?.isValid) {
+            const bundle = await this.assets.bundle(COMMON_ASSET_BUNDLE);
+            const prefab = await this.assets.load(COMMON_HEAD_ASSET, Prefab, bundle);
+            if (!mount.isValid || this.headRevisions.get(mount) !== revision) return;
+            head = instantiate(prefab);
+            for (const child of [...mount.children]) child.destroy();
+            mount.addChild(head);
+        }
+        const controller = head.getComponent(CommonHeadController);
+        if (!controller) throw new Error('CommonHead 缺少 CommonHeadController');
+        const listVariant = controller.useVariant('List');
+        const mountSize = mount.getComponent(UITransform)?.contentSize;
+        const variantSize = listVariant.getComponent(UITransform)?.contentSize;
+        const scale = mountSize && variantSize && variantSize.width > 0 && variantSize.height > 0
+            ? Math.min(mountSize.width / variantSize.width, mountSize.height / variantSize.height)
+            : 1;
+        head.setScale(new Vec3(scale, scale, 1));
+        head.setPosition(-listVariant.position.x * scale, -listVariant.position.y * scale, 0);
+        this.textAt(head, 'List/Lb_PlayerName', String(player.name ?? player.nickName ?? ''));
+        this.activeAt(head, 'List/Icon_Banker', Number(player.pid) === Number(this.runtime.getRoom().GetRoomProperty('ownerID')));
+        await controller.showPlayerAvatar(Number(player.pid ?? 0), String(player.headImageUrl ?? ''));
+        console.info('[PDK BigSettlement head]', {
+            roomId: Number(this.runtime.getRoomManager().GetEnterRoomID()),
+            playerId: Number(player.pid ?? 0), source,
+        });
     }
 
     private async continueRoom(): Promise<void> {
@@ -169,6 +210,14 @@ export class CommonPdkRecordController {
     }
     private active(path: string, value: boolean): void { const node = this.node(path); if (node) node.active = value; }
     private text(path: string, value: string): void { const label = this.node(path)?.getComponent(Label); if (label) label.string = value; }
+    private activeAt(root: Node, path: string, value: boolean): void {
+        const node = root.getChildByPath(path);
+        if (node) node.active = value;
+    }
+    private textAt(root: Node, path: string, value: string): void {
+        const label = root.getChildByPath(path)?.getComponent(Label);
+        if (label) label.string = value;
+    }
     private pathOf(node: Node): string {
         const names: string[] = [];
         let current: Node | null = node;

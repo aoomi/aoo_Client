@@ -15,7 +15,7 @@ export function positionPdkPlayCount(count: Node, cards: readonly Node[]): void 
             * (1 - (leftTransform?.anchorPoint.x ?? 0.5)) * Math.abs(left.scale.x);
         const rightEdge = right.position.x + (rightTransform?.contentSize.width ?? 0)
             * (1 - (rightTransform?.anchorPoint.x ?? 0.5)) * Math.abs(right.scale.x);
-        return rightEdge - leftEdge;
+        return leftEdge - rightEdge;
     }).at(-1);
     if (!lastCard) return;
     const cardTransform = lastCard.getComponent(UITransform);
@@ -86,7 +86,7 @@ export interface PdkRetainedPlayedCardFlow {
     moveAfterLiveHold(request: PdkRetainedPlayedCardMove): Promise<boolean>;
     /** A new local play ends any preceding live hold, without skipping its move animation. */
     flushPendingHolds(releaseNextHold?: boolean): void;
-    /** Prevent the next Out_Card hand from replacing nodes still travelling to the archive. */
+    /** Lifecycle drain used only at hard round/settlement boundaries, never as an input barrier. */
     waitForPendingTransfers(): Promise<void>;
     addStoppedPlayCount(hand: Node, countTemplate: Node | null, playIndex: number): void;
 }

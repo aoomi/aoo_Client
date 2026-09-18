@@ -43,28 +43,8 @@ export class Poker_Deck_Presenter extends Component {
     private context: PokerDeckSelectionContext | null = null;
     private dealStage: PokerDealStage = 'INITIAL';
     private generation = 0;
-    private controlsBound = false;
     private lastControlPointerAt = 0;
     private readonly selectedCards = new Set<number>();
-    private readonly onControlPointerEnd = (event: EventMouse | EventTouch): void => {
-        const location = event.getUILocation();
-        const stagedDeal = this.context?.dealFlow === 'DEAL_DURING_GAME';
-        const controls: ReadonlyArray<readonly [string, () => void, boolean]> = [
-            ['Confirm', () => this.submit(), !stagedDeal],
-            ['Close', () => this.node.emit('poker-card-selection-close'), true],
-            ['CurrentRound', () => { this.dealStage = 'CURRENT_ROUND'; this.submit(); }, stagedDeal],
-            ['NextRound', () => { this.dealStage = 'NEXT_ROUND'; this.submit(); }, stagedDeal],
-        ];
-        for (const [name, handler, enabled] of controls) {
-            if (!enabled) continue;
-            const node = this.findDescendant(name);
-            if (node?.activeInHierarchy && node.getComponent(Button)?.interactable
-                && node.getComponent(UITransform)?.hitTest(location)) {
-                this.activateControl(handler);
-                return;
-            }
-        }
-    };
 
     public present(gameCode: string, deckCards: readonly number[]): void {
         if (!gameCode.trim()) throw new Error('Poker deck gameCode is required');
@@ -89,7 +69,6 @@ export class Poker_Deck_Presenter extends Component {
         this.present(context.gameCode, context.deckCards);
         this.ensureModalMask();
         this.bindAuthoredControls();
-        this.bindControlFallback();
     }
 
     public presentFromRules(gameCode: string, ruleOptions: Readonly<Record<string, unknown>>): void {
@@ -115,6 +94,7 @@ export class Poker_Deck_Presenter extends Component {
         if (cardPresenter) cardPresenter.enabled = false;
         const transform = this.node.getComponent(UITransform) ?? this.node.addComponent(UITransform);
         transform.setContentSize(1280, 720);
+        if (!this.node.getComponent(BlockInputEvents)) this.node.addComponent(BlockInputEvents);
         let content = this.node.getChildByName('DeckContent');
         if (!content) {
             content = new Node('DeckContent');
@@ -142,6 +122,7 @@ export class Poker_Deck_Presenter extends Component {
         }
         mask.setPosition(0, 0, 0);
         mask.setSiblingIndex(0);
+        this.content?.setSiblingIndex(1);
         mask.active = true;
     }
 
@@ -251,14 +232,13 @@ export class Poker_Deck_Presenter extends Component {
         const button = node.getComponent(Button) ?? node.addComponent(Button);
         node.targetOff(this);
         node.on(Button.EventType.CLICK, () => this.activateControl(handler), this);
+        const pointerEnd = (event: EventMouse | EventTouch): void => {
+            event.propagationStopped = true;
+            this.activateControl(handler);
+        };
+        node.on(Node.EventType.TOUCH_END, pointerEnd, this);
+        node.on(Node.EventType.MOUSE_UP, pointerEnd, this);
         button.interactable = true;
-    }
-
-    private bindControlFallback(): void {
-        if (this.controlsBound) return;
-        this.controlsBound = true;
-        this.node.on(Node.EventType.TOUCH_END, this.onControlPointerEnd, this, true);
-        this.node.on(Node.EventType.MOUSE_UP, this.onControlPointerEnd, this, true);
     }
 
     private activateControl(handler: () => void): void {
@@ -266,13 +246,6 @@ export class Poker_Deck_Presenter extends Component {
         if (now - this.lastControlPointerAt < 180) return;
         this.lastControlPointerAt = now;
         handler();
-    }
-
-    protected onDestroy(): void {
-        if (!this.controlsBound) return;
-        this.node.off(Node.EventType.TOUCH_END, this.onControlPointerEnd, this, true);
-        this.node.off(Node.EventType.MOUSE_UP, this.onControlPointerEnd, this, true);
-        this.controlsBound = false;
     }
 
     private submit(): void {

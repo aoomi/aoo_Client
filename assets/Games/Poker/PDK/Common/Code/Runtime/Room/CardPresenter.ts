@@ -10,6 +10,7 @@ export class CardPresenter {
     private readonly cards = new Poker_Card_Factory();
     private readonly basePositions = new WeakMap<Node, Vec3>();
     private readonly selectedStates = new WeakMap<Node, boolean>();
+    private readonly motionResolvers = new WeakMap<Node, () => void>();
     private readonly presented = new Set<Node>();
 
     public async create(parent: Node, cardValue: number, selected = false, onClick?: () => void): Promise<Node> {
@@ -41,28 +42,36 @@ export class CardPresenter {
         const changed = this.selectedStates.get(card) !== selected;
         this.selectedStates.set(card, selected);
         // Authority refreshes selection on every committed packet. Reapplying an
-        // unchanged state must not stop the independent hand-compaction tween.
+        // unchanged state must not restart the composed card-position motion.
         if (!changed) return;
         const current = card.position;
         const base = this.basePositions.get(card) ?? new Vec3(current.x, current.y, current.z);
         this.basePositions.set(card, base);
         this.presented.add(card);
-        const target = new Vec3(current.x, base.y + (selected ? SELECTED_OFFSET_Y : 0), current.z);
-        Tween.stopAllByTarget(card);
-        tween(card).to(selected ? SELECT_RAISE_DURATION : DESELECT_DROP_DURATION, { position: target }, { easing: 'quadOut' })
-            .start();
+        void this.animateToPose(card, selected ? SELECT_RAISE_DURATION : DESELECT_DROP_DURATION);
+    }
+
+    /**
+     * Change the authored hand slot without creating a second position owner.
+     * Selection and hand compaction both affect the same Node.position, so they
+     * must be composed into one target instead of cancelling each other's tween.
+     */
+    public moveBase(card: Node, target: Vec3, duration: number): Promise<void> {
+        if (!card.isValid) return Promise.resolve();
+        this.basePositions.set(card, target.clone());
+        this.presented.add(card);
+        return this.animateToPose(card, duration);
     }
 
     /** Drop stale user selection synchronously at an authoritative turn boundary. */
     public clearSelectionImmediately(cards: readonly Node[]): void {
         for (const card of cards) {
             if (!card.isValid) continue;
-            // A locally accepted play has already detached the selected cards;
-            // every survivor may currently be running the independent hand-
-            // compaction tween. Stopping all survivors here freezes the exact
-            // gaps left by the played cards. Only stale raised cards need reset.
+            // A locally accepted play has already detached the selected cards.
+            // Only stale raised cards need reset; untouched survivors keep their
+            // composed motion toward the canonical hand slot.
             if (this.selectedStates.get(card) !== true) continue;
-            Tween.stopAllByTarget(card);
+            this.cancelMotion(card);
             card.getComponent(Poker_Card_Presenter)?.setPdkVisualState(false, false);
             this.selectedStates.set(card, false);
             const base = this.basePositions.get(card);
@@ -79,14 +88,19 @@ export class CardPresenter {
         return card.isValid && this.selectedStates.get(card) === true;
     }
 
-    /** Layout owns the initial x/y placement, so cache bases only after it has settled. */
+    /**
+     * Layout writes the canonical unselected slot. Cache that authored position as
+     * the base, then compose the current logical selection on top of it. Treating
+     * Layout's Y as an already-raised position makes a hint clicked during hand
+     * compaction visually drop again when the authority reconciliation finishes.
+     */
     public synchronizeLayout(cards: readonly Node[]): void {
         for (const card of cards) {
             if (!card.isValid) continue;
-            Tween.stopAllByTarget(card);
+            this.cancelMotion(card);
             const selected = this.selectedStates.get(card) === true;
             const current = card.position;
-            const base = new Vec3(current.x, current.y - (selected ? SELECTED_OFFSET_Y : 0), current.z);
+            const base = new Vec3(current.x, current.y, current.z);
             this.basePositions.set(card, base);
             card.setPosition(current.x, base.y + (selected ? SELECTED_OFFSET_Y : 0), current.z);
         }
@@ -103,7 +117,7 @@ export class CardPresenter {
     public stopAll(restoreBase: boolean): void {
         for (const card of [...this.presented]) {
             if (!card.isValid) { this.presented.delete(card); continue; }
-            Tween.stopAllByTarget(card);
+            this.cancelMotion(card);
             if (restoreBase) {
                 const base = this.basePositions.get(card);
                 if (base) card.setPosition(base);
@@ -115,7 +129,7 @@ export class CardPresenter {
         if (parent) {
             const children = [...parent.children];
             for (const card of children) {
-                Tween.stopAllByTarget(card);
+                this.cancelMotion(card);
                 this.presented.delete(card);
             }
             parent.removeAllChildren();
@@ -130,10 +144,39 @@ export class CardPresenter {
         const preserved = new Set(preservedNames);
         for (const card of [...parent.children]) {
             if (preserved.has(card.name)) continue;
-            Tween.stopAllByTarget(card);
+            this.cancelMotion(card);
             this.presented.delete(card);
             card.removeFromParent();
             if (card.isValid) card.destroy();
         }
+    }
+
+    private animateToPose(card: Node, duration: number): Promise<void> {
+        if (!card.isValid) return Promise.resolve();
+        const base = this.basePositions.get(card) ?? card.position.clone();
+        const selected = this.selectedStates.get(card) === true;
+        const target = new Vec3(base.x, base.y + (selected ? SELECTED_OFFSET_Y : 0), base.z);
+        this.cancelMotion(card);
+        if (Vec3.equals(card.position, target)) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+            let settled = false;
+            const settle = (): void => {
+                if (settled) return;
+                settled = true;
+                if (this.motionResolvers.get(card) === settle) this.motionResolvers.delete(card);
+                resolve();
+            };
+            this.motionResolvers.set(card, settle);
+            tween(card).to(duration, { position: target }, { easing: 'quadOut' })
+                .call(settle)
+                .start();
+        });
+    }
+
+    private cancelMotion(card: Node): void {
+        const settle = this.motionResolvers.get(card);
+        this.motionResolvers.delete(card);
+        Tween.stopAllByTarget(card);
+        settle?.();
     }
 }

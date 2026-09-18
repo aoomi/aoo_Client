@@ -56,8 +56,11 @@ test('PokerTest owns a backmost modal mask and resilient authored controls', () 
   assert.match(source, /new Node\('CardSelectionModalMask'\)/);
   assert.match(source, /mask\.addComponent\(BlockInputEvents\)/);
   assert.match(source, /mask\.setSiblingIndex\(0\)/);
-  assert.match(source, /node\.getComponent\(UITransform\)\?\.hitTest\(location\)/);
-  assert.match(source, /this\.node\.on\(Node\.EventType\.TOUCH_END, this\.onControlPointerEnd, this, true\)/);
+  assert.match(source, /this\.node\.getComponent\(BlockInputEvents\)/);
+  assert.match(source, /this\.content\?\.setSiblingIndex\(1\)/);
+  assert.match(source, /node\.on\(Node\.EventType\.TOUCH_END, pointerEnd, this\)/);
+  assert.match(source, /node\.on\(Node\.EventType\.MOUSE_UP, pointerEnd, this\)/);
+  assert.match(source, /event\.propagationStopped = true/);
   assert.match(source, /now - this\.lastControlPointerAt < 180/);
   assert.match(pdkCoordinator, /onCardSelectionClose[\s\S]*closeAfterPointer\(POKER_CARD_SELECTION_FORM\)/);
 });

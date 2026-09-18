@@ -141,6 +141,15 @@ export class SceneRouter {
             report('正在查询活动房间...', 0.58);
             activeRoom = await gateway.activeRoom();
             if (!current()) return this.discardLateNavigation(operationId, 'ACTIVE_ROOM');
+            this.logNavigation({
+                operationId,
+                stage: 'ACTIVE_ROOM_RESOLVED',
+                accountId: account.accountId,
+                playerId: role.playerId,
+                roomId: Number(activeRoom?.roomId ?? 0),
+                stateVersion: 0,
+                hasActiveRoom: Boolean(activeRoom),
+            });
         } catch (error: unknown) {
             if (!current()) return this.discardLateNavigation(operationId, 'AUTH_FAILURE');
             // A ticket refusal is an expected authentication-state boundary,
@@ -217,47 +226,27 @@ export class SceneRouter {
             await this.releaseStartupTransition();
         } catch (error: unknown) {
             if (!current()) return this.discardLateNavigation(operationId, 'ROOM_RECOVERY_FAILURE');
-            // An active Hall membership and an interactive lobby are mutually
-            // exclusive states. If the authoritative room cannot be restored,
-            // complete the ordinary Hall/Authority leave transaction before the
-            // lobby is exposed. The previous fallback only cleared local cache,
-            // leaving the account JOINED and causing every later room entry to be
-            // rejected as HALL_ALREADY_IN_ANOTHER_ROOM.
-            let cleanupError: unknown = null;
-            try {
-                await gateway.leave(Number(activeRoom.roomId));
-                console.info('[RoomMembershipBoundary] recovery-failed-room-left', {
-                    roomId: activeRoom.roomId,
-                    playerId: role.playerId,
-                    operationId,
-                });
-            } catch (leaveFailure: unknown) {
-                cleanupError = leaveFailure;
-                console.error('[RoomMembershipBoundary] recovery-failed-leave-failed', {
-                    roomId: activeRoom.roomId,
-                    playerId: role.playerId,
-                    operationId,
-                    recoveryError: error instanceof Error ? error.message : String(error),
-                    leaveError: leaveFailure instanceof Error ? leaveFailure.message : String(leaveFailure),
-                });
-            }
-            if (cleanupError) throw cleanupError;
-            this.roomRecovery.clear(String(account.accountId));
+            // Hall membership is authoritative. A bundle, WebSocket or snapshot
+            // recovery failure is not an explicit leave command and must never
+            // evict the player or expose an interactive lobby behind that active
+            // membership. Preserve both the Hall row and local navigation intent;
+            // the bootstrap error surface owns retrying the same room.
             this.gameLauncher?.destroy();
             this.gameLauncher = null;
-            this.pendingLobbyStartup = {
-                skipRoomRecovery: true,
-                startupMessage: error instanceof Error ? error.message : '房间恢复失败，已返回大厅',
-            };
             this.network.reset();
-            console.error('[StartupRoomRecovery] active-room recovery failed', this.roomRecoveryDiagnostic(error));
-            if (presentation === 'MOUNT_CURRENT') {
-                await this.enterLobby(account, parent);
-                await this.waitForTargetPresentation();
-                await this.releaseStartupTransition();
-                return 'LOBBY_MOUNTED';
-            }
-            this.showLobby();
+            const diagnostic = {
+                roomId: activeRoom.roomId,
+                playerId: role.playerId,
+                accountId: account.accountId,
+                operationId,
+                stateVersion: 0,
+                stage: 'ROOM_RECOVERY_FAILURE',
+                membershipAction: 'PRESERVED',
+                ...this.roomRecoveryDiagnostic(error),
+            };
+            this.logNavigation(diagnostic);
+            console.error('[StartupRoomRecovery] active-room recovery blocked; membership preserved', diagnostic);
+            throw error;
         }
         if (presentation === 'MOUNT_CURRENT' && this.startupTransition?.isCurrent()) {
             await this.waitForTargetPresentation();

@@ -53,6 +53,7 @@ test('poker runtime consumes canonical dispatch payloads and reconnects authorit
     assert.match(adapter, /setCount: roundLimit/);
     assert.match(adapter, /posList/);
     assert.match(adapter, /stateVersion/);
+    assert.match(adapter, /shuffleSequence/);
     assert.match(adapter, /legacyPatternOptions\(ruleOptions\)/);
     assert.match(adapter, /CommonPdk 权威牌型配置不完整/);
 });
@@ -124,7 +125,10 @@ test('final settlement reads the authoritative cumulative room record', () => {
     assert.match(adapter, /winCount: integer\(seat\.winCount\)/);
     assert.match(adapter, /loseCount: integer\(seat\.loseCount\)/);
     assert.match(adapter, /point: typeof seat\.totalScore/);
-    assert.match(recordController, /BestWinnerNameLabel/);
+    assert.match(recordController, /COMMON_HEAD_ASSET/);
+    assert.match(recordController, /controller\.useVariant\('List'\)/);
+    assert.match(recordController, /controller\.showPlayerAvatar/);
+    assert.doesNotMatch(recordController, /AvatarImage|BestWinnerNameLabel|PlayerNameLabel/);
     assert.match(recordController, /BestWinnerScoreLabel/);
 });
 

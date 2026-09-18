@@ -83,9 +83,16 @@ test('dissolve return retains the live room frame before teardown and has no one
 test('user exit uses the single Hall lifecycle and cannot be blocked by a closing game socket', () => {
   const leave = coordinator.slice(coordinator.indexOf('private async performLeave'), coordinator.indexOf('public destroy'));
   assert.match(leave, /if \(!authorityAlreadyExited\) await this\.leaveRoom\(roomId\)/);
-  assert.match(leave, /reason === 'room-not-found'/);
-  assert.match(leave, /reason === 'reconnect-room-failed'/);
+  assert.doesNotMatch(leave, /authorityAlreadyExited[\s\S]{0,300}reason === 'room-not-found'/);
+  assert.doesNotMatch(leave, /authorityAlreadyExited[\s\S]{0,300}reason === 'reconnect-room-failed'/);
   assert.doesNotMatch(leave, /CNJPDKExitRoom|runtime\.action\('leave-room'/);
+});
+
+test('transient snapshot recovery retries in-room and only terminal authority state exits', () => {
+  assert.match(runtime, /\[CommonPdkReconnect\] transient-restore-failed/);
+  assert.match(runtime, /roomRestoreRetryTimer = globalThis\.setTimeout/);
+  assert.match(runtime, /if \(terminalRoom\)[\s\S]*onExit\?\.\('room-not-found'\)/);
+  assert.doesNotMatch(runtime, /onExit\?\.\('reconnect-room-failed'\)/);
 });
 
 test('refuse and timeout close dissolve without navigation', () => {

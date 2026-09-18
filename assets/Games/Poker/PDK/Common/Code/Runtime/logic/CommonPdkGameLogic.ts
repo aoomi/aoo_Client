@@ -55,9 +55,10 @@ export class CommonPdkGameLogic {
         return value;
     }
 
-    private GetTripleAttachmentMode(): 'DISABLED' | 'SINGLES' | 'PAIRS' | 'EITHER' {
+    private GetTripleAttachmentMode(): 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER' {
         const value = String(this.GetAuthoritativeRuleOptions().tripleAttachmentMode ?? '');
-        if (value !== 'DISABLED' && value !== 'SINGLES' && value !== 'PAIRS' && value !== 'EITHER') {
+        if (value !== 'DISABLED' && value !== 'SINGLES' && value !== 'PAIRS'
+            && value !== 'SINGLE_OR_PAIR' && value !== 'EITHER') {
             throw new Error('CommonPdk 权威 tripleAttachmentMode 无效');
         }
         return value;
@@ -65,12 +66,16 @@ export class CommonPdkGameLogic {
 
     private AllowsTripleSingles(): boolean {
         const mode = this.GetTripleAttachmentMode();
-        return mode === 'SINGLES' || mode === 'EITHER';
+        return mode === 'SINGLES' || mode === 'SINGLE_OR_PAIR' || mode === 'EITHER';
     }
 
     private AllowsTriplePairs(): boolean {
         const mode = this.GetTripleAttachmentMode();
-        return mode === 'PAIRS' || mode === 'EITHER';
+        return mode === 'PAIRS' || mode === 'SINGLE_OR_PAIR' || mode === 'EITHER';
+    }
+
+    private AllowsTripleTwoSingles(): boolean {
+        return this.GetTripleAttachmentMode() === 'EITHER';
     }
 
     private ComparesTripleAttachments(): boolean {
@@ -508,7 +513,7 @@ export class CommonPdkGameLogic {
         }
         else if(tag == 7){
             //没有三带二的玩法 不检测
-            if(!this.AllowsTripleSingles())
+            if(!this.AllowsTripleTwoSingles())
             {
                 return false;
             }

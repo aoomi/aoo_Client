@@ -5,12 +5,14 @@ import test from 'node:test';
 const base = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/', import.meta.url);
 const arrow = readFileSync(new URL('Room/PdkCurrentPlayArrowPresenter.ts', base), 'utf8');
 const play = readFileSync(new URL('CommonPdkPlayController.ts', base), 'utf8');
+const runtime = readFileSync(new URL('CommonPdkRuntime.ts', base), 'utf8');
+const capabilities = readFileSync(new URL('../Regional/PdkGameplayCapabilities.ts', base), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL('../../Prefab/PDK_CommonRoom.prefab', base), 'utf8'));
 
 test('current-play Arrow reuses XQP jiantou spine and follows live then retained hand', () => {
   assert.match(arrow, /Spine\/jiantou\/skeleton/);
   assert.match(arrow, /setAnimation\(0, 'animation', true\)/);
-  assert.match(arrow, /this\.root\.getChildByName\('Arrow'\)/);
+  assert.match(arrow, /this\.root\.getChildByName\('RoomCommon'\)\?\.getChildByName\('Arrow'\)/);
   assert.match(arrow, /this\.authoredOffset = mount\.position\.clone\(\)/);
   assert.match(arrow, /!child\.name\.startsWith\('PlayCount'\)/);
   assert.match(arrow, /child\.getComponent\(UITransform\)\?\.getBoundingBoxToWorld\(\)/);
@@ -19,12 +21,12 @@ test('current-play Arrow reuses XQP jiantou spine and follows live then retained
   assert.match(arrow, /\(left \+ right\) \/ 2/);
   assert.match(arrow, /cardTopCenter\.y \+ arrowHalfHeight \+ offset\.y/);
   assert.doesNotMatch(arrow, /new Node\('Arrow'\)/);
-  const root = prefab.find((entry) => entry?.__type__ === 'cc.Node' && entry._name === 'PDK_CommonRoom');
-  assert.ok(root, 'PDK_CommonRoom root must exist');
-  const fixedArrow = root._children
+  const roomCommon = prefab.find((entry) => entry?.__type__ === 'cc.Node' && entry._name === 'RoomCommon');
+  assert.ok(roomCommon, 'RoomCommon must exist');
+  const fixedArrow = roomCommon._children
     .map((entry) => prefab[entry.__id__])
     .find((entry) => entry?._name === 'Arrow');
-  assert.ok(fixedArrow, 'Arrow must be an authored root child');
+  assert.ok(fixedArrow, 'Arrow must be an authored RoomCommon child');
   assert.equal(fixedArrow._active, false);
   assert.deepEqual([fixedArrow._lscale.x, fixedArrow._lscale.y], [0.8, 0.8]);
   assert.match(play, /showCurrentPlayArrow\(parent, packet, true\)/);
@@ -35,4 +37,9 @@ test('current-play Arrow reuses XQP jiantou spine and follows live then retained
   assert.match(play, /\[\.\.\.operations\]\.reverse\(\)/);
   assert.match(play, /operation && String\(operation\.action\)\.toLowerCase\(\) === 'play'/);
   assert.match(play, /currentPlayArrow\?\.hide\(\)/);
+  assert.match(play, /this\.runtime\.currentPlayArrowEnabled\(\)[\s\S]*new PdkCurrentPlayArrowPresenter/);
+  assert.match(play, /if \(!this\.currentPlayArrow\) return/);
+  assert.match(runtime, /currentPlayArrowEnabled\(\): boolean/);
+  assert.match(capabilities, /DEFAULT_PDK_GAMEPLAY_CAPABILITIES[\s\S]*currentPlayArrow: 'disabled'/);
+  assert.match(capabilities, /PDK_BUSINESS_CODES\.LIANGSHAN[\s\S]*currentPlayArrow: 'enabled'/);
 });

@@ -305,8 +305,8 @@ test('production bootstrap reaches login and lobby scenes, and logout returns to
     assert.match(router, /activeRoom = await gateway\.activeRoom\(\);/);
   assert.match(router, /if \(!activeRoom\) \{[\s\S]*this\.showLobby\(\)/);
   assert.match(router, /await this\.recoverRoomHandoff\(account, role, activeRoom, gateway, parent, report\)/);
-  assert.match(router, /active-room recovery failed/);
-  assert.match(router, /this\.roomRecovery\.clear\(String\(account\.accountId\)\)/);
+  assert.match(router, /active-room recovery blocked; membership preserved/);
+  assert.match(router, /membershipAction: 'PRESERVED'/);
     assert.doesNotMatch(router, /recoverRoomTarget\(|recoverMainSceneTarget\(/);
     const gateway = fs.readFileSync(path.join(clientRoot, 'assets/Lobby/Code/HallRoomGateway.ts'), 'utf8');
     assert.match(gateway, /import \{[\s\S]*ProductionApiError[\s\S]*\} from/);

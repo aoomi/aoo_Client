@@ -5,6 +5,7 @@ export interface CommonPdkAuthoritativeRoomView extends Record<string, unknown> 
     playerCount: number;
     roundNo: number;
     roundLimit: number;
+    shuffleSequence: number;
     playVersion: string;
     stateVersion: number;
     phase: string;
@@ -143,6 +144,8 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
 
     const roundNo = integer(source.roundNo) && source.roundNo >= 0 ? source.roundNo : 0;
     const roundLimit = positiveInteger(source.roundLimit) ? source.roundLimit : 1;
+    const shuffleSequence = integer(source.shuffleSequence) && source.shuffleSequence >= 0
+        ? source.shuffleSequence : -1;
     const currentSeat = integer(source.currentSeat) ? source.currentSeat : -1;
     const seats = record(source.seats);
     const ruleOptions = record(source.ruleOptions);
@@ -262,12 +265,17 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     const tableLastOperation = record(tableSnapshot.lastOperation);
     const authorityOperationId = String(source.operationId || operationDeadline.operationId || tableLastOperation.operationId || '');
     const set = {
+        // Public-card reconciliation is asynchronous (Liangshan keeps every live
+        // play for two seconds). Preserve the version on the projected RoomSet so
+        // a completed older task cannot clean up nodes created by a newer push.
+        stateVersion,
         state,
         authorityPhase: phase,
         cardsDealt: typeof source.cardsDealt === 'boolean'
             ? source.cardsDealt : phase !== 'WAITING' && phase !== 'COMPETE_DEALER',
         setID: roundNo,
         roundNo,
+        shuffleSequence,
         opPos: currentSeat,
         isFirstOp,
         mustBeatWhenPossible: ruleOptions.mustBeatWhenPossible,
@@ -343,6 +351,7 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
             canContinue,
             roundNo,
             roundLimit,
+            shuffleSequence,
             roomId,
             stateVersion,
             operationId: authorityOperationId,
@@ -384,6 +393,7 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
             playerCount,
             roundNo,
             roundLimit,
+            shuffleSequence,
             playVersion,
             stateVersion,
             phase,

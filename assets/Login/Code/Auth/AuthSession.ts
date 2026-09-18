@@ -74,14 +74,28 @@ export class AuthSession {
         this.restoreFailureMessage = '';
     }
 
-    /** Prevents restoration while the replacement notice is awaiting confirmation. */
+    /**
+     * Invalidates the displaced browser as soon as the server reports a
+     * replacement. Waiting for the notice button is only a UI concern: the
+     * refresh credential must already be gone, otherwise reloading this page
+     * can sign in again and displace the newer device in turn.
+     */
     public suspendReplacedSession(): void {
         this.assertStarted();
+        const replacedAccount = this.currentAccount;
+        replacedAccount?.cancelWsTicketRequest?.();
+        if (replacedAccount) replacedAccount.onSessionRotated = undefined;
         this.sessionEpoch += 1;
         this.pending = false;
         this.currentAccount = null;
         this.restorePending = null;
         this.autoRestoreBlocked = true;
+        this.restoreFailureMessage = '';
+        this.sessionStore.clear();
+        this.lastAccountStore.clear();
+        console.info('[SessionReplacementBoundary] local-credentials-cleared', {
+            accountId: replacedAccount?.accountId ?? '',
+        });
     }
 
     /** Clears only this client's credentials; no logout request is sent to the server. */

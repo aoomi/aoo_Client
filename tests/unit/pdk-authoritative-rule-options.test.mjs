@@ -37,7 +37,7 @@ function createLogic(ruleOptions) {
 const regionalRules = {
   CD201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
   NJ201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
-  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'SINGLE_OR_PAIR', fourAttachmentMode: 'DISABLED' },
 };
 
 test('three regional clients derive straight length from the authoritative snapshot', () => {
@@ -48,7 +48,7 @@ test('three regional clients derive straight length from the authoritative snaps
   }
 });
 
-test('Liangshan XQP rule accepts triple with one card, one pair, or two loose cards', () => {
+test('Liangshan XQP rule accepts triple with one card or one pair but rejects two loose cards', () => {
   const logic = createLogic(regionalRules.LS201);
   logic.ChangeSelectCard([103, 203, 303, 104]);
   assert.equal(logic.GetCardType(), 6);
@@ -57,7 +57,19 @@ test('Liangshan XQP rule accepts triple with one card, one pair, or two loose ca
   assert.equal(logic.GetCardType(), 15);
 
   logic.ChangeSelectCard([103, 203, 303, 104, 205]);
-  assert.equal(logic.GetCardType(), 7);
+  assert.equal(logic.GetCardType(), 0);
+});
+
+test('single-or-pair is a complete authoritative attachment mode, not a client fallback', () => {
+  const { source } = loadLogic();
+  assert.match(source, /value !== 'SINGLE_OR_PAIR'/);
+  assert.match(source, /mode === 'SINGLE_OR_PAIR'/);
+  assert.match(source, /AllowsTripleTwoSingles/);
+
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  assert.match(controller, /'SINGLE_OR_PAIR', 'EITHER'/);
+  assert.match(controller, /twoSingles: mode === 'EITHER'/);
 });
 
 test('Liangshan first-lead hand can hint AAA plus the required seven', () => {
@@ -82,15 +94,15 @@ test('Liangshan JJJJKK can answer a lower triple-with-pair as either JJJKK or JJ
 
 test('a lower triple body can never answer a higher triple body', () => {
   const logic = createLogic({ ...regionalRules.LS201, compareTripleAttachments: false });
-  logic.OutPokerCard([105, 205, 305, 109, 209, 309, 113, 110]);
-  logic.SetCardData(7, [108, 208, 308, 106, 105]);
+  logic.OutPokerCard([105, 205, 305, 109, 209, 309, 113, 213]);
+  logic.SetCardData(15, [108, 208, 308, 106, 206]);
 
-  logic.ChangeSelectCard([105, 205, 305, 113, 110]);
+  logic.ChangeSelectCard([105, 205, 305, 113, 213]);
   assert.equal(logic.GetCardType(), 0);
   assert.equal(logic.CheckCanOut(), false);
 
-  logic.ChangeSelectCard([109, 209, 309, 113, 110]);
-  assert.equal(logic.GetCardType(), 7);
+  logic.ChangeSelectCard([109, 209, 309, 113, 213]);
+  assert.equal(logic.GetCardType(), 15);
   assert.equal(logic.CheckCanOut(), true);
 });
 
@@ -217,8 +229,9 @@ test('missing or malformed authoritative rules fail closed', () => {
 test('only LS201 opts into the complete arrangement-area capability', () => {
   const capabilities = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Regional/PdkGameplayCapabilities.ts'), 'utf8');
-  const enabledMappings = [...capabilities.matchAll(/\[[^\]]+\]:\s*Object\.freeze\(\{\s*arrangementMode:\s*'enabled'\s*\}\)/g)];
+  const enabledMappings = [...capabilities.matchAll(/\[[^\]]+\]:\s*Object\.freeze\(\{[\s\S]*?arrangementMode:\s*'enabled',[\s\S]*?currentPlayArrow:\s*'enabled',[\s\S]*?\}\)/g)];
   assert.equal(enabledMappings.length, 1);
   assert.match(enabledMappings[0][0], /PDK_BUSINESS_CODES\.LIANGSHAN/);
   assert.match(capabilities, /DEFAULT_PDK_GAMEPLAY_CAPABILITIES[\s\S]*arrangementMode:\s*'disabled'/);
+  assert.match(capabilities, /DEFAULT_PDK_GAMEPLAY_CAPABILITIES[\s\S]*currentPlayArrow:\s*'disabled'/);
 });

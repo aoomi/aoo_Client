@@ -104,7 +104,7 @@ test('authority adapter requires one atomic table snapshot without legacy recons
   assert.match(adapter, /const publicCards = cardValues\(effectiveTrick\.cards\)/);
   assert.match(adapter, /effectiveTrick\.cardType/);
   assert.match(adapter, /playedCardList,/);
-  assert.match(play, /presentLatestAuthorityAction\(setInfo\)[\s\S]*\.then\(\(\) => this\.restoreTableCards\(setInfo\)\)/);
+  assert.match(play, /presentLatestAuthorityAction\(setInfo, snapshotPresentationGeneration\)[\s\S]*\.then\(\(\) => this\.restoreTableCards\(setInfo, snapshotPresentationGeneration\)\)/);
 });
 
 test('a committed trick reset clears lead state without reopening a duplicate authority hint', () => {

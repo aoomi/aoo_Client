@@ -24,8 +24,8 @@ export class PdkCurrentPlayArrowPresenter {
         // Keep the marker centred above the complete latest played hand. The
         // authored Arrow position remains an optional fine-tuning offset, while
         // the baseline gap between the card top and arrow bottom is exactly 0 UI px.
-        const rootTransform = this.root.getComponent(UITransform);
-        if (!rootTransform) throw new Error('PDK_CommonRoom 根节点缺少 UITransform');
+        const mountTransform = mount.parent?.getComponent(UITransform);
+        if (!mountTransform) throw new Error('RoomCommon 节点缺少 UITransform');
         const targetTransform = target.getComponent(UITransform);
         const arrowTransform = mount.getComponent(UITransform);
         if (!targetTransform || !arrowTransform) throw new Error('当前出牌箭头定位节点缺少 UITransform');
@@ -41,7 +41,7 @@ export class PdkCurrentPlayArrowPresenter {
         const top = cardBounds.length > 0
             ? Math.max(...cardBounds.map((bounds) => bounds.y + bounds.height))
             : fallback.y + fallback.height;
-        const cardTopCenter = rootTransform.convertToNodeSpaceAR(new Vec3(
+        const cardTopCenter = mountTransform.convertToNodeSpaceAR(new Vec3(
             (left + right) / 2,
             top,
             target.worldPosition.z,
@@ -72,8 +72,8 @@ export class PdkCurrentPlayArrowPresenter {
 
     private ensureMount(): Node {
         if (this.mount?.isValid) return this.mount;
-        const mount = this.root.getChildByName('Arrow');
-        if (!mount) throw new Error('PDK_CommonRoom 预制体缺少 Arrow 节点');
+        const mount = this.root.getChildByName('RoomCommon')?.getChildByName('Arrow');
+        if (!mount) throw new Error('PDK_CommonRoom 预制体缺少 RoomCommon/Arrow 节点');
         this.authoredOffset = mount.position.clone();
         this.mount = mount;
         return mount;

@@ -18,9 +18,17 @@ test('lobby startup reconciles authoritative membership without local recovery c
     assert.match(source, /entryOrigin: intent\?\.entryOrigin \?\? 'GAME_LOBBY'/);
 });
 
-test('failed active-room recovery leaves authority before exposing the lobby', () => {
-    assert.match(router, /ROOM_RECOVERY_FAILURE[\s\S]*await gateway\.leave\(Number\(activeRoom\.roomId\)\)/);
-    assert.match(router, /if \(cleanupError\) throw cleanupError/);
+test('failed active-room recovery preserves authority and blocks lobby fallback', () => {
+    assert.match(router, /ROOM_RECOVERY_FAILURE[\s\S]*membershipAction: 'PRESERVED'[\s\S]*throw error/);
+    assert.doesNotMatch(router, /await gateway\.leave/);
+});
+
+test('lobby-side recovery keeps intent and reports the authoritative identity context', () => {
+    assert.match(source, /\[RoomMembershipBoundary\] lobby-room-recovery-blocked/);
+    assert.match(source, /playerId: this\.role\.playerId[\s\S]*membershipAction: 'PRESERVED'/);
+    const start = source.indexOf("'[RoomMembershipBoundary] lobby-room-recovery-blocked'");
+    const failureBranch = source.slice(start, source.indexOf('private rememberRoomRecoveryIntent', start));
+    assert.doesNotMatch(failureBranch, /clearRoomRecoveryIntent\(\)/);
 });
 
 test('an in-progress club room is never downgraded to a lobby waiting desk', () => {

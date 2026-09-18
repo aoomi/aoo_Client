@@ -209,7 +209,11 @@ export class CommonPdkSwitchCoordinator {
             console.error('[CommonPdkSwitchCoordinator] MsgDrift 预加载失败', error);
         });
         this.forms.register(COMMON_ROOM_FORM, {
-            zOrder: 21,
+            // General room controls (back, more, etc.) must remain above the
+            // gameplay form. CommonPdkPlayController moves only chat and voice
+            // into the gameplay root below Players, so cards can cover those
+            // two controls without hiding the rest of CommonRoom.
+            zOrder: 22,
             modal: false,
             presentationOwnedExternally: true,
             lifecycle: {
@@ -249,7 +253,7 @@ export class CommonPdkSwitchCoordinator {
             },
         });
         this.forms.register(PDK_ROOM_FORM, {
-            zOrder: 20,
+            zOrder: 21,
             // PDK_CommonRoom 是桌面根容器，不是弹窗；若沿用 zOrder>0 的默认模态，
             // LegacyModalInputMask 会覆盖出牌/不要等真实按钮，导致用户点击无响应。
             modal: false,
@@ -941,17 +945,15 @@ export class CommonPdkSwitchCoordinator {
         const source = this.sourceTicket;
         const roomId = Number(source?.roomId ?? source?.roomID ?? 0);
         const authorityAlreadyExited = reason === 'authority-left' || reason === 'pdk-room-dissolved'
-            || reason === 'waiting-room-expired' || reason === 'room-not-found'
-            || reason === 'reconnect-room-failed';
+            || reason === 'waiting-room-expired';
         console.info('[AooRoomExit] begin', { reason, roomId, authorityAlreadyExited });
         if (Number.isSafeInteger(roomId) && roomId > 0) {
             try {
                 // Hall owns the canonical room lifecycle and verifies the active-room state
                 // after the mutation. When Authority has already reported that the room is
-                // gone (including a terminal reconnect failure), another Hall leave can only
-                // race the removed route and surface HALL_INTERNAL_ERROR. Skip that redundant
-                // mutation so the terminal signal can never block navigation away from the
-                // retired room screen.
+                // gone, another Hall leave can only race the removed route. A state lookup that
+                // reports room-not-found is different: Hall may still contain the membership,
+                // so its idempotent leave boundary must reconcile that stale row before lobby.
                 if (!authorityAlreadyExited) await this.leaveRoom(roomId);
                 this.onExplicitLeave();
             } catch (error: unknown) {

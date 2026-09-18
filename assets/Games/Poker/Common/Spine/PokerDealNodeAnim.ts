@@ -1,4 +1,4 @@
-import { Node, Tween, tween } from 'cc';
+import { Node, Tween, tween, UIOpacity, Vec3 } from 'cc';
 
 export interface PokerDealNodeAnimOptions {
     /** 每批同时发出的牌数。 */
@@ -9,6 +9,12 @@ export interface PokerDealNodeAnimOptions {
     moveDuration: number;
     /** 牌从牌堆出现时的缩放。 */
     startScale: number;
+    /** 是否从牌堆位置飞向目标；关闭时在最终牌位依次展开。 */
+    travelFromOrigin: boolean;
+    /** 原位发牌时的初始透明度，避免整张牌突然闪现。 */
+    startOpacity: number;
+    /** 原位发牌时相对最终牌位向下偏移的像素。 */
+    revealOffsetY: number;
     /** 每批开始时触发，可用于播放一次发牌音效。 */
     onBatchStart?: () => void;
 }
@@ -18,6 +24,9 @@ const DEFAULT_OPTIONS: Readonly<PokerDealNodeAnimOptions> = {
     batchInterval: 0.08,
     moveDuration: 0.18,
     startScale: 0.6,
+    travelFromOrigin: true,
+    startOpacity: 96,
+    revealOffsetY: 6,
 };
 
 /**
@@ -43,10 +52,25 @@ export class PokerDealNodeAnim {
                 card,
                 targetPosition: card.worldPosition.clone(),
                 targetScale: card.scale.clone(),
+                opacity: card.getComponent(UIOpacity) ?? card.addComponent(UIOpacity),
+                targetOpacity: card.getComponent(UIOpacity)?.opacity ?? 255,
             };
             Tween.stopAllByTarget(card);
-            card.setWorldPosition(origin.worldPosition);
-            card.setScale(config.startScale, config.startScale, config.startScale);
+            Tween.stopAllByTarget(plan.opacity);
+            if (config.travelFromOrigin) {
+                card.setWorldPosition(origin.worldPosition);
+                card.setScale(config.startScale, config.startScale, config.startScale);
+            } else {
+                card.setWorldPosition(new Vec3(
+                    plan.targetPosition.x,
+                    plan.targetPosition.y - config.revealOffsetY,
+                    plan.targetPosition.z,
+                ));
+                card.setScale(plan.targetScale);
+                // Pending cards must remain fully hidden. Applying startOpacity
+                // here would expose the whole hand before its individual turn.
+                plan.opacity.opacity = 0;
+            }
             return [plan];
         });
         const batches: Promise<void>[] = [];
@@ -59,7 +83,7 @@ export class PokerDealNodeAnim {
     }
 
     private static async playBatch(
-        cards: ReadonlyArray<{ card: Node; targetPosition: Node['worldPosition']; targetScale: Node['scale'] }>,
+        cards: ReadonlyArray<DealCardPlan>,
         delay: number,
         options: Readonly<PokerDealNodeAnimOptions>,
     ): Promise<void> {
@@ -69,13 +93,17 @@ export class PokerDealNodeAnim {
     }
 
     private static moveCard(
-        plan: { card: Node; targetPosition: Node['worldPosition']; targetScale: Node['scale'] },
+        plan: DealCardPlan,
         options: Readonly<PokerDealNodeAnimOptions>,
     ): Promise<void> {
-        const { card, targetPosition, targetScale } = plan;
+        const { card, targetPosition, targetScale, opacity, targetOpacity } = plan;
         if (!card.isValid) return Promise.resolve();
 
         return new Promise((resolve) => {
+            if (!options.travelFromOrigin) opacity.opacity = options.startOpacity;
+            tween(opacity)
+                .to(options.moveDuration, { opacity: targetOpacity })
+                .start();
             tween(card)
                 .to(options.moveDuration, {
                     worldPosition: targetPosition,
@@ -97,10 +125,14 @@ export class PokerDealNodeAnim {
             ['batchInterval', config.batchInterval],
             ['moveDuration', config.moveDuration],
             ['startScale', config.startScale],
+            ['revealOffsetY', config.revealOffsetY],
         ] as const) {
             if (!Number.isFinite(value) || value < 0) {
                 throw new Error(`PokerDealNodeAnim ${name} must be a non-negative number`);
             }
+        }
+        if (!Number.isFinite(config.startOpacity) || config.startOpacity < 0 || config.startOpacity > 255) {
+            throw new Error('PokerDealNodeAnim startOpacity must be between 0 and 255');
         }
         return config;
     }
@@ -109,4 +141,12 @@ export class PokerDealNodeAnim {
         if (seconds === 0) return Promise.resolve();
         return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
     }
+}
+
+interface DealCardPlan {
+    card: Node;
+    targetPosition: Vec3;
+    targetScale: Vec3;
+    opacity: UIOpacity;
+    targetOpacity: number;
 }

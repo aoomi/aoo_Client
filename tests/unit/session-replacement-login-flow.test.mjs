@@ -160,6 +160,52 @@ test('replacement notice is topmost, exact, one-shot, and clears only local cred
   assert.doesNotMatch(localClear, /gateway\.logout/);
 });
 
+test('a displaced page clears restorable credentials before the player confirms the notice', () => {
+  const auth = read('assets/Login/Code/Auth/AuthSession.ts');
+  const immediateInvalidation = auth.slice(
+    auth.indexOf('public suspendReplacedSession'),
+    auth.indexOf('/**', auth.indexOf('public suspendReplacedSession')),
+  );
+  assert.match(immediateInvalidation, /onSessionRotated = undefined/);
+  assert.match(immediateInvalidation, /this\.sessionStore\.clear\(\)/);
+  assert.match(immediateInvalidation, /this\.lastAccountStore\.clear\(\)/);
+  assert.match(immediateInvalidation, /\[SessionReplacementBoundary\] local-credentials-cleared/);
+  assert.doesNotMatch(immediateInvalidation, /gateway\.logout/);
+});
+
+test('replacement invalidation removes the refresh cache and blocks restoration immediately', async () => {
+  class AppError extends Error { constructor(code, message) { super(message); this.code = code; } }
+  const { AuthSession } = compile('assets/Login/Code/Auth/AuthSession.ts', {
+    '../../../Common/Code/Runtime/core/AppError': { AppError },
+    './LastAccountStore': { LastAccountStore: class {} },
+    './GuestSessionStore': { GuestSessionStore: class {} },
+  });
+  let cached = null;
+  let lastAccount = '';
+  const sessionStore = {
+    load: () => cached,
+    save: (value) => { cached = value; },
+    clear: () => { cached = null; },
+  };
+  const lastAccountStore = {
+    load: () => lastAccount,
+    save: (value) => { lastAccount = value; },
+    clear: () => { lastAccount = ''; },
+  };
+  const auth = new AuthSession({}, lastAccountStore, sessionStore);
+  auth.start();
+  const account = {
+    accountId: '381', account: 'player381', accountToken: 'refresh-old', token: 'refresh-old',
+  };
+  auth.acceptExternalSession(account);
+  assert.equal(cached.refreshToken ?? cached.token, 'refresh-old');
+  auth.suspendReplacedSession();
+  assert.equal(cached, null);
+  assert.equal(lastAccount, '');
+  assert.equal(account.onSessionRotated, undefined);
+  assert.equal(await auth.restoreSession(), null);
+});
+
 test('LoginScene owns the replacement Message node and never uses a drift placeholder', () => {
   const scene = JSON.parse(read('assets/Login/Scenes/LoginScene.scene'));
   const loginIndex = scene.findIndex((entry) => entry?.__type__ === 'cc.Node' && entry?._name === 'Login');

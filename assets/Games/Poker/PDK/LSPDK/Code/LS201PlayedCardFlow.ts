@@ -14,8 +14,9 @@ const MOVE_TO_ARRANGEMENT_SECONDS = 0.45;
 
 /**
  * 凉山摆牌流程：公共层先把牌从手牌区移动到 Out_Card；本流程只接管后半段，
- * 让同一批实体牌在出牌区停满两秒，再连续移动到 Table_Cards。实时流程禁止
- * 销毁后重建牌节点，断线恢复仍由权威历史重建。
+ * 让同一批实体牌保持出牌区世界坐标两秒，再连续移动到 Table_Cards。每手牌
+ * 立即取得独立父节点，后续出牌无需等待；实时流程禁止销毁后重建牌节点，
+ * 断线恢复仍由权威历史重建。
  */
 export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
     private readonly pendingHoldReleases = new Set<() => void>();
@@ -40,9 +41,9 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
 
     public async moveAfterLiveHold(request: PdkRetainedPlayedCardMove): Promise<boolean> {
         if (!request.isCurrent() || !request.outCard.isValid || !request.tableCards.isValid) return false;
-        // Lock this operation's physical cards when its Out_Card hold begins.
-        // Out_Card is a shared live slot: reading children after the delay can
-        // accidentally capture the next operation that landed during this hold.
+        // Lock this operation's physical cards before its visual hold begins.
+        // Out_Card is only the live landing slot and must be released for the
+        // following operation immediately.
         const cards = request.outCard.children.filter((child) =>
             child.name !== 'PlayCount' && child.isValid);
         if (cards.length === 0) return false;
@@ -50,31 +51,6 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
         const retainedHand = request.tableCards.getChildByName(nodeName);
         if (retainedHand) {
             this.addStoppedPlayCount(retainedHand, request.playCountTemplate, request.playIndex);
-            layoutPdkRetainedHands(request.tableCards);
-            return true;
-        }
-
-        const releaseImmediately = this.releaseNextHold;
-        this.releaseNextHold = false;
-        if (!releaseImmediately) await new Promise<void>((resolve) => {
-            let settled = false;
-            const finish = (): void => {
-                if (settled) return;
-                settled = true;
-                globalThis.clearTimeout(timeout);
-                this.pendingHoldReleases.delete(finish);
-                resolve();
-            };
-            const timeout = globalThis.setTimeout(finish, OUT_CARD_HOLD_MS);
-            this.pendingHoldReleases.add(finish);
-        });
-        if (!request.isCurrent() || !request.outCard.isValid || !request.tableCards.isValid) return false;
-        // A newer authority projection may have replaced this live slot while
-        // the hold was pending. Never steal nodes that no longer belong to it.
-        if (cards.some((card) => !card.isValid || card.parent !== request.outCard)) return false;
-        const recoveredHand = request.tableCards.getChildByName(nodeName);
-        if (recoveredHand) {
-            this.addStoppedPlayCount(recoveredHand, request.playCountTemplate, request.playIndex);
             layoutPdkRetainedHands(request.tableCards);
             return true;
         }
@@ -107,6 +83,34 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
             );
         });
 
+        // The operation owns its nodes as soon as the live Out_Card projection
+        // is accepted. Holding them under the shared Out_Card for two seconds
+        // made the next play wait for this operation's entire animation. The
+        // retained hand now preserves the exact world pose during its hold, so
+        // a following operation can use Out_Card immediately and both timelines
+        // remain independent.
+        request.outCard.active = request.outCard.children.some((child) =>
+            child.isValid && child.name !== 'PlayCount');
+        const releaseImmediately = this.releaseNextHold;
+        this.releaseNextHold = false;
+        if (!releaseImmediately) await new Promise<void>((resolve) => {
+            let settled = false;
+            const finish = (): void => {
+                if (settled) return;
+                settled = true;
+                globalThis.clearTimeout(timeout);
+                this.pendingHoldReleases.delete(finish);
+                resolve();
+            };
+            const timeout = globalThis.setTimeout(finish, OUT_CARD_HOLD_MS);
+            this.pendingHoldReleases.add(finish);
+        });
+        // Once this operation has claimed and reparented its physical nodes it
+        // owns the remainder of the presentation. A newer authority snapshot
+        // must not abort it between the move and PlayCount creation; only actual
+        // node/lifecycle destruction can cancel an already-owned operation.
+        if (!request.tableCards.isValid || !hand.isValid) return false;
+
         const transfer = Promise.all(cards.map((card, index) => new Promise<void>((resolve) => {
             let settled = false;
             const finish = (): void => {
@@ -126,10 +130,6 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
             await transfer;
         } finally {
             this.activeTransfers.delete(transfer);
-        }
-        if (!request.isCurrent()) {
-            for (const card of cards) Tween.stopAllByTarget(card);
-            return false;
         }
         // The hand number is not part of the flight. Match SmallSettlement:
         // create one Count only after this complete hand has stopped in its

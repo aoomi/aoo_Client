@@ -644,9 +644,20 @@ export class LobbyScreenController {
                 returnContext: intent?.returnContext ?? {},
             });
         } catch (error: unknown) {
-            this.clearRoomRecoveryIntent();
+            // A transient presentation failure is not a room exit. Keep the
+            // recovery intent so refresh/retry still reconciles against Hall's
+            // authoritative membership instead of stranding the player in an
+            // interactive lobby that contradicts the server.
+            console.error('[RoomMembershipBoundary] lobby-room-recovery-blocked', {
+                roomId: Number(intent?.roomId ?? 0),
+                playerId: this.role.playerId,
+                operationId: 'LOBBY_ROOM_RECOVERY',
+                stateVersion: 0,
+                membershipAction: 'PRESERVED',
+                error: error instanceof Error ? error.message : String(error),
+            });
             await this.forms?.show('UIMessage_Drift', null, null,
-                error instanceof Error ? error.message : '房间已结束或无法恢复，已返回大厅');
+                error instanceof Error ? error.message : '房间恢复失败，请刷新重试');
             this.enteringRoom = false;
         }
     }
