@@ -54,7 +54,7 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
         bind(this.presetButton, () => controller.preset(1, 3));
         const bets = [
             () => controller.bet('DROP', 0), () => controller.bet('FOLLOW', 0),
-            () => controller.bet('REST', 0), () => controller.bet('RAISE', 3),
+            () => controller.bet('REST', 0), () => controller.bet('RAISE', 0),
             () => controller.bet('ALL_IN', 3),
         ];
         this.betButtons.forEach((button, index) => bind(button, bets[index]));
@@ -117,7 +117,8 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
 
     public setActions(actions: Readonly<CD299Actions>): void {
         this.setButton(this.presetButton, actions.canPreset);
-        this.betButtons.forEach(button => this.setButton(button, actions.canBet));
+        this.betButtons.forEach((button, index) => this.setButton(button,
+            actions.canBet && actions.betActions.includes((['DROP', 'FOLLOW', 'REST', 'RAISE', 'ALL_IN'] as const)[index])));
         this.setButton(this.addCardButton, actions.canAddCard);
         this.setButton(this.splitButton, actions.canSplit);
         this.setButton(this.continueButton, actions.canContinue);

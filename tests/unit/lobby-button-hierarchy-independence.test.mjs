@@ -58,6 +58,18 @@ test('every serialized lobby button keeps a unique semantic name after reparenti
     for (const name of names) assert.equal(findByName(simulatedContainer, name)?.name, name);
 });
 
+test('JoinRoom is a standard non-visual-transition Button entry', () => {
+    const joinRoom = prefab.find(entry => entry?.__type__ === 'cc.Node' && entry._name === 'JoinRoom');
+    assert.ok(joinRoom, 'LobbyMain must contain JoinRoom');
+    const button = (joinRoom._components ?? [])
+        .map(reference => prefab[reference.__id__])
+        .find(entry => entry?.__type__ === 'cc.Button');
+    assert.ok(button, 'JoinRoom must use the standard Button binding contract');
+    assert.equal(button._enabled, true);
+    assert.equal(button._interactable, true);
+    assert.equal(button._transition, 0, 'adding input must not change the authored visuals');
+});
+
 test('directional lobby layout is owned by prefab widgets instead of runtime coordinate overrides', () => {
     const visibilityStart = source.indexOf('private applyLegacyRuntimeVisibility');
     const visibilityEnd = source.indexOf('private findDescendant', visibilityStart);

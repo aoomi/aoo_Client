@@ -13,6 +13,7 @@ export interface CN298RoomRules {
     maxRobMultiplier: 3 | 4 | 5;
     maxPushMultiplier: 0 | 5 | 10 | 15;
     standPolicy: CN298StandPolicy;
+    fastModeEnabled: boolean;
     kanShunDouEnabled: boolean;
 }
 
@@ -24,6 +25,7 @@ export const CN298_DEFAULT_RULES: Readonly<CN298RoomRules> = Object.freeze({
     maxRobMultiplier: 4,
     maxPushMultiplier: 10,
     standPolicy: 'everyone_may_stand',
+    fastModeEnabled: true,
     kanShunDouEnabled: true,
 });
 
@@ -35,7 +37,9 @@ export function validateCN298Rules(value: CN298RoomRules): CN298RoomRules {
         && (['classic', 'passion', 'crazy'] as const).includes(value.mode)
         && ([3, 4, 5] as const).includes(value.maxRobMultiplier)
         && ([0, 5, 10, 15] as const).includes(value.maxPushMultiplier)
-        && (['loser_may_stand', 'everyone_may_stand', 'no_one_may_stand'] as const).includes(value.standPolicy);
+        && (['loser_may_stand', 'everyone_may_stand', 'no_one_may_stand'] as const).includes(value.standPolicy)
+        && typeof value.fastModeEnabled === 'boolean'
+        && typeof value.kanShunDouEnabled === 'boolean';
     if (!valid) throw new Error('[CN298] invalid room rules');
     return { ...value };
 }

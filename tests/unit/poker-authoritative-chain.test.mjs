@@ -58,6 +58,11 @@ test('poker runtime consumes canonical dispatch payloads and reconnects authorit
     assert.match(adapter, /CommonPdk 权威牌型配置不完整/);
 });
 
+test('play response applies its authority snapshot before resolving the UI action', () => {
+    const request = runtime.slice(runtime.indexOf('public request<T'), runtime.indexOf('/** One in-flight request'));
+    assert.match(request, /event === 'common\.room\.play_req'[\s\S]*this\.applyAuthoritativePacket\(packet, false\)[\s\S]*this\.unwrapDispatchPayload\(packet\)/);
+});
+
 test('game room refresh and transport reconnect both re-enter through Hall for fresh room tickets', () => {
     const gateway = fs.readFileSync(path.join(root, 'assets/Lobby/Code/HallRoomGateway.ts'), 'utf8');
     const switcher = fs.readFileSync(path.join(root,
@@ -107,6 +112,8 @@ test('authoritative room pushes rebuild the visible hand through the public card
 test('final-settlement rematch closes through the form manager and releases its modal mask', () => {
     assert.match(recordController, /await this\.runtime\.action\('rematch'/);
     assert.match(recordController, /this\.closeSettlement\(\)/);
+    assert.match(recordController, /requestLeave\('record-exit'\)/);
+    assert.doesNotMatch(recordController, /requestLeave\('authority-left'\)/);
     assert.doesNotMatch(recordController, /this\.form\.node\.active = false/);
     assert.match(switchCoordinator, /\(\) => this\.forms\.close\(this\.bigSettlementForm\)/);
 });

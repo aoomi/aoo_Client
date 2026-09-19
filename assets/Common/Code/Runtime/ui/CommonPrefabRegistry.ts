@@ -38,6 +38,7 @@ const COMMON_CLUB_FORM_ASSETS = Object.freeze<Record<string, CommonPrefabCandida
     // 解散投票是所有房间共享的弹窗；业务层只能使用逻辑键 room/DissolveRoom，
     // 不能回退到任何玩法私有的 DissolveRequest 资源。
     DissolveRoom: { bundle: COMMON_PREFAB_BUNDLE, asset: 'Prefab/DissolveRoom' },
+    AddSubtract: { bundle: COMMON_PREFAB_BUNDLE, asset: 'Prefab/AddSubtract' },
     AutoPlay: { bundle: COMMON_PREFAB_BUNDLE, asset: 'Prefab/AutoPlay' },
     ChatPanel: { bundle: COMMON_PREFAB_BUNDLE, asset: 'Prefab/ChatPanel' },
     MagicExpressionPanel: { bundle: COMMON_PREFAB_BUNDLE, asset: 'Prefab/MagicPanel' },

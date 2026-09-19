@@ -14,20 +14,32 @@ test('PokerTest owns both the card view and rule-driven deck presenter without C
   assert.ok(prefab.every(entry => !Object.hasOwn(entry, 'cardPrefab')), 'whole-deck CardTest must not be used as one card');
   assert.match(source, /this\.cardTemplate \?\?= this\.createCardTemplate\(\)/);
   assert.match(source, /const card = instantiate\(this\.cardTemplate!\)/);
+  assert.match(source, /child\.removeFromParent\(\)[\s\S]*child\.destroy\(\)/);
+  assert.match(source, /template\.removeComponent\(deckPresenter\)/);
 });
 
-test('each rank owns four suit slots and absent ranks are omitted', () => {
+test('each rank owns its available suit cards and absent ranks or cards are omitted', () => {
   assert.match(source, /const PROTOCOL_SUITS = Object\.freeze\(\[1, 2, 3, 4\]\)/);
   assert.match(source, /if \(!rankCards\.some\(card => deck\.has\(card\)\)\) continue/);
-  assert.match(source, /rankCards\.forEach\(\(card, suitIndex\) => this\.createCard\(group, card, deck\.has\(card\), suitIndex\)\)/);
-  assert.match(source, /group\.setPosition\(-540 \+ column \* 180/);
+  assert.match(source, /rankCards\.filter\(card => deck\.has\(card\)\)/);
+  assert.match(source, /const column = visibleIndex % 5/);
+  assert.match(source, /RANK_GROUP_WIDTH \+ RANK_GROUP_GAP/);
+  assert.match(source, /RANK_GROUP_HEIGHT \+ RANK_GROUP_GAP/);
 });
 
-test('cards absent from the authoritative deck are masked and cannot be selected', () => {
-  assert.match(source, /presenter\.present\([\s\S]*false, !available\)/);
-  assert.match(source, /button\.interactable = available/);
-  assert.match(source, /if \(available\) card\.on\(Button\.EventType\.CLICK/);
+test('only cards from the authoritative deck are rendered and selectable', () => {
+  assert.match(source, /rankCards\.filter\(card => deck\.has\(card\)\)/);
+  assert.match(source, /button\.interactable = true/);
   assert.match(source, /presentFromRules\([\s\S]*ruleOptions\.deckCards/);
+});
+
+test('cards use the enlarged separated layout and selected cards mirror into Selected', () => {
+  assert.match(source, /const CARD_SCALE = 0\.567/);
+  assert.match(source, /card\.setScale\(new Vec3\(CARD_SCALE, CARD_SCALE, 1\)\)/);
+  assert.match(source, /availableIndex \* 38/);
+  assert.match(source, /getChildByName\('Selected'\)/);
+  assert.match(source, /this\.refreshSelectedContent\(\)/);
+  assert.match(source, /this\.selectedContent!\.addChild\(card\)/);
 });
 
 test('deal-once games hide round-stage controls while staged games keep them', () => {
@@ -58,6 +70,9 @@ test('PokerTest owns a backmost modal mask and resilient authored controls', () 
   assert.match(source, /mask\.setSiblingIndex\(0\)/);
   assert.match(source, /this\.node\.getComponent\(BlockInputEvents\)/);
   assert.match(source, /this\.content\?\.setSiblingIndex\(1\)/);
+  assert.match(source, /this\.bindPointerBlocker\(mask\)/);
+  assert.match(source, /card\.on\(Node\.EventType\.TOUCH_END, activate, this\)/);
+  assert.match(source, /card\.on\(Node\.EventType\.MOUSE_UP, activate, this\)/);
   assert.match(source, /node\.on\(Node\.EventType\.TOUCH_END, pointerEnd, this\)/);
   assert.match(source, /node\.on\(Node\.EventType\.MOUSE_UP, pointerEnd, this\)/);
   assert.match(source, /event\.propagationStopped = true/);

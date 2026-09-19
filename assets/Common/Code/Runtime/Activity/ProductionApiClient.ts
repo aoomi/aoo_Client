@@ -39,7 +39,23 @@ export class ProductionApiClient {
         const key = `${method}:${path}:${operationKey}`;
         const active = this.inflight.get(key) as Promise<T> | undefined;
         if (active) return active;
-        const request = this.request<T>(method, path, body, operationKey).finally(() => this.inflight.delete(key));
+        const request = this.request<T>(method, path, body, operationKey).catch((error: unknown) => {
+            const production = error instanceof ProductionApiError ? error : null;
+            console.error('[ProductionApiMutation] failed', {
+                method,
+                path,
+                playerId: this.playerId,
+                operationId: operationKey,
+                name: error instanceof Error ? error.name : typeof error,
+                message: error instanceof Error ? error.message : String(error),
+                code: production?.code ?? '',
+                status: production?.status ?? 0,
+                traceId: production?.traceId ?? '',
+                retryable: production?.retryable ?? false,
+                disposed: this.disposed,
+            });
+            throw error;
+        }).finally(() => this.inflight.delete(key));
         this.inflight.set(key, request);
         return request;
     }
@@ -86,6 +102,7 @@ export class ProductionApiClient {
         traceId: string, timeoutMs: number): Promise<T> {
         const controller = new AbortController(); this.controllers.add(controller);
         const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+        let responseReceived = false;
         const endpoints = resolveRuntimeEndpoints();
         const accessToken = this.currentAccessToken();
         if (!accessToken) throw new ProductionApiError('SESSION_EXPIRED', '登录会话已失效，请重新登录', 401, false, traceId);
@@ -98,7 +115,10 @@ export class ProductionApiClient {
         if (operationKey) headers['Idempotency-Key'] = operationKey;
         try {
             const response = await ProtocolHttpClient.fetch(endpoint, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal });
-            const raw = await response.text(); let packet: unknown;
+            responseReceived = true;
+            const raw = await response.text();
+            if (!raw) throw new ProductionApiError('EMPTY_RESPONSE', '服务返回了空响应', response.status, false, traceId);
+            let packet: unknown;
             try { packet = raw ? JSON.parse(raw) : null; }
             catch { throw new ProductionApiError('INVALID_RESPONSE', '服务响应格式错误', response.status, response.status >= 500, traceId); }
             if (!response.ok) {
@@ -114,6 +134,13 @@ export class ProductionApiClient {
             return packet as T;
         } catch (error: unknown) {
             if (error instanceof ProductionApiError) throw error;
+            // fetch resolves as soon as response headers arrive. If reading the body then
+            // stalls, retrying a successful GET can keep the UI in a loading state for
+            // every retry budget. Treat that transport violation as terminal and expose
+            // its exact stage; a later explicit user retry starts a fresh request.
+            if (controller.signal.aborted && responseReceived) {
+                throw new ProductionApiError('RESPONSE_BODY_TIMEOUT', '服务响应体读取超时，请重试', 0, false, traceId);
+            }
             if (controller.signal.aborted) throw new ProductionApiError('REQUEST_TIMEOUT', '网络请求超时，请重试', 0, true, traceId);
             throw new ProductionApiError('NETWORK_UNAVAILABLE', error instanceof Error ? error.message : '网络不可用', 0, true, traceId);
         } finally { globalThis.clearTimeout(timeout); this.controllers.delete(controller); }

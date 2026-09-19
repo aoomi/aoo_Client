@@ -14,7 +14,6 @@ export interface CN298RuntimeEntryOptions {
     readonly playerId: number;
     readonly requestPrefix: string;
     readonly host?: () => Node | null;
-    readonly selectedSplitCards?: () => readonly number[];
 }
 
 export class CN298GameRuntimeEntry implements GameRuntimeEntry {
@@ -72,8 +71,11 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
             roomView.bindActions({
                 sit: seatId => controller.sit(seatId), rob: value => controller.rob(value),
                 bet: value => controller.bet(value),
-                split: () => controller.split(this.options.selectedSplitCards?.() ?? []),
+                start: () => controller.start(),
+                toggleSplitCard: (seat, cardIndex) => controller.toggleSplitCard(seat, cardIndex),
+                split: () => controller.split(),
                 continueRound: () => controller.continueRound(),
+                seatContext: () => controller.seatInputContext(),
             });
             await controller.state();
             console.info('[CN298] initial state ready', { roomId, playVersion: CN298_PLAY_VERSION });

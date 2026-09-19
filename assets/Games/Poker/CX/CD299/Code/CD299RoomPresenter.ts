@@ -70,8 +70,9 @@ export class CD299RoomPresenter {
             canSplit: snapshot.viewerRole === 'SEATED' && snapshot.phase === 'SPLITTING'
                 && !snapshot.splitSeats.includes(localSeat)
                 && !snapshot.threeFlowerSeats.includes(localSeat),
-            canContinue: snapshot.viewerRole === 'SEATED' && snapshot.phase === 'ROUND_SETTLEMENT',
-            betActions: Object.freeze(['DROP', 'FOLLOW', 'REST', 'RAISE', 'ALL_IN'] as CD299BetAction[]),
+            canContinue: snapshot.viewerRole === 'SEATED' && snapshot.phase === 'ROUND_SETTLEMENT'
+                && snapshot.players[localSeat] === snapshot.ownerId,
+            betActions: Object.freeze([...snapshot.allowedBetActions]),
         }));
     }
 }

@@ -75,6 +75,10 @@ export class PlaySelectorController {
         }});
     }
     public open(gameName = '', serverPack: unknown = null, clubData: ClubContext | null = null): Promise<unknown> {
+        console.info('[CreateRoomSelector]', {
+            action: 'OPEN', gameName, disposed: this.disposed,
+            formCached: Boolean(this.forms.get(FORM_PATH)?.node.isValid),
+        });
         return this.forms.show(FORM_PATH, serverPack, gameName, clubData);
     }
     public destroy(): void {
@@ -87,7 +91,7 @@ export class PlaySelectorController {
         this.schemaRefreshTimer = null;
         this.numpad?.dispose(); this.numpad = null;
         for (const dispose of this.disposers.splice(0)) dispose();
-        this.presenter?.destroy(); this.presenter = null; this.gateway.destroy(); this.form = null;
+        this.presenter?.destroy(); this.presenter = null; this.form = null;
     }
     private bind(form: LegacyForm): void {
         this.form = form;
@@ -141,10 +145,19 @@ export class PlaySelectorController {
             const hot = item.getChildByName('Icon_Hot'); if (hot) hot.active = selected;
         }
         this.setStatus('正在读取房间规则...');
+        console.info('[CreateRoomSelector]', {
+            action: 'CONFIG_REQUEST', gameCode: game.gameCode, gameId: Number(game.gameId),
+            playVersion: game.playVersion, selectionGeneration,
+        });
         try {
             const configuration = await this.gateway.configuration(game);
             if (this.disposed || selectionGeneration !== this.selectionGeneration) return;
             const fields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
+            console.info('[CreateRoomSelector]', {
+                action: 'CONFIG_RESPONSE', gameCode: game.gameCode, gameId: Number(game.gameId),
+                playVersion: game.playVersion, selectionGeneration, fieldCount: fields.length,
+                schemaHash: String(configuration.ui?.roomRuleSourceHash ?? ''),
+            });
             if (!fields.length) throw new Error('该玩法尚未发布创建房间规则');
             const schemaHash = String(configuration.ui?.roomRuleSourceHash ?? '');
             this.activeSchemaHash = schemaHash;
@@ -159,7 +172,23 @@ export class PlaySelectorController {
             this.setStatus(`${this.visibleGameName(game)} · ${game.playVersion}`);
         } catch (error: unknown) {
             if (this.disposed || selectionGeneration !== this.selectionGeneration) return;
+            const production = error instanceof ProductionApiError ? error : null;
+            console.error('[CreateRoomSelector]', {
+                action: 'CONFIG_FAILED', gameCode: game.gameCode, gameId: Number(game.gameId),
+                playVersion: game.playVersion, selectionGeneration,
+                name: error instanceof Error ? error.name : typeof error,
+                message: error instanceof Error ? error.message : String(error),
+                code: production?.code ?? '', status: production?.status ?? 0,
+                traceId: production?.traceId ?? '',
+            });
             this.rulesReady = false; this.setCreateButtonBusy(false); this.presenter?.clear(); this.fail(error, '玩法规则加载失败');
+        } finally {
+            console.info('[CreateRoomSelector]', {
+                action: 'CONFIG_FINALLY', gameCode: game.gameCode, gameId: Number(game.gameId),
+                playVersion: game.playVersion, selectionGeneration,
+                activeSelection: selectionGeneration === this.selectionGeneration,
+                disposed: this.disposed, rulesReady: this.rulesReady,
+            });
         }
     }
     private scheduleSchemaRefresh(game: HallCatalogGame, selectionGeneration: number): void {
@@ -192,6 +221,12 @@ export class PlaySelectorController {
         if (this.disposed || this.submitting) {
             return;
         }
+        console.info('[CreateRoomSubmit] click', {
+            gameCode: this.selectedGame?.gameCode ?? '',
+            gameId: Number(this.selectedGame?.gameId ?? 0),
+            rulesReady: this.rulesReady,
+            formVisible: this.form?.isShown() === true,
+        });
         if (!this.selectedGame || !this.presenter || !this.rulesReady) {
             this.message('房间规则尚未加载完成'); return;
         }
@@ -214,6 +249,13 @@ export class PlaySelectorController {
         }
         const preferenceIdentity = this.preferenceIdentity;
         const generation = this.generation;
+        console.info('[CreateRoomSubmit] validated', {
+            gameCode: selectedGame.gameCode,
+            gameId: Number(selectedGame.gameId),
+            playVersion: selectedGame.playVersion,
+            scope: Number(this.club?.clubId ?? 0) > 0 ? 'CLUB' : 'PERSONAL',
+            ruleKeys: Object.keys(submittedRules).sort(),
+        });
         this.submitting = true; this.setCreateButtonBusy(true);
         const submittingForm = this.form;
         // 先抓取创建页已经绘制完成的最后一帧。真实创建节点会在本帧绘制后关闭，
@@ -245,6 +287,13 @@ export class PlaySelectorController {
             const handoff = await this.gateway.create(selectedGame.gameCode, submittedRules, clubId > 0 ?
                 { type: 'CLUB', clubId, templateCode: this.club?.gameIndex ? `template-${this.club.gameIndex}` : 'default' } :
                 { type: 'PERSONAL' });
+            console.info('[CreateRoomSubmit] created', {
+                gameCode: selectedGame.gameCode,
+                gameId: Number(selectedGame.gameId),
+                roomId: Number(handoff.roomId ?? 0),
+                bundleName: String(handoff.bundleName ?? ''),
+                sceneName: String(handoff.sceneName ?? ''),
+            });
             // 服务端确认建房成功后立即保存；场景交接可能销毁大厅控制器，不能等进入
             // 房间后再写入。校验失败或 gateway.create 抛错时不会执行到这里。
             if (preferenceIdentity) this.preferences.save(preferenceIdentity, submittedRules);
@@ -261,13 +310,21 @@ export class PlaySelectorController {
                 entryOrigin: clubId > 0 ? 'CLUB' : 'GAME_LOBBY',
                 returnContext: clubId > 0 ? { clubId } : undefined,
                 ...(clubId > 0 ? { clubId, fromClub: true } : {}) });
+            console.info('[CreateRoomSubmit] entered', {
+                gameCode: selectedGame.gameCode,
+                roomId: Number(handoff.roomId ?? 0),
+            });
             await transition.commitAfterPresentation();
             if (this.disposed || generation !== this.generation) return;
         } catch (error: unknown) {
             hidePending = false;
             director.off(Director.EVENT_AFTER_DRAW, hideSubmittingForm);
             if (hideFallback !== null) globalThis.clearTimeout(hideFallback);
-            console.error('[创建房间] 提交失败', error);
+            console.error('[CreateRoomSubmit] failed', {
+                gameCode: selectedGame.gameCode,
+                gameId: Number(selectedGame.gameId),
+                error: error instanceof Error ? error.message : String(error),
+            });
             transition.fail(error, () => { void this.submit(); });
             // 场景已经移交后旧大厅不再恢复；移交前失败则还原创建页供用户修正规则或重试。
             if (this.forms.isAlive() && submittingForm?.node.isValid) {

@@ -2,6 +2,7 @@ import { Button, EditBox, Label, Layout, Node, RichText, ScrollView, Toggle, ins
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface ShortPlayer { pid?: number; name?: string; iconUrl?: string }
 interface UnionClubMember { shortPlayer?: ShortPlayer; upShortPlayer?: ShortPlayer; minister?: number; clubCent?: number; eliminatePoint?: number; isUnionBanGame?: boolean }
@@ -18,6 +19,7 @@ export class LegacyUnionClubUserListController {
     private unionName = '';
     private unionSign = 0;
     private page = 1;
+    private loading = false;
     private shareContext: ShareContext = {};
     private detailType = 0;
     private detailPage = 1;
@@ -47,8 +49,13 @@ export class LegacyUnionClubUserListController {
     private bind(form: LegacyForm, path: string): void {
         this.click(form.node, 'btn_close', () => this.forms.close(path));
         this.click(form.node, 'btn_search', () => { this.page = 1; void this.load(true); });
-        this.click(form.node, 'btn_next', () => { this.page += 1; void this.load(true); });
-        this.click(form.node, 'btn_last', () => { if (this.page > 1) { this.page -= 1; void this.load(true); } });
+        this.active(form.node, 'btn_next', false);
+        this.active(form.node, 'btn_last', false);
+        this.active(form.node, 'page', false);
+        const scroll = this.desc(form.node, 'layout')?.parent?.parent?.getComponent(ScrollView);
+        if (scroll) this.disposers.push(ScrollEvents.onBottom(scroll, () => {
+            if (!this.loading) { this.page += 1; void this.load(false); }
+        }));
         for (const name of ['OnlineToggle', 'FuToggle']) {
             const toggle = this.desc(form.node, name)?.getComponent(Toggle);
             if (!toggle) continue;
@@ -93,14 +100,16 @@ export class LegacyUnionClubUserListController {
         const query = this.desc(form.node, 'EditBox')?.getComponent(EditBox)?.string.trim() ?? '';
         const type = this.desc(form.node, 'OnlineToggle')?.getComponent(Toggle)?.isChecked ? 1 : 0;
         const losePoint = this.desc(form.node, 'FuToggle')?.getComponent(Toggle)?.isChecked ? 1 : 0;
+        if (this.loading) return;
+        this.loading = true;
         try {
             const rows = await this.client.request<UnionClubMember[]>('union.CUnionClubMemberList', { clubId: this.ownerClubId, unionId: this.unionId, opClubId: this.clubId, pageNum: this.page, query, type, losePoint });
-            if (!rows.length && this.page > 1) { this.page -= 1; this.pageLabel(); return; }
+            if (!rows.length && this.page > 1) { this.page -= 1; return; }
             this.render(rows, refresh);
-            this.pageLabel();
         } catch (error) {
+            if (!refresh && this.page > 1) this.page -= 1;
             await this.tip(error instanceof Error ? error.message : '获取俱乐部成员列表失败');
-        }
+        } finally { this.loading = false; }
     }
 
     private render(rows: UnionClubMember[], refresh: boolean): void {
@@ -298,7 +307,7 @@ export class LegacyUnionClubUserListController {
     private value(root: Node, name: string): string { return this.desc(root, name)?.getComponent(EditBox)?.string.trim() ?? ''; }
     private pageLabel(): void { if (this.form) this.label(this.form.node, 'lb_page', String(this.page)); }
     private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const found = this.desc(child, name); if (found) return found; } return null; }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private async tip(message: string): Promise<void> { await this.forms.show('ui/UIMessage', message); }
 }

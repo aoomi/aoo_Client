@@ -96,6 +96,24 @@ test('idempotent replay preserves its key and subscriptions follow only the curr
     assert.deepEqual(pushes, [1, 3]);
 });
 
+test('nested rematch idempotency key makes final-settlement continuation reconnect-safe', async () => {
+    assert.deepEqual(policy.resolveRequestPolicy('poker.CD201.dispatch', {
+        action: 'common.room.rematch_req',
+        payload: { idempotencyKey: 'rematch-operation-1' },
+    }), { policy: 'IDEMPOTENT_KEYED', idempotencyKey: 'rematch-operation-1' });
+
+    const slot = new coordinator.ConnectionSlot('GAME');
+    const facade = new StableTransportFacade(slot);
+    const pending = facade.request('poker.CD201.dispatch', {
+        action: 'common.room.rematch_req',
+        payload: { idempotencyKey: 'rematch-operation-1' },
+    });
+    const connected = new FakeTransport();
+    slot.adopt(connected);
+    assert.equal((await pending).idempotencyKey, 'rematch-operation-1');
+    assert.equal(connected.requests[0].idempotencyKey, 'rematch-operation-1');
+});
+
 test('hall and game retries are independent single flights', async () => {
     const owner = new coordinator.ReconnectCoordinator();
     let hallAttempts = 0;

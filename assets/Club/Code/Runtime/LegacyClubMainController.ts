@@ -51,6 +51,7 @@ import { CommonHeadController } from '../../../Common/Code/UI/CommonHeadControll
 import { AssetLoader } from '../../../Common/Code/UI/Infrastructure';
 import { COMMON_ASSET_BUNDLE, COMMON_HEAD_ASSET } from '../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
 import { UnifiedScroll, UnifiedScrollDirection } from '../../../Common/Code/UI/UnifiedScroll';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 const CLUB_DESK_PREFAB = { bundle: 'club', path: 'Prefab/ClubDesk' } as const;
 const COMMON_HEAD_PREFAB = { bundle: COMMON_ASSET_BUNDLE, path: COMMON_HEAD_ASSET } as const;
@@ -496,6 +497,7 @@ export class LegacyClubMainController {
         });
         show('Btn_FindRoom', 'ui/club/ClubFind');
         this.onClick(node('Btn_Safe'), () => {
+            if (Number(this.club?.unionId ?? 0) <= 0) return;
             void this.forms.show('ui/club/UIClubSafePanel');
         });
         show('Btn_PromoterManage', 'ui/club/UIPromoterManager');
@@ -849,6 +851,7 @@ export class LegacyClubMainController {
                     const club = createdClub as LegacyClubDetail;
                     if (this.club) Object.assign(this.club, createdClub);
                     if (this.activeForm) this.applyClubModeVisibility(this.activeForm);
+                    await this.switchRoomScopeProjection('创建联盟后的房间作用域切换');
                     await this.forms.show('ui/club/UIUnionManager', {
                         ...(this.club ?? club),
                         unionName: String(club.unionName ?? union.name ?? ''),
@@ -888,9 +891,25 @@ export class LegacyClubMainController {
         if (this.activeForm) this.applyClubModeVisibility(this.activeForm);
         try {
             await this.refreshCurrentClub(expectedClubId);
+            await this.switchRoomScopeProjection('解散联盟后的房间作用域切换');
         } catch {
             this.persistCurrentClub();
+            await this.switchRoomScopeProjection('解散联盟后的房间作用域恢复');
         }
+    }
+
+    private async switchRoomScopeProjection(source: string): Promise<void> {
+        if (!this.activeForm?.node.isValid) return;
+        // Never render the previous mode while the new authoritative scope is loading.
+        this.rooms = [];
+        this.selectedGameFilter = '';
+        this.selectedRoomFilter = '';
+        this.renderRoomTabs();
+        this.renderRooms();
+        console.info('[ClubRoomScope] switch', {
+            clubId: this.clubId(), unionId: Number(this.club?.unionId ?? 0), source,
+        });
+        await this.restoreAuthoritativeTemplates(this.clubId(), source);
     }
 
     private async refreshCurrentClub(expectedClubId: number): Promise<LegacyClubDetail> {
@@ -1460,6 +1479,7 @@ export class LegacyClubMainController {
         if (!node) return;
         node.active = !node.active;
         if (node.active) {
+            if (semanticName === 'Menu') this.refreshMoreMenuLayout(form, 'open');
             // The menu descends into the bottom toolbar's screen area. Keep the
             // owning top layer above that toolbar so visible menu buttons receive
             // the pointer instead of the quick-join button underneath.
@@ -1657,9 +1677,28 @@ export class LegacyClubMainController {
         this.active(form, 'Btn_Skin', this.isClubOwnerOrAllianceOwner());
         this.active(form, 'Btn_Manage', true);
         this.active(form, 'Btn_More', true);
-        // The old client gated the safe-box entry by tournament state. It is now
-        // available for every club, including immediately after creating a union.
-        this.active(form, 'Btn_Safe', true);
+        // Insurance-box points belong to the alliance economy. A standalone
+        // family club must not expose this entrance.
+        this.active(form, 'Btn_Safe', isUnion);
+        this.refreshMoreMenuLayout(form, 'mode');
+    }
+
+    private refreshMoreMenuLayout(form: LegacyForm, source: 'mode' | 'open'): void {
+        const menu = this.findMainNode(form, 'Menu');
+        if (!menu) return;
+        const safe = this.findMainNode(form, 'Btn_Safe');
+        const isUnion = Number(this.club?.unionId ?? 0) > 0;
+        // Forms survive hot refreshes and mode switches. Re-assert the real node
+        // whenever the menu opens so an old cached active state cannot leak through.
+        if (safe) safe.active = isUnion;
+        // Alliance menus can contain more actions than fit vertically. Keep the
+        // visible safe-box entry at the top instead of leaving it under the toolbar.
+        if (isUnion && safe?.parent === menu) safe.setSiblingIndex(0);
+        menu.getComponent(Layout)?.updateLayout();
+        console.info('[ClubSafeBox] menu-visibility', {
+            clubId: this.clubId(), source, isUnion,
+            safeActive: safe?.active ?? false, safeY: safe?.position.y ?? null,
+        });
     }
 
     /**
@@ -1980,23 +2019,14 @@ export class LegacyClubMainController {
     }
 
     private renderClubDesks(mark: Node, layout: Node, prefab: Prefab, commonHeadPrefab: Prefab | null): void {
-        // The migrated mark Widget still carries a legacy -320 right offset, making
-        // the ScrollView 1600 wide inside a 1280-wide RoomList. Its last 320 pixels
-        // are outside the usable UI and ScrollView therefore stops before the final
-        // desk is fully visible. Keep the viewport inside its actual RoomList.
-        const roomListTransform = mark.parent?.getComponent(UITransform) ?? null;
+        // ClubMain.prefab owns the desk viewport size. Its 1600px width deliberately
+        // extends beyond the 1280px interaction area so the rightmost desk remains
+        // complete; rendering must not shrink it to the RoomList parent width.
         const markTransform = mark.getComponent(UITransform);
         const markWidget = mark.getComponent(Widget);
-        if (roomListTransform && markTransform) {
-            if (markWidget) markWidget.enabled = false;
-            markTransform.setContentSize(roomListTransform.contentSize.width, markTransform.contentSize.height);
-            const viewTransform = mark.getChildByName('view')?.getComponent(UITransform) ?? null;
-            const viewWidget = viewTransform?.node.getComponent(Widget) ?? null;
-            if (viewWidget) viewWidget.enabled = false;
-            if (viewTransform) viewTransform.setContentSize(
-                roomListTransform.contentSize.width, viewTransform.contentSize.height,
-            );
-        }
+        if (markWidget) markWidget.enabled = false;
+        const viewWidget = mark.getChildByName('view')?.getComponent(Widget) ?? null;
+        if (viewWidget) viewWidget.enabled = false;
         const roomScroll = UnifiedScroll.ensure(mark, UnifiedScrollDirection.Horizontal);
         const unifiedScroll = mark.getComponent(UnifiedScroll);
         const roomLayout = layout.getComponent(Layout);
@@ -2698,8 +2728,7 @@ export class LegacyClubMainController {
     }
 
     private setLabel(root: Node, path: string, text: string): void {
-        const label = this.find(root, path)?.getComponent(Label);
-        if (label) label.string = text;
+        setClubDynamicLabel(this.find(root, path)?.getComponent(Label) ?? null, path, text);
     }
 
     private setDescendantLabel(root: Node, name: string, text: string): void {

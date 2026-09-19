@@ -1,6 +1,7 @@
 import { Button, EditBox, Label, Layout, Node, Toggle, instantiate, isValid } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface ClubContext { id?: number; clubId?: number; unionId?: number; minister?: number; unionPostType?: number; groupingScope?: 'club' | 'union'; onChanged?: () => void }
 interface Player { pid?: number; name?: string; iconUrl?: string }
@@ -154,7 +155,11 @@ export class LegacyClubForbidController {
     private isUnionGrouping(): boolean { return this.context.groupingScope === 'union'; }
     private canManage(): boolean { return Number(this.context.minister ?? 0) > 0; }
     private player(root: Node, player: Player): void { this.label(root, 'name', String(player.name ?? '')); this.label(root, 'id', `ID:${player.pid ?? ''}`); }
-    private label(root: Node, name: string, value: string): void { const base = this.desc(root, name); const label = base?.getComponent(Label) ?? this.desc(base ?? root, 'lb')?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void {
+        const base = this.desc(root, name);
+        const label = base?.getComponent(Label) ?? this.desc(base ?? root, 'lb')?.getComponent(Label) ?? null;
+        setClubDynamicLabel(label, name, value);
+    }
     private input(root: Node, name: string): number { const text = this.desc(root, name)?.getComponent(EditBox)?.string.trim() ?? ''; return !text ? 0 : /^\d+$/.test(text) ? Number(text) : -1; }
     private click(root: Node, name: string, listener: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, listener); this.disposers.push(() => { if (isValid(node, true)) node.off(Button.EventType.CLICK, listener); }); }
     private rowClick(root: Node, name: string, listener: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, listener); this.rows.push(() => { if (isValid(node, true)) node.off(Button.EventType.CLICK, listener); }); }

@@ -21,6 +21,7 @@ interface HistoryDetail { readonly roomId?: number | string; readonly gameCode?:
     readonly smallSettleTemplate?: string; readonly rounds?: ReadonlyArray<HistoryRound>;
     readonly ruleSnapshot?: Record<string, unknown>; readonly ruleFields?: readonly Record<string, unknown>[] }
 interface HistoryOpenContext { readonly roomId?: number | string; readonly source?: 'HALL' | 'CLUB'; readonly returnForm?: string }
+interface RecordsOpenContext { readonly source?: 'HALL' | 'CLUB'; readonly clubId?: number; readonly unionId?: number }
 
 /** Runtime binding for the 2.22 UILobbyRecords/Records prefab family. */
 export class ReplayController {
@@ -39,6 +40,7 @@ export class ReplayController {
     private historyReplayTarget: PdkReplayTarget | null = null;
     private readonly replayPlayer: PdkReplayController;
     private historyClubId = 0;
+    private historyUnionId = 0;
     private readonly historyCards = new CardPresenter();
 
     public constructor(private readonly forms: LegacyFormManager, private readonly node: Node,
@@ -64,12 +66,14 @@ export class ReplayController {
 
     public async open(context?: unknown): Promise<void> {
         if (this.forms.isShown('UILobbyRecords')) return;
-        const entry = this.object(context);
+        const entry = this.object(context) as RecordsOpenContext;
         this.historyClubId = String(entry.source ?? '').toUpperCase() === 'CLUB'
             ? Math.max(0, Number(entry.clubId ?? 0)) : 0;
+        this.historyUnionId = this.historyClubId > 0 ? Math.max(0, Number(entry.unionId ?? 0)) : 0;
         const form = await this.forms.show('UILobbyRecords');
         if (!form) return;
         this.form = form; this.pageIndex = 0; this.cursors = [0];
+        this.active(form.node, 'Btn_Stats', this.historyClubId > 0);
         await this.loadPage(0);
     }
 
@@ -83,12 +87,18 @@ export class ReplayController {
     private bindRecords(form: LegacyForm): void {
         this.click(form.node, 'Btn_Close', () => this.forms.close('UILobbyRecords'));
         this.click(form.node, 'Btn_Replay', () => { void this.forms.show('UIReplayCode'); });
-        const dateNavigation = 'DateFilterBar/DatePagination/DateNavigation';
-        this.ensureButtonAt(form.node, `${dateNavigation}/Btn_PreviousDate`);
-        this.ensureButtonAt(form.node, `${dateNavigation}/Btn_NextDate`);
-        this.clickAt(form.node, `${dateNavigation}/Btn_PreviousDate`, () => { void this.shiftDate(form, 1); });
-        this.clickAt(form.node, `${dateNavigation}/Btn_NextDate`, () => { void this.shiftDate(form, -1); });
+        this.click(form.node, 'Btn_Stats', () => {
+            if (this.historyClubId > 0) void this.forms.show(
+                'ui/club/ClubPlayerLog', this.historyClubId, this.historyUnionId,
+            );
+        });
+        const dateNavigation = 'DateFilter/Page/Date';
+        this.ensureButtonAt(form.node, `${dateNavigation}/Btn_Previous`);
+        this.ensureButtonAt(form.node, `${dateNavigation}/Btn_Next`);
+        this.clickAt(form.node, `${dateNavigation}/Btn_Previous`, () => { void this.shiftDate(form, 1); });
+        this.clickAt(form.node, `${dateNavigation}/Btn_Next`, () => { void this.shiftDate(form, -1); });
         this.updateDatePagination(form);
+        this.active(form.node, 'Btn_Stats', this.historyClubId > 0);
     }
 
     private ensureButtonAt(root: Node, path: string): void {
@@ -111,6 +121,7 @@ export class ReplayController {
         this.generation += 1; this.loading = false; this.form = null; this.pageIndex = 0;
         this.cursors = [0]; this.currentPage = {}; this.selectedReplay = null; this.replayLoading = false;
         this.dateOffset = 0;
+        this.historyClubId = 0; this.historyUnionId = 0;
         this.clearGenerated(form.node); this.pageLabel(form, 1); this.replayButtonLabel(form, '查看他人回放');
     }
 
@@ -149,18 +160,18 @@ export class ReplayController {
     }
 
     private async renderPage(form: LegacyForm, page: HistoryPage, generation: number): Promise<void> {
-        const content = form.find('RecordPanel/Viewport/RecordContent');
-        if (!content) throw new Error('Records/RecordContent contract is missing');
+        const content = form.find('Record/View/Content');
+        if (!content) throw new Error('Records/Record/View/Content contract is missing');
         this.clearGenerated(form.node);
         const rows = Array.isArray(page.items) ? page.items : [];
         this.selectedReplay = null;
         this.pageLabel(form, this.pageIndex + 1);
         const totalCount = Math.max(0, Number(page.totalCount ?? rows.length));
         const bigWinnerCount = Math.max(0, Number(page.bigWinnerCount ?? 0));
-        this.textAt(form.node, 'DateFilterBar/PlayersLabel', `大赢家次数:${bigWinnerCount}`);
+        this.textAt(form.node, 'DateFilter/Lb_Players', `大赢家次数:${bigWinnerCount}`);
         if (!rows.length) { this.renderState(form, '暂无战绩', new Color(225, 235, 242, 255)); return; }
-        const template = form.find('RecordPanel/RecordItemTemplate');
-        if (!template) throw new Error('Records/RecordItemTemplate contract is missing');
+        const template = form.find('Record/Item');
+        if (!template) throw new Error('Records/Record/Item contract is missing');
         rows.forEach((row, offset) => {
             const item = instantiate(template), roomId = Number(row.roomId ?? 0);
             item.name = `runtime-record-${roomId || offset}`;
@@ -169,12 +180,12 @@ export class ReplayController {
             const entries = Array.isArray(settlement.entries) ? settlement.entries : [];
             const own = entries.find(entry => String(entry.playerId ?? '') === this.playerId);
             const score = Number(own?.scoreDelta ?? 0), played = this.date(row.playedAt);
-            this.label(item, 'DateLabel', played.date); this.label(item, 'TimeLabel', played.time);
-            this.label(item, 'PlayersLabel', entries.length ? entries.map(entry => `ID:${entry.playerId ?? ''}`).join('  ') : '对局成员');
-            this.label(item, 'VersionLabel', `版本 ${row.playVersion ?? settlement.playVersion ?? '-'}`);
-            this.label(item, 'TotalScoreLabel', score > 0 ? `+${score}` : '');
-            this.label(item, 'ScoreDetailLabel', score < 0 ? String(score) : score === 0 ? '0' : '');
-            this.label(item, 'RoomNumberLabel', `房间:${roomId || '-'}`);
+            this.label(item, 'Lb_Date', played.date); this.label(item, 'Lb_Time', played.time);
+            this.label(item, 'Lb_Players', entries.length ? entries.map(entry => `ID:${entry.playerId ?? ''}`).join('  ') : '对局成员');
+            this.label(item, 'Lb_Version', `版本 ${row.playVersion ?? settlement.playVersion ?? '-'}`);
+            this.label(item, 'Lb_Score', score > 0 ? `+${score}` : '');
+            this.label(item, 'Lb_Detail', score < 0 ? String(score) : score === 0 ? '0' : '');
+            this.label(item, 'Lb_Room', `房间:${roomId || '-'}`);
             const target = this.replayTarget(row);
             if (!this.selectedReplay && target) this.selectedReplay = target;
             this.click(item, 'Btn_Details', () => { if (target) this.selectedReplay = target;
@@ -185,7 +196,7 @@ export class ReplayController {
     }
 
     private renderState(form: LegacyForm, text: string, color: Color): void {
-        const content = form.find('RecordPanel/Viewport/RecordContent'); if (!content) return;
+        const content = form.find('Record/View/Content'); if (!content) return;
         this.clearGenerated(form.node);
         const node = new Node('runtime-record-state'); node.addComponent(UITransform).setContentSize(900, 120);
         const label = node.addComponent(Label); label.string = text; label.fontSize = 28; label.lineHeight = 36;
@@ -453,7 +464,7 @@ export class ReplayController {
     }
 
     private clearGenerated(root: Node): void {
-        for (const name of ['RecordContent', 'mj_layout_player', 'poker_layout_player']) { const parent = this.desc(root, name); if (!parent) continue;
+        for (const name of ['Content', 'mj_layout_player', 'poker_layout_player']) { const parent = this.desc(root, name); if (!parent) continue;
             for (const child of [...parent.children]) if (child.name.startsWith('runtime-record-') || child.name.startsWith('runtime-result-')) child.destroy(); }
     }
     private accept(generation: number, form: LegacyForm): boolean { return generation === this.generation && this.form === form && form.isShown(); }
@@ -468,10 +479,10 @@ export class ReplayController {
         await this.loadPage(0);
     }
     private updateDatePagination(form: LegacyForm): void {
-        const dateNavigation = 'DateFilterBar/DatePagination/DateNavigation';
-        this.textAt(form.node, `${dateNavigation}/DateLabel`, ['今天', '昨天', '前天'][this.dateOffset]);
-        const previous = this.at(form.node, `${dateNavigation}/Btn_PreviousDate`)?.getComponent(Button);
-        const next = this.at(form.node, `${dateNavigation}/Btn_NextDate`)?.getComponent(Button);
+        const dateNavigation = 'DateFilter/Page/Date';
+        this.textAt(form.node, `${dateNavigation}/Lb_Date`, ['今天', '昨天', '前天'][this.dateOffset]);
+        const previous = this.at(form.node, `${dateNavigation}/Btn_Previous`)?.getComponent(Button);
+        const next = this.at(form.node, `${dateNavigation}/Btn_Next`)?.getComponent(Button);
         if (previous) previous.interactable = this.dateOffset < 2;
         if (next) next.interactable = this.dateOffset > 0;
     }

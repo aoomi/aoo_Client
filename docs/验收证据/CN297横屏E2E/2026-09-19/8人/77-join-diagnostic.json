@@ -1,0 +1,171 @@
+{
+  "account": "77",
+  "room": "868993",
+  "state": {
+    "scene": "MainScene",
+    "landscape": true,
+    "recovery": [
+      [
+        "aoo.room.recovery.v1.626",
+        "{\"roomId\":868993,\"gameId\":9,\"entryOrigin\":\"GAME_LOBBY\",\"returnContext\":{},\"gameName\":\"CN297\",\"playFamily\":\"poker:compare-hand\",\"playVersion\":\"cn297-v1.0.0\",\"fromClub\":false,\"updatedAt\":1789814252540}"
+      ]
+    ],
+    "route": [
+      [
+        "aoo.host-route.v1.627",
+        "{\"name\":\"lobby\"}"
+      ],
+      [
+        "aoo.host-route.v1.626",
+        "{\"name\":\"lobby\"}"
+      ]
+    ]
+  },
+  "records": [
+    {
+      "at": 1789814249839,
+      "type": "info",
+      "text": "[LobbyJoinRoomEntry] {action: OPEN_NUMPAD, controllerReady: true, disposed: false, lifecycleEpoch: 1, scene: MainScene}"
+    },
+    {
+      "at": 1789814249840,
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"begin\",\"id\":5,\"name\":\"form:common/Numpad\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789814249838}"
+    },
+    {
+      "at": 1789814249841,
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":5,\"name\":\"form:common/Numpad\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789814249838}"
+    },
+    {
+      "at": 1789814249872,
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"progress\",\"id\":5,\"name\":\"form:common/Numpad\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789814249869}"
+    },
+    {
+      "at": 1789814250096,
+      "type": "info",
+      "text": "[AooPresentationTransition] {\"action\":\"commit\",\"id\":5,\"name\":\"form:common/Numpad\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789814250095}"
+    },
+    {
+      "at": 1789814250097,
+      "type": "info",
+      "text": "[LobbyJoinRoomEntry] {action: NUMPAD_SHOWN, lifecycleEpoch: 1}"
+    },
+    {
+      "at": 1789814252199,
+      "type": "info",
+      "text": "[JoinRoomConfirm] confirm {roomId: 868993, epoch: 1, formVisible: true, resolving: false}"
+    },
+    {
+      "at": 1789814252199,
+      "type": "info",
+      "text": "[JoinRoomConfirm] request {roomId: 868993, epoch: 1}"
+    },
+    {
+      "at": 1789814252517,
+      "type": "info",
+      "text": "[HallRoomConfiguration] {action: REQUEST, gameCode: CN297, gameId: 9, playVersion: cn297-v1.0.0}"
+    },
+    {
+      "at": 1789814252547,
+      "type": "info",
+      "text": "[HallRoomConfiguration] {action: RESPONSE, gameCode: CN297, gameId: 9, playVersion: cn297-v1.0.0, fieldCount: 11}"
+    },
+    {
+      "at": 1789814252548,
+      "type": "info",
+      "text": "[HallRoomJoin] response {roomId: 868993, playerId: 274829, gameCode: CN297, bundleName: poker-zjh, sceneName: GameRoom2D}"
+    },
+    {
+      "at": 1789814252548,
+      "type": "info",
+      "text": "[JoinRoomConfirm] response {roomId: 868993, gameCode: CN297, bundleName: poker-zjh, sceneName: GameRoom2D, epoch: 1}"
+    },
+    {
+      "at": 1789814253211,
+      "type": "info",
+      "text": "[CN297GameRuntimeEntry] {action: entered, roomId: 868993, playVersion: cn297-v1.0.0, stateVersion: 1, roundNo: 0}"
+    },
+    {
+      "at": 1789814253212,
+      "type": "info",
+      "text": "[GameRuntimePresentation] {action: ENTERED, entryId: cn297-zjh, source: LobbyMain, hiddenChildren: Array(6), cameraPreserved: false}"
+    },
+    {
+      "at": 1789814253519,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814253522,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814253765,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814253781,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814254008,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814254055,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814254205,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814254206,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814258480,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814258481,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814260233,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814260245,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814260246,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    },
+    {
+      "at": 1789814261715,
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "at": 1789814261911,
+      "type": "debug",
+      "text": "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+    }
+  ]
+}

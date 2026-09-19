@@ -62,11 +62,23 @@ export class JoinRoomController {
     }
 
     private bind(form: LegacyForm): void {
+        // Cached Common/Numpad can be rebound after a lobby lifecycle handoff.
+        // Dispose this controller's prior listeners before attaching again so a
+        // single physical confirm can never fan out to stale join callbacks.
+        this.numpad?.dispose();
         this.form = form;
         this.confirmButton = form.find('Keypad/Btn_Confirm')?.getComponent(Button) ?? null;
         this.numpad = this.numpadService.attach(form.node, {
             close: () => this.forms.close(FORM_PATH),
-            confirm: () => { void this.resolveRoom(); },
+            confirm: () => {
+                console.info('[JoinRoomConfirm] confirm', {
+                    roomId: this.digits.join(''),
+                    epoch: this.epoch,
+                    formVisible: this.form?.isShown() === true,
+                    resolving: this.resolving,
+                });
+                void this.resolveRoom();
+            },
         }, {
             digitCount: ROOM_KEY_DIGITS,
             maxDigits: ROOM_KEY_DIGITS,
@@ -85,6 +97,7 @@ export class JoinRoomController {
         if (this.resolving) return;
         const roomKey = this.digits.join('');
         if (!/^\d{6}$/.test(roomKey)) {
+            console.warn('[JoinRoomConfirm] validation-failed', { roomId: roomKey, epoch: this.epoch });
             await this.forms.show('UIMessage_Drift', null, null, '请输入6位纯数字房间号');
             return;
         }
@@ -92,13 +105,32 @@ export class JoinRoomController {
         if (this.confirmButton) this.confirmButton.interactable = false;
         const epoch = this.epoch;
         try {
+            console.info('[JoinRoomConfirm] request', { roomId: Number(roomKey), epoch });
             const handoff = await this.gateway.join(Number(roomKey));
-            if (epoch !== this.epoch || !this.form) return;
+            if (epoch !== this.epoch || !this.form) {
+                console.warn('[JoinRoomConfirm] stale-response', {
+                    roomId: Number(roomKey), requestEpoch: epoch, currentEpoch: this.epoch,
+                });
+                return;
+            }
+            console.info('[JoinRoomConfirm] response', {
+                roomId: Number(handoff.roomId ?? roomKey),
+                gameCode: String(handoff.gameCode ?? ''),
+                bundleName: String(handoff.bundleName ?? ''),
+                sceneName: String(handoff.sceneName ?? ''),
+                epoch,
+            });
             this.resolving = false;
             if (this.confirmButton?.isValid) this.confirmButton.interactable = true;
             this.form.node.emit('authoritative-join-room-resolved', handoff);
             this.onResolved?.(handoff);
         } catch (error: unknown) {
+            console.error('[JoinRoomConfirm] failed', {
+                roomId: Number(roomKey),
+                epoch,
+                code: error instanceof ProductionApiError ? error.code : '',
+                error: error instanceof Error ? error.message : String(error),
+            });
             if (epoch !== this.epoch || !this.form) return;
             await this.forms.show('UIMessage_Drift', null, null,
                 this.joinFailureMessage(error));

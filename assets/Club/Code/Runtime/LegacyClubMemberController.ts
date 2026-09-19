@@ -2,6 +2,8 @@ import { Button, EditBox, Label, Layout, Node, ScrollView, Toggle, UITransform, 
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { adaptClubMemberLandscape } from './LegacyClubLandscapeAdapter';
+import { clubPlayerDisplayId, setClubDynamicLabel } from './ClubDynamicLabel';
+import { ScrollEvents, UnifiedScroll, UnifiedScrollDirection } from '../../../Common/Code/UI/UnifiedScroll';
 
 interface MemberContext {
     id?: number; clubId?: number; unionId?: number; minister?: number;
@@ -10,8 +12,8 @@ interface MemberContext {
 interface MemberRow {
     status?: number; minister?: number; playerClubCard?: number; clubCent?: number;
     isBanGame?: boolean; isPromotionManage?: boolean;
-    shortPlayer?: { pid?: number; name?: string };
-    upShortPlayer?: { pid?: number; name?: string };
+    shortPlayer?: { pid?: number; displayId?: number | string; name?: string };
+    upShortPlayer?: { pid?: number; displayId?: number | string; name?: string };
 }
 
 export class LegacyClubMemberController {
@@ -20,6 +22,9 @@ export class LegacyClubMemberController {
     private form: LegacyForm | null = null;
     private context: MemberContext = {};
     private page = 1;
+    private loading = false;
+    private pendingRefresh = false;
+    private reachedEnd = false;
 
     private remarkPlayer: { pid?: number; name?: string; onChanged?: (remarkName: string) => void } = {};
 
@@ -35,7 +40,7 @@ export class LegacyClubMemberController {
             lifecycle: {
                 onCreate: (form) => this.bind(form),
                 onShow: (form, context) => this.show(form, context),
-                onClose: () => { this.form = null; this.clearRows(); },
+                onClose: () => { this.form = null; this.pendingRefresh = false; this.clearRows(); },
             },
         });
         this.forms.register('UILobbyRemark', {
@@ -59,11 +64,30 @@ export class LegacyClubMemberController {
     private bind(form: LegacyForm): void {
         adaptClubMemberLandscape(form.node);
         this.click(form.find('btn_close') ?? form.find('bottom/btn_close'), () => this.forms.close('ui/club/ClubMembers'));
-        this.click(form.find('bottom/btn_search'), () => { this.page = 1; void this.load(true); });
-        this.click(form.find('bottom/btn_next'), () => { this.page += 1; void this.load(true); });
-        this.click(form.find('bottom/btn_last'), () => { if (this.page > 1) { this.page -= 1; void this.load(true); } });
+        this.click(form.find('bottom/btn_search'), () => { this.page = 1; this.reachedEnd = false; void this.load(true); });
+        this.active(form.node, 'bottom/btn_next', false);
+        this.active(form.node, 'bottom/btn_last', false);
+        this.active(form.node, 'bottom/page', false);
+        const view = UnifiedScroll.ensure(form.find('mark') ?? form.node, UnifiedScrollDirection.Vertical);
+        this.disposers.push(ScrollEvents.onBottom(view, () => {
+            if (this.loading || this.reachedEnd) return;
+            this.page += 1;
+            void this.load(false);
+        }));
         for (const path of ['bottom/OnlineToggle', 'bottom/FuToggle']) {
-            this.click(form.find(path), () => { this.page = 1; void this.load(true); });
+            const toggle = form.find(path)?.getComponent(Toggle);
+            if (!toggle) continue;
+            const change = (): void => {
+                this.page = 1;
+                this.reachedEnd = false;
+                console.info('[ClubMembers] filter:change', {
+                    clubId: this.clubId(), filter: path,
+                    checked: toggle.isChecked,
+                });
+                void this.load(true);
+            };
+            toggle.node.on(Toggle.EventType.TOGGLE, change);
+            this.disposers.push(() => toggle.node.off(Toggle.EventType.TOGGLE, change));
         }
         this.click(form.find('bottom/SeeToggle'), () => { void this.saveOnlineCountVisibility(); });
     }
@@ -73,11 +97,14 @@ export class LegacyClubMemberController {
         this.form = form;
         this.context = context && typeof context === 'object' ? context as MemberContext : {};
         this.page = 1;
+        this.pendingRefresh = false;
+        this.reachedEnd = false;
         const input = form.find('bottom/SearchBox/EditBox')?.getComponent(EditBox);
         if (input) input.string = '';
         const canManage = Number(this.context.minister ?? 0) > 0;
         this.active(form.node, 'bottom/SeeToggle', canManage);
         this.active(form.node, 'top/tip_pl', Number(this.context.unionId ?? 0) > 0);
+        this.active(form.node, 'top/ScoreTitle', Number(this.context.unionId ?? 0) > 0);
         if (canManage) void this.loadOnlineCountVisibility();
         void this.load(true);
         void this.loadOnlineCount();
@@ -85,25 +112,54 @@ export class LegacyClubMemberController {
 
     private async load(refresh: boolean): Promise<void> {
         const form = this.form; if (!form) return;
+        // A filter can change while the previous page is still in flight. Never
+        // discard that intent; execute one fresh first-page request afterwards.
+        if (this.loading) { this.pendingRefresh ||= refresh; return; }
         const query = form.find('bottom/SearchBox/EditBox')?.getComponent(EditBox)?.string.trim() ?? '';
         const online = Boolean(form.find('bottom/OnlineToggle')?.getComponent(Toggle)?.isChecked);
         const losePoint = Boolean(form.find('bottom/FuToggle')?.getComponent(Toggle)?.isChecked);
+        this.loading = true;
+        console.info('[ClubMembers] load:start', {
+            clubId: this.clubId(), unionId: Number(this.context.unionId ?? 0),
+            pageNum: this.page, onlineOnly: online, losePoint, queryPresent: query.length > 0,
+        });
         try {
             const rows = await this.client.request<MemberRow[]>('club.CClubGetMemberManage', {
                 clubId: this.clubId(), pageNum: this.page, query,
-                type: online ? 1 : 0, losePoint: losePoint ? 1 : 0,
+                // Both names are sent during the legacy protocol transition:
+                // current dispatch reads `type`, inherited handlers expose `getType()`.
+                type: online ? 1 : 0, getType: online ? 1 : 0,
+                pageType: 0, losePoint: losePoint ? 1 : 0,
+            });
+            console.info('[ClubMembers] load:success', {
+                clubId: this.clubId(), pageNum: this.page, onlineOnly: online, rowCount: rows.length,
             });
             if (!rows.length && this.page > 1) {
                 this.page -= 1;
-                await this.load(true);
+                this.reachedEnd = true;
                 return;
             }
+            if (query && rows.length === 0) {
+                await this.forms.show('UIMessage_Drift', null, null, '此玩家不存在');
+                return;
+            }
+            this.reachedEnd = rows.length < 20;
             this.render(rows, refresh);
-            this.label(form.node, 'bottom/page/lb_page', String(this.page));
-            if (query && rows.length === 0) await this.forms.show('UIMessage_Drift', null, null, '此玩家不存在');
         } catch (error: unknown) {
+            console.error('[ClubMembers] load:failed', {
+                clubId: this.clubId(), pageNum: this.page, onlineOnly: online,
+                message: error instanceof Error ? error.message : String(error),
+            });
             await this.forms.show('UIMessage_Drift', null, null,
                 error instanceof Error ? error.message : '获取俱乐部成员列表失败');
+        } finally {
+            this.loading = false;
+            if (this.pendingRefresh && this.form === form) {
+                this.pendingRefresh = false;
+                this.page = 1;
+                this.reachedEnd = false;
+                void this.load(true);
+            }
         }
     }
 
@@ -158,24 +214,24 @@ export class LegacyClubMemberController {
         // Never trust transport/invalidation order for identity-sensitive lists.
         // Keep the authenticated account first while preserving every other row's
         // server order, including after search and realtime refreshes.
-        const orderedRows = [...rows].sort((left, right) => {
-            const leftSelf = Number(left.shortPlayer?.pid ?? 0) === this.playerId;
-            const rightSelf = Number(right.shortPlayer?.pid ?? 0) === this.playerId;
-            return leftSelf === rightSelf ? 0 : leftSelf ? -1 : 1;
-        });
+        const roleRank = (row: MemberRow): number => Number(row.minister ?? 0) === 2 ? 0
+            : Number(row.minister ?? 0) > 0 ? 1 : Boolean(row.isPromotionManage) ? 2 : 3;
+        const orderedRows = [...rows].sort((left, right) => roleRank(left) - roleRank(right));
         for (const row of orderedRows) {
             const pid = Number(row.shortPlayer?.pid ?? 0); if (layout.getChildByName(String(pid))) continue;
             const node = instantiate(template); node.name = String(pid); node.active = true;
             this.label(node, 'name', String(row.shortPlayer?.name ?? ''));
-            this.label(node, 'id', `ID:${pid}`);
+            this.label(node, 'id', `ID:${clubPlayerDisplayId(row.shortPlayer, pid)}`);
             this.label(node, 'promoterName', String(row.upShortPlayer?.name ?? ''));
-            this.label(node, 'promoterId', `ID:${row.upShortPlayer?.pid ?? ''}`);
+            this.label(node, 'promoterId', `ID:${clubPlayerDisplayId(row.upShortPlayer)}`);
+            const ownerTitle = Number(this.context.unionId ?? 0) > 0 ? '盟主' : '圈主';
             this.label(node, 'zhiwu', Boolean(row.isPromotionManage) && Number(row.minister ?? 0) > 0 ? '管理/队长'
                 : Boolean(row.isPromotionManage) ? '队长'
-                : Number(row.minister ?? 0) === 2 ? '圈主'
+                : Number(row.minister ?? 0) === 2 ? ownerTitle
                     : Number(row.minister ?? 0) > 0 ? '管理' : '成员');
             this.label(node, 'quanka', Number(this.context.unionId ?? 0) > 0 ? '' : String(row.playerClubCard ?? 0));
-            this.label(node, 'ClubCent', Number(this.context.unionId ?? 0) > 0 ? String(row.clubCent ?? 0) : '');
+            this.active(node, 'ClubCent', Number(this.context.unionId ?? 0) > 0);
+            if (Number(this.context.unionId ?? 0) > 0) this.label(node, 'ClubCent', String(row.clubCent ?? 0));
             const control = node.getChildByName('controlNode');
             this.setMemberRowExpanded(node, false);
             this.bindMemberActions(node, row);
@@ -320,7 +376,9 @@ export class LegacyClubMemberController {
     }
     private clearRows(): void { for (const dispose of this.rowDisposers.splice(0)) dispose(); }
     private active(root: Node, path: string, value: boolean): void { const node = this.find(root, path); if (node) node.active = value; }
-    private label(root: Node, path: string, value: string): void { const label = this.find(root, path)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, path: string, value: string): void {
+        setClubDynamicLabel(this.find(root, path)?.getComponent(Label) ?? null, path, value);
+    }
     private find(root: Node, path: string): Node | null {
         let node: Node | null = root; for (const part of path.split('/')) node = node?.getChildByName(part) ?? null; return node;
     }

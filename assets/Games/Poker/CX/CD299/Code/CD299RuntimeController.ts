@@ -55,7 +55,10 @@ export class CD299RuntimeController {
         return this.run('preset', () => this.protocol.preset(base, mango));
     }
     public bet(action: CD299BetAction, amount = 0): Promise<boolean> {
-        return this.run(`bet:${action}`, () => this.protocol.bet(action, amount));
+        const authoritativeAmount = action === 'RAISE' && amount <= 0
+            ? Math.max(this.snapshot?.rules.openingBet ?? 1, Math.max(1, this.snapshot?.betTarget ?? 0) * 2)
+            : amount;
+        return this.run(`bet:${action}`, () => this.protocol.bet(action, authoritativeAmount));
     }
     public addCard(): Promise<boolean> { return this.run('add-card', () => this.protocol.addCard()); }
     public split(cards: readonly number[]): Promise<boolean> {

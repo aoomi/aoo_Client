@@ -11,6 +11,7 @@ export const CATALOG_FAMILY_BINDINGS:readonly RegionRuntimeBinding[]=Object.free
  {code:"CD201",family:"poker:pao-de-kuai",regionConfig:"CONFIG:CD201@sichuan/chengdu"},
  {code:"NJ201",family:"poker:pao-de-kuai",regionConfig:"CONFIG:NJ201@sichuan/neijiang"},
  {code:"LS201",family:"poker:pao-de-kuai",regionConfig:"CONFIG:LS201@sichuan/liangshan"},
+ {code:"CD299",family:"poker:cd299",regionConfig:"CONFIG:CD299@sichuan/chengdu"},
  {code:"ptmj",family:"mahjong:xue-zhan",regionConfig:"CONFIG:ptmj@fujian"},
  {code:"ndmj",family:"mahjong:standard",regionConfig:"CONFIG:ndmj@fujian"},
  {code:"smmj",family:"mahjong:standard",regionConfig:"CONFIG:smmj@fujian"},
@@ -544,6 +545,7 @@ export const CATALOG_GAME_METADATA:Readonly<Record<string,CatalogGameMetadata>>=
  "CD201":{gameId:8,displayName:"成都跑得快",category:"POKER",enabled:true},
  "NJ201":{gameId:629,displayName:"内江跑得快",category:"POKER",enabled:true},
  "LS201":{gameId:90005,displayName:"凉山跑得快",category:"POKER",enabled:true},
+ "CD299":{gameId:630,displayName:"成都扯旋",category:"POKER",enabled:true},
  "ptmj":{gameId:11,displayName:"PTMJ",category:"MAHJONG",enabled:false},
  "ndmj":{gameId:12,displayName:"NDMJ",category:"MAHJONG",enabled:true},
  "smmj":{gameId:13,displayName:"SMMJ",category:"MAHJONG",enabled:false},
@@ -1067,7 +1069,7 @@ export const CATALOG_GAME_METADATA:Readonly<Record<string,CatalogGameMetadata>>=
 });
 const DISABLED_GAME_CAPABILITIES:Readonly<GameCapabilities>=Object.freeze({supportsSettings:false,supportsChat:false,supportsVoice:false,supportsDissolve:false});
 const PDK_GAME_CAPABILITIES:Readonly<GameCapabilities>=Object.freeze({supportsSettings:true,supportsChat:true,supportsVoice:true,supportsDissolve:true});
-export const CATALOG_GAME_CAPABILITIES:Readonly<Record<string,GameCapabilities>>=Object.freeze({CD201:PDK_GAME_CAPABILITIES,NJ201:PDK_GAME_CAPABILITIES,LS201:PDK_GAME_CAPABILITIES});
+export const CATALOG_GAME_CAPABILITIES:Readonly<Record<string,GameCapabilities>>=Object.freeze({CD201:PDK_GAME_CAPABILITIES,NJ201:PDK_GAME_CAPABILITIES,LS201:PDK_GAME_CAPABILITIES,CD299:PDK_GAME_CAPABILITIES});
 export function getCatalogGameMetadata(gameCode:string):CatalogGameMetadata|undefined{return CATALOG_GAME_METADATA[gameCode];}
 export function getGameCapabilities(gameCode:string):GameCapabilities{return CATALOG_GAME_CAPABILITIES[gameCode]??DISABLED_GAME_CAPABILITIES;}
 export function populateAuthoritativeGameNames(target:Map<number,string>):void{target.clear();for(const binding of CATALOG_FAMILY_BINDINGS){const metadata=getCatalogGameMetadata(binding.code);if(metadata?.enabled)target.set(metadata.gameId,metadata.displayName);}}

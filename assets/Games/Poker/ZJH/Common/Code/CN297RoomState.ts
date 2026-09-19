@@ -7,10 +7,11 @@ export interface CN297SeatState {
 }
 export interface CN297Snapshot {
     gameCode: typeof CN297_GAME_CODE; playVersion: typeof CN297_PLAY_VERSION; roomId: number; ownerPlayerId: number;
-    seatLimit: 8 | 10; viewerRole: 'SPECTATOR' | 'SEATED';
+    seatLimit: 8 | 10; minimumPlayers: number; viewerRole: 'SPECTATOR' | 'SEATED';
     stateVersion: number; state: CN297Phase;
     roundNo: number; roundLimit: number; operatorSeat: number; winnerSeat: number;
-    bettingRound: number; compareStartRound: number; baseBet: number; maximumBet: number; pot: number;
+    bettingRound: number; compareStartRound: number; mustBlindRounds: number;
+    baseBet: number; minimumBet: number; maximumBet: number; pot: number;
     operationDeadlineEpochMillis: number; seats: Readonly<Record<number, CN297SeatState>>;
 }
 

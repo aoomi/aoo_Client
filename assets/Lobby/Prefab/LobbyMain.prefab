@@ -47,7 +47,7 @@
       }
     ],
     "_prefab": {
-      "__id__": 434
+      "__id__": 436
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -9589,6 +9589,9 @@
       },
       {
         "__id__": 402
+      },
+      {
+        "__id__": 434
       }
     ],
     "_prefab": {
@@ -10398,6 +10401,64 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "9bq1GC+uBOLpABYIzQTeID"
+  },
+  {
+    "__type__": "cc.Button",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 395
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 435
+    },
+    "clickEvents": [],
+    "_interactable": true,
+    "_transition": 0,
+    "_normalColor": {
+      "__type__": "cc.Color",
+      "r": 214,
+      "g": 214,
+      "b": 214,
+      "a": 255
+    },
+    "_hoverColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_pressedColor": {
+      "__type__": "cc.Color",
+      "r": 211,
+      "g": 211,
+      "b": 211,
+      "a": 255
+    },
+    "_disabledColor": {
+      "__type__": "cc.Color",
+      "r": 124,
+      "g": 124,
+      "b": 124,
+      "a": 255
+    },
+    "_normalSprite": null,
+    "_hoverSprite": null,
+    "_pressedSprite": null,
+    "_disabledSprite": null,
+    "_duration": 0.1,
+    "_zoomScale": 1.2,
+    "_target": {
+      "__id__": 395
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "joinRoomButtonStdContract"
   },
   {
     "__type__": "cc.PrefabInfo",

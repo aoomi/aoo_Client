@@ -7,6 +7,10 @@ import { Poker_Card_Presenter, Poker_Card_Suit } from './Poker_Card_Presenter';
 const { ccclass } = _decorator;
 const PROTOCOL_RANKS = Object.freeze([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 const PROTOCOL_SUITS = Object.freeze([1, 2, 3, 4]);
+const CARD_SCALE = 0.567;
+const RANK_GROUP_WIDTH = 220;
+const RANK_GROUP_HEIGHT = 150;
+const RANK_GROUP_GAP = 24;
 
 export interface PokerDeckSelection {
     readonly gameCode: string;
@@ -32,12 +36,13 @@ export interface PokerDeckSelectionSubmit extends PokerDeckSelectionContext {
 
 /**
  * 按权威 deckCards 展示完整玩法牌堆。
- * 每个点数独占一个容器；容器固定四个花色槽位。不存在的实体牌显示禁用遮罩且不能选中，
+ * 每个点数独占一个容器；只创建权威牌堆实际包含的花色牌。
  * 整个点数都不存在时（例如凉山跑得快的 2）隐藏该点数容器。
  */
 @ccclass('Poker_Deck_Presenter')
 export class Poker_Deck_Presenter extends Component {
     private content: Node | null = null;
+    private selectedContent: Node | null = null;
     private cardTemplate: Node | null = null;
     private gameCode = '';
     private context: PokerDeckSelectionContext | null = null;
@@ -86,7 +91,7 @@ export class Poker_Deck_Presenter extends Component {
         // PokerTest still contains the original single-card visual as its cloning
         // template. Hide only those template layers; authored action controls must
         // survive when the generated deck is rebuilt.
-        const templateLayers = new Set(['Card_Front', 'Card_Back', 'Selected_Mask', 'Disabled_Mask', 'Selected']);
+        const templateLayers = new Set(['Card_Front', 'Card_Back', 'Selected_Mask', 'Disabled_Mask']);
         for (const child of [...this.node.children]) {
             if (templateLayers.has(child.name)) child.active = false;
         }
@@ -102,8 +107,14 @@ export class Poker_Deck_Presenter extends Component {
             content.addComponent(UITransform).setContentSize(1280, 720);
             this.node.addChild(content);
         }
+        if (!content.getComponent(BlockInputEvents)) content.addComponent(BlockInputEvents);
         content.active = true;
         this.content = content;
+        const selected = this.node.getChildByName('Selected');
+        if (!selected) throw new Error('PokerTest is missing the authored Selected container');
+        selected.active = true;
+        selected.removeAllChildren();
+        this.selectedContent = selected;
     }
 
     /** PokerTest 自己持有全屏遮罩，放在所有牌和操作按钮后面。 */
@@ -123,6 +134,7 @@ export class Poker_Deck_Presenter extends Component {
         mask.setPosition(0, 0, 0);
         mask.setSiblingIndex(0);
         this.content?.setSiblingIndex(1);
+        this.bindPointerBlocker(mask);
         mask.active = true;
     }
 
@@ -134,36 +146,53 @@ export class Poker_Deck_Presenter extends Component {
             const rankCards = PROTOCOL_SUITS.map(suit => suit * 100 + rank);
             if (!rankCards.some(card => deck.has(card))) continue;
             const group = this.createRankGroup(rank, visibleIndex++);
-            rankCards.forEach((card, suitIndex) => this.createCard(group, card, deck.has(card), suitIndex));
+            rankCards.filter(card => deck.has(card))
+                .forEach((card, availableIndex) => this.createCard(group, card, availableIndex));
         }
     }
 
     private createRankGroup(rank: number, visibleIndex: number): Node {
         const group = new Node(`Rank_${rank === 15 ? '2' : rank}`);
         group.layer = this.node.layer;
-        group.addComponent(UITransform).setContentSize(174, 110);
-        const column = visibleIndex % 7;
-        const row = Math.floor(visibleIndex / 7);
-        group.setPosition(-540 + column * 180, row === 0 ? 80 : -80, 0);
+        group.addComponent(UITransform).setContentSize(RANK_GROUP_WIDTH, RANK_GROUP_HEIGHT);
+        const column = visibleIndex % 5;
+        const row = Math.floor(visibleIndex / 5);
+        group.setPosition(
+            -488 + column * (RANK_GROUP_WIDTH + RANK_GROUP_GAP),
+            150 - row * (RANK_GROUP_HEIGHT + RANK_GROUP_GAP),
+            0,
+        );
         this.content!.addChild(group);
         return group;
     }
 
-    private createCard(group: Node, rawCard: number, available: boolean, suitIndex: number): void {
+    private createCard(group: Node, rawCard: number, availableIndex: number): void {
         const card = instantiate(this.cardTemplate!);
         card.name = `Card_${rawCard}`;
         card.active = true;
-        card.setScale(new Vec3(0.42, 0.42, 1));
-        card.setPosition(-45 + suitIndex * 30, 0, suitIndex);
+        // Keep every four-card rank readable while leaving equal spacing between
+        // the fixed-size rank containers. CARD_SCALE is 90% of the prior 0.63.
+        card.setScale(new Vec3(CARD_SCALE, CARD_SCALE, 1));
+        card.setPosition(-57 + availableIndex * 38, 0, availableIndex);
         const presenter = card.getComponent(Poker_Card_Presenter);
         if (!presenter) throw new Error('PokerTest card template is missing Poker_Card_Presenter');
         const protocolSuit = Math.floor(rawCard / 100);
         const protocolRank = rawCard % 100;
         const suits = [Poker_Card_Suit.Diamond, Poker_Card_Suit.Club, Poker_Card_Suit.Heart, Poker_Card_Suit.Spade] as const;
-        presenter.present(protocolRank === 15 ? 2 : protocolRank, suits[protocolSuit - 1], undefined, false, !available);
+        presenter.present(protocolRank === 15 ? 2 : protocolRank, suits[protocolSuit - 1], undefined, false, false);
         const button = card.getComponent(Button) ?? card.addComponent(Button);
-        button.interactable = available;
-        if (available) card.on(Button.EventType.CLICK, () => this.toggleCard(card, rawCard, presenter), this);
+        button.interactable = true;
+        let lastActivationAt = 0;
+        const activate = (event?: EventMouse | EventTouch): void => {
+            if (event) event.propagationStopped = true;
+            const now = Date.now();
+            if (now - lastActivationAt < 180) return;
+            lastActivationAt = now;
+            this.toggleCard(card, rawCard, presenter);
+        };
+        card.on(Button.EventType.CLICK, activate, this);
+        card.on(Node.EventType.TOUCH_END, activate, this);
+        card.on(Node.EventType.MOUSE_UP, activate, this);
         group.addChild(card);
     }
 
@@ -180,12 +209,20 @@ export class Poker_Deck_Presenter extends Component {
         for (const child of [...template.children]) {
             if (child.name === 'CurrentRound' || child.name === 'NextRound' || child.name === 'SelectCard'
                 || child.name === 'Confirm' || child.name === 'Close'
+                || child.name === 'Selected'
                 || child.name === 'DeckContent') {
+                // destroy() is deferred until the end of the frame. Detach first,
+                // otherwise cards instantiated immediately below inherit the whole
+                // selector UI and its full-screen hit areas.
+                child.removeFromParent();
                 child.destroy();
             }
         }
         const deckPresenter = template.getComponent(Poker_Deck_Presenter);
-        if (deckPresenter) deckPresenter.destroy();
+        if (deckPresenter) {
+            template.removeComponent(deckPresenter);
+            deckPresenter.destroy();
+        }
         if (!template.getComponent(Poker_Card_Presenter)) {
             template.destroy();
             throw new Error('PokerTest root is missing Poker_Card_Presenter');
@@ -199,8 +236,29 @@ export class Poker_Deck_Presenter extends Component {
         if (selected) this.selectedCards.add(rawCard);
         else this.selectedCards.delete(rawCard);
         presenter.setSelected(selected);
+        this.refreshSelectedContent();
         const detail: PokerDeckSelection = { gameCode: this.gameCode, card: rawCard, selected };
         this.node.emit('poker-card-selected', detail);
+    }
+
+    /** Mirrors the current selection into the authored PokerTest/Selected tray. */
+    private refreshSelectedContent(): void {
+        if (!this.selectedContent || !this.cardTemplate) return;
+        this.selectedContent.removeAllChildren();
+        this.selected().forEach((rawCard, index) => {
+            const card = instantiate(this.cardTemplate!);
+            card.name = `Selected_${rawCard}`;
+            card.active = true;
+            card.setScale(new Vec3(CARD_SCALE, CARD_SCALE, 1));
+            card.setPosition((index - (this.selectedCards.size - 1) / 2) * 43.2, 0, index);
+            const presenter = card.getComponent(Poker_Card_Presenter);
+            if (!presenter) throw new Error('PokerTest selected card is missing Poker_Card_Presenter');
+            const protocolSuit = Math.floor(rawCard / 100);
+            const protocolRank = rawCard % 100;
+            const suits = [Poker_Card_Suit.Diamond, Poker_Card_Suit.Club, Poker_Card_Suit.Heart, Poker_Card_Suit.Spade] as const;
+            presenter.present(protocolRank === 15 ? 2 : protocolRank, suits[protocolSuit - 1]);
+            this.selectedContent!.addChild(card);
+        });
     }
 
     private bindAuthoredControls(): void {
@@ -246,6 +304,19 @@ export class Poker_Deck_Presenter extends Component {
         if (now - this.lastControlPointerAt < 180) return;
         this.lastControlPointerAt = now;
         handler();
+    }
+
+    private bindPointerBlocker(node: Node): void {
+        node.targetOff(this);
+        const stop = (event: EventMouse | EventTouch): void => {
+            event.propagationStopped = true;
+        };
+        node.on(Node.EventType.TOUCH_START, stop, this);
+        node.on(Node.EventType.TOUCH_MOVE, stop, this);
+        node.on(Node.EventType.TOUCH_END, stop, this);
+        node.on(Node.EventType.MOUSE_DOWN, stop, this);
+        node.on(Node.EventType.MOUSE_MOVE, stop, this);
+        node.on(Node.EventType.MOUSE_UP, stop, this);
     }
 
     private submit(): void {

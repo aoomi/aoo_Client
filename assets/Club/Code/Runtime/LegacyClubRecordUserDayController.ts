@@ -2,6 +2,7 @@ import { Button, Label, Layout, Node, ScrollView, instantiate } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface DayPlayer { pid?: number; name?: string; iconUrl?: string; point?: number; clubCent?: number }
 interface DayResult { pid?: number; point?: number; clubCent?: number }
@@ -61,7 +62,7 @@ export class LegacyClubRecordUserDayController {
     private rowClick(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.rowDisposers.push(() => node.off(Button.EventType.CLICK, fn)); }
     private clearRows(): void { for (const dispose of this.rowDisposers.splice(0)) dispose(); }
     private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const result = this.desc(child, name); if (result) return result; } return null; }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private async tip(message: string): Promise<void> { await this.forms.show('UIMessage_Drift', null, null, message); }
 }

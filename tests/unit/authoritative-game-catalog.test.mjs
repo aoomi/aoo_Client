@@ -22,8 +22,8 @@ test('lobby and club consume the authoritative catalog without retired resource 
   assert.match(gateway, /\/api\/v2\/hall\/configuration/);
   assert.match(screen, /hallRoomGateway\.catalog\('ALL'\)/);
   assert.doesNotMatch(union, /hall\.catalog|请先选择地区/);
-  assert.equal((catalog.match(/\{code:"[^"]+",family:"[^"]+",regionConfig:"[^"]+"\}/g) || []).length, 530);
-  assert.equal((catalog.match(/gameId:\d+,displayName:"[^"]*",category:"(?:MAHJONG|POKER|LONG_CARD|WORD_CARD)",enabled:(?:true|false)/g) || []).length, 530);
+  assert.equal((catalog.match(/\{code:"[^"]+",family:"[^"]+",regionConfig:"[^"]+"\}/g) || []).length, 531);
+  assert.equal((catalog.match(/gameId:\d+,displayName:"[^"]*",category:"(?:MAHJONG|POKER|LONG_CARD|WORD_CARD)",enabled:(?:true|false)/g) || []).length, 531);
 });
 
 test('region is a display filter and never enters authoritative room creation', () => {

@@ -45,6 +45,17 @@ export class ProtocolClient extends LegacyWebSocketClient {
 
     public setWsTicket(ticket: string): void { this.wsTicket = ticket; }
 
+    public override async connect(url: string, timeoutMs = 5000): Promise<void> {
+        await super.connect(url, timeoutMs);
+        // LegacyWebSocketClient.connect starts by calling the polymorphic close().
+        // ProtocolClient.close deliberately clears push gating state, so restore
+        // the already selected room authority only after the new socket is live.
+        // Without this, raw room pushes reach the browser but are rejected before
+        // every gameplay listener on the first connection and after reconnect.
+        const authority = this.roomAuthority;
+        if (authority) this.roomPushGate.bind(authority.roomId, authority.playVersion);
+    }
+
     public bindRoomAuthority(roomId: number | string, playVersion: string): void {
         const normalizedRoomId = String(roomId).trim();
         const normalizedVersion = playVersion.trim();
@@ -246,9 +257,11 @@ export class ProtocolClient extends LegacyWebSocketClient {
     }
 
     private envelope(route: ProtocolRouteDecision, kind: 'req' | 'push', body: unknown): ProtocolRequest {
-        const requestId = ProtocolClient.uuid();
-        this.v2Sequence = this.v2Sequence >= Number.MAX_SAFE_INTEGER ? 1 : this.v2Sequence + 1;
         const authority = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+        const suppliedIdempotencyKey = typeof authority.idempotencyKey === 'string'
+            ? authority.idempotencyKey.trim() : '';
+        const requestId = suppliedIdempotencyKey || ProtocolClient.uuid();
+        this.v2Sequence = this.v2Sequence >= Number.MAX_SAFE_INTEGER ? 1 : this.v2Sequence + 1;
         const reconnect = route.canonicalMsgId === 'room.reconnect';
         const roomDispatch = route.canonicalMsgId === 'common.room.dispatch';
         const canonicalPokerDispatch = CANONICAL_POKER_DISPATCH.test(route.canonicalMsgId);

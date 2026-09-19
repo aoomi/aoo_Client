@@ -46,6 +46,11 @@ test('V2 websocket sequence is allocated only at the real send boundary', () => 
     assert.doesNotMatch(source, /const envelope = this\.envelope\(route, 'req', body\);\s*return send/);
 });
 
+test('a replay-safe mutation keeps its idempotency key as the durable V2 request id', () => {
+    assert.match(source, /const suppliedIdempotencyKey = typeof authority\.idempotencyKey === 'string'/);
+    assert.match(source, /const requestId = suppliedIdempotencyKey \|\| ProtocolClient\.uuid\(\)/);
+});
+
 test('authoritative V2 room context uses only positive room ids and keeps error correlation populated', () => {
     assert.match(source, /private authoritativeRoomId\(authority: Record<string, unknown>\): string/);
     assert.match(source, /ProtocolClient\.positiveId\(authority\.roomId\)[\s\S]*ProtocolClient\.positiveId\(authority\.roomID\)[\s\S]*this\.roomAuthority\?\.roomId/);

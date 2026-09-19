@@ -27,8 +27,12 @@ test('模板桌沿用 2.2.2 显式占位排布与标题优先级', () => {
         'Players_ 设计宽度必须换算为大厅中的实际缩放宽度');
     assert.match(source, /node\.setPosition\(columnCenters\[column\]/,
         '每张模板桌必须按实际列宽获得两行横向分页坐标');
-    assert.match(source, /markTransform\.setContentSize\(roomListTransform\.contentSize\.width/,
-        '滚动视口必须收敛到 RoomList 可见宽度，不能把屏幕外区域算作可见区');
+    assert.doesNotMatch(source, /markTransform\.setContentSize\(roomListTransform\.contentSize\.width/,
+        '桌面渲染不得把预制体 1600px 视口缩成 RoomList 的 1280px');
+    assert.doesNotMatch(source, /viewTransform\.setContentSize\(\s*roomListTransform\.contentSize\.width/,
+        '桌面渲染不得覆盖预制体 view 的权威宽度');
+    assert.match(source, /if \(markWidget\) markWidget\.enabled = false/,
+        '运行时仍须禁用旧 Widget，避免其偏移规则覆盖预制体尺寸');
     assert.doesNotMatch(source, /roomLayout\.constraint = Layout\.Constraint\.FIXED_ROW/,
         '不得强制两行，否则第二行会落到大厅底栏后面');
     assert.match(source, /if \(roomName\) return roomName/,

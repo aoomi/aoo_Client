@@ -3,7 +3,7 @@ import { UnifiedScroll } from '../../../Common/Code/UI/UnifiedScroll';
 import type { HallRoomRuleField, HallRoomRuleOption } from '../../../Lobby/Code/HallRoomGateway';
 
 export interface RuleValidationResult { readonly ok: boolean; readonly message: string; }
-type RuleControl = 'radio' | 'checkbox';
+type RuleControl = 'radio' | 'checkbox' | 'number';
 type RuleOption = HallRoomRuleOption | string | number | boolean;
 interface OptionPlacement { readonly x: number; readonly y: number; readonly width: number; readonly visualRows: number; }
 
@@ -47,7 +47,7 @@ export class CreateRoomRulePresenter {
     }
     public snapshot(): Record<string, unknown> {
         return Object.fromEntries(this.fields.filter(field => !field.disabled && this.values.has(field.key))
-            .map(field => [field.key, this.values.get(field.key)]));
+            .map(field => [field.key, this.snapshotValue(field, this.values.get(field.key))]));
     }
     public validate(): RuleValidationResult {
         for (const field of this.fields) {
@@ -55,7 +55,9 @@ export class CreateRoomRulePresenter {
             const value = this.values.get(field.key);
             if (field.required && (value === undefined || (Array.isArray(value) && value.length === 0))) return { ok: false, message: `请选择${this.fieldLabel(field)}` };
             if (value === undefined) continue;
-            if (this.control(field) === 'checkbox') {
+            if (this.control(field) === 'number') {
+                if (!this.validNumber(field, value)) return { ok: false, message: `${this.fieldLabel(field)}数值无效` };
+            } else if (this.control(field) === 'checkbox') {
                 if (!Array.isArray(value) || value.some(item => !this.hasEnabledOption(field, item))) return { ok: false, message: `${this.fieldLabel(field)}包含不可用选项` };
             } else if (!this.hasEnabledOption(field, value)) return { ok: false, message: `${this.fieldLabel(field)}选项无效` };
         }
@@ -74,12 +76,15 @@ export class CreateRoomRulePresenter {
             if (!category || !label || !radio || !checkbox) throw new Error(`规则模板节点契约无效: ${field.key}`);
             const categoryNode = category;
             label.string = this.fieldLabel(field); radio.active = false; checkbox.active = false;
-            const prototype = this.control(field) === 'checkbox' ? checkbox : radio;
-            const options = field.options ?? [];
+            const control = this.control(field);
+            const prototype = control === 'checkbox' ? checkbox : radio;
+            const options: readonly RuleOption[] = control === 'number'
+                ? ['-', String(this.values.get(field.key) ?? ''), '+'] : field.options ?? [];
             const draftPlacements = this.layoutOptions(row, categoryNode, prototype, options);
             this.resizeRuntimeRow(row, draftPlacements[0]?.visualRows ?? 1);
             const placements = this.layoutOptions(row, categoryNode, prototype, options);
-            options.forEach((option, index) => this.appendOption(row, prototype, field, option, placements[index]));
+            if (control === 'number') this.appendNumberControl(row, prototype, field, placements);
+            else options.forEach((option, index) => this.appendOption(row, prototype, field, option, placements[index]));
             this.content.addChild(row); this.runtimeRows.push(row);
         }
         this.content.getComponent(Layout)?.updateLayout(true);
@@ -152,6 +157,27 @@ export class CreateRoomRulePresenter {
         if (!disabled) item.on(Toggle.EventType.TOGGLE, () => this.choose(field, option), this);
         row.addChild(item);
     }
+    private appendNumberControl(row: Node, prototype: Node, field: HallRoomRuleField, placements: readonly OptionPlacement[]): void {
+        const value = Number(this.values.get(field.key));
+        const labels = ['-', String(value), '+'];
+        labels.forEach((text, index) => {
+            const item = instantiate(prototype); item.name = `Number_${field.key}_${index}`; item.active = true;
+            const transform = item.getComponent(UITransform); const label = item.getChildByName('Label')?.getComponent(Label);
+            const toggle = item.getComponent(Toggle); const placement = placements[index];
+            if (!transform || !label || !toggle || !placement) throw new Error(`规则数值模板契约无效: ${field.key}`);
+            transform.setContentSize(placement.width, transform.height);
+            item.setPosition(placement.x, placement.y, prototype.position.z);
+            label.string = text; toggle.isChecked = false;
+            const direction = index === 0 ? -1 : index === 2 ? 1 : 0;
+            const next = direction === 0 ? value : this.nextNumber(field, value, direction);
+            toggle.interactable = !field.disabled && direction !== 0 && next !== value;
+            this.applyState(item, false);
+            if (toggle.interactable) item.on(Toggle.EventType.TOGGLE, () => {
+                this.values.set(field.key, next); this.render();
+            }, this);
+            row.addChild(item);
+        });
+    }
     private applyState(item: Node, selected: boolean): void {
         const selectedNode = item.getChildByName('Icon_Selected'); const unselectedNode = item.getChildByName('Icon_Unselected');
         if (selectedNode) selectedNode.active = selected; if (unselectedNode) unselectedNode.active = !selected;
@@ -175,7 +201,8 @@ export class CreateRoomRulePresenter {
             return this.control(field) === 'checkbox' ? selected.map(option => this.optionValue(option))
                 : selected.length ? this.optionValue(selected[0]) : undefined;
         }
-        if (field.defaultValue !== undefined) return field.defaultValue;
+        if (field.defaultValue !== undefined) return this.control(field) === 'number'
+            ? this.normalizeNumber(field, field.defaultValue) : field.defaultValue;
         return this.control(field) === 'checkbox' ? [] : undefined;
     }
     private initializeValues(remembered: Record<string, unknown> | null): void {
@@ -189,8 +216,14 @@ export class CreateRoomRulePresenter {
                 continue;
             }
             const saved = remembered?.[field.key];
-            if (this.control(field) === 'checkbox') {
-                const projected = Array.isArray(saved) ? saved.filter(value => this.hasEnabledOption(field, value)) : null;
+            if (this.control(field) === 'number') {
+                const restored = this.normalizeNumber(field, saved);
+                const initial = restored ?? this.normalizeNumber(field, fallback);
+                if (initial !== undefined) this.values.set(field.key, initial);
+            } else if (this.control(field) === 'checkbox') {
+                const restored = this.booleanFlag(field) && typeof saved === 'boolean'
+                    ? (saved ? [true] : []) : saved;
+                const projected = Array.isArray(restored) ? restored.filter(value => this.hasEnabledOption(field, value)) : null;
                 this.values.set(field.key, projected ?? (Array.isArray(fallback) ? fallback : []));
             } else if (saved !== undefined && this.hasEnabledOption(field, saved)) this.values.set(field.key, saved);
             else if (fallback !== undefined) this.values.set(field.key, fallback);
@@ -208,7 +241,39 @@ export class CreateRoomRulePresenter {
         const control = String(field.control ?? '').trim().toLowerCase();
         if (control === 'radio' || control === 'single_select') return 'radio';
         if (control === 'checkbox' || control === 'multi_select') return 'checkbox';
+        if (control === 'number') return 'number';
         throw new Error(`未知创建房间控件类型: ${field.control ?? ''}`);
+    }
+    private normalizeNumber(field: HallRoomRuleField, raw: unknown): number | undefined {
+        if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
+        const min = typeof field.min === 'number' && Number.isFinite(field.min) ? field.min : Number.MIN_SAFE_INTEGER;
+        const max = typeof field.max === 'number' && Number.isFinite(field.max) ? field.max : Number.MAX_SAFE_INTEGER;
+        const step = typeof field.step === 'number' && Number.isFinite(field.step) && field.step > 0 ? field.step : 1;
+        const clamped = Math.min(max, Math.max(min, raw));
+        const aligned = min === Number.MIN_SAFE_INTEGER ? clamped : min + Math.round((clamped - min) / step) * step;
+        return Math.min(max, Math.max(min, Number(aligned.toFixed(10))));
+    }
+    private nextNumber(field: HallRoomRuleField, current: number, direction: -1 | 1): number {
+        const step = typeof field.step === 'number' && Number.isFinite(field.step) && field.step > 0 ? field.step : 1;
+        return this.normalizeNumber(field, current + direction * step) ?? current;
+    }
+    private validNumber(field: HallRoomRuleField, raw: unknown): boolean {
+        if (typeof raw !== 'number' || !Number.isFinite(raw)) return false;
+        const min = typeof field.min === 'number' && Number.isFinite(field.min) ? field.min : Number.MIN_SAFE_INTEGER;
+        const max = typeof field.max === 'number' && Number.isFinite(field.max) ? field.max : Number.MAX_SAFE_INTEGER;
+        if (raw < min || raw > max) return false;
+        const step = typeof field.step === 'number' && Number.isFinite(field.step) && field.step > 0 ? field.step : 1;
+        return min === Number.MIN_SAFE_INTEGER || Math.abs((raw - min) / step - Math.round((raw - min) / step)) < 1e-8;
+    }
+    /** A one-option boolean checkbox is edited as a selection but submitted as a boolean rule. */
+    private booleanFlag(field: HallRoomRuleField): boolean {
+        const options = field.options ?? [];
+        return this.control(field) === 'checkbox' && options.length === 1
+            && typeof this.optionValue(options[0]) === 'boolean';
+    }
+    private snapshotValue(field: HallRoomRuleField, value: unknown): unknown {
+        if (!this.booleanFlag(field)) return value;
+        return Array.isArray(value) && value.some(item => item === true);
     }
     private isSelected(field: HallRoomRuleField, option: RuleOption): boolean {
         const optionValue = this.optionValue(option);

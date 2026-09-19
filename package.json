@@ -14,9 +14,12 @@
     "version": "3.8.8"
   },
   "scripts": {
-    "audit:client-runtime": "node scripts/audit-client-runtime-deps.mjs",
+    "preview:dual": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs",
+    "preview:quad": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs --clients 4",
+    "audit:client-runtime": "node scripts/verify-unresolved-identifiers.mjs && node scripts/audit-client-runtime-deps.mjs",
     "verify:client-manager": "node scripts/verify-client-manager.mjs",
     "verify:component-registration": "node scripts/verify-component-registration.mjs",
+    "verify:unresolved-identifiers": "node scripts/verify-unresolved-identifiers.mjs",
     "verify:creator-node-creation": "node scripts/verify-creator-node-creation.mjs",
     "verify:creator-native-assets": "node scripts/verify-creator-native-assets.mjs",
     "verify:cur07-editor-sync": "node scripts/verify-cur07-editor-sync.mjs",

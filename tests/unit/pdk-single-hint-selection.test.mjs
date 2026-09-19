@@ -1705,6 +1705,24 @@ test('Hint clicked during continuous play is queued and consumed on the next loc
   assert.match(authority, /consumeQueuedHintAfterPlay\(\)[\s\S]*autoHintForAuthoritativeTurn/);
 });
 
+test('manual Hint paints selection immediately and hand rendering does not synchronously precompute hints', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const presenter = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/Room/CardPresenter.ts'), 'utf8');
+  const tip = controller.slice(controller.indexOf('private tip(): void'),
+    controller.indexOf('private prepareHintCache'));
+  const render = controller.slice(controller.indexOf('private async renderHand'),
+    controller.indexOf('private shouldAnimateDeal'));
+
+  assert.match(tip, /this\.updateSelection\(true\)/);
+  assert.match(controller,
+    /if \(immediate\) this\.cards\.selectImmediately\(node, selected\)/);
+  assert.match(presenter,
+    /public selectImmediately[\s\S]*this\.cancelMotion\(card\)[\s\S]*card\.setPosition/);
+  assert.doesNotMatch(render, /prepareHintCache\(\)/);
+});
+
 test('remote authority cards land without waiting for decorative flight', () => {
   const source = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');

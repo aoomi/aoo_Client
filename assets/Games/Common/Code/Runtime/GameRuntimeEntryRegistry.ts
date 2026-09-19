@@ -9,7 +9,7 @@ const LOG_PREFIX = '[GameRuntimeEntryRegistry]';
 
 export class GameRuntimeEntryResolutionError extends Error {
     public constructor(
-        readonly code: 'DUPLICATE_GAME_CODE' | 'AMBIGUOUS_GAME_FAMILY',
+        readonly code: 'DUPLICATE_GAME_CODE' | 'AMBIGUOUS_GAME_FAMILY' | 'UNSUPPORTED_GAME_RUNTIME',
         message: string,
     ) {
         super(message);
@@ -57,6 +57,20 @@ export class GameRuntimeEntryRegistry {
             `family ${family} matched multiple runtime entries: ${matches.map(entry => entry.id).join(', ')}`,
         );
         console.error(LOG_PREFIX, { action: 'resolve', ...context, entries: matches.map(entry => entry.id), error });
+        throw error;
+    }
+
+    public resolveRequired(handoff: LegacySubgameTicket): GameRuntimeEntry {
+        const resolved = this.resolveUnique(handoff);
+        if (resolved) return resolved;
+        const gameCode = canonicalGameCode(handoff);
+        const family = canonicalGameFamily(handoff);
+        const context = this.context(handoff, gameCode, family);
+        const error = new GameRuntimeEntryResolutionError(
+            'UNSUPPORTED_GAME_RUNTIME',
+            `no runtime entry is registered for gameCode=${gameCode || 'unknown'}, family=${family || 'unknown'}`,
+        );
+        console.error(LOG_PREFIX, { action: 'resolve', ...context, error });
         throw error;
     }
 

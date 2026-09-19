@@ -148,8 +148,8 @@ test('record settlement uses explicit history context and shared rule formatting
 test('record date navigation and big-winner summary use their unique prefab paths', () => {
     const history = read('Modules/Records/Code/ReplayController.ts');
     const recordsPrefab = read('Modules/Records/Prefab/Records.prefab');
-    assert.match(history, /DateFilterBar\/DatePagination\/DateNavigation/);
-    assert.match(history, /DateFilterBar\/PlayersLabel', `大赢家次数:\$\{bigWinnerCount\}`/);
+    assert.match(history, /DateFilter\/Page\/Date/);
+    assert.match(history, /DateFilter\/Lb_Players', `大赢家次数:\$\{bigWinnerCount\}`/);
     assert.match(history, /readonly bigWinnerCount\?: number/);
     assert.doesNotMatch(recordsPrefab, /大赢家次数:1245/);
     assert.match(recordsPrefab, /大赢家次数:0/);

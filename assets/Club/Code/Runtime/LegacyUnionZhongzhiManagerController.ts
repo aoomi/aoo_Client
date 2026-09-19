@@ -2,6 +2,7 @@ import { Button, EditBox, Label, Layout, Node, ScrollView, Toggle, instantiate }
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface Context { id?: number; clubId?: number; unionId?: number; unionName?: string; unionSign?: number; unionPostType?: number; minister?: number; levelPromotion?: number }
 interface CompetitionTime { type?: number; beginTime?: number | string; status?: number }
@@ -289,7 +290,7 @@ export class LegacyUnionZhongzhiManagerController {
     private clearRows(): void { for (const dispose of this.rowDisposers.splice(0)) dispose(); }
     private toggle(root: Node, name: string): void { const node = this.desc(root, name); if (node) node.active = !node.active; }
     private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const found = this.desc(child, name); if (found) return found; } return null; }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private async tip(message: string): Promise<void> { await this.forms.show('ui/UIMessage', message); }
 }

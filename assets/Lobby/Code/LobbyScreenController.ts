@@ -229,6 +229,7 @@ export class LobbyScreenController {
             main.node,
             accessToken,
             String(this.role.playerId),
+            this.client,
             (error) => this.showProductionError(error),
             refreshAccessToken,
             shouldRefreshAccessToken,
@@ -674,8 +675,10 @@ export class LobbyScreenController {
         this.clearRoomRecoveryIntent();
         this.enteringRoom = false;
         this.joinRoomController?.cancelPending();
-        this.playSelector?.destroy();
-        this.playSelector = null;
+        // The lobby controller and its Hall gateway remain alive across an
+        // in-place room return. Destroying the create-room selector here leaves
+        // the still-visible CreateRoom button with no controller until a full
+        // scene reconstruction. Lifetime cleanup belongs to destroy().
     }
 
     private recoveryAccountId(): string {
@@ -1306,7 +1309,19 @@ export class LobbyScreenController {
                 void this.clubEntry?.openAll();
                 return;
             case 'JoinRoom':
-                void this.forms?.show('common/Numpad');
+                console.info('[LobbyJoinRoomEntry]', {
+                    action: 'OPEN_NUMPAD',
+                    controllerReady: Boolean(this.joinRoomController),
+                    disposed: this.disposed,
+                    lifecycleEpoch: this.lifecycleEpoch,
+                    scene: director.getScene()?.name ?? '',
+                });
+                void this.forms?.show('common/Numpad').then(form => {
+                    console.info('[LobbyJoinRoomEntry]', {
+                        action: form?.isShown() ? 'NUMPAD_SHOWN' : 'NUMPAD_UNAVAILABLE',
+                        lifecycleEpoch: this.lifecycleEpoch,
+                    });
+                });
                 return;
             case 'CreateRoom':
                 this.openCreateRoomSelector();
@@ -1586,6 +1601,13 @@ export class LobbyScreenController {
 
     private openCreateRoomSelector(): void {
         const selector = this.playSelector;
+        console.info('[LobbyCreateRoomEntry]', {
+            action: 'CLICK',
+            controllerReady: Boolean(selector),
+            disposed: this.disposed,
+            lifecycleEpoch: this.lifecycleEpoch,
+            scene: director.getScene()?.name ?? '',
+        });
         if (!selector) {
             void this.forms?.show('UIMessage_Drift', null, null, '创建房间功能正在初始化，请稍后重试');
             return;

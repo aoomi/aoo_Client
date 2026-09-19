@@ -1,6 +1,8 @@
-import { Button, EditBox, Label, Layout, Node, Toggle, instantiate } from 'cc';
+import { Button, EditBox, Label, Layout, Node, ScrollView, Toggle, instantiate } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
+import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
 
 interface ClubRecordPlayer {
     pid?: number;
@@ -77,8 +79,14 @@ export class LegacyClubRecordListController {
     private bind(form: LegacyForm): void {
         this.clearLegacyToggleHandlers(form.node);
         this.click(form.find('btn_close'), () => this.forms.close('ui/club/UIClubRecordList'));
-        this.click(form.find('btn_next'), () => void this.changePage(1));
-        this.click(form.find('btn_last'), () => void this.changePage(-1));
+        this.active(form, 'btn_next', false);
+        this.active(form, 'btn_last', false);
+        this.active(form, 'page', false);
+        this.active(form, 'pageGo', false);
+        const scroll = form.find('mark')?.getComponent(ScrollView);
+        if (scroll) ScrollEvents.onBottom(scroll, () => {
+            if (!this.loading && this.page < this.pageTotal) { this.page += 1; void this.load(false, undefined, true); }
+        });
         this.click(form.find('top/btn_list/btn_all'), () => void this.selectType(6));
         this.click(form.find('top/btn_list/btn_zuotian'), () => void this.selectType(1));
         this.click(form.find('top/btn_list/btn_jintian'), () => void this.selectType(0));
@@ -119,7 +127,7 @@ export class LegacyClubRecordListController {
         void this.load(true);
     }
 
-    private async load(refreshSummary: boolean, query?: string): Promise<void> {
+    private async load(refreshSummary: boolean, query?: string, append = false): Promise<void> {
         if (!this.form || this.clubId <= 0 || this.loading) return;
         const form = this.form;
         const requestEpoch = ++this.epoch;
@@ -150,9 +158,8 @@ export class LegacyClubRecordListController {
             if (!this.form || this.form !== form || requestEpoch !== this.epoch) return;
             if (summary) this.renderSummary(form, summary);
             this.pageTotal = query ? 1 : Math.max(1, Number(summary?.pageNumTotal ?? records.pageNumTotal ?? this.pageTotal));
-            this.clearRows();
+            if (!append) this.clearRows();
             for (const record of records.clubRecordInfos ?? []) this.addRecord(form, record);
-            this.setLabel(form.node, 'page/lb_page', `${query ? 1 : this.page}/${this.pageTotal}`);
         } catch (error: unknown) {
             if (requestEpoch === this.epoch) {
                 await this.forms.show('UIMessage_Drift', null, null,
@@ -234,13 +241,6 @@ export class LegacyClubRecordListController {
             await this.forms.show('UIMessage_Drift', null, null,
                 error instanceof Error ? error.message : '战绩查看状态更新失败');
         }
-    }
-
-    private async changePage(delta: number): Promise<void> {
-        const next = this.page + delta;
-        if (this.loading || next < 1 || next > this.pageTotal) return;
-        this.page = next;
-        await this.load(true);
     }
 
     private async selectType(type: number): Promise<void> {
@@ -366,7 +366,7 @@ export class LegacyClubRecordListController {
 
     private setLabel(root: Node, path: string, value: string): void {
         const label = Label ? this.find(root, path)?.getComponent(Label) : null;
-        if (label) label.string = value;
+        setClubDynamicLabel(label, path, value);
     }
 
     private toggleComponent(node: Node | null): Toggle | null {

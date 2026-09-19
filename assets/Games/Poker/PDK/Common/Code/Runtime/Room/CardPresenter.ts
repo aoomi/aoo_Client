@@ -51,6 +51,21 @@ export class CardPresenter {
         void this.animateToPose(card, selected ? SELECT_RAISE_DURATION : DESELECT_DROP_DURATION);
     }
 
+    /** Manual Hint must be visible in the same click frame, without a selection tween. */
+    public selectImmediately(card: Node, selected: boolean): void {
+        if (!card.isValid) return;
+        const presenter = card.getComponent(Poker_Card_Presenter);
+        if (!presenter) throw new Error('Poker_Card instance is missing Poker_Card_Presenter');
+        this.cancelMotion(card);
+        presenter.setPdkVisualState(selected, false);
+        this.selectedStates.set(card, selected);
+        const current = card.position;
+        const base = this.basePositions.get(card) ?? new Vec3(current.x, current.y, current.z);
+        this.basePositions.set(card, base);
+        this.presented.add(card);
+        card.setPosition(base.x, base.y + (selected ? SELECTED_OFFSET_Y : 0), base.z);
+    }
+
     /**
      * Change the authored hand slot without creating a second position owner.
      * Selection and hand compaction both affect the same Node.position, so they

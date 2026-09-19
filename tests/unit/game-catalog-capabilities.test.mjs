@@ -18,10 +18,12 @@ test('catalog exposes one typed capability model with safe-disabled fallback', (
   assert.doesNotMatch(catalog, /gameId\s*[<>=]|displayName.*supports|toLowerCase\(\).*CAPABILIT/);
 });
 
-test('only confirmed stable PDK codes opt in to all room capabilities', () => {
-  assert.match(catalog, /CATALOG_GAME_CAPABILITIES[^\n]+\{CD201:PDK_GAME_CAPABILITIES,NJ201:PDK_GAME_CAPABILITIES,LS201:PDK_GAME_CAPABILITIES\}/);
+test('only confirmed stable poker codes opt in to all room capabilities', () => {
+  assert.match(catalog, /CATALOG_GAME_CAPABILITIES[^\n]+\{CD201:PDK_GAME_CAPABILITIES,NJ201:PDK_GAME_CAPABILITIES,LS201:PDK_GAME_CAPABILITIES,CD299:PDK_GAME_CAPABILITIES\}/);
   assert.match(catalog, /PDK_GAME_CAPABILITIES[^\n]+supportsSettings:true,supportsChat:true,supportsVoice:true,supportsDissolve:true/);
-  assert.equal((catalog.match(/:PDK_GAME_CAPABILITIES/g) || []).length, 3);
+  assert.equal((catalog.match(/:PDK_GAME_CAPABILITIES/g) || []).length, 4);
+  assert.match(catalog, /\{code:"CD299",family:"poker:cd299",regionConfig:"CONFIG:CD299@sichuan\/chengdu"\}/);
+  assert.match(catalog, /"CD299":\{gameId:630,displayName:"成都扯旋",category:"POKER",enabled:true\}/);
 });
 
 test('metadata and capabilities are queried by exact stable game code', () => {

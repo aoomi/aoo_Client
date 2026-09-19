@@ -2,6 +2,7 @@ import { CN297Snapshot } from './CN297RoomState';
 import { CN297_DEFAULT_RULES, CN297_FAMILY, CN297_GAME_CODE, CN297_PLAY_VERSION,
     CN297RoomRules, validateCN297Rules } from './CN297Rules';
 import type { ProtocolClient } from '../../../../../Common/Code/Runtime/network/ProtocolClient';
+import { GameRequestIdentity } from '../../../../../Common/Code/Runtime/network/GameRequestIdentity';
 
 export const CN297_DISPATCH = 'common.room.dispatch' as const;
 
@@ -16,7 +17,10 @@ export interface CN297CommandEnvelope { msgId: CN297Message; requestId: string; 
     roundNo: number; playVersion: typeof CN297_PLAY_VERSION; expectedStateVersion: number;
     body: Readonly<Record<string, unknown>>; }
 export interface CN297CompareResult { loserSeat: number; view: CN297Snapshot; }
-export interface CN297SettlementResult { winnerSeat: number; winnerBonusPerOpponent: number; entries: readonly unknown[]; }
+export interface CN297SettlementEntry { playerId: number; scoreDelta: number; dimensions: Readonly<Record<string, number>>; }
+export interface CN297SettlementResult { winnerSeat: number; winnerBonusPerOpponent: number;
+    roundNo: number; final: boolean; entries: readonly CN297SettlementEntry[];
+    cumulativeEntries?: readonly CN297SettlementEntry[]; }
 export interface CN297Transport { request<T>(command: CN297CommandEnvelope): Promise<T>; }
 
 /** Exact Hall create payload for the published CN297 workbook contract. */
@@ -37,13 +41,14 @@ export class CN297ProtocolClientTransport implements CN297Transport {
 }
 
 export class CN297ProtocolAdapter {
-    private sequence = 0;
+    private readonly requests: GameRequestIdentity;
     private acceptedStateVersion = -1;
     private acceptedRoundNo = -1;
     constructor(private readonly transport: CN297Transport, private readonly roomId: number,
         private readonly stateVersion: () => number, private readonly roundNo: () => number,
         private readonly requestPrefix: string) {
         if (!Number.isSafeInteger(roomId) || roomId <= 0 || !requestPrefix.trim()) throw new Error('[CN297] invalid adapter identity');
+        this.requests = new GameRequestIdentity(requestPrefix, roomId);
     }
     createRoomBody(rules: CN297RoomRules): Readonly<Record<string, unknown>> {
         return createCN297RoomBody(rules);
@@ -64,7 +69,7 @@ export class CN297ProtocolAdapter {
         const expectedStateVersion = this.acceptedStateVersion >= 0 ? this.acceptedStateVersion : this.stateVersion();
         if (!Number.isSafeInteger(roundNo) || roundNo < 0 || !Number.isSafeInteger(expectedStateVersion)
             || expectedStateVersion < 0) throw new Error('[CN297] invalid authority cursor');
-        return this.transport.request<T>(Object.freeze({ msgId, requestId: `${this.requestPrefix}-${++this.sequence}`,
+        return this.transport.request<T>(Object.freeze({ msgId, requestId: this.requests.next(),
             roomId: this.roomId, roundNo, playVersion: CN297_PLAY_VERSION, expectedStateVersion,
             body: Object.freeze({ ...body }) })).then(value => { this.observeAuthority(value); return value; });
     }

@@ -1,4 +1,4 @@
-import type { Node } from 'cc';
+import { Layers, RenderRoot2D, type Node } from 'cc';
 import type { LegacySubgameTicket } from '../../../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import type { GameRuntimeEntry } from '../../../../Common/Code/Runtime/GameRuntimeEntry';
 import { createOwnedGameClient } from '../../../../../Common/Code/Runtime/network/ConnectionOwnership';
@@ -55,6 +55,7 @@ export class CN297GameRuntimeEntry implements GameRuntimeEntry {
             const prefabPath = this.host.isPortrait() ? CN297_ROOM_PREFABS.portrait : CN297_ROOM_PREFABS.landscape;
             const root = await this.host.loadAndMountPrefab(prefabPath, handoff.bundleName);
             this.assertCurrent(generation);
+            this.applyUiLayer(root);
             this.root = root;
             const trace = handoff as LegacySubgameTicket & { stateVersion?: unknown; roundNo?: unknown };
             let stateVersion = this.nonNegativeInteger(trace.stateVersion); let roundNo = this.nonNegativeInteger(trace.roundNo);
@@ -66,7 +67,7 @@ export class CN297GameRuntimeEntry implements GameRuntimeEntry {
             this.assertCurrent(generation);
             stateVersion = initial.stateVersion; roundNo = initial.roundNo;
             console.info('[CN297GameRuntimeEntry]', { action: 'entered', roomId, playVersion: CN297_PLAY_VERSION,
-                stateVersion, roundNo, prefabPath });
+                stateVersion, roundNo, prefabPath, layer: root.layer });
         } catch (error) {
             if (generation === this.generation) this.destroy();
             throw error;
@@ -87,6 +88,17 @@ export class CN297GameRuntimeEntry implements GameRuntimeEntry {
     private nonNegativeInteger(value: unknown): number {
         const parsed = Number(value ?? 0);
         return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
+    }
+
+    /** Dynamically mounted bundle prefabs do not inherit the scene Canvas layer automatically. */
+    private applyUiLayer(root: Node): void {
+        const layer = root.parent?.layer === Layers.Enum.UI_2D ? root.parent.layer : Layers.Enum.UI_2D;
+        const visit = (node: Node): void => { node.layer = layer; node.children.forEach(visit); };
+        visit(root);
+        // The production host mounts the room beside the lobby Canvas. Merely assigning UI_2D
+        // does not register that sibling subtree with the 2D batcher, so give the feature root
+        // its own render boundary while continuing to use the scene's UI camera.
+        if (!root.getComponent(RenderRoot2D)) root.addComponent(RenderRoot2D);
     }
 }
 

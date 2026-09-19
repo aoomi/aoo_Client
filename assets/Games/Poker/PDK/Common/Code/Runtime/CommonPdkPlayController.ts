@@ -920,7 +920,6 @@ export class CommonPdkPlayController {
             this.syncHandTouchArea();
             this.assertHandNodeInvariant(parent, hand.length);
             this.bindGestureSurface(this.view?.find('Players/Play_0/Card/Hand_TouchArea') ?? null);
-            this.prepareHintCache();
             return;
         }
         this.cards.stopAll(true);
@@ -972,7 +971,6 @@ export class CommonPdkPlayController {
         this.syncHandTouchArea();
         this.assertHandNodeInvariant(parent, hand.length);
         this.bindGestureSurface(this.view?.find('Players/Play_0/Card/Hand_TouchArea') ?? null);
-        this.prepareHintCache();
     }
 
     private shouldAnimateDeal(setInfo: Record<string, unknown>): boolean {
@@ -1115,12 +1113,16 @@ export class CommonPdkPlayController {
         return bombs.some((bomb) => cards.every((card) => bomb.includes(card)));
     }
 
-    private updateSelection(): void {
+    private updateSelection(immediate = false): void {
         const selectedSlots = pdkSelectionMask(
             (this.logic.GetHandCard() ?? []).map(Number),
             (this.logic.GetSelectCard() ?? []).map(Number),
         );
-        this.cardNodes.forEach((node, index) => this.cards.select(node, selectedSlots[index] === true));
+        this.cardNodes.forEach((node, index) => {
+            const selected = selectedSlots[index] === true;
+            if (immediate) this.cards.selectImmediately(node, selected);
+            else this.cards.select(node, selected);
+        });
     }
 
     private onRoomTouchEnd(event: EventTouch): void {
@@ -2784,7 +2786,7 @@ export class CommonPdkPlayController {
         else if (this.tipIndex >= tips.length) this.tipIndex = 0;
         this.logic.ChangeSelectCard(tips[this.tipIndex]);
         this.tipIndex = (this.tipIndex + 1) % tips.length;
-        this.updateSelection();
+        this.updateSelection(true);
         const selectedCards = [...(this.logic.GetSelectCard() ?? [])].map(Number);
         const computedAt = globalThis.performance?.now?.() ?? Date.now();
         globalThis.requestAnimationFrame?.(() => {

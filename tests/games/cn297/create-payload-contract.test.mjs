@@ -51,3 +51,78 @@ test('CN297 empty seats write their selected seatId but UI never joins or readie
     assert.match(controller, /!snapshot \|\| snapshot\.viewerRole !== 'SEATED'/);
     assert.match(controller, /return this\.protocol\.state\(\)\.then\(value => this\.accept\(value\)\)/);
 });
+
+test('CN297 finished rounds fetch and render authoritative settlement before continue', async () => {
+    const protocol = await source('CN297Protocol.ts');
+    const presenter = await source('CN297RoomPresenter.ts');
+    const view = await source('CN297RoomViewAdapter.ts');
+    const controller = await source('CN297RoomController.ts');
+    assert.match(protocol, /settle: 'poker\.CN297\.settle_req'/);
+    assert.match(protocol, /interface CN297SettlementEntry/);
+    assert.match(protocol, /settle\(\).*CN297SettlementResult/);
+    assert.match(controller, /await this\.settleIfFinished\(response\)/);
+    assert.match(controller, /this\.settledRound !== snapshot\.roundNo/);
+    assert.match(controller, /round settlement is not confirmed/);
+    assert.match(controller, /const settlement = await this\.protocol\.settle\(\)/);
+    assert.match(controller, /this\.presenter\.applySettlement\(snapshot\.roundNo, settlement\)/);
+    assert.match(presenter, /this\.view\.showSettlement\(roundNo, settlement\)/);
+    assert.match(view, /settlement\.entries\.map/);
+    assert.match(view, /entry\.scoreDelta >= 0/);
+});
+
+test('CN297 betting and compare require explicit legal UI selections', async () => {
+    const controller = await source('CN297RoomController.ts');
+    const view = await source('CN297RoomViewAdapter.ts');
+    assert.match(controller, /showBetOptions\(this\.betOptions\(\), false\)/);
+    assert.match(controller, /showBetOptions\(this\.betOptions\(\), true\)/);
+    assert.match(controller, /\[minimum, minimum \* 2, minimum \* 5, maximum\]/);
+    assert.match(controller, /amount <= maximum/);
+    assert.match(controller, /showCompareTargets\(this\.compareTargets\(\)\)/);
+    assert.match(controller, /filter\(\(\[seat, state\]\) => Number\(seat\) !== localSeat && state\.active\)/);
+    assert.match(view, /this\.actionSink\.bet\(amount, queued\)/);
+    assert.match(view, /this\.actionSink\.compare\(seat\)/);
+    assert.match(view, /取消比牌/);
+    assert.match(view, /now - lastInvokeAt < 180/);
+});
+
+test('CN297 settlement UI distinguishes small and final settlement and gates continuation', async () => {
+    const protocol = await source('CN297Protocol.ts');
+    const presenter = await source('CN297RoomPresenter.ts');
+    const view = await source('CN297RoomViewAdapter.ts');
+    assert.match(protocol, /roundNo: number; final: boolean/);
+    assert.match(view, /settlement\.final \? '大结算' : '小结算'/);
+    assert.match(view, /settlement\.cumulativeEntries/);
+    assert.match(view, /this\.require\('CN297Contract'\)\.active = true/,
+        'the inactive contract parent must be enabled before its action buttons can render');
+    assert.match(view, /this\.require\('CN297Contract\/Settlement'\)\.active = true/,
+        'settlement text must enable its inactive presentation parent');
+    assert.match(view, /this\.require\('CN297Contract\/Settlement'\)\.active = false/,
+        'the settlement parent must be cleared between rounds');
+    assert.match(presenter, /canContinue: snapshot\.state === 'ROUND_FINISHED'/);
+    assert.doesNotMatch(presenter, /canContinue: snapshot\.state === 'FINISHED'/);
+});
+
+test('CN297 all action buttons are gated by authoritative state and published rules', async () => {
+    const presenter = await source('CN297RoomPresenter.ts');
+    const state = await source('CN297RoomState.ts');
+    assert.match(state, /minimumPlayers: number/);
+    assert.match(state, /mustBlindRounds: number/);
+    assert.match(state, /minimumBet: number/);
+    assert.match(presenter, /Object\.keys\(snapshot\.seats\)\.length >= snapshot\.minimumPlayers/);
+    assert.match(presenter, /snapshot\.bettingRound > snapshot\.mustBlindRounds/);
+    assert.match(presenter, /canBet: ownTurn && !!local\?\.active/);
+    assert.match(presenter, /canPreBet: snapshot\.state === 'PLAYING' && !!local\?\.active && !ownTurn/);
+    assert.match(presenter, /activeOpponentCount > 0/);
+    assert.match(presenter, /snapshot\.bettingRound >= snapshot\.compareStartRound/);
+    const view = await source('CN297RoomViewAdapter.ts');
+    assert.match(view, /Any authoritative render invalidates local choices/);
+    assert.match(view, /if \(this\.hasSelection\(\)\) this\.clearSelection\(\)/);
+});
+
+test('CN297 dynamically mounted room inherits the UI camera layer', async () => {
+    const entry = await source('CN297GameRuntimeEntry.ts');
+    assert.match(entry, /this\.applyUiLayer\(root\)/);
+    assert.match(entry, /Layers\.Enum\.UI_2D/);
+    assert.match(entry, /node\.children\.forEach\(visit\)/);
+    assert.match(entry, /root\.addComponent\(RenderRoot2D\)/);
+});

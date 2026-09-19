@@ -25,9 +25,14 @@ const MODULE_PREFAB_BY_FORM = Object.freeze<Record<string, ModulePrefabRoute>>({
     UILobbyRemark: { bundle: 'profile-ui', asset: 'Prefab/Remark' },
     UILobbyLeaderboard: { bundle: 'ranking-ui', asset: 'Prefab/Leaderboard' },
     UILobbyRecords: { bundle: 'records-ui', asset: 'Prefab/Records' },
+    UIClubStats: { bundle: 'records-ui', asset: 'Prefab/ClubStats' },
     UILobbyRecordItem: { bundle: 'records-ui', asset: 'Prefab/RecordItem' },
-    UILobbyUserRecord: { bundle: 'records-ui', asset: 'Prefab/UserRecord' },
+    // The player record panel is shared by the lobby and club, but its
+    // authoritative prefab is owned by the club bundle.
+    UILobbyUserRecord: { bundle: 'club', asset: 'Prefab/UserRecord' },
+    UIClubRecordUser: { bundle: 'club', asset: 'Prefab/UserRecord' },
     UILobbyMatchRecord: { bundle: 'records-ui', asset: 'Prefab/MatchRecord' },
+    ClubPlayerLog: { bundle: 'records-ui', asset: 'Prefab/ClubPlayerLog' },
     UILobbyGift: { bundle: 'gift-room-card-ui', asset: 'Prefab/GiftRoomCard' },
     UILobbyInviteRewards: { bundle: 'rewards-ui', asset: 'Prefab/InviteRewards' },
     UILobbyInviteTask: { bundle: 'rewards-ui', asset: 'Prefab/InviteTask' },

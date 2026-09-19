@@ -1,6 +1,7 @@
-import { Button, EditBox, Label, Layout, Node, RichText, instantiate } from 'cc';
+import { Button, EditBox, Label, Layout, Node, RichText, ScrollView, instantiate } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
 
 interface MessageContext {
     id?: number; clubId?: number; unionId?: number; name?: string; unionName?: string; unionSign?: number;
@@ -25,6 +26,7 @@ export class LegacyClubMessageController {
     private sportsPage = 1;
     private sportsType = 0;
     private sportsDate = 0;
+    private sportsLoading = false;
 
     public constructor(private readonly forms: LegacyFormManager, private readonly client: ProtocolClient) {}
 
@@ -98,14 +100,19 @@ export class LegacyClubMessageController {
 
     private bindSports(form: LegacyForm): void {
         this.clickNamed(form.node, 'btn_close', () => this.forms.close('ui/club/ClubScoreRecord'));
-        this.clickNamed(form.node, 'btn_last', () => { if (this.sportsPage > 1) { this.sportsPage -= 1; void this.loadSports(); } });
-        this.clickNamed(form.node, 'btn_next', () => { this.sportsPage += 1; void this.loadSports(); });
+        this.active(form.node, 'btn_last', false);
+        this.active(form.node, 'btn_next', false);
+        this.active(form.node, 'lb_page', false);
+        const scroll = this.desc(form.node, 'content')?.parent?.parent?.getComponent(ScrollView);
+        if (scroll) this.disposers.push(ScrollEvents.onBottom(scroll, () => {
+            if (!this.sportsLoading) { this.sportsPage += 1; void this.loadSports(false); }
+        }));
         for (let index = 0; index <= 11; index += 1) this.clickNamed(form.node, `btn_ChooseType_${index}`, () => {
-            this.sportsType = index; this.sportsPage = 1; void this.loadSports();
+            this.sportsType = index; this.sportsPage = 1; void this.loadSports(true);
         });
         const dateNames = ['btn_msg_today', 'btn_msg_yesterday', 'btn_msg_santian', 'btn_msg_sanshitian'];
         dateNames.forEach((name, index) => this.clickNamed(form.node, name, () => {
-            this.sportsDate = index; this.sportsPage = 1; void this.loadSports();
+            this.sportsDate = index; this.sportsPage = 1; void this.loadSports(true);
         }));
     }
 
@@ -113,11 +120,13 @@ export class LegacyClubMessageController {
         this.sportsForm = form;
         this.context = this.asContext(context);
         this.sportsPage = 1; this.sportsType = 0; this.sportsDate = 0;
-        void this.loadSports();
+        void this.loadSports(true);
     }
 
-    private async loadSports(): Promise<void> {
+    private async loadSports(refresh: boolean): Promise<void> {
         const form = this.sportsForm; if (!form) return;
+        if (this.sportsLoading) return;
+        this.sportsLoading = true;
         const pid = Number(this.context.pid ?? 0); const opClubId = Number(this.context.opClubId ?? 0);
         const protocol = opClubId > 0 ? 'union.CUnionClubCentMemberDynamicByPid'
             : pid > 0 ? 'club.CClubCentMemberDynamicByPid' : 'club.CClubCentDynamicByPid';
@@ -129,17 +138,17 @@ export class LegacyClubMessageController {
             });
             const rows = this.rows(result);
             if (!rows.length && this.sportsPage > 1) this.sportsPage -= 1;
-            else this.render(form, rows, false);
-            this.setAnyLabel(form.node, ['lb_page', 'page'], String(this.sportsPage));
-        } catch (error: unknown) { await this.tip(this.error(error, '获取竞技动态失败')); }
+            else this.render(form, rows, false, refresh);
+        } catch (error: unknown) { if (!refresh && this.sportsPage > 1) this.sportsPage -= 1; await this.tip(this.error(error, '获取竞技动态失败')); }
+        finally { this.sportsLoading = false; }
     }
 
-    private render(form: LegacyForm, rows: DynamicRow[], dynamic: boolean): void {
-        this.clearRows();
+    private render(form: LegacyForm, rows: DynamicRow[], dynamic: boolean, refresh = true): void {
+        if (refresh) this.clearRows();
         const content = this.desc(form.node, 'content');
         const template = this.desc(form.node, dynamic ? 'demo' : 'message_demo') ?? this.desc(form.node, 'demo');
         if (!content || !template) return;
-        for (const child of [...content.children]) if (child !== template) child.destroy();
+        if (refresh) for (const child of [...content.children]) if (child !== template) child.destroy();
         template.active = false;
         for (const row of rows) {
             const node = instantiate(template); node.active = true;
@@ -152,6 +161,8 @@ export class LegacyClubMessageController {
         }
         content.getComponent(Layout)?.updateLayout();
     }
+
+    private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
 
     private dynamicText(row: DynamicRow): string {
         const actor = String(row.execName ?? row.execPid ?? '系统');
