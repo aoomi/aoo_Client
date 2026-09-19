@@ -63,6 +63,17 @@ export class CardPresenter {
         return this.animateToPose(card, duration);
     }
 
+    /**
+     * Compose Layout's fresh horizontal slot with the card's stable hand baseline.
+     * Horizontal Layout does not own Y, so node.position.y may still be between the
+     * selected and unselected poses when the player replaces a hint and immediately
+     * plays another card. That transient value must never become the next baseline.
+     */
+    public canonicalLayoutBase(card: Node, layoutPosition: Readonly<Vec3>): Vec3 {
+        const previousBase = this.basePositions.get(card);
+        return new Vec3(layoutPosition.x, previousBase?.y ?? layoutPosition.y, layoutPosition.z);
+    }
+
     /** Drop stale user selection synchronously at an authoritative turn boundary. */
     public clearSelectionImmediately(cards: readonly Node[]): void {
         for (const card of cards) {
@@ -79,13 +90,38 @@ export class CardPresenter {
         }
     }
 
-    public preview(card: Node, preview: boolean): void {
-        if (!card.isValid) return;
-        card.getComponent(Poker_Card_Presenter)?.setPdkPreview(preview);
-    }
-
     public isSelected(card: Node): boolean {
         return card.isValid && this.selectedStates.get(card) === true;
+    }
+
+    public previewDrag(card: Node, preview: boolean): void {
+        if (!card.isValid) return;
+        card.getComponent(Poker_Card_Presenter)?.setPdkDragPreview(preview);
+    }
+
+    /**
+     * Out_Card/Table_Cards/flying nodes are presentation-only. Remove the hand
+     * interaction layers instead of merely hiding them, otherwise a later
+     * presenter refresh or an instantiated selected hand card can reactivate a
+     * mask after the card has already entered the public play area.
+     */
+    public stripInteractionVisual(card: Node): void {
+        if (!card.isValid) return;
+        // Mark the presenter first so no delayed present/selection refresh can
+        // reactivate either overlay after the card reaches Out_Card/Table_Cards.
+        card.getComponent(Poker_Card_Presenter)?.setPresentationOnly();
+        const disable = (node: Node): void => {
+            for (const child of [...node.children]) {
+                if (child.name === 'Selected_Mask' || child.name === 'Disabled_Mask') {
+                    child.active = false;
+                    child.removeFromParent();
+                    child.destroy();
+                    continue;
+                }
+                disable(child);
+            }
+        };
+        disable(card);
     }
 
     /**
@@ -100,7 +136,12 @@ export class CardPresenter {
             this.cancelMotion(card);
             const selected = this.selectedStates.get(card) === true;
             const current = card.position;
-            const base = new Vec3(current.x, current.y, current.z);
+            // Horizontal Layout does not own Y. When a hinted card is already
+            // raised, current.y therefore contains the selection offset. Reusing
+            // that value as the new base raises the same card another 20 px on
+            // every authority reconciliation. Preserve the last canonical Y and
+            // only accept Layout's freshly authored X/Z coordinates.
+            const base = this.canonicalLayoutBase(card, current);
             this.basePositions.set(card, base);
             card.setPosition(current.x, base.y + (selected ? SELECTED_OFFSET_Y : 0), current.z);
         }

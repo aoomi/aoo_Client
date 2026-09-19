@@ -20,12 +20,16 @@ test('automatic hint is computed locally and remains bound to the authoritative 
 test('an automatic pass failure stays diagnostic and never shows an automatic-hint toast', () => {
   const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private maybeAutoPlay'));
   assert.match(method, /\[CommonRoomAutoPassError\]/);
+  assert.match(method, /let autoPassFailed = false/);
+  assert.match(method, /autoPassFailed = true/);
+  assert.match(method, /if \(autoPassFailed\) this\.refresh\(\)/);
   assert.doesNotMatch(method, /reportUserActionError\('自动提示'/);
 });
-test('automatic hint waits for both hand and table projection so every card type stays raised', () => {
+test('automatic hint waits for the hand but never blocks on the retained public-card hold', () => {
   const state = play.slice(play.indexOf("if (event === 'CommonPdk_AuthoritativeState')"), play.indexOf("} else if (event === 'CommonPdkSetStart')"));
-  assert.match(state, /Promise\.all\(\[handRender, settledPublicPresentation\]\)[\s\S]*autoHintForAuthoritativeTurn\(setInfo\)/);
-  assert.ok(state.indexOf('Promise.all([handRender, settledPublicPresentation])') < state.indexOf('autoHintForAuthoritativeTurn(setInfo)'));
+  assert.match(state, /const hintReady = handRender/);
+  assert.match(state, /this\.trackPresentation\(settledPublicPresentation\)/);
+  assert.match(state, /const turnPresentation = hintReady[\s\S]*autoHintForAuthoritativeTurn\(/);
 });
 test('automatic hint stays turn-scoped but replaces a stale manual selection', () => {
   assert.doesNotMatch(play, /selectionUnchanged/);
@@ -36,7 +40,7 @@ test('dealer competition cannot trigger whole-hand autoplay before the final dea
   const hint = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'),
     play.indexOf('private operationTypeForCards'));
   const visibility = play.slice(play.indexOf('private isAutomaticWholeHand'),
-    play.indexOf('private synchronizeAuthorityComparison'));
+    play.indexOf('private maybeAutoPlay'));
   const submit = play.slice(play.indexOf('private maybeAutoPlay'),
     play.indexOf('private autoPlayKey'));
   const phase = play.slice(play.indexOf('private isFormalCardPlayPhase'),
@@ -48,12 +52,13 @@ test('dealer competition cannot trigger whole-hand autoplay before the final dea
   assert.match(phase, /!this\.competeDealerPhase && phase === 'PLAYING'/);
 });
 
-test('a normal lead turn does not auto-select cards while final-hand autoplay remains first', () => {
+test('a lead turn auto-plays only when the complete hand is one legal final play', () => {
   const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private maybeAutoPlay'));
   const autoplay = method.indexOf('this.maybeAutoPlay');
   const leadReturn = method.indexOf('if (leading)');
   const automatic = method.indexOf('this.logic.ChangeSelectCard(automatic)');
   assert.ok(autoplay >= 0 && autoplay < leadReturn && leadReturn < automatic);
+  assert.match(method, /if \(\(required <= 0 \|\| hand\.includes\(required\)\)/);
   assert.match(method.slice(leadReturn, automatic), /ChangeSelectCard\(\[\]\)[\s\S]*updateSelection\(\)[\s\S]*return/);
 });
 
@@ -69,7 +74,7 @@ test('each committed authority version clears selection before rebuilding the ha
   const state = play.slice(play.indexOf("if (event === 'CommonPdk_AuthoritativeState')"), play.indexOf("} else if (event === 'CommonPdkSetStart')"));
   assert.match(state, /this\.applyAuthoritativeTurnBoundary\(setInfo\);[\s\S]*this\.logic\.InitHandCard\(\)/);
   assert.match(state, /const authorityHand = \[\.\.\.\(this\.logic\.GetHandCard\(\) \?\? \[\]\)\]\.map\(Number\)/);
-  assert.match(state, /this\.renderHand\(false, authorityHand\)/);
+  assert.match(state, /this\.handCompaction\.then\(\(\) => this\.renderHand\(animateDeal, authorityHand\)\)/);
   assert.doesNotMatch(state, /setInfo\.cardList[\s\S]*SetCardData/);
   const auto = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private maybeAutoPlay'));
   assert.match(auto, /if \(tips\.length > 0\)[\s\S]*ChangeSelectCard\(\[\]\)[\s\S]*await this\.pass\(\)/);
@@ -79,10 +84,19 @@ test('each committed authority version clears selection before rebuilding the ha
 test('atomic table snapshot restores comparison before seat presentation', () => {
   const restore = play.slice(play.indexOf('private reconcileAuthorityPublicCards'), play.indexOf('private async restoreSeatPlayStates'));
   assert.match(restore, /this\.record\(packet\.comparisonState\)/);
+  assert.match(restore, /const trickId = Number\(comparison\.trickId \?\? packet\.trickId \?\? 0\)/);
   assert.match(restore, /Array\.isArray\(packet\.seatPlayStates\)/);
   assert.match(restore, /this\.logic\.SetCardData\(opType, cardList\)/);
   assert.match(restore, /return this\.restoreSeatPlayStates/);
   assert.ok(restore.indexOf('SetCardData(opType, cardList)') < restore.indexOf('return this.restoreSeatPlayStates'));
+});
+
+test('ordinary live projection restores coalesced preceding seat plays after the comparison hand', () => {
+  const restore = play.slice(play.indexOf('private reconcileAuthorityPublicCards'),
+    play.indexOf('private async restoreSeatPlayStates'));
+  const ordinary = restore.slice(restore.indexOf('if (!this.runtime.arrangementEnabled())'));
+  assert.match(ordinary,
+    /renderPublicOperation\([\s\S]*\.then\(\(\) => this\.restoreSeatPlayStates\(seatPlays, projectionGeneration\)\)/);
 });
 
 test('legacy OpCard is fully inert after the authoritative snapshot cutover', () => {
@@ -117,7 +131,8 @@ test('a committed trick reset clears lead state without reopening a duplicate au
   assert.match(boundary, /this\.playInFlight = false;[\s\S]*this\.playRequestScope = null/);
   const out = play.slice(play.indexOf('private async outCard'), play.indexOf('private prepareOwnFlightCards'));
   assert.match(out, /const scope = \{ roomId, stateVersion, trickId, operationId \}/);
-  assert.match(out, /Number\(setInfo\.opPos \?\? deadline\?\.seatId \?\? -1\) !== this\.clientSeat\(\)/);
+  assert.match(out, /const authorityTurnSeat = Number\(setInfo\.opPos \?\? deadline\?\.seatId \?\? -1\)/);
+  assert.match(out, /authorityTurnSeat !== this\.clientSeat\(\)/);
   assert.match(out, /await this\.lifecycle\.play\(roomId/);
   assert.match(out, /catch \(error: unknown\)[\s\S]*await this\.renderHand\(\)/);
   assert.doesNotMatch(out, /if \(!requestAccepted\) this\.refresh\(\)/);
@@ -136,7 +151,7 @@ test('same-turn authority refresh preserves a visible selection and local flight
 });
 
 test('manual card selection is unrestricted and play legality is submitted to Authority', () => {
-  const selection = play.slice(play.indexOf('private async toggleCardAt'), play.indexOf('private async toggleSingleResponseCard'));
+  const selection = play.slice(play.indexOf('private async toggleCardAt'), play.indexOf('private groupedResponseSelection'));
   assert.match(selection, /CheckSelected[\s\S]*DeleteCardSelected[\s\S]*SetCardSelected/);
   assert.doesNotMatch(selection, /GetLastCardType|strictly|locallyLegal/);
   const drag = play.slice(play.indexOf('private commitSmartDragSelection'), play.indexOf('private largestLegalDragCandidates'));
@@ -191,9 +206,19 @@ test('last-hand autoplay directly validates the exact whole hand on lead and res
   assert.match(authority, /const wholeHandType = this\.operationTypeForCards\(hand\)/);
   assert.match(authority, /const wholeHandAllowed = this\.isWholeHandTypeEnabled\(wholeHandType\)/);
   assert.match(authority, /required <= 0 \|\| hand\.includes\(required\)/);
+  assert.doesNotMatch(authority, /if \(!leading && \(required/);
   assert.match(authority, /this\.maybeAutoPlay\(latestSet, true, \{ cards: hand, opType: wholeHandType \}\)/);
   assert.ok(authority.indexOf('const wholeHandType') < authority.indexOf('const localSource'));
   assert.ok(authority.indexOf('if (leading) return') < authority.indexOf('if (tips.length > 0)'));
+});
+
+test('a complete legal response candidate auto-plays even when exact-hand preclassification was conservative', () => {
+  const authority = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'),
+    play.indexOf('private isWholeHandTypeEnabled'));
+  assert.match(authority, /tips\.find\(\(cards\) => this\.sameCards\(cards, hand\)\)/);
+  assert.match(authority, /this\.intrinsicOperationTypeForCards\(completeResponse\)/);
+  assert.match(authority, /source: 'AUTHORITY_LEGAL_CANDIDATE'/);
+  assert.match(authority, /this\.maybeAutoPlay\(latestSet, true/);
 });
 
 test('last-hand autoplay rejects disabled four-with-three before and after its delay', () => {
@@ -202,8 +227,36 @@ test('last-hand autoplay rejects disabled four-with-three before and after its d
   assert.match(policy, /case 10:[\s\S]*rules\.allowFourWithThree === true/);
   const auto = play.slice(play.indexOf('private maybeAutoPlay'), play.indexOf('private isFormalCardPlayPhase'));
   assert.match(auto, /const latestOpType = this\.operationTypeForCards\(latestHand\)/);
-  assert.match(auto, /latestOpType <= 0 \|\| !this\.isWholeHandTypeEnabled\(latestOpType\)/);
-  assert.match(auto, /this\.outCard\(latestOpType, true\)/);
+  assert.match(auto, /latestOpType <= 0 \|\| !this\.isAutomaticWholeHandCandidate\(latestHand, latestOpType\)/);
+  assert.match(auto, /this\.outCard\(opType, true\)/);
+});
+
+test('scoring bombs are never auto-played as a four-with attachment family', () => {
+  const policy = play.slice(play.indexOf('private isWholeHandTypeEnabled'),
+    play.indexOf('private isAutomaticWholeHand'));
+  assert.match(policy, /const scoringBomb = String\(rules\.bombScoreMode \?\? 'DISABLED'\) !== 'DISABLED'/);
+  for (const opType of [8, 9, 10, 20]) {
+    assert.match(policy, new RegExp(`case ${opType}:[\\s\\S]*?!scoringBomb`));
+  }
+  assert.doesNotMatch(policy, /case 11:[\s\S]*!scoringBomb/,
+    'a standalone final bomb remains eligible for final-hand autoplay');
+});
+
+test('physical regional bomb cannot carry extra cards in whole-hand autoplay', () => {
+  const guard = play.slice(play.indexOf('private isAutomaticWholeHandCandidate'),
+    play.indexOf('/** The atomic table snapshot'));
+  assert.match(guard, /isAtomicPdkWholeHandCandidate\(cards, this\.protectedBombGroups\(\)\)/);
+  assert.match(play, /import \{[^}]*isAtomicPdkWholeHandCandidate[^}]*\} from '\.\/logic\/PdkCleanHintRanker'/);
+
+  const authority = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'),
+    play.indexOf('private operationTypeForCards'));
+  assert.match(authority, /this\.isAutomaticWholeHandCandidate\(hand, wholeHandType\)/);
+  assert.match(authority, /this\.isAutomaticWholeHandCandidate\(completeResponse, completeType\)/);
+
+  const auto = play.slice(play.indexOf('private isAutomaticWholeHand'),
+    play.indexOf('private isFormalCardPlayPhase'));
+  assert.match(auto, /this\.isAutomaticWholeHandCandidate\(hand, opType\)/);
+  assert.match(auto, /this\.isAutomaticWholeHandCandidate\(latestHand, latestOpType\)/);
 });
 
 test('last-hand autoplay is delayed, turn-scoped, and submits through common.room.play_req once', () => {
@@ -211,19 +264,31 @@ test('last-hand autoplay is delayed, turn-scoped, and submits through common.roo
   assert.match(auto, /AUTO_PLAY_SELECTION_DELAY_MS/);
   assert.match(play, /const AUTO_PLAY_SELECTION_DELAY_MS = 600/);
   assert.match(auto, /this\.autoPlayTurnKey === turnKey/);
-  assert.match(auto, /this\.outCard\(latestOpType, true\)/);
+  assert.match(auto, /this\.outCard\(opType, true\)/);
   assert.match(auto, /setInfo\.trickId/);
   assert.match(auto, /deadline\?\.operationId/);
+  assert.match(auto, /latestOperationId === this\.autoPlayOperationId/);
+  assert.doesNotMatch(auto, /stillLocalTurn[\s\S]{0,180}this\.activeOpPos === this\.clientSeat\(\)/);
   const lifecycle = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/Room/RoomLifecycleController.ts'), 'utf8');
   assert.match(lifecycle, /common\.room\.play_req/);
 });
 
+test('same authority operation survives state-version and legacy seat projection races', () => {
+  const refresh = play.slice(play.indexOf('private refresh()'), play.indexOf('private centerOperationButtons'));
+  const key = play.slice(play.indexOf('private autoPlayKey'), play.indexOf('private sameCards'));
+  assert.match(play, /private autoPlayOperationId = ''/);
+  assert.match(refresh, /authorityOperationId === this\.autoPlayOperationId/);
+  assert.match(refresh, /authorityTurnSeat === positions\.GetClientPos\(\)/);
+  assert.doesNotMatch(key, /stateVersion/);
+  assert.doesNotMatch(key, /this\.activeOpPos/);
+});
+
 test('a rejected last-hand autoplay restores manual operation buttons for the same turn', () => {
   const visibility = play.slice(play.indexOf('private isAutomaticWholeHand'),
-    play.indexOf('private synchronizeAuthorityComparison'));
+    play.indexOf('private maybeAutoPlay'));
   const auto = play.slice(play.indexOf('private maybeAutoPlay'), play.indexOf('private isFormalCardPlayPhase'));
   assert.match(play, /private autoPlayRejectedTurnKey = ''/);
-  assert.match(visibility, /this\.autoPlayRejectedTurnKey === this\.autoPlayKey\(setInfo, hand\)/);
+  assert.match(visibility, /this\.autoPlayRejectedTurnKey !== this\.autoPlayKey\(setInfo, hand\)/);
   assert.match(auto, /this\.autoPlayRejectedTurnKey === turnKey/);
   assert.match(auto, /\.catch\(\(error: unknown\) => \{[\s\S]*this\.autoPlayRejectedTurnKey = turnKey/);
   assert.ok(auto.indexOf('this.autoPlayRejectedTurnKey = turnKey') < auto.lastIndexOf('this.refresh()'));

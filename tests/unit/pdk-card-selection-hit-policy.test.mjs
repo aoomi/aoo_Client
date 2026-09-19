@@ -46,3 +46,10 @@ test('exposed interactive buttons preserve selection and remain forwarded after 
   assert.match(domUp, /bridgedButton === this\.interactiveButtonAtUi/);
   assert.match(domUp, /bridgedButton\.emit\(Button\.EventType\.CLICK/);
 });
+
+test('full-screen backdrop buttons do not swallow empty-space deselection', () => {
+  const hit = method('interactiveButtonAtUi', 'sampleFromPointer');
+  assert.match(hit, /candidate === root/);
+  assert.match(hit, /worldWidth >= visibleSize\.width \* 0\.8/);
+  assert.match(hit, /worldHeight >= visibleSize\.height \* 0\.8/);
+});

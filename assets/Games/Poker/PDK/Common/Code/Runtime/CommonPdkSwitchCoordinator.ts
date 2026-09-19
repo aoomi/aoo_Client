@@ -10,7 +10,7 @@ import { resolveRuntimeEndpoints } from '../../../../../../Common/Code/Runtime/c
 import { CommonPdkRuntime } from './CommonPdkRuntime';
 import { isPdkBusinessCode } from '../Regional/PdkBusinessCodes';
 import { CommonPdkPlayController } from './CommonPdkPlayController';
-import { COMMON_ROOM_FORM, CommonRoomNodePath, DISSOLVE_ROOM_FORM, PDK_ROOM_FORM, POKER_CARD_SELECTION_FORM } from './Room/PdkRoomNodePaths';
+import { COMMON_ROOM_FORM, CommonRoomNodePath, DEAL_QUALITY_FORM, DISSOLVE_ROOM_FORM, PDK_ROOM_FORM, POKER_CARD_SELECTION_FORM } from './Room/PdkRoomNodePaths';
 import { CommonPdkResultController } from './CommonPdkResultController';
 import { CommonPdkDissolveController } from './CommonPdkDissolveController';
 import { CommonPdkRecordController } from './CommonPdkRecordController';
@@ -80,6 +80,20 @@ export class CommonPdkSwitchCoordinator {
     private roomUiGeneration = 0;
     private roomCapabilities: GameCapabilities = getGameCapabilities('');
     private cardSelectionRoot: Node | null = null;
+    private dealQualityRoot: Node | null = null;
+    private dealQualityButtons: Node[] = [];
+    private readonly onDealQualityAction = (): void => {
+        const runtime = this.runtime;
+        console.info('[DealQuality] action confirmed', {
+            roomId: Number(runtime?.getRoomManager().GetEnterRoomID() ?? 0),
+            playerId: runtime?.getPlayerId() ?? 0,
+        });
+        void this.showMessage('OK了');
+        this.forms.closeAfterPointer(DEAL_QUALITY_FORM);
+    };
+    private readonly onDealQualityClose = (): void => {
+        this.forms.closeAfterPointer(DEAL_QUALITY_FORM);
+    };
     private readonly onCardSelectionSubmit = (detail: PokerDeckSelectionSubmit): void => {
         void this.submitCardSelection(detail);
     };
@@ -280,6 +294,16 @@ export class CommonPdkSwitchCoordinator {
                 onShow: (form, context) => this.showCardSelectionForm(form, context),
                 onClose: () => this.unbindCardSelectionForm(),
                 onDestroy: () => this.unbindCardSelectionForm(),
+            },
+        });
+        this.forms.register(DEAL_QUALITY_FORM, {
+            zOrder: 42,
+            modal: true,
+            lifecycle: {
+                onCreate: (form) => this.bindDealQualityForm(form),
+                onShow: (form) => this.bindDealQualityForm(form),
+                onClose: () => this.unbindDealQualityForm(),
+                onDestroy: () => this.unbindDealQualityForm(),
             },
         });
         this.registerSmallSettlementForm('settlement/poker/SmallSettlement');
@@ -559,6 +583,7 @@ export class CommonPdkSwitchCoordinator {
                 ticket.ruleFields,
                 (active) => this.syncAutoPlay(active),
                 (targetSeat) => { void this.openCardSelection(targetSeat); },
+                (targetSeat) => { void this.openDealQuality(targetSeat); },
                 runtime.getGameCode() === PDK_BUSINESS_CODES.LIANGSHAN
                     ? new LS201PlayedCardFlow() : undefined,
             );
@@ -727,6 +752,8 @@ export class CommonPdkSwitchCoordinator {
                 CommonPdkVoiceController.formKey,
                 MagicExpressionPanelController.formKey,
                 COMMON_SETTINGS_FORM,
+                POKER_CARD_SELECTION_FORM,
+                DEAL_QUALITY_FORM,
             ]) {
                 if (this.disposed || !this.inGame) return;
                 await this.forms.preload(form);
@@ -1221,6 +1248,33 @@ export class CommonPdkSwitchCoordinator {
         });
     }
 
+    private async openDealQuality(targetSeat: number): Promise<void> {
+        const runtime = this.runtime;
+        if (!runtime || !this.inGame) return;
+        const player = runtime.getRoomPosManager().GetPlayerInfoByPos(targetSeat) as Record<string, unknown> | undefined;
+        const targetPlayerId = Number(player?.pid ?? 0);
+        if (!Number.isSafeInteger(targetPlayerId) || targetPlayerId <= 0) {
+            await this.showMessage('该座位当前没有玩家');
+            return;
+        }
+        console.info('[DealQuality] opening', {
+            roomId: Number(runtime.getRoomManager().GetEnterRoomID()),
+            playerId: targetPlayerId,
+            targetSeat,
+        });
+        try {
+            await this.forms.show(DEAL_QUALITY_FORM, { targetPlayerId, targetSeat });
+        } catch (error: unknown) {
+            console.error('[DealQuality] open failed', {
+                roomId: Number(runtime.getRoomManager().GetEnterRoomID()),
+                playerId: targetPlayerId,
+                targetSeat,
+                error,
+            });
+            await this.showMessage(error instanceof Error ? error.message : '牌质调整界面打开失败');
+        }
+    }
+
     private bindCardSelectionForm(form: LegacyForm): void {
         if (this.cardSelectionRoot === form.node) return;
         this.unbindCardSelectionForm();
@@ -1243,6 +1297,32 @@ export class CommonPdkSwitchCoordinator {
         this.cardSelectionRoot?.off('poker-card-selection-submit', this.onCardSelectionSubmit, this);
         this.cardSelectionRoot?.off('poker-card-selection-close', this.onCardSelectionClose, this);
         this.cardSelectionRoot = null;
+    }
+
+    private bindDealQualityForm(form: LegacyForm): void {
+        if (this.dealQualityRoot === form.node && this.dealQualityButtons.length > 0) return;
+        this.unbindDealQualityForm();
+        this.dealQualityRoot = form.node;
+        for (const name of ['Btn_Add', 'Btn_Subtract', 'Btn_Close']) {
+            const node = form.node.getChildByName(name);
+            if (!node?.getComponent(Button)) {
+                console.error('[DealQuality] button binding failed', { name, reason: 'Button component missing' });
+                continue;
+            }
+            node.on(Button.EventType.CLICK,
+                name === 'Btn_Close' ? this.onDealQualityClose : this.onDealQualityAction, this);
+            this.dealQualityButtons.push(node);
+        }
+        if (this.dealQualityButtons.length === 0) throw new Error('AddSubtract 没有可用按钮');
+    }
+
+    private unbindDealQualityForm(): void {
+        for (const node of this.dealQualityButtons) {
+            node.off(Button.EventType.CLICK, this.onDealQualityAction, this);
+            node.off(Button.EventType.CLICK, this.onDealQualityClose, this);
+        }
+        this.dealQualityButtons = [];
+        this.dealQualityRoot = null;
     }
 
     private async submitCardSelection(detail: PokerDeckSelectionSubmit): Promise<void> {

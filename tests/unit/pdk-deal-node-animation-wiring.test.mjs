@@ -6,20 +6,14 @@ const controller = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/
 const animation = fs.readFileSync(new URL('../../assets/Games/Poker/Common/Spine/PokerDealNodeAnim.ts', import.meta.url), 'utf8');
 const runtime = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntime.ts', import.meta.url), 'utf8');
 
-test('PDK initial hand uses the shared poker node-deal animation once per round', () => {
-    assert.match(controller, /import \{ PokerDealNodeAnim \} from '\.\.\/\.\.\/\.\.\/\.\.\/Common\/Spine\/PokerDealNodeAnim'/);
+test('PDK initial hand is published immediately at the deal boundary', () => {
+    assert.doesNotMatch(controller, /import \{ PokerDealNodeAnim \}/);
     assert.match(controller, /Boolean\(packet\.dealBoundary\) && this\.shouldAnimateDeal\(setInfo\)/);
     assert.match(controller, /renderHand\(animateDeal, authorityHand\)/);
-    assert.match(controller, /await PokerDealNodeAnim\.play\(this\.cardNodes, \[origin\], \{/);
-    assert.match(controller, /const dealDuration = 1/);
-    assert.match(controller, /const cardDuration = dealDuration \/ this\.cardNodes\.length/);
-    assert.match(controller, /batchSize: 1/);
-    assert.match(controller, /batchInterval: cardDuration/);
-    assert.match(controller, /moveDuration: cardDuration/);
-    assert.match(controller, /travelFromOrigin: false/);
-    assert.match(controller, /startScale: 1/);
-    assert.match(controller, /startOpacity: 96/);
-    assert.match(controller, /revealOffsetY: 0/);
+    assert.match(controller, /\[CommonPdkDealVisible\]/);
+    assert.match(controller, /presentation: 'IMMEDIATE'/);
+    assert.doesNotMatch(controller, /PokerDealNodeAnim\.play\(this\.cardNodes/);
+    assert.doesNotMatch(controller, /startOpacity:/);
     assert.match(controller, /const key = `\$\{this\.roomId\(\)\}:\$\{roundNo\}`/);
     assert.match(controller, /if \(this\.lastDealAnimationKey === key\) return false/);
     const decision = controller.slice(controller.indexOf('private shouldAnimateDeal'),

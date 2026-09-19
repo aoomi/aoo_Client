@@ -40,6 +40,8 @@ export class Poker_Card_Presenter extends Component {
     @property([SpriteFrame]) private jokerPictures: SpriteFrame[] = [];
     private selected = false;
     private disabled = false;
+    /** Public/table cards can never display hand-interaction shading again. */
+    private presentationOnly = false;
 
     public present(
         rank: number,
@@ -102,21 +104,43 @@ export class Poker_Card_Presenter extends Component {
 
     /** PDK uses vertical movement alone for selection; selected cards stay fully bright. */
     public setPdkVisualState(selected: boolean, disabled: boolean): void {
+        if (this.presentationOnly) return;
         this.requireBindings();
         this.selected = selected;
         this.disabled = disabled;
         this.selectedMask!.active = false;
-        this.disabledMask!.active = !selected && disabled;
+        this.disabledMask!.active = this.presentationOnly ? false : !selected && disabled;
     }
 
-    public setPdkPreview(preview: boolean): void {
-        if (!this.node.isValid) return;
+    /** Drag-range feedback only; taps and committed selections never use a mask. */
+    public setPdkDragPreview(preview: boolean): void {
+        if (!this.node.isValid || this.presentationOnly) return;
         this.requireBindings();
-        this.selectedMask!.active = !this.selected && preview;
-        this.disabledMask!.active = !this.selected && this.disabled && !preview;
+        this.selectedMask!.active = this.presentationOnly ? false : !this.selected && preview;
+        this.disabledMask!.active = false;
+    }
+
+    /** Permanently make this instance a display-only card. */
+    public setPresentationOnly(): void {
+        if (this.presentationOnly) return;
+        this.presentationOnly = true;
+        this.selected = false;
+        this.disabled = false;
+        // Public cards never return to the selectable hand. Detach these nodes
+        // instead of merely hiding them: serialized references and delayed
+        // selection callbacks then have nothing that can be reactivated.
+        for (const mask of [this.selectedMask, this.disabledMask]) {
+            if (!mask?.isValid) continue;
+            mask.active = false;
+            mask.removeFromParent();
+            mask.destroy();
+        }
+        this.selectedMask = null;
+        this.disabledMask = null;
     }
 
     private applyVisualState(): void {
+        if (this.presentationOnly) return;
         this.selectedMask!.active = this.selected;
         this.disabledMask!.active = !this.selected && this.disabled;
     }

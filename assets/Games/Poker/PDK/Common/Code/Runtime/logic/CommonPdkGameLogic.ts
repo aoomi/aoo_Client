@@ -55,6 +55,14 @@ export class CommonPdkGameLogic {
         return value;
     }
 
+    private GetMinimumPairRunLength(): number {
+        const value = Number(this.GetAuthoritativeRuleOptions().minimumPairRunLength);
+        if (!Number.isSafeInteger(value) || value < 2) {
+            throw new Error('CommonPdk 权威 minimumPairRunLength 无效');
+        }
+        return value;
+    }
+
     private GetTripleAttachmentMode(): 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER' {
         const value = String(this.GetAuthoritativeRuleOptions().tripleAttachmentMode ?? '');
         if (value !== 'DISABLED' && value !== 'SINGLES' && value !== 'PAIRS'
@@ -632,83 +640,54 @@ export class CommonPdkGameLogic {
         return false;
     }
 
-    public IsZhadan(pokers){
-        let temp = [];
-        for(let i=0; i < pokers.length; i++){
-            let poker = pokers[i];
-            let zhadan = this.GetSameValue(pokers, poker);
-            if(zhadan.length == 4){
-                temp = zhadan;
-                break;
-            }
-            //是否有3A炸玩法
-            if(this.Room.GetRoomPaiXing('SanAZha')){
-                if(zhadan.length == 3 && this.GetCardValue(zhadan[0]) == 14){
-                    temp = zhadan;
-                    break;
-                }
+    private GetBombDescriptor(pokers): { tier: number; rank: number } | null {
+        if(!Array.isArray(pokers) || !pokers.length) return null;
+        const options = this.GetAuthoritativeRuleOptions();
+        const counts = new Map<number, number>();
+        for(const poker of pokers){
+            const rank = this.GetCardValue(poker);
+            counts.set(rank, (counts.get(rank) ?? 0) + 1);
+        }
+        const specialRanks = Array.isArray(options.specialTripleBombRanks)
+            ? options.specialTripleBombRanks.map(Number)
+            : [];
+        const specialRank = [...counts.entries()].find(([rank, count]) => count === 3 && specialRanks.includes(rank))?.[0];
+        if(specialRank !== undefined){
+            if(pokers.length === 3
+                || (pokers.length === 4 && options.allowSpecialTripleBombWithOne === true)){
+                return { tier: Number(options.specialBombTier ?? 2), rank: specialRank };
             }
         }
-        if(temp.length){    
-            //4带1玩法必须带1根牌才能出，最后一手不用
-            if(this.Room.GetRoomPaiXing('SiDaiYi')==true){
-                if(pokers.length - temp.length == 0 ){
-                    return true;
-                }else{
-                    //判断是否是最后一手
-                    if(this.handCardList.length==pokers.length && pokers.length<=4 ){
-                        return true;
-                    }
-                }
-            }else{
-                console.log('eeeeeeeee')
-                if(pokers.length - temp.length == 0 ){
-                    return true;
-                }
+        const ranks = [...counts.keys()].sort((a, b) => a - b);
+        if(options.allowConsecutiveBomb === true && pokers.length >= 8 && pokers.length % 4 === 0
+            && [...counts.values()].every((count) => count === 4)
+            && ranks.every((rank, index) => rank < 15 && (index === 0 || rank === ranks[index - 1] + 1))){
+            return { tier: ranks.length * 2 - 1, rank: ranks[ranks.length - 1] };
+        }
+        const fourRank = [...counts.entries()].find(([, count]) => count === 4)?.[0];
+        if(fourRank !== undefined){
+            if(pokers.length === 4){
+                return { tier: Number(options.standardBombTier ?? 1), rank: fourRank };
+            }
+            if(pokers.length === 5 && options.allowFourBombWithOne === true){
+                return { tier: Number(options.fourBombWithOneTier ?? 1), rank: fourRank };
             }
         }
+        return null;
+    }
 
-        return false;
+    public IsZhadan(pokers){
+        return this.GetBombDescriptor(pokers) !== null;
     }
     
     public CheckZhaDan(){
         let pokers = this.selectCardList;
-
-        let lastCardValue = 0;
-        let myCardValue = 0;
-
-        if(this.IsZhadan(this.lastCardList)){
-            for(let i = 0; i < this.lastCardList; i++){
-                let sameCard = this.GetSameValue(this.lastCardList,this.lastCardList[i]);
-                if(sameCard.length>=3){
-                    lastCardValue = this.GetCardValue(this.lastCardList[i]);
-                    break;
-                }
-            }
-        }
-        if(this.IsZhadan(pokers)){
-            if(lastCardValue == 0){
-                return true;
-            }
-            for(let i = 0; i < pokers; i++){
-                let sameCard = this.GetSameValue(pokers,pokers[i]);
-                if(sameCard.length>=3){
-                    myCardValue = this.GetCardValue(pokers[i]);
-                    break;
-                }
-            }
-        }
-        else{
-            return false;
-        }
-        
-        //先比较牌值再比较张数
-        if(myCardValue > lastCardValue){
-            //if(pokers.length >= this.lastCardList.length){
-            return true;
-            //}
-        }
-        return false;
+        const candidate = this.GetBombDescriptor(pokers);
+        if(!candidate) return false;
+        const previous = this.GetBombDescriptor(this.lastCardList);
+        if(!previous) return true;
+        return candidate.tier > previous.tier
+            || (candidate.tier === previous.tier && candidate.rank > previous.rank);
     }
 
     public IsLianShun(pokers){
@@ -1087,11 +1066,8 @@ export class CommonPdkGameLogic {
         }else{
              pokers = this.selectCardList;
         }
-        if(!this.Room.GetRoomPaiXing('JieMeiDui') && pokers.length<=4){
-            return false;
-        }
-        
-        if(pokers.length < 4){return false;}
+        const minimumPairRunLength = this.GetMinimumPairRunLength();
+        if(pokers.length < minimumPairRunLength * 2){return false;}
         if(pokers.length%2 == 1){return false;}
 
         let lastCardValue = 0;

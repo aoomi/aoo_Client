@@ -12,9 +12,11 @@ export class CommonPdkRecordController {
     private form: LegacyForm | null = null;
     private terminalPayload: Record<string, unknown> = {};
     private continuing = false;
-    // Final settlement is already terminal at game authority. Skipping a second
-    // in-game leave command lets Hall clear the completed room deterministically.
-    private readonly returnLobby = (): void => this.requestLeave('authority-left');
+    private rematchOperationId = '';
+    // A completed match remains an active room while players decide whether to
+    // rematch. Returning must therefore execute the normal authoritative leave
+    // path instead of pretending that Authority has already removed the room.
+    private readonly returnLobby = (): void => this.requestLeave('record-exit');
     private readonly continueMatch = (): void => { void this.continueRoom(); };
     private readonly shareMore = (): void => this.openShare();
     private readonly showDetails = (): void => this.shareController.shareLink();
@@ -38,6 +40,7 @@ export class CommonPdkRecordController {
     public onShow(form?: LegacyForm, roomEnd?: unknown): void {
         if (form) this.form = form;
         this.terminalPayload = this.record(roomEnd);
+        this.rematchOperationId = '';
         this.bindButtons();
         this.render();
     }
@@ -166,13 +169,25 @@ export class CommonPdkRecordController {
         if (button) button.interactable = false;
         try {
             const roomId = Number(this.runtime.getRoomManager().GetEnterRoomID());
-            await this.runtime.action('rematch', 'common.room.rematch_req', { roomID: roomId });
+            if (!this.rematchOperationId) this.rematchOperationId = crypto.randomUUID();
+            console.info('[PDK BigSettlement rematch]', {
+                roomId,
+                playerId: this.runtime.getPlayerId(),
+                operationId: this.rematchOperationId,
+            });
+            await this.runtime.action('rematch', 'common.room.rematch_req', {
+                roomID: roomId,
+                operationId: this.rematchOperationId,
+                idempotencyKey: this.rematchOperationId,
+            });
             // Closing by changing node.active leaves LegacyFormManager's shown
             // stack and full-screen modal input mask alive. Always close through
             // the manager so the resumed room becomes interactive immediately.
             this.closeSettlement();
         } catch (error: any) {
-            this.showMessage(error?.message ?? '无法继续游戏，请联系赛事举办方');
+            const interrupted = String(error?.message ?? '').includes('REQUEST_INTERRUPTED_NOT_REPLAYABLE');
+            this.showMessage(interrupted ? '连接正在恢复，请稍后再次点击继续游戏'
+                : error?.message ?? '无法继续游戏，请联系赛事举办方');
         } finally {
             this.continuing = false;
             if (button?.isValid) button.interactable = true;

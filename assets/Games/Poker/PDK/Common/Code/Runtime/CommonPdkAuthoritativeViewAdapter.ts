@@ -93,8 +93,8 @@ function legacyOperationType(type: unknown): number {
         case 'TRIPLE': return 5;
         case 'TRIPLE_WITH_ONE': return 6;
         case 'TRIPLE_WITH_TWO': return 7;
-        case 'FOUR_BOMB_WITH_ONE':
-        case 'FOUR_WITH_TWO_PAIRS': return 8;
+        case 'FOUR_BOMB_WITH_ONE': return 8;
+        case 'FOUR_WITH_TWO_PAIRS': return 20;
         case 'FOUR_WITH_TWO': return 9;
         case 'FOUR_WITH_THREE': return 10;
         case 'BOMB':

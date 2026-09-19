@@ -271,9 +271,18 @@ export class CommonPdkRuntime {
             playVersion: authorityBody.playVersion,
             action: event,
             payload: source,
+            ...(typeof source.idempotencyKey === 'string'
+                ? { idempotencyKey: source.idempotencyKey } : {}),
         };
         return this.client.request<unknown>(dispatchEvent, dispatchBody)
-            .then((packet) => this.unwrapDispatchPayload(packet) as T);
+            .then((packet) => {
+                // A successful play response already contains the committed
+                // authoritative room view. Apply it before resolving the user
+                // action; otherwise controls keep rendering the previous turn
+                // until a later WebSocket push happens to arrive.
+                if (event === 'common.room.play_req') this.applyAuthoritativePacket(packet, false);
+                return this.unwrapDispatchPayload(packet) as T;
+            });
     }
 
     /** One in-flight request per user action; a rejected request is always released for retry. */
