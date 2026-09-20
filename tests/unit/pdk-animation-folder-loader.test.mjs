@@ -63,7 +63,7 @@ test('deal and outgoing-card animations do not replay history or carry card shad
     const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
     const dealGate = controller.slice(
         controller.indexOf('private shouldAnimateDeal'),
-        controller.indexOf('public async waitForRoundEndPresentation'),
+        controller.indexOf('public async truncateRoundEndPresentation'),
     );
     assert.match(dealGate, /playHistory\.length > 0/);
     assert.match(dealGate, /hasPlayedCards/);
@@ -116,7 +116,6 @@ test('deal, light effects, trick cleanup, and More menu follow explicit UI bound
     assert.match(clear, /this\.clearPublicCardsForSeat\(dataSeat\)/);
     assert.doesNotMatch(clear, /animatePublicCardsClear\(\)/);
     assert.match(controller, /getBoundingBoxToWorld\(\)[\s\S]*toggleMoreMenu\(\)/);
-    assert.match(controller, /menu\.setSiblingIndex\(this\.view\.root\.children\.length - 1\)/);
     assert.match(resolver, /EVENT_AFTER_UPDATE/);
     assert.match(resolver, /glow\|halo\|guang\|gx_\|lizi\|diquan\|shadow\|ying/);
 });

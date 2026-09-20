@@ -76,14 +76,16 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
         this.phaseLabel.string = `第${round}局 · ${PHASE_TEXT[phase]}`;
     }
 
-    public showSeat(seat: number, playerId: number | null, canSit: boolean, seatLimit: number): void {
+    public showSeat(seat: number, authoritativeSeat: number, playerId: number | null,
+        canSit: boolean, seatLimit: number): void {
         const seatNode = this.ensureSeatNode(seat, seatLimit);
         const name = seatNode.getChildByName('Name')?.getComponent(Label);
         if (name) name.string = playerId === null ? '空位' : `玩家${playerId}`;
         const button = seatNode.getComponent(Button) ?? seatNode.addComponent(Button);
         button.interactable = canSit;
         seatNode.off(Button.EventType.CLICK, undefined, this);
-        if (canSit) seatNode.on(Button.EventType.CLICK, () => { void this.controller?.sit(seat); }, this, false);
+        if (canSit) seatNode.on(Button.EventType.CLICK,
+            () => { void this.controller?.sit(authoritativeSeat, 0); }, this, false);
     }
 
     public showHand(seat: number, cards: readonly number[], revealed: boolean): void {
@@ -92,6 +94,8 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
         // 未公开的牌只显示牌背数量，避免旁观席位从客户端状态中泄露牌值。
         label.string = revealed ? cards.map(card => String(card)).join('  ') : cards.map(() => '■').join('  ');
     }
+
+    public showReady(_seat: number, _ready: boolean): void {}
 
     public showCommitted(seat: number, value: number): void {
         const label = this.committedLabels[seat];

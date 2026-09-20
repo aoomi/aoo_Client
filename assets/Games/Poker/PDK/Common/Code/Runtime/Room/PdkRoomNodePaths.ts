@@ -23,6 +23,7 @@ export const CommonRoomNodePath = Object.freeze({
 } as const);
 
 export const PdkRoomNodePath = Object.freeze({
+    playCountTemplate: 'RoomCommon/PlayCount',
     operationButtons: 'Btn',
     passButton: 'Btn/Btn_Pass',
     hintButton: 'Btn/Btn_Hint',

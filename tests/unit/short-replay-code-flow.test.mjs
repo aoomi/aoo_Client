@@ -59,12 +59,13 @@ test('authoritative replay keeps the selected round terminal cards visible', () 
 
 test('small settlement fetches displays and copies its stable code', () => {
     const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /this\.setEnd\.replayCode/);
-    assert.match(result, /回放码:\$\{this\.replayCode\}/);
+    assert.match(result, /this\.viewSetEnd\.replayCode/);
+    assert.match(result, /回放码:\$\{replayCode\}/);
     assert.match(result, /loadReplayCode\(roomId, setId\)/);
     assert.match(result, /roundNo - 1/);
-    assert.match(result, /Btn_Share', Boolean\(this\.replayCode\)/);
-    assert.match(result, /writeClipboard\(this\.replayCode\)/);
+    assert.match(result, /Btn_Share', Boolean\(replayCode\)/);
+    assert.match(result, /writeClipboard\(replayCode\)/);
+    assert.match(result, /target !== this\.viewSetEnd/);
     assert.doesNotMatch(result, /回放码:生成中/);
 });
 
@@ -87,12 +88,12 @@ test('terminal round still opens the eighth small settlement before totals', () 
 
 test('small settlement keeps global hand boundaries and completed-round pagination', () => {
     const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /PageLabel', `\$\{roundNo\}\/\$\{roundLimit\}`/);
-    assert.match(result, /new Node\(`PlayedHand_\$\{hand\.playIndex\}`\)/);
-    assert.match(result, /playIndex: order \+ 1/);
+    assert.match(result, /Bottom\/Page\/Label', `\$\{roundNo\}\/\$\{roundLimit\}`/);
+    assert.match(result, /PlayedCard_\$\{hand\.playIndex\}_\$\{index\}/);
+    assert.match(result, /: order \+ 1/);
     assert.match(result, /this\.sortedCards\(hand\.cards\)/);
-    assert.match(result, /Btn_Continue', !roomEnded/);
-    assert.match(result, /Btn_FinalSettlement', roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Continue', !roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Final', roomEnded/);
     assert.match(result, /if \(this\.matchFinished\(\)\) return;/);
 });
 
@@ -108,9 +109,9 @@ test('final settlement receives the exact terminal payload instead of relying on
 
 test('terminal small settlement exposes only summary and cannot overlay it with return lobby', () => {
     const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /Btn_FinalSettlement', roomEnded/);
-    assert.match(result, /Btn_ReturnLobby', false/);
-    assert.doesNotMatch(result, /Btn_ReturnLobby', roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Final', roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Return', false/);
+    assert.doesNotMatch(result, /Bottom\/Btn\/Btn_Return', roomEnded/);
 });
 
 test('record settlement uses explicit history context and shared rule formatting', () => {

@@ -243,7 +243,17 @@ export class ReplayController {
         const hasDirectCode = /^(?:\d{6}|\d{7}|\d{8}|\d{11})$/.test(directCode);
         this.label(form.node, 'Lb_PlaybackCode', hasDirectCode
             ? `回放码:${directCode}` : '回放码:暂不可用');
-        this.textAt(form.node, 'Bottom/Page/Label', rounds.length ? `${index + 1}/${rounds.length}` : '0/0');
+        const configuredRoundCount = Number(detail.ruleSnapshot?.roundCount
+            ?? detail.ruleSnapshot?.setCount ?? 0);
+        const completedRoundNo = Number(round?.roundNo ?? 0);
+        const roundLimit = Number.isSafeInteger(configuredRoundCount) && configuredRoundCount > 0
+            ? configuredRoundCount
+            : Math.max(0, ...rounds.map(value => Number(value.roundNo ?? 0)).filter(Number.isFinite));
+        // Page labels describe the authoritative hand number, not the compacted
+        // array index. An unfinished/corrupt settlement can be filtered out, but
+        // that must never turn an 8-round room into a misleading "1/7" record.
+        this.textAt(form.node, 'Bottom/Page/Label', completedRoundNo > 0 && roundLimit > 0
+            ? `${completedRoundNo}/${roundLimit}` : '0/0');
         this.textAt(form.node, 'Bottom/Bg_Rule/Label', formatPdkRuleSummary(detail.ruleSnapshot, detail.ruleFields));
         const previousPage = this.at(form.node, 'Bottom/Page/Btn_Previous')?.getComponent(Button);
         const nextPage = this.at(form.node, 'Bottom/Page/Btn_Next')?.getComponent(Button);

@@ -1,4 +1,4 @@
-import { assetManager, instantiate, Node, Prefab, UITransform, Widget } from 'cc';
+import { assetManager, Button, instantiate, Node, Prefab, UITransform, Widget } from 'cc';
 import type { GameRuntimeEntry } from '../../../../Common/Code/Runtime/GameRuntimeEntry';
 import type { LegacySubgameTicket } from '../../../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import { createOwnedGameClient } from '../../../../../Common/Code/Runtime/network/ConnectionOwnership';
@@ -9,7 +9,9 @@ import { CD299LandscapeRoomViewComponent } from './CD299LandscapeRoomViewCompone
 import { CD299_PLAY_VERSION } from './CD299Rules';
 
 const BUNDLE = 'poker-cx';
-const LANDSCAPE_PREFAB = 'CD299/Prefab/Landscape/CD299RoomLandscape';
+const COMMON_ROOM_BUNDLE = 'games-common';
+const COMMON_ROOM_PREFAB = 'Prefab/CommonRoom';
+const LANDSCAPE_PREFAB = 'Common/Prefab/CX_CommonRoom';
 const PORTRAIT_PREFAB = 'CD299/Prefab/Portrait/CD299RoomPortrait';
 const LANDSCAPE_SEAT_POSITIONS = Object.freeze([
     [-300, -271.18], [450, -100], [450, 100], [280, 280],
@@ -21,6 +23,7 @@ export interface CD299GameRuntimeEntryOptions {
     readonly playerId: number;
     readonly requestPrefix?: string;
     readonly onEntered?: (roomId: number, node: Node, controller: CD299RuntimeController) => void;
+    readonly onExitRequested?: (roomId: number) => Promise<void>;
 }
 
 /** Feature-owned CD299 entry dedicated to the live authoritative table. */
@@ -32,6 +35,7 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
     private host: Node | null = null;
     private controller: CD299RuntimeController | null = null;
     private unbindCommands: (() => void) | null = null;
+    private unbindExit: (() => void) | null = null;
 
     public constructor(private readonly options: CD299GameRuntimeEntryOptions) {
         if (!Number.isSafeInteger(options.playerId) || options.playerId <= 0) {
@@ -40,7 +44,10 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
     }
 
     public async preload(handoff?: LegacySubgameTicket): Promise<void> {
-        await this.loadPrefab(this.prefabPath(handoff));
+        await Promise.all([
+            this.loadPrefab(this.prefabPath(handoff)),
+            this.loadPrefabFromBundle(COMMON_ROOM_BUNDLE, COMMON_ROOM_PREFAB),
+        ]);
     }
 
     public async enter(handoff: LegacySubgameTicket): Promise<void> {
@@ -58,7 +65,12 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
             client.bindRoomAuthority(roomId, CD299_PLAY_VERSION);
             await client.connect(authorityRoute);
             const prefabPath = this.prefabPath(handoff);
-            const node = instantiate(await this.loadPrefab(prefabPath));
+            const [prefab, commonRoomPrefab] = await Promise.all([
+                this.loadPrefab(prefabPath),
+                this.loadPrefabFromBundle(COMMON_ROOM_BUNDLE, COMMON_ROOM_PREFAB),
+            ]);
+            const node = instantiate(prefab);
+            const commonRoom = instantiate(commonRoomPrefab);
             const portrait = prefabPath === PORTRAIT_PREFAB;
             const view = portrait
                 ? node.getComponent(CD299RoomViewComponent)
@@ -71,11 +83,53 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
             host.setPosition(0, 0, 0);
             host.setScale(1, 1, 1);
             host.addChild(node);
-            if (!portrait) this.configureLandscapeLayout(node);
+            // CommonRoom is the shared room chrome and must render above the gameplay
+            // desk. Its controls occupy only their own hit areas, so gameplay seats remain clickable.
+            host.addChild(commonRoom);
+            if (!portrait) {
+                this.configureLandscapeLayout(node);
+                this.configureCommonRoomLayout(commonRoom, node.layer);
+            }
+            if (!portrait && view instanceof CD299LandscapeRoomViewComponent) {
+                view.attachCommonRoom(commonRoom, roomId);
+            }
+            const back = commonRoom.getChildByPath('Btn/Btn_Back');
+            const backButton = back?.getComponent(Button);
+            if (back && backButton && this.options.onExitRequested) {
+                let exitStarted = false;
+                const exit = (): void => {
+                    if (exitStarted) return;
+                    if (!backButton.interactable) return;
+                    exitStarted = true;
+                    backButton.interactable = false;
+                    console.info('[CD299] room exit requested', { roomId, playerId: this.options.playerId });
+                    void this.options.onExitRequested!(roomId).catch((error: unknown) => {
+                        exitStarted = false;
+                        if (back.isValid) backButton.interactable = true;
+                        console.error('[CD299] room exit failed', { roomId, playerId: this.options.playerId,
+                            reason: error instanceof Error ? error.message : String(error) });
+                    });
+                };
+                back.on(Button.EventType.CLICK, exit, this);
+                back.on(Node.EventType.TOUCH_END, exit, this);
+                back.on(Node.EventType.MOUSE_UP, exit, this);
+                this.unbindExit = () => {
+                    back.off(Button.EventType.CLICK, exit, this);
+                    back.off(Node.EventType.TOUCH_END, exit, this);
+                    back.off(Node.EventType.MOUSE_UP, exit, this);
+                };
+            }
             this.host = host;
             const prefix = `${this.options.requestPrefix ?? 'cd299'}-${roomId}-${this.options.playerId}`;
-            const controller = new CD299RuntimeController(client, view, roomId, this.options.playerId, prefix);
+            const controller = new CD299RuntimeController(client, view, roomId, prefix);
             this.controller = controller;
+            const diagnostics = globalThis as typeof globalThis & {
+                __PDK_E2E_LOGS__?: unknown[];
+                __CD299_RUNTIME__?: { root: Node; controller: CD299RuntimeController };
+            };
+            if (Array.isArray(diagnostics.__PDK_E2E_LOGS__)) {
+                diagnostics.__CD299_RUNTIME__ = { root: node, controller };
+            }
             this.unbindCommands = view.bindController(controller);
             await controller.state();
             this.options.onEntered?.(roomId, node, controller);
@@ -89,8 +143,15 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
     }
 
     public destroy(): void {
+        const diagnostics = globalThis as typeof globalThis & {
+            __CD299_RUNTIME__?: { root: Node; controller: CD299RuntimeController };
+        };
+        if (diagnostics.__CD299_RUNTIME__?.controller === this.controller) delete diagnostics.__CD299_RUNTIME__;
         this.unbindCommands?.();
         this.unbindCommands = null;
+        this.unbindExit?.();
+        this.unbindExit = null;
+        this.controller?.destroy();
         this.controller = null;
         this.host?.destroy();
         this.host = null;
@@ -126,7 +187,7 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
         players.setScale(1, 1, 1);
 
         LANDSCAPE_SEAT_POSITIONS.forEach(([x, y], seat) => {
-            const seatNode = players.getChildByName(String(seat));
+            const seatNode = players.getChildByName(`Seat_${seat}`);
             if (!seatNode) throw new Error(`[CD299] landscape prefab missing seat=${seat}`);
             const widget = seatNode.getComponent(Widget);
             if (widget) widget.enabled = false;
@@ -140,11 +201,34 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
         });
     }
 
-    private async loadPrefab(path: string): Promise<Prefab> {
-        const bundle = assetManager.getBundle(BUNDLE) ?? await new Promise<ReturnType<typeof assetManager.getBundle>>((resolve, reject) => {
-            assetManager.loadBundle(BUNDLE, (error, loaded) => error || !loaded ? reject(error ?? new Error('[CD299] poker-cx bundle unavailable')) : resolve(loaded));
+    /** The gameplay Camera renders the CX game layer, not the prefab's default UI_2D layer. */
+    private configureCommonRoomLayout(commonRoom: Node, gameLayer: number): void {
+        const widget = commonRoom.getComponent(Widget);
+        if (widget) widget.enabled = false;
+        commonRoom.getComponent(UITransform)?.setContentSize(1280, 720);
+        commonRoom.setPosition(0, 0, 1);
+        commonRoom.setScale(1, 1, 1);
+        this.setLayerRecursively(commonRoom, gameLayer);
+        console.info('[CD299] common room layout fixed', {
+            commonRoom: commonRoom.name, gameLayer, designWidth: 1280, designHeight: 720,
         });
-        if (!bundle) throw new Error('[CD299] poker-cx bundle unavailable');
+    }
+
+    private setLayerRecursively(node: Node, layer: number): void {
+        node.layer = layer;
+        for (const child of node.children) this.setLayerRecursively(child, layer);
+    }
+
+    private async loadPrefab(path: string): Promise<Prefab> {
+        return this.loadPrefabFromBundle(BUNDLE, path);
+    }
+
+    private async loadPrefabFromBundle(bundleName: string, path: string): Promise<Prefab> {
+        const bundle = assetManager.getBundle(bundleName) ?? await new Promise<ReturnType<typeof assetManager.getBundle>>((resolve, reject) => {
+            assetManager.loadBundle(bundleName, (error, loaded) => error || !loaded
+                ? reject(error ?? new Error(`[CD299] bundle unavailable name=${bundleName}`)) : resolve(loaded));
+        });
+        if (!bundle) throw new Error(`[CD299] bundle unavailable name=${bundleName}`);
         return new Promise<Prefab>((resolve, reject) => bundle.load(path, Prefab, (error, prefab) =>
             error || !prefab ? reject(error ?? new Error(`[CD299] prefab unavailable path=${path}`)) : resolve(prefab)));
     }

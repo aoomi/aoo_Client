@@ -27,7 +27,7 @@ export const LS201_PROFILE:PdkRegionalRoomProfile<LiangshanPdkRoomInput>={
  toImmutableRules(input):PdkRoomRulePayload{return{
   playerCount:requireChoice(input.playerCount,[2,3,4],'playerCount'),
   roundCount:requireChoice(input.roundCount,[8,12,16],'roundCount'),
-  operationTime:requireIntegerRange(input.operationTime,1,3600,'operationTime'),
+  operationTime:requireIntegerRange(input.operationTime,1,86400,'operationTime'),
   dealCardCount:requireChoice(input.dealCardCount,[8,10],'dealCardCount'),
   jinHuaScore:requireChoice(input.jinHuaScore,[1,2,3,4,5,'no_compare'],'jinHuaScore'),
   robDealerRule:requireChoice(input.robDealerRule,['dealer_first','dealer_last','first_round_no_compete','no_compete'],'robDealerRule'),

@@ -13,11 +13,17 @@ export class RoomLifecycleController {
     public dissolve(roomID: number): Promise<unknown> {
         return this.commands.action('dissolve', 'common.room.dissolve_req', { roomID });
     }
-    public play(roomID: number, pos: number, opCardType: number, cardList: readonly number[], daiNum: number): Promise<unknown> {
-        return this.commands.action('op-card', 'common.room.play_req', { roomID, pos, opCardType, cards: cardList, daiNum });
+    public play(roomID: number, pos: number, opCardType: number, cardList: readonly number[], daiNum: number,
+        expectedStateVersion: number, trickId: number, operationId: string): Promise<unknown> {
+        return this.commands.action('op-card', 'common.room.play_req', {
+            roomID, pos, opCardType, cards: cardList, daiNum, expectedStateVersion, trickId, operationId,
+        });
     }
-    public pass(roomID: number, pos: number): Promise<unknown> {
-        return this.commands.action('pass', 'common.room.pass_req', { roomID, pos });
+    public pass(roomID: number, pos: number, expectedStateVersion: number, trickId: number,
+        operationId: string): Promise<unknown> {
+        return this.commands.action('pass', 'common.room.pass_req', {
+            roomID, pos, expectedStateVersion, trickId, operationId,
+        });
     }
     public hint(roomID: number, pos: number): Promise<unknown> {
         return this.commands.action('hint', 'common.room.hint_req', { roomID, pos });

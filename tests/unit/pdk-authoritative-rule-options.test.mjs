@@ -51,7 +51,7 @@ function loadRanker() {
 const regionalRules = {
   CD201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
   NJ201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
-  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'SINGLE_OR_PAIR', fourAttachmentMode: 'DISABLED' },
 };
 
 test('three regional clients derive straight length from the authoritative snapshot', () => {
@@ -71,7 +71,7 @@ test('required opening card constrains decomposition before hint ranking', () =>
   assert.deepEqual(enumeratePdkRankMultisetCandidates(hand, 303), []);
 });
 
-test('Liangshan rule accepts triple with one card, one pair, or two loose cards', () => {
+test('Liangshan rule accepts triple with one card or one pair but rejects two loose cards', () => {
   const logic = createLogic(regionalRules.LS201);
   logic.ChangeSelectCard([103, 203, 303, 104]);
   assert.equal(logic.GetCardType(), 6);
@@ -80,7 +80,7 @@ test('Liangshan rule accepts triple with one card, one pair, or two loose cards'
   assert.equal(logic.GetCardType(), 15);
 
   logic.ChangeSelectCard([103, 203, 303, 104, 205]);
-  assert.equal(logic.GetCardType(), 7);
+  assert.equal(logic.GetCardType(), 0);
 });
 
 test('full lead enumeration ranks 888 plus pair threes before bare 888', () => {
@@ -748,11 +748,23 @@ test('single-or-pair is a complete authoritative attachment mode, not a client f
   assert.match(source, /value !== 'SINGLE_OR_PAIR'/);
   assert.match(source, /mode === 'SINGLE_OR_PAIR'/);
   assert.match(source, /AllowsTripleTwoSingles/);
+  assert.match(source,
+    /if\(this\.AllowsTripleTwoSingles\(\)\)\{\s*array\.push\.apply\(array, this\.GetSanDaiTip\(7,true\)\)/);
+  assert.match(source,
+    /if\(this\.AllowsTripleTwoSingles\(\)\)\{\s*array\.push\.apply\(array, this\.GetSanDaiFeiJiTip\(18,3,true\)\)/);
 
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
-  assert.match(controller, /\['SINGLES', 'SINGLE_OR_PAIR'\]\.includes/);
-  assert.match(controller, /String\(rules\.tripleAttachmentMode/);
+  assert.match(controller, /oneSingle: mode === 'SINGLES' \|\| mode === 'SINGLE_OR_PAIR'/);
+  assert.match(controller, /twoSingles: mode === 'EITHER'/);
+  assert.match(controller, /tripleAttachmentMode: String\(rules\.tripleAttachmentMode/);
+  assert.match(controller, /case 7:\s*case 18:\s*return triple === 'EITHER'/);
+
+  const adapter = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkAuthoritativeViewAdapter.ts'), 'utf8');
+  assert.match(adapter, /triple === 'SINGLE_OR_PAIR'.*patterns\.push\(1\)/);
+  assert.match(adapter, /triple === 'SINGLE_OR_PAIR'.*patterns\.push\(2\)/);
+  assert.match(adapter, /if \(triple === 'EITHER'\) patterns\.push\(3\)/);
 });
 
 test('whole-hand planner preserves exact authoritative triple attachment modes', () => {
@@ -786,6 +798,104 @@ test('Liangshan first-lead hand can hint AAA plus the required seven', () => {
   assert.deepEqual(logic.GetSanDaiTip(6)[0], [114, 214, 314, 107]);
 });
 
+test('later Liangshan rounds rank a complete AAA attachment before a loose seven', () => {
+  const rules = {
+    ...regionalRules.LS201,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    deckCards: [
+      107, 207, 307, 407, 108, 208, 308, 408,
+      109, 209, 309, 409, 110, 210, 310, 410,
+      111, 211, 311, 411, 112, 212, 312, 412,
+      113, 213, 313, 413, 114, 214, 314, 414,
+    ],
+    prioritizeMaximumWithOneOrdinaryPlay: true,
+    prioritizeLargestLeadWithoutMaximum: true,
+    prioritizeMaximumLeadUnlessConnectedRun: true,
+    prioritizeMaximumResponseWithinThreePlays: true,
+    prioritizeLargestLeadUnlessMaximumStraight: true,
+    optimizeWholeHand: true,
+    compareTripleAttachments: false,
+  };
+  const logic = createLogic(rules);
+  const hand = [114, 214, 314, 113, 110, 109, 108, 107];
+  logic.OutPokerCard(hand);
+  logic.ClearCardData();
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRanker();
+  const legal = enumeratePdkRankMultisetCandidates(hand)
+    .filter((cards) => {
+      logic.ChangeSelectCard(cards);
+      return logic.GetCardType() > 0;
+    })
+    .map((cards, order) => ({ cards, order }));
+  const ranked = rankCleanPdkHints(hand, legal, {
+    ...rules,
+    protectedBombs: [],
+    preserveScoringBombs: false,
+    maximumSingleRanks: [14],
+  }, true, true);
+  assert.equal(ranked[0].length, 4);
+  assert.deepEqual([...ranked[0]].filter((card) => card % 100 === 14).sort(), [114, 214, 314]);
+  assert.notDeepEqual(ranked[0], [107]);
+});
+
+test('equal-turn straights lead the lower intact run and retain the higher recapture run', () => {
+  const rules = {
+    ...regionalRules.LS201,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    optimizeWholeHand: true,
+    compareTripleAttachments: false,
+  };
+  const logic = createLogic(rules);
+  const hand = [114, 113, 112, 110, 210, 109, 108, 107];
+  logic.OutPokerCard(hand);
+  logic.ClearCardData();
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRanker();
+  const legal = enumeratePdkRankMultisetCandidates(hand)
+    .filter((cards) => {
+      logic.ChangeSelectCard(cards);
+      return logic.GetCardType() > 0;
+    })
+    .map((cards, order) => ({ cards, order }));
+  const ranked = rankCleanPdkHints(hand, legal, {
+    ...rules,
+    protectedBombs: [],
+    preserveScoringBombs: false,
+    maximumSingleRanks: [14],
+  }, true, true);
+  assert.deepEqual(ranked[0], [109, 108, 107]);
+});
+
+test('connected-family ranking leads three consecutive pairs before a destructive straight', () => {
+  const rules = {
+    ...regionalRules.LS201,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    optimizeWholeHand: true,
+    compareTripleAttachments: false,
+  };
+  const logic = createLogic(rules);
+  const hand = [113, 213, 109, 209, 108, 208, 107, 207];
+  logic.OutPokerCard(hand);
+  logic.ClearCardData();
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRanker();
+  const legal = enumeratePdkRankMultisetCandidates(hand)
+    .filter((cards) => {
+      logic.ChangeSelectCard(cards);
+      return logic.GetCardType() > 0;
+    })
+    .map((cards, order) => ({ cards, order }));
+  const ranked = rankCleanPdkHints(hand, legal, {
+    ...rules,
+    protectedBombs: [],
+    preserveScoringBombs: false,
+    maximumSingleRanks: [14],
+  }, true, true);
+  assert.deepEqual([...ranked[0]].sort((a, b) => a - b),
+    [107, 207, 108, 208, 109, 209].sort((a, b) => a - b));
+});
+
 test('Liangshan JJJJKK can answer a lower triple-with-pair as either JJJKK or JJJJ bomb', () => {
   const logic = createLogic({ ...regionalRules.LS201, compareTripleAttachments: false });
   logic.OutPokerCard([111, 211, 311, 411, 113, 213]);
@@ -811,6 +921,34 @@ test('a lower triple body can never answer a higher triple body', () => {
 
   logic.ChangeSelectCard([109, 209, 309, 113, 213]);
   assert.equal(logic.GetCardType(), 15);
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('attachment-comparison rule rejects a higher triple carrying a lower side card', () => {
+  const logic = createLogic({
+    ...regionalRules.LS201,
+    compareTripleAttachments: true,
+  });
+  logic.OutPokerCard([112, 212, 312, 108, 114]);
+  logic.SetCardData(6, [111, 211, 311, 112]);
+
+  logic.ChangeSelectCard([112, 212, 312, 108]);
+  assert.equal(logic.GetCardType(), 0, 'QQQ+8 cannot beat JJJ+Q when attachments compare');
+  assert.equal(logic.CheckCanOut(), false);
+
+  logic.ChangeSelectCard([112, 212, 312, 114]);
+  assert.equal(logic.GetCardType(), 6, 'QQQ+A beats both the JJJ body and Q attachment');
+  assert.equal(logic.CheckCanOut(), true);
+});
+
+test('body-only rooms do not inherit the attachment comparison rule', () => {
+  const logic = createLogic({
+    ...regionalRules.CD201,
+    compareTripleAttachments: false,
+  });
+  logic.SetCardData(6, [111, 211, 311, 112]);
+  logic.ChangeSelectCard([112, 212, 312, 108]);
+  assert.equal(logic.GetCardType(), 6);
   assert.equal(logic.CheckCanOut(), true);
 });
 
@@ -895,6 +1033,9 @@ test('four-with-two hint is generated only when authoritative four attachments a
   assert.match(controller, /return enumeratePdkRankMultisetCandidates\(hand, required\)/);
   assert.match(controller, /deckCards: Array\.isArray\(rules\.deckCards\)/,
     'hint ranking must receive the authoritative regional deck for response maximums');
+  assert.match(controller,
+    /preserveScoringBombs: String\(rules\.bombScoreMode \?\? 'DISABLED'\) !== 'DISABLED'/,
+    'public bomb preservation must come from the authoritative scoring mode');
 });
 
 test('common gameplay contains no regional branch or fixed five-card straight gate', () => {
@@ -923,6 +1064,18 @@ test('common gameplay contains no regional branch or fixed five-card straight ga
   assert.doesNotMatch(capabilities, /CD201|NJ201|LS201/);
   assert.doesNotMatch(runtime, /arrangementMode\?:/);
   assert.doesNotMatch(coordinator, /gameCode\s*===\s*['"](?:CD201|NJ201|LS201)['"]/);
+});
+
+test('hint context trusts the authoritative round marker and never reconstructs opening rules', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const start = controller.indexOf('private activeRequiredFirstCard');
+  const end = controller.indexOf('private authoritativePlayedCards', start);
+  const method = controller.slice(start, end);
+  assert.match(method, /setInfo\.roundNo \?\? setInfo\.setID/);
+  assert.match(method, /setInfo\.activeRequiredFirstCard \?\? 0/);
+  assert.doesNotMatch(method, /playedCards|playHistory|GetRoomProperty/);
+  assert.doesNotMatch(controller, /liangshanHintCompatibility|liangshanLeadStrategy/);
 });
 
 test('missing or malformed authoritative rules fail closed', () => {
@@ -972,6 +1125,40 @@ test('authoritative recognition covers pair runs, all bomb families, and four wi
   assert.equal(logic.GetCardType(), 0, 'a lower bomb must not beat a higher bomb');
   logic.ChangeSelectCard([110, 210, 310, 410]);
   assert.equal(logic.GetCardType(), 11, 'a higher bomb must beat a lower bomb');
+});
+
+test('Liangshan authoritative empty special-bomb ranks keep AAA available as an ordinary triple', () => {
+  const { CommonPdkGameLogic } = loadLogic();
+  const ruleOptions = {
+    minimumStraightLength: 3,
+    minimumPairRunLength: 2,
+    tripleAttachmentMode: 'SINGLE_OR_PAIR',
+    fourAttachmentMode: 'DISABLED',
+    specialTripleBombRanks: [],
+    allowSpecialTripleBombWithOne: false,
+  };
+  const logic = new CommonPdkGameLogic({
+    room: {
+      GetRoomConfig: () => ({ ruleOptions }),
+      // A stale legacy room flag must not turn LS201 AAA into a bomb.
+      GetRoomPaiXing: (name) => name === 'SanAZha',
+    },
+  });
+  const aces = [114, 214, 314];
+  logic.OutPokerCard([...aces, 109]);
+  assert.deepEqual(logic.GetZhaDanTip(), []);
+  logic.ChangeSelectCard([...aces, 109]);
+  assert.equal(logic.GetCardType(), 6);
+});
+
+test('public maximum control includes K when every ace is in hand or already played', () => {
+  const { effectivePdkMaximumSingleRanks } = loadRanker();
+  const deck = [
+    113, 213, 313, 413,
+    114, 214, 314, 414,
+  ];
+  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], [214, 314, 414]), [13, 14]);
+  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], [214, 314]), [14]);
 });
 
 test('pair-run recognition obeys authoritative minimumPairRunLength', () => {

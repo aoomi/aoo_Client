@@ -19,6 +19,7 @@ export interface ProductionGameRuntimeEntriesOptions {
     readonly pdk: GameRuntimeEntry;
     readonly lobbyNode: Node;
     readonly playerId: number;
+    readonly onCD299ExitRequested?: (roomId: number) => Promise<void>;
 }
 
 /** The single static composition point for native game runtimes shipped by Creator. */
@@ -36,6 +37,7 @@ export function createProductionGameRuntimeEntryRegistry(
             parent: roomHost,
             playerId: options.playerId,
             requestPrefix: 'cd299',
+            onExitRequested: options.onCD299ExitRequested,
         }),
         createCN298GameRuntimeEntry({
             playerId: options.playerId,

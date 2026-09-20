@@ -139,10 +139,13 @@ test('final settlement reads the authoritative cumulative room record', () => {
     assert.match(recordController, /BestWinnerScoreLabel/);
 });
 
-test('round settlement opens 1 second after authority without waiting for local animations', () => {
+test('round settlement preserves operation timing and truncates unfinished visual effects', () => {
     const settlement = switchCoordinator.slice(switchCoordinator.indexOf('private async showSettlementAfterPresentation'));
     assert.match(settlement, /globalThis\.setTimeout\(resolve,[\s\S]*\? 2000 : 1000\)/);
-    assert.doesNotMatch(settlement, /waitForRoundEndPresentation/);
+    const delay = settlement.indexOf('globalThis.setTimeout(resolve');
+    const presentation = settlement.indexOf('truncateRoundEndPresentation()');
+    assert.ok(delay >= 0 && presentation > delay);
+    assert.doesNotMatch(settlement, /waitForRoundEndPresentation\(\)/);
     assert.match(switchCoordinator, /generation !== this\.settlementPresentationGeneration/);
     assert.match(switchCoordinator, /key === this\.settlementPendingKey \|\| key === this\.settlementShownKey/);
     assert.match(switchCoordinator, /if \(!staticRestore\)/);

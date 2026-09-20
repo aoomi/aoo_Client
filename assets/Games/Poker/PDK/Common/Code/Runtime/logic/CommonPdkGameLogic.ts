@@ -72,6 +72,11 @@ export class CommonPdkGameLogic {
         return value;
     }
 
+    private HasSpecialTripleBombRank(value: number): boolean {
+        const ranks = this.GetAuthoritativeRuleOptions().specialTripleBombRanks;
+        return Array.isArray(ranks) && ranks.map(Number).includes(value);
+    }
+
     private AllowsTripleSingles(): boolean {
         const mode = this.GetTripleAttachmentMode();
         return mode === 'SINGLES' || mode === 'SINGLE_OR_PAIR' || mode === 'EITHER';
@@ -217,7 +222,7 @@ export class CommonPdkGameLogic {
         return this.lastCardType;
     }
     public CheckHaveBoomDai(list){
-        if(this.Room.GetRoomPaiXing('SanAZha')){
+        if(this.HasSpecialTripleBombRank(14)){
             for(let i = 0; i < list.length; i++){
                 let item = list[i];
                 let sameCard = this.GetSameValue(item, item[0]);
@@ -570,6 +575,26 @@ export class CommonPdkGameLogic {
             }
             if(myCardValue <= lastCardValue){
                 return false;
+            }
+            // In attachment-comparison rooms a triple response must beat both
+            // parts of the previous play.  Authority applies this after the
+            // triple body comparison; mirroring it here prevents Hint from
+            // presenting a locally accepted play that Authority will reject.
+            if(tripleFamily && tag !== 5 && this.ComparesTripleAttachments()){
+                const maximumAttachmentRank = (cards: number[], body: number[]) => {
+                    if(!body.length) return -1;
+                    const bodyRank = this.GetCardValue(body[0]);
+                    let maximum = -1;
+                    for(const card of cards){
+                        const rank = this.GetCardValue(card);
+                        if(rank !== bodyRank) maximum = Math.max(maximum, rank);
+                    }
+                    return maximum;
+                };
+                if(maximumAttachmentRank(pokers, candidateBody)
+                    <= maximumAttachmentRank(this.lastCardList, targetBody)){
+                    return false;
+                }
             }
         }
         if(candidateBody.length){
@@ -1155,7 +1180,7 @@ export class CommonPdkGameLogic {
                 if(zhadan.length == 4){
                     return true;
                 }
-                if(this.Room.GetRoomPaiXing('SanAZha')){
+                if(this.HasSpecialTripleBombRank(14)){
                     if(zhadan.length == 3 && this.GetCardValue(zhadan[0]) == 14){
                         return true;
                     }
@@ -1415,7 +1440,9 @@ export class CommonPdkGameLogic {
             if(this.AllowsTripleSingles()){
                 array.push.apply(array, this.GetSanDaiTip(6,true));
             }
-            if(this.AllowsTripleSingles()){
+            // Two loose wings are a distinct authority capability; allowing one
+            // wing must never make the legacy lead enumerator synthesize two.
+            if(this.AllowsTripleTwoSingles()){
                 array.push.apply(array, this.GetSanDaiTip(7,true));
             }
             if(this.AllowsTriplePairs()){
@@ -1437,7 +1464,7 @@ export class CommonPdkGameLogic {
             if(this.AllowsTriplePairs()){
                 array.push.apply(array, this.GetSanDaiFeiJiTip(17,3,true));
             }
-            if(this.AllowsTripleSingles()){
+            if(this.AllowsTripleTwoSingles()){
                 array.push.apply(array, this.GetSanDaiFeiJiTip(18,3,true));
             }
             if(this.Room.GetRoomPaiXing('SanBuDai')){
@@ -1519,7 +1546,7 @@ export class CommonPdkGameLogic {
             if(zhadan.length == 4 && !bInList){
                 zhadans[zhadans.length] = zhadan;
             }
-            if(this.Room.GetRoomPaiXing('SanAZha')){
+            if(this.HasSpecialTripleBombRank(14)){
                 if(zhadan.length == 3 && !bInList && this.GetCardValue(zhadan[0]) == 14){
                     zhadans[zhadans.length] = zhadan;
                 }
@@ -1559,7 +1586,7 @@ export class CommonPdkGameLogic {
             if(zhadan.length == 4 && !bInList && this.GetCardValue(zhadan[0]) > lastCardValue){
                 zhadans[zhadans.length] = zhadan;
             }
-            if(this.Room.GetRoomPaiXing('SanAZha')){
+            if(this.HasSpecialTripleBombRank(14)){
                 if(zhadan.length == 3 && !bInList && this.GetCardValue(zhadan[0]) == 14){
                     zhadans[zhadans.length] = zhadan;
                 }
@@ -1595,7 +1622,7 @@ export class CommonPdkGameLogic {
                 zhadans[zhadans.length] = zhadan;
             }
             //是否有3A炸玩法
-            if(this.Room.GetRoomPaiXing('SanAZha')){
+            if(this.HasSpecialTripleBombRank(14)){
                 if(zhadan.length == 3 && this.GetCardValue(zhadan[0]) == 14 && !bInList){
                     
                     zhadans[zhadans.length] = zhadan;

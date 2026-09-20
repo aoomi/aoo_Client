@@ -38,7 +38,6 @@ export class CommonPdkResultController {
     private readonly specialHandRevisions = new WeakMap<Node, number>();
     private continueInFlight = false;
     private continueRoundKey = '';
-    private replayCode = '';
     private replayCodeRequest = 0;
     private autoContinueTimer: ReturnType<typeof setInterval> | null = null;
     private autoContinueSeconds = 0;
@@ -73,19 +72,17 @@ export class CommonPdkResultController {
     public onShow(setEnd?: unknown): void {
         if (this.form) this.bindButtons(this.form);
         this.setEnd = (setEnd ?? this.runtime.getRoomSet().GetRoomSetProperty('setEnd') ?? {}) as Record<string, unknown>;
-        this.recordSettlement(this.setEnd);
+        if (this.isCompletedSettlement(this.setEnd)) this.recordSettlement(this.setEnd);
         this.viewSetEnd = this.setEnd;
         this.displayedRoundNo = this.numberValue(this.setEnd.roundNo);
         this.openedFromRoomButton = this.setEnd.openedFromRoomButton === true;
         if (this.form?.node) {
             (this.form.node as Node & { __pdkRoomButtonReview?: boolean }).__pdkRoomButtonReview = this.openedFromRoomButton;
         }
-        const replayCode = String(this.setEnd.replayCode ?? '');
-        this.replayCode = /^(?:\d{6}|\d{7}|\d{8}|\d{11})$/.test(replayCode) ? replayCode : '';
         this.render();
         void this.hydrateSettlementHistory();
         this.startAutoContinue();
-        if (!this.replayCode) void this.refreshReplayCode();
+        if (!this.displayedReplayCode()) void this.refreshReplayCode();
     }
 
     public onClose(): void { this.stopAutoContinue(); }
@@ -147,14 +144,29 @@ export class CommonPdkResultController {
     private render(): void {
         const room = this.runtime.getRoom();
         const playersByPos = this.runtime.getRoomPosManager().GetRoomAllPlayerInfo() ?? {};
-        const players: ResultPlayer[] = Object.keys(playersByPos)
-            .map((key) => ({ dataSeat: Number(key), player: playersByPos[key] as Record<string, unknown> }))
+        const historicalPlayers = this.viewSetEnd.posInfo;
+        const seatKeys = new Set([
+            ...Object.keys(playersByPos),
+            ...(Array.isArray(historicalPlayers)
+                ? historicalPlayers.map((_, index) => String(index))
+                : historicalPlayers && typeof historicalPlayers === 'object'
+                    ? Object.keys(historicalPlayers) : []),
+        ]);
+        const players: ResultPlayer[] = [...seatKeys]
+            .map((key) => {
+                const dataSeat = Number(key);
+                const live = this.objectValue(playersByPos[key]);
+                const historical = this.objectValue(this.indexed(historicalPlayers, dataSeat));
+                return { dataSeat, player: { ...historical, ...live } };
+            })
+            .filter(({ dataSeat }) => Number.isSafeInteger(dataSeat) && dataSeat >= 0)
             .filter(({ player }) => Number(player.pid ?? 0) > 0)
             .sort((left, right) => left.dataSeat - right.dataSeat);
         const roomEnded = this.matchFinished();
         this.text('Top/Lb_RoomId', `房号:${room.GetRoomProperty('key') ?? ''}`);
         this.text('Top/Lb_Time', this.date(this.viewSetEnd.startTime));
-        this.text('Top/Lb_PlaybackCode', this.replayCode ? `回放码:${this.replayCode}` : '回放码:获取失败');
+        const replayCode = this.displayedReplayCode();
+        this.text('Top/Lb_PlaybackCode', replayCode ? `回放码:${replayCode}` : '回放码:获取失败');
         const display = this.viewSetEnd;
         const roundNo = this.numberValue(display.roundNo ?? room.GetRoomProperty('setID'));
         const roundLimit = this.numberValue(this.setEnd.roundLimit ?? room.GetRoomConfigByProperty('setCount'));
@@ -165,7 +177,7 @@ export class CommonPdkResultController {
             display.ruleSnapshot ?? config.ruleSnapshot ?? config.ruleOptions ?? config,
             display.ruleFields ?? config.ruleFields,
         ));
-        this.active('Bottom/Btn_Share', Boolean(this.replayCode));
+        this.active('Bottom/Btn_Share', Boolean(replayCode));
         this.active('Top/Btn_Replay', false);
         const canContinue = this.canContinue();
         this.active('Bottom/Btn/Btn_Continue', !roomEnded);
@@ -189,6 +201,7 @@ export class CommonPdkResultController {
      * must never create holes in 1..currentRound pagination.
      */
     public recordSettlement(payload: Record<string, unknown>): void {
+        if (!this.isCompletedSettlement(payload)) return;
         const roomId = this.numberValue(payload.roomId ?? this.runtime.getRoomManager().GetEnterRoomID());
         const roundNo = this.numberValue(payload.roundNo);
         if (roomId <= 0 || roundNo <= 0) return;
@@ -219,7 +232,14 @@ export class CommonPdkResultController {
             const rounds = Array.isArray(detail.rounds) ? detail.rounds : [];
             const players = this.runtime.getRoomPosManager().GetRoomAllPlayerInfo() ?? {};
             const seatByPlayer = new Map<number, number>();
-            const seatCount = Math.max(0, ...Object.keys(players).map(Number).filter(Number.isSafeInteger)) + 1;
+            const historicalSeatCount = rounds.reduce((maximum, value) => {
+                const round = this.objectValue(value);
+                const settlement = this.objectValue(round.settlement);
+                return Math.max(maximum, Array.isArray(settlement.entries) ? settlement.entries.length : 0);
+            }, 0);
+            const currentSeatCount = Math.max(-1,
+                ...Object.keys(players).map(Number).filter(Number.isSafeInteger)) + 1;
+            const seatCount = Math.max(currentSeatCount, historicalSeatCount);
             Object.entries(players).forEach(([seat, value]) => {
                 const player = this.objectValue(value);
                 const playerId = Number(player.pid ?? player.playerId ?? 0);
@@ -231,32 +251,75 @@ export class CommonPdkResultController {
                 const roundNo = this.numberValue(round.roundNo);
                 if (roundNo <= 0) continue;
                 const pointList = Array.from({ length: seatCount }, () => 0);
+                const surplusCardList: number[][] = Array.from({ length: seatCount }, () => []);
+                const playedCardList: number[][] = Array.from({ length: seatCount }, () => []);
+                const specialHandList: string[][] = Array.from({ length: seatCount }, () => []);
+                const closeDoorList = Array.from({ length: seatCount }, () => false);
+                const posInfo: Array<Record<string, unknown>> = Array.from({ length: seatCount }, () => ({}));
+                const restoredPlayHistory: Array<Record<string, unknown>> = [];
                 const settlement = this.objectValue(round.settlement);
                 const entries = Array.isArray(settlement.entries) ? settlement.entries : [];
-                for (const rawEntry of entries) {
+                for (const [entryIndex, rawEntry] of entries.entries()) {
                     const entry = this.objectValue(rawEntry);
-                    const seat = seatByPlayer.get(Number(entry.playerId ?? 0));
+                    const mappedSeat = seatByPlayer.get(Number(entry.playerId ?? 0));
+                    const seat = mappedSeat ?? (entryIndex < seatCount ? entryIndex : undefined);
                     if (seat === undefined) continue;
+                    const playerId = Number(entry.playerId ?? 0);
+                    if (playerId > 0 && mappedSeat === undefined) seatByPlayer.set(playerId, seat);
                     const delta = Number(entry.scoreDelta ?? 0);
                     pointList[seat] = Number.isFinite(delta) ? delta : 0;
                     totals[seat] += pointList[seat];
+                    surplusCardList[seat] = [...this.remainingCards(entry.remainingCards)];
+                    playedCardList[seat] = [...this.remainingCards(entry.playedCards)];
+                    specialHandList[seat] = Array.isArray(entry.initialPatterns)
+                        ? entry.initialPatterns.map(String).filter(Boolean) : [];
+                    const tags = Array.isArray(entry.tags) ? entry.tags.map(String) : [];
+                    closeDoorList[seat] = tags.includes('SHUT_OUT');
+                    posInfo[seat] = {
+                        pos: seat,
+                        pid: playerId,
+                        playerId,
+                        name: String(entry.name ?? ''),
+                        headImageUrl: String(entry.headImageUrl ?? ''),
+                    };
+                    const hands = Array.isArray(entry.playedHands) ? entry.playedHands : [];
+                    for (const rawHand of hands) {
+                        const hand = this.objectValue(rawHand);
+                        const cards = [...this.remainingCards(hand.cards)];
+                        if (cards.length === 0) continue;
+                        restoredPlayHistory.push({
+                            ...hand,
+                            seat,
+                            cards,
+                            playIndex: this.numberValue(hand.playIndex) || restoredPlayHistory.length + 1,
+                        });
+                    }
                 }
-                if (this.settlementHistory.has(roundNo)) continue;
-                this.recordSettlement({
+                const settlementHistory = Array.isArray(settlement.playHistory)
+                    && settlement.playHistory.length > 0
+                    ? settlement.playHistory : restoredPlayHistory.sort((left, right) =>
+                        this.numberValue(left.playIndex) - this.numberValue(right.playIndex));
+                const restored = {
                     ...this.setEnd,
                     roomId,
                     roundNo,
                     pointList,
                     totalPointList: [...totals],
-                    surplusCardList: Array.from({ length: seatCount }, () => []),
-                    playedCardList: Array.from({ length: seatCount }, () => []),
-                    playHistory: [],
+                    surplusCardList,
+                    playedCardList,
+                    specialHandList,
+                    closeDoorList,
+                    posInfo,
+                    playHistory: settlementHistory,
                     replayCode: String(round.replayCode ?? ''),
                     startTime: round.settledAt,
                     ruleSnapshot: detail.ruleSnapshot,
                     ruleFields: detail.ruleFields,
                     matchFinished: roundNo >= this.numberValue(this.setEnd.roundLimit),
-                });
+                    authorityPhase: 'FINISHED',
+                };
+                const existing = this.settlementHistory.get(roundNo);
+                if (!existing || !this.hasSettlementCards(existing)) this.recordSettlement(restored);
             }
             console.info('[PdkSettlementHistory]', {
                 roomId,
@@ -265,6 +328,16 @@ export class CommonPdkResultController {
                 roundCount: rounds.length,
                 availableRounds: [...this.settlementHistory.keys()].sort((left, right) => left - right),
             });
+            if (!this.isCompletedSettlement(this.viewSetEnd)) {
+                const completedRounds = [...this.settlementHistory.keys()].sort((left, right) => left - right);
+                const latestRound = completedRounds.at(-1);
+                const latest = latestRound === undefined ? undefined : this.settlementHistory.get(latestRound);
+                if (latest) {
+                    this.setEnd = latest;
+                    this.viewSetEnd = latest;
+                    this.displayedRoundNo = latestRound;
+                }
+            }
             if (this.form) this.render();
         }).catch((error: unknown) => {
             console.warn('[PdkSettlementHistory] hydrate failed', {
@@ -293,6 +366,7 @@ export class CommonPdkResultController {
             latestRoundNo: this.numberValue(this.setEnd.roundNo),
         });
         this.render();
+        if (!this.displayedReplayCode()) void this.refreshReplayCode();
     }
 
     private updatePageButtons(): void {
@@ -307,25 +381,40 @@ export class CommonPdkResultController {
     private async refreshReplayCode(): Promise<void> {
         const request = ++this.replayCodeRequest;
         const roomId = Number(this.runtime.getRoomManager().GetEnterRoomID());
-        const roundNo = Number(this.setEnd.roundNo);
+        const target = this.viewSetEnd;
+        const roundNo = Number(target.roundNo);
         const setId = Number.isSafeInteger(roundNo) && roundNo > 0
             ? roundNo - 1
             : Number(this.runtime.getRoom().GetRoomProperty('setID') ?? 0);
         try {
             const code = await this.loadReplayCode(roomId, setId);
-            if (request !== this.replayCodeRequest || !/^(?:\d{6}|\d{7}|\d{8}|\d{11})$/.test(code)) return;
-            this.replayCode = code; this.render();
+            if (request !== this.replayCodeRequest || target !== this.viewSetEnd
+                || !this.validReplayCode(code)) return;
+            target.replayCode = code;
+            this.render();
         } catch (error: unknown) {
-            if (request === this.replayCodeRequest) this.showMessage(error instanceof Error ? error.message : '回放码尚未生成');
+            if (request === this.replayCodeRequest && target === this.viewSetEnd) {
+                this.showMessage(error instanceof Error ? error.message : '回放码尚未生成');
+            }
         }
     }
 
     private async shareReplay(): Promise<void> {
-        if (!this.replayCode) await this.refreshReplayCode();
-        if (!this.replayCode) { this.showMessage('回放码尚未生成，请稍后重试'); return; }
-        const copied = await legacyPlatformBridge.writeClipboard(this.replayCode).catch(() => false);
-        this.showMessage(copied ? `回放码 ${this.replayCode} 已复制` : `回放码：${this.replayCode}`);
+        if (!this.displayedReplayCode()) await this.refreshReplayCode();
+        const replayCode = this.displayedReplayCode();
+        if (!replayCode) { this.showMessage('回放码尚未生成，请稍后重试'); return; }
+        const copied = await legacyPlatformBridge.writeClipboard(replayCode).catch(() => false);
+        this.showMessage(copied ? `回放码 ${replayCode} 已复制` : `回放码：${replayCode}`);
         this.openShare();
+    }
+
+    private displayedReplayCode(): string {
+        const value = String(this.viewSetEnd.replayCode ?? '');
+        return this.validReplayCode(value) ? value : '';
+    }
+
+    private validReplayCode(value: string): boolean {
+        return /^(?:\d{6}|\d{7}|\d{8}|\d{11})$/.test(value);
     }
 
     private renderPlayer(item: Node, entry: ResultPlayer): void {
@@ -665,8 +754,22 @@ export class CommonPdkResultController {
     }
 
     private canContinue(): boolean {
+        if (this.openedFromRoomButton) return true;
         const roomSet = this.runtime.getRoomSet().GetRoomSetInfo() as Record<string, unknown> | undefined;
         return Boolean(this.setEnd.canContinue ?? roomSet?.canContinue) && !this.matchFinished();
+    }
+
+    private isCompletedSettlement(payload: Record<string, unknown>): boolean {
+        const phase = String(payload.authorityPhase ?? payload.phase ?? '').toUpperCase();
+        return ['FINISHED', 'ROUND_SETTLEMENT', 'INTER_ROUND', 'SETTLED', 'DIRECT_WIN'].includes(phase)
+            || payload.matchFinished === true
+            || payload.canContinue === true;
+    }
+
+    private hasSettlementCards(payload: Record<string, unknown>): boolean {
+        const collections = [payload.surplusCardList, payload.playedCardList, payload.playHistory];
+        return collections.some((value) => Array.isArray(value) && value.some((entry) =>
+            Array.isArray(entry) ? entry.length > 0 : Boolean(entry && typeof entry === 'object')));
     }
 
     private startAutoContinue(): void {

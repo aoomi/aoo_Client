@@ -329,6 +329,11 @@ export class LobbyScreenController {
             pdk: this.commonPdkRuntimeEntry,
             lobbyNode: main.node,
             playerId: this.role.playerId,
+            onCD299ExitRequested: async roomId => {
+                await hallRoomGateway.leave(roomId);
+                this.clearRoomNavigationContext();
+                this.gameRuntimeEntries?.all().find(entry => entry.id === 'cd299')?.destroy();
+            },
         });
         // Start before create-room controls and club restoration are mounted, so
         // the first visible desk click can use the parsed room scene immediately.

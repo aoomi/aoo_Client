@@ -519,6 +519,24 @@ test('a regional maximum combination ranks first when exactly two legal plays re
   assert.deepEqual(ranked[1], [115]);
 });
 
+test('Liangshan two-play lead exposes maximum ace before retaining the 8-to-J straight', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const ace = [114];
+  const straight = [108, 109, 110, 111];
+  const ranked = rankCleanPdkHints([...ace, ...straight], [
+    { cards: straight, order: 0, finishesInTwo: true, containsRuleMaximum: false },
+    { cards: ace, order: 1, finishesInTwo: true, containsRuleMaximum: true },
+  ], {
+    minimumStraightLength: 3,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    tripleAttachmentMode: 'SINGLE_OR_PAIR',
+    twoHandMaximumLeadSizeTolerance: 3,
+  }, true, true);
+
+  assert.deepEqual(ranked[0], ace);
+});
+
 test('two-play maximum priority never splits a protected regional bomb', () => {
   const { rankCleanPdkHints } = loadHelper();
   const threeAceBomb = [114, 214, 314];
@@ -677,7 +695,8 @@ test('a rolling-deployment packet without tableSnapshot still preserves the auth
   const adapter = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkAuthoritativeViewAdapter.ts'), 'utf8');
   assert.match(adapter, /const snapshotComplete = integer\(tableSnapshot\.stateVersion\)/);
-  assert.match(adapter, /const comparison = snapshotComplete[\s\S]*legacyTrick[\s\S]*lastAction/);
+  assert.match(adapter,
+    /const comparison = snapshotComplete[\s\S]*Boolean\(source\.trickReset\) \? \{\}[\s\S]*legacyTrick[\s\S]*lastAction/);
   assert.match(adapter, /\? tableSnapshot\.operations : lastActions/);
   assert.doesNotMatch(adapter, /throw new Error\('CommonPdk 权威桌面快照不完整'\)/);
 });
@@ -716,15 +735,65 @@ test('authority history restores only the latest play for each seat', () => {
     < restore.indexOf('const entry = createSeatEntries'));
 });
 
-test('More opens by lifting only MoreItems above the PDK room', () => {
+test('More visibility does not override prefab-authored adaptation', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const method = controller.slice(controller.indexOf('private toggleMoreMenu'),
     controller.indexOf('private hideMoreMenu'));
-  assert.match(controller, /this\.commonMoreMenuParent = this\.commonMoreItems\?\.parent \?\? null/);
-  assert.match(method, /node\.parent = this\.view\.root/);
-  assert.match(method, /node\.setSiblingIndex\(this\.view\.root\.children\.length - 1\)/);
-  assert.doesNotMatch(method, /const menu = node\.parent|menu\.parent = this\.view\.root/);
+  assert.match(method, /node\.active = opening/);
+  assert.doesNotMatch(method, /setScale|Widget|updateLayout/);
+});
+
+test('More hit-through is identical for touch and desktop mouse input', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const touch = controller.slice(controller.indexOf('private onRoomTouchEnd'),
+    controller.indexOf('private onRoomMouseUp'));
+  const mouse = controller.slice(controller.indexOf('private onRoomMouseUp'),
+    controller.indexOf('private isCommonMoreHit'));
+  const hit = controller.slice(controller.indexOf('private isCommonMoreHit'),
+    controller.indexOf('private clearSelectionOutsideCards'));
+  assert.match(touch, /this\.isCommonMoreHit\(location\.x, location\.y\)[\s\S]*this\.toggleMoreMenu\(\)/);
+  assert.match(mouse, /this\.isCommonMoreHit\(uiLocation\.x, uiLocation\.y\)[\s\S]*this\.toggleMoreMenu\(\)/);
+  assert.match(hit, /getBoundingBoxToWorld\(\)/);
+});
+
+test('More opens on physical press before an overlapping form can steal release', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  assert.match(controller, /private bindCommonMoreButton\(\): void/);
+  assert.match(controller, /entry\.on\(Node\.EventType\.TOUCH_START, invoke, this\)/);
+  assert.match(controller, /entry\.on\(Node\.EventType\.MOUSE_DOWN, invoke, this\)/);
+  assert.match(controller, /entry\.on\(Button\.EventType\.CLICK, invoke, this\)/);
+  assert.match(controller, /this\.bindCommonMoreButton\(\)/);
+});
+
+test('CommonRoom overlay stays above the game form so MoreItems is visible', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const raise = controller.slice(controller.indexOf('private raiseCommonOverlay'),
+    controller.indexOf('private bindCommonCapability'));
+  assert.match(raise, /root\.setSiblingIndex\(parent\.children\.length - 1\)/);
+  assert.equal(controller.match(/this\.raiseCommonOverlay\(\)/g)?.length, 2);
+});
+
+test('More de-duplicates the complete browser down-up-click gesture', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const toggle = controller.slice(controller.indexOf('private toggleMoreMenu'),
+    controller.indexOf('private hideMoreMenu'));
+  assert.match(toggle, /now - this\.lastMoreToggleAt < 750/);
+});
+
+test('MoreItems is promoted and anchored below the visible More button', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const overlay = controller.slice(controller.indexOf('private ensureMoreMenuOverlay'),
+    controller.indexOf('private showCurrentRoomRules'));
+  assert.match(overlay, /node\.setParent\(overlay, true\)/);
+  assert.match(overlay, /node\.setSiblingIndex\(overlay\.children\.length - 1\)/);
+  assert.match(overlay, /buttonTransform\.getBoundingBoxToWorld\(\)/);
+  assert.match(overlay, /node\.setWorldPosition\(bounds\.x \+ bounds\.width \/ 2, bounds\.y/);
 });
 
 test('submitting a play hides controls immediately and Authority owns restoration', () => {
@@ -902,7 +971,7 @@ test('Liangshan deal boundary displays the complete hand immediately', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const animate = controller.slice(controller.indexOf('private shouldAnimateDeal'),
-    controller.indexOf('public async waitForRoundEndPresentation'));
+    controller.indexOf('public async truncateRoundEndPresentation'));
   assert.match(controller, /Boolean\(packet\.dealBoundary\) && this\.shouldAnimateDeal\(setInfo\)/);
   assert.match(controller, /renderHand\(animateDeal, authorityHand\)/);
   assert.match(animate, /phase !== 'PLAYING' && phase !== 'COMPETE_DEALER'/);
@@ -934,7 +1003,22 @@ test('repeated response tips alternate Q and K after a table 10', () => {
   assert.deepEqual(pdkSelectionMask(hand, next()), hand.map((card) => card === 112));
 });
 
-test('manual Hint keeps the complete higher-single cycle instead of pinning the maximum', () => {
+test('first manual Hint reasserts the best response after automatic preselection', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const manual = controller.slice(controller.indexOf('private tip(): void'),
+    controller.indexOf('private prepareHintCache'));
+  const automatic = controller.slice(controller.indexOf('private async autoHintForAuthoritativeTurn'),
+    controller.indexOf('private maybeAutoPlay'));
+
+  assert.match(manual, /const continuingManualCycle = this\.promptCycleKey === key/);
+  assert.match(manual, /continuingManualCycle && currentIndex >= 0/);
+  assert.match(automatic, /this\.promptCycleKey = ''/);
+  assert.match(automatic, /this\.tipIndex = 0/);
+  assert.doesNotMatch(automatic, /this\.tipIndex = tips\.length > 1 \? 1 : 0/);
+});
+
+test('manual Hint cycles higher singles normally but keeps reported-single maximum constraint', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const prepare = controller.slice(controller.indexOf('private prepareHintCache'),
@@ -943,6 +1027,8 @@ test('manual Hint keeps the complete higher-single cycle instead of pinning the 
     controller.indexOf('private cardsInHandOrder'));
 
   assert.match(prepare,
+    /sortedLegalTipCandidates\(local, leading, leading\)/);
+  assert.doesNotMatch(prepare,
     /sortedLegalTipCandidates\(local, leading, leading, false\)/);
   assert.match(sorter, /constrainToHighestReportedSingle = true/);
   assert.match(sorter,
@@ -1063,6 +1149,31 @@ test('single responses minimize loose singles before choosing the lowest winning
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   assert.match(controller, /prioritizeLooseSingles: targetCount > 0/);
+});
+
+test('single response to seven uses loose ten before splitting pair kings', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const hand = [113, 213, 110, 109, 209, 309];
+  const ranked = rankCleanPdkHints(hand, [
+    { cards: [113], order: 0, finishesInTwo: true },
+    { cards: [110], order: 1, finishesInTwo: true },
+  ], {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    tripleAttachmentMode: 'EITHER',
+    prioritizeLooseSingles: true,
+    optimizeWholeHand: true,
+  });
+
+  assert.equal(ranked[0][0], 110, 'the lowest winning loose single preserves KK and 999');
+
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  assert.match(controller, /GetClientDownPos\(\)/);
+  assert.match(controller, /Number\(nextPlayer\?\.cardCount\)/);
+  assert.doesNotMatch(controller,
+    /const nextSeat = \(this\.clientSeat\(\) \+ 1\) % playerCount/);
 });
 
 test('seven-card response hand keeps A and 2 after using the lowest winning Q', () => {
@@ -1705,7 +1816,7 @@ test('Hint clicked during continuous play is queued and consumed on the next loc
   assert.match(authority, /consumeQueuedHintAfterPlay\(\)[\s\S]*autoHintForAuthoritativeTurn/);
 });
 
-test('manual Hint paints selection immediately and hand rendering does not synchronously precompute hints', () => {
+test('manual Hint keeps the authored selection tween and hand rendering does not synchronously precompute hints', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const presenter = readFileSync(join(clientRoot,
@@ -1715,12 +1826,51 @@ test('manual Hint paints selection immediately and hand rendering does not synch
   const render = controller.slice(controller.indexOf('private async renderHand'),
     controller.indexOf('private shouldAnimateDeal'));
 
-  assert.match(tip, /this\.updateSelection\(true\)/);
-  assert.match(controller,
-    /if \(immediate\) this\.cards\.selectImmediately\(node, selected\)/);
-  assert.match(presenter,
-    /public selectImmediately[\s\S]*this\.cancelMotion\(card\)[\s\S]*card\.setPosition/);
+  assert.match(tip, /this\.updateSelection\(\)/);
+  assert.match(controller, /this\.cards\.select\(node, selectedSlots\[index\] === true\)/);
+  assert.doesNotMatch(presenter, /selectImmediately/);
   assert.doesNotMatch(render, /prepareHintCache\(\)/);
+});
+
+test('turn interaction is never gated by decorative public-card presentation', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const snapshot = controller.slice(controller.indexOf('const handRender ='),
+    controller.indexOf("} else if (event === 'CommonPdkSetStart')"));
+  const refresh = controller.slice(controller.indexOf('private refresh(): void'),
+    controller.indexOf('private centerOperationButtons'));
+
+  assert.match(snapshot, /const hintReady = handRender/);
+  assert.match(snapshot, /this\.trackPresentation\(settledPublicPresentation\)/);
+  assert.doesNotMatch(snapshot, /Promise\.all\(\[handRender, settledPublicPresentation\]\)/);
+  assert.match(refresh, /canTip: localTurn && !this\.autoPlayInFlight/);
+  assert.match(refresh, /canPlay: localTurn && !this\.autoPlayInFlight/);
+  assert.doesNotMatch(refresh, /canTip:[^\n]*automaticWholeHand/);
+});
+
+test('round reset always clears retained Table_Cards even outside arrangement phase', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const clear = controller.slice(controller.indexOf('private clearTableCards'),
+    controller.indexOf('private async appendTableCards'));
+
+  assert.doesNotMatch(clear, /arrangementEnabled/);
+  assert.match(clear, /Players\/Play_\$\{slot\}\/Card\/Table_Cards/);
+  assert.match(clear, /this\.cards\.clear\(table\)/);
+  assert.match(clear, /this\.view\.visible\(path, false\)/);
+});
+
+test('Play click never waits for the preceding retained-card transfer', () => {
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const out = controller.slice(controller.indexOf('private async outCard'),
+    controller.indexOf('private selectedIntrinsicType'));
+  const beforeRequest = out.slice(0, out.indexOf('const result = await this.lifecycle.play'));
+
+  assert.doesNotMatch(beforeRequest, /await Promise\.all\(precedingTablePresentations\)/);
+  assert.doesNotMatch(beforeRequest, /await this\.retainedPlayedCardFlow\?\.waitForPendingTransfers\(\)/);
+  assert.match(beforeRequest, /flushPendingHolds\(shouldAdvancePrecedingPresentation\)/);
+  assert.match(beforeRequest, /this\.flyCardsToOwnAction\(flyingCards\)/);
 });
 
 test('remote authority cards land without waiting for decorative flight', () => {

@@ -32,5 +32,10 @@ test('lobby-side recovery keeps intent and reports the authoritative identity co
 });
 
 test('an in-progress club room is never downgraded to a lobby waiting desk', () => {
-    assert.match(router, /waitingClubRoom[\s\S]*Number\(activeRoom\.roundNo \?\? 0\) <= 0/);
+    assert.match(router, /waitingClubRoom = Number\(activeRoom\?\.clubId \?\? 0\) > 0[\s\S]*Number\(activeRoom\.roundNo \?\? 0\) <= 0/);
+});
+
+test('a personal Liangshan waiting room always follows authoritative room recovery', () => {
+    assert.match(router, /waitingClubRoom = Number\(activeRoom\?\.clubId \?\? 0\) > 0/);
+    assert.doesNotMatch(router, /waitingClubRoom = activeRoom\?\.gameName/);
 });

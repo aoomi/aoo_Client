@@ -121,6 +121,17 @@ export class CommonPdkRoom {
 	public OnPosDealVote(pos, agreeDissolve){
 
 		let dissolveInfo = this.dataInfo["dissolve"];
+		// Regional legacy vote events and the authoritative room snapshot can
+		// arrive in either order. A stale vote must never crash the room runtime
+		// after the ballot has been cleared; the authoritative snapshot will
+		// establish/reconcile the current ballot when it is present.
+		if(!dissolveInfo || typeof dissolveInfo !== "object"){
+			this.ErrLog("OnPosDealVote ignored without active dissolve ballot:", {
+				pos: pos,
+				agreeDissolve: agreeDissolve,
+			});
+			return null;
+		}
 		let posAgreeList = dissolveInfo["posAgreeList"];
 		if(!posAgreeList){
 			this.ErrLog("OnPosDealVote not find posAgreeList:", this.dataInfo);

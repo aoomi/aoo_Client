@@ -149,6 +149,11 @@ export class CommonPdkDissolveController {
         const dissolve = room.GetRoomProperty('dissolve') || this.dissolve || {};
         if (Number(dissolve.endSec ?? 0) > 0) this.dissolve = dissolve;
         const createPos = Number(dissolve.createPos ?? -1);
+        const endSec = Number(dissolve.endSec ?? 0);
+        const voteEstablished = Number.isSafeInteger(createPos)
+            && createPos >= 0
+            && Number.isFinite(endSec)
+            && endSec > Date.now() / 1000;
         const clientPos = Number(posManager.GetClientPos());
         const initiator = posManager.GetPlayerInfoByPos(createPos);
         this.text('Content/Message/Label', `${initiator?.name ?? '玩家'}发起解散`);
@@ -163,7 +168,11 @@ export class CommonPdkDissolveController {
             this.active(`${root}/Icon_Rejected`, vote === 2);
         }
         const clientVote = Number(dissolve.posAgreeList?.[clientPos] ?? 0);
-        const canVote = createPos !== clientPos && clientVote === 0;
+        // The form is mounted before dissolve_req finishes so the initiating
+        // click gets immediate visual feedback. It must remain read-only until
+        // an authoritative ballot arrives; otherwise a fast second click sends
+        // dissolve_agree_req before the server has created the vote.
+        const canVote = voteEstablished && createPos !== clientPos && clientVote === 0;
         // The applicant has already cast the implicit approval by initiating
         // the ballot. Hide both actions instead of showing disabled controls.
         this.active('Btn_Reject', canVote);
@@ -182,8 +191,19 @@ export class CommonPdkDissolveController {
 
     private vote(agree: boolean): void {
         if (this.disposed) return;
-        const generation = ++this.requestGeneration;
         const roomId = Number(this.runtime.getRoomManager().GetEnterRoomID());
+        const dissolve = this.runtime.getRoom().GetRoomProperty('dissolve') || this.dissolve || {};
+        const createPos = Number(dissolve.createPos ?? -1);
+        const endSec = Number(dissolve.endSec ?? 0);
+        if (!Number.isSafeInteger(createPos) || createPos < 0
+            || !Number.isFinite(endSec) || endSec <= Date.now() / 1000) {
+            console.warn('[RoomDissolveVote] blocked before authoritative ballot', {
+                roomId, agree, createPos, endSec,
+            });
+            this.render();
+            return;
+        }
+        const generation = ++this.requestGeneration;
         this.interactable('Btn_Reject', false);
         this.interactable('Btn_Agree', false);
         const event = agree ? 'common.room.dissolve_agree_req' : 'common.room.dissolve_refuse_req';
@@ -202,7 +222,7 @@ export class CommonPdkDissolveController {
                 if (this.disposed || generation !== this.requestGeneration) return;
                 console.error('[RoomDissolveVote] failed', { roomId, agree, generation, error });
                 const message = error instanceof Error ? error.message : String(error ?? '');
-                if (/room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message)) {
+                if (/room (?:is )?dissolved|room (?:not found|does not exist)|room authority is not active|room route not found|request_not_found|\b3001\b/i.test(message)) {
                     // The ballot may become terminal before this seat receives its final
                     // push. Reconcile immediately instead of reviving an obsolete dialog.
                     this.runtime.reconcileAuthority();

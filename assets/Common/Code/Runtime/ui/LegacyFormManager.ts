@@ -175,6 +175,11 @@ export class LegacyFormManager {
         private readonly onLoadingChanged: (loading: boolean) => void = () => undefined,
         private readonly externalLoadingPresentation = false,
     ) {
+        // Runtime-created nodes default to the DEFAULT layer. A modal shield on
+        // that layer does not participate in the UI camera's hit-test chain,
+        // so pointer events can reach controls behind an otherwise visible
+        // modal. Keep the shield on the same UI layer as every mounted form.
+        this.modalMask.layer = this.uiLayer.layer;
         this.modalMask.addComponent(UITransform).setContentSize(1280, 720);
         this.modalMask.addComponent(BlockInputEvents);
         this.modalMask.active = false;

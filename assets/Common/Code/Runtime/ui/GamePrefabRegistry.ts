@@ -4,6 +4,7 @@ export interface GamePrefabRoute {
 }
 
 const GAME_PREFAB_BY_FORM: Record<string, GamePrefabRoute> = {
+    // 使用 Creator 资源库中的真实 Bundle 相对路径，禁止引用已移除的迁移目录。
     'pdk/PDK_CommonRoom': { bundle: 'paodekuai-common', asset: 'Prefab/PDK_CommonRoom' },
     // 权威回放复用玩法默认房间，确保桌面、座位和牌面始终与实战一致。
     'pdk/AuthoritativeReplay': { bundle: 'paodekuai-common', asset: 'Prefab/PDK_CommonRoom' },

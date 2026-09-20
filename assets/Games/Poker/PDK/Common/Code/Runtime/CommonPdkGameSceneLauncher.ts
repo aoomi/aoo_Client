@@ -31,6 +31,7 @@ const COMMON_SCENE_BUNDLE = 'games-common';
 const COMMON_PDK_BUNDLE = 'paodekuai-common';
 const COMMON_PDK_SCENE = 'GameRoom2D';
 const COMMON_ROOM_PREFAB = 'Prefab/CommonRoom';
+// Bundle 内路径必须与 Creator 资源数据库中的实际 Prefab 目录一致。
 const PDK_ROOM_PREFAB = 'Prefab/PDK_CommonRoom';
 
 export interface StartupSceneMask {

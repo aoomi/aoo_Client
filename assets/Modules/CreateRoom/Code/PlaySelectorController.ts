@@ -371,7 +371,10 @@ export class PlaySelectorController {
         // 冒泡事件；在场景根节点捕获并按按钮真实世界矩形判定，可避免修改用户 Prefab。
         captureRoot?.on(Node.EventType.TOUCH_END, captureTouch, this, true);
         captureRoot?.on(Node.EventType.MOUSE_UP, captureMouse, this, true);
-        const canvas = typeof HTMLCanvasElement !== 'undefined' && game.canvas instanceof HTMLCanvasElement
+        // DOM/Window 捕获只是提交按钮在 Creator 设备外壳下丢失原生事件时的定向补偿。
+        // 普通按钮（尤其左侧动态玩法项）不得注册全局监听，否则模拟器缩放时 DOM 与
+        // Cocos 坐标系的换算误差会把规则区点击判进玩法按钮热区。
+        const canvas = captureRoot && typeof HTMLCanvasElement !== 'undefined' && game.canvas instanceof HTMLCanvasElement
             ? game.canvas : null;
         const captureDomClick = (event: MouseEvent): void => {
             if (!canvas) return;

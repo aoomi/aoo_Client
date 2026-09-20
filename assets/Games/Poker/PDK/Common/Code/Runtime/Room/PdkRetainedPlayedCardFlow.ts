@@ -1,11 +1,20 @@
-import { Layout, Node, UITransform } from 'cc';
+import { Layout, Node, UITransform, Vec3 } from 'cc';
 
 export const PDK_RETAINED_HAND_GAP = 2;
-export const PDK_PLAY_COUNT_RIGHT_INSET = 10;
+export const PDK_PLAY_COUNT_RIGHT_INSET = 0;
+const retainedPlayIndexes = new WeakMap<Node, number>();
+
+/** Register Authority's immutable play order before any asynchronous movement. */
+export function setPdkRetainedPlayIndex(hand: Node, playIndex: number): void {
+    if (!Number.isSafeInteger(playIndex) || playIndex <= 0) return;
+    retainedPlayIndexes.set(hand, playIndex);
+}
 
 /**
- * Attach the play index to the visual rightmost physical card. Once parented to
- * that card its position is stable through every hand/table move and seat scale.
+ * Position the play index inside the visual rightmost physical card's lower-right
+ * corner, with the badge's bottom and right edges flush with the card. Counts live
+ * directly under Table_Cards and are raised after every hand, so a later hand
+ * cannot cover an earlier hand's badge on left-to-right local layouts.
  */
 export function positionPdkPlayCount(count: Node, cards: readonly Node[]): void {
     const lastCard = [...cards].sort((left, right) => {
@@ -21,14 +30,26 @@ export function positionPdkPlayCount(count: Node, cards: readonly Node[]): void 
     const cardTransform = lastCard.getComponent(UITransform);
     const countTransform = count.getComponent(UITransform);
     if (!cardTransform || !countTransform) return;
-    count.parent = lastCard;
-    const cardRight = cardTransform.contentSize.width * (1 - cardTransform.anchorPoint.x);
-    const cardTop = cardTransform.contentSize.height * (1 - cardTransform.anchorPoint.y);
-    const countX = cardRight - PDK_PLAY_COUNT_RIGHT_INSET
-        - countTransform.contentSize.width * (1 - countTransform.anchorPoint.x) * Math.abs(count.scale.x);
-    const countY = cardTop
-        - countTransform.contentSize.height * (1 - countTransform.anchorPoint.y) * Math.abs(count.scale.y);
-    count.setPosition(countX, countY, 1);
+    const hand = lastCard.parent;
+    const tableCards = hand?.parent;
+    const tableTransform = tableCards?.getComponent(UITransform);
+    if (!hand || !tableCards || !tableTransform) return;
+    count.parent = tableCards;
+    // Seats may mirror or scale their card containers. Resolve the visible corner
+    // from world bounds so "lower-right" always means screen lower-right rather
+    // than the card hierarchy's potentially inverted local Y direction.
+    const cardBounds = cardTransform.getBoundingBoxToWorld();
+    const countWidth = countTransform.contentSize.width * Math.abs(count.worldScale.x);
+    const countHeight = countTransform.contentSize.height * Math.abs(count.worldScale.y);
+    const worldPosition = new Vec3(
+        cardBounds.xMax - PDK_PLAY_COUNT_RIGHT_INSET - countWidth * (1 - countTransform.anchorPoint.x),
+        cardBounds.yMin + countHeight * countTransform.anchorPoint.y,
+        1,
+    );
+    count.setPosition(tableTransform.convertToNodeSpaceAR(worldPosition));
+    for (const badge of tableCards.children.filter((child) => child.name.startsWith('PlayCount_'))) {
+        badge.setSiblingIndex(tableCards.children.length - 1);
+    }
 }
 
 /** Arrange one completed play without leaving its coordinates to a deferred Layout pass. */
@@ -54,7 +75,15 @@ export function layoutPdkRetainedHands(tableCards: Node, gap = PDK_RETAINED_HAND
     const rightToLeft = automatic?.horizontalDirection === Layout.HorizontalDirection.RIGHT_TO_LEFT;
     if (automatic) automatic.enabled = false;
     const hands = tableCards.children.filter((child) =>
-        child.active && child.name.startsWith('Play_') && child.getComponent(UITransform));
+        child.active && child.name.startsWith('Play_') && child.getComponent(UITransform))
+        .map((hand, siblingIndex) => ({
+            hand,
+            siblingIndex,
+            playIndex: retainedPlayIndexes.get(hand) ?? Number.MAX_SAFE_INTEGER,
+        }))
+        .sort((left, right) => left.playIndex - right.playIndex
+            || left.siblingIndex - right.siblingIndex)
+        .map(({ hand }) => hand);
     if (hands.length === 0) return;
     const widths = hands.map((hand) => hand.getComponent(UITransform)!.contentSize.width);
     const totalWidth = widths.reduce((sum, width) => sum + width, 0)
@@ -70,6 +99,16 @@ export function layoutPdkRetainedHands(tableCards: Node, gap = PDK_RETAINED_HAND
     });
     const tableTransform = tableCards.getComponent(UITransform);
     if (tableTransform) tableTransform.setContentSize(totalWidth, tableTransform.contentSize.height);
+    // PlayCount nodes live directly under Table_Cards so later hands cannot
+    // cover them. Consequently they do not inherit a hand's position change;
+    // re-anchor every badge after the complete hand layout has settled.
+    for (const hand of hands) {
+        const playIndex = retainedPlayIndexes.get(hand);
+        if (!playIndex) continue;
+        const badge = tableCards.getChildByName(`PlayCount_${playIndex}`);
+        if (!badge) continue;
+        positionPdkPlayCount(badge, hand.children.filter((child) => child.isValid));
+    }
 }
 
 export interface PdkRetainedPlayedCardMove {
@@ -84,9 +123,11 @@ export interface PdkRetainedPlayedCardMove {
 /** Regional extension for moving a completed live play into a retained round archive. */
 export interface PdkRetainedPlayedCardFlow {
     moveAfterLiveHold(request: PdkRetainedPlayedCardMove): Promise<boolean>;
-    /** A new local play ends any preceding live hold, without skipping its move animation. */
-    flushPendingHolds(releaseNextHold?: boolean): void;
+    /** A new local play may end holds that are already active; future plays are never pre-released. */
+    flushPendingHolds(): void;
     /** Lifecycle drain used only at hard round/settlement boundaries, never as an input barrier. */
     waitForPendingTransfers(): Promise<void>;
+    /** End unfinished visual-only holds/moves at their authored destination without delaying gameplay. */
+    finishPendingImmediately(): Promise<void>;
     addStoppedPlayCount(hand: Node, countTemplate: Node | null, playIndex: number): void;
 }

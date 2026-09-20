@@ -168,10 +168,9 @@ export class CommonPdkRuntime {
             this.options.onExit?.('waiting-room-expired');
         }));
         this.disposers.push(this.client.onReconnect(() => this.restoreRoomAfterReconnect()));
-        // A room packet is only a wake-up signal. Always reconcile from the viewer-specific
-        // authoritative snapshot so both players advance even when a transport push carries
-        // an incomplete/stale view. The short debounce coalesces response + broadcast frames.
-        this.disposers.push(this.client.onActivity(() => this.scheduleAuthorityReconcile()));
+        // Mutation responses and room pushes both carry the complete viewer-specific authority
+        // view. Reconciliation is reserved for reconnect/resume; polling after every packet used
+        // to turn one play into another state request and a room-wide duplicate broadcast.
         const resume = (): void => {
             if (globalThis.document?.visibilityState === 'hidden') return;
             void this.restoreRoomAfterReconnect();
@@ -419,7 +418,7 @@ export class CommonPdkRuntime {
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error ?? '');
             const dissolve = this.room.GetRoomProperty('dissolve');
-            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message);
+            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room authority is not active|room route not found|request_not_found|\b3001\b/i.test(message);
             const revokedMember = /authentication required|player (?:is )?not (?:a room member|seated)|\b1002\b/i.test(message);
             if (!this.disposed && (terminalRoom || (dissolve && typeof dissolve === 'object' && revokedMember))) {
                 // 2.2.2 used the server's Dissolve broadcast as the sole terminal
@@ -455,7 +454,7 @@ export class CommonPdkRuntime {
         } catch (error: unknown) {
             if (this.disposed) return;
             const message = error instanceof Error ? error.message : String(error ?? '');
-            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room route not found|request_not_found|\b3001\b/i.test(message);
+            const terminalRoom = /room (?:is )?dissolved|room (?:not found|does not exist)|room authority is not active|room route not found|request_not_found|\b3001\b/i.test(message);
             if (terminalRoom) {
                 console.info('[CommonPdkReconnect] authoritative-room-terminal', {
                     roomId,

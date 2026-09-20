@@ -17,7 +17,7 @@ test('PDK initial hand is published immediately at the deal boundary', () => {
     assert.match(controller, /const key = `\$\{this\.roomId\(\)\}:\$\{roundNo\}`/);
     assert.match(controller, /if \(this\.lastDealAnimationKey === key\) return false/);
     const decision = controller.slice(controller.indexOf('private shouldAnimateDeal'),
-        controller.indexOf('public async waitForRoundEndPresentation'));
+        controller.indexOf('public async truncateRoundEndPresentation'));
     assert.doesNotMatch(decision, /setInfo\.(?:tableOperations|playHistory|playedCardList)/,
         'cross-round authority ledgers are not a deal-boundary source');
     assert.match(decision, /this\.lastDealAnimationKey === key/);

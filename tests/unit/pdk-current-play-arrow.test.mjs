@@ -9,7 +9,7 @@ const runtime = readFileSync(new URL('CommonPdkRuntime.ts', base), 'utf8');
 const capabilities = readFileSync(new URL('../Regional/PdkGameplayCapabilities.ts', base), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL('../../Prefab/PDK_CommonRoom.prefab', base), 'utf8'));
 
-test('current-play Arrow reuses XQP jiantou spine and follows live then retained hand', () => {
+test('current-play Arrow reuses XQP jiantou spine and appears only after a retained hand stops', () => {
   assert.match(arrow, /Spine\/jiantou\/skeleton/);
   assert.match(arrow, /setAnimation\(0, 'animation', true\)/);
   assert.match(arrow, /this\.root\.getChildByName\('RoomCommon'\)\?\.getChildByName\('Arrow'\)/);
@@ -31,14 +31,15 @@ test('current-play Arrow reuses XQP jiantou spine and follows live then retained
   assert.deepEqual([fixedArrow._lscale.x, fixedArrow._lscale.y], [0.8, 0.8]);
   assert.match(play, /showCurrentPlayArrow\(parent, packet, true\)/);
   assert.match(play, /Play_\$\{operationId\}/);
-  assert.match(play, /showCurrentPlayArrow\(retainedHand, packet, false\)/);
+  assert.match(play, /showCurrentPlayArrow\(retainedHand, packet, true\)/);
   assert.match(play, /if \(playIndex < this\.currentPlayArrowIndex\) return/);
   assert.match(play, /operationId !== this\.currentPlayArrowOperationId/);
   assert.match(play, /\[\.\.\.operations\]\.reverse\(\)/);
   assert.match(play, /operation && String\(operation\.action\)\.toLowerCase\(\) === 'play'/);
   assert.match(play, /currentPlayArrow\?\.hide\(\)/);
-  assert.match(play, /this\.runtime\.currentPlayArrowEnabled\(\)[\s\S]*new PdkCurrentPlayArrowPresenter/);
-  assert.match(play, /if \(!this\.currentPlayArrow\) return/);
+  assert.match(play, /this\.currentPlayArrow = new PdkCurrentPlayArrowPresenter/);
+  assert.match(play, /values\.length > 0 && !this\.runtime\.arrangementEnabled\(\)/);
+  assert.match(play, /if \(moved\) \{[\s\S]*showCurrentPlayArrow\(retainedHand, packet, true\)/);
   assert.match(runtime, /currentPlayArrowEnabled\(\): boolean/);
   assert.match(capabilities, /DEFAULT_PDK_GAMEPLAY_CAPABILITIES[\s\S]*currentPlayArrow: 'disabled'/);
   assert.match(capabilities, /PDK_BUSINESS_CODES\.LIANGSHAN[\s\S]*currentPlayArrow: 'enabled'/);

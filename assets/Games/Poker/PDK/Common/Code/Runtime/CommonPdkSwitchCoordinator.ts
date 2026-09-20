@@ -158,8 +158,41 @@ export class CommonPdkSwitchCoordinator {
 
     /** Open the latest authoritative round settlement from the persistent room button. */
     private async openLastSmallSettlement(): Promise<void> {
-        const stored = this.lastSmallSettlementPayload
-            ?? this.runtime?.getRoomSet().GetRoomSetProperty('setEnd');
+        let stored = this.lastSmallSettlementPayload;
+        if (!stored) {
+            const roomId = Number(this.runtime?.getRoom().GetRoomProperty('roomId')
+                ?? this.runtime?.getRoom().GetRoomProperty('key') ?? 0);
+            const history = roomId > 0
+                ? await this.settlementHistory(roomId).catch((error: unknown) => {
+                    console.warn('[PdkSettlementHistory] latest completed round load failed', {
+                        roomId,
+                        reason: error instanceof Error ? error.message : String(error),
+                    });
+                    return {};
+                }) : {};
+            const envelope = history && typeof history === 'object' && !Array.isArray(history)
+                ? history as Record<string, unknown> : {};
+            const detail = envelope.data && typeof envelope.data === 'object' && !Array.isArray(envelope.data)
+                ? envelope.data as Record<string, unknown> : envelope;
+            const rounds = Array.isArray(detail.rounds) ? detail.rounds : [];
+            const latest = rounds.at(-1);
+            const round = latest && typeof latest === 'object' && !Array.isArray(latest)
+                ? latest as Record<string, unknown> : null;
+            if (round) {
+                stored = {
+                    roomId,
+                    roundNo: Number(round.roundNo ?? 0),
+                    roundLimit: Number(this.runtime?.getRoomSet().GetRoomSetProperty('roundLimit')
+                        ?? this.runtime?.getRoom().GetRoomConfigByProperty('setCount') ?? 0),
+                    replayCode: String(round.replayCode ?? ''),
+                    startTime: round.settledAt,
+                    ruleSnapshot: detail.ruleSnapshot,
+                    ruleFields: detail.ruleFields,
+                    authorityPhase: 'FINISHED',
+                    openedFromRoomButton: true,
+                };
+            }
+        }
         if (!stored || typeof stored !== 'object' || Array.isArray(stored)
             || Object.keys(stored as Record<string, unknown>).length === 0) {
             await this.showMessage('暂无小结算');
@@ -180,7 +213,7 @@ export class CommonPdkSwitchCoordinator {
         } catch (error: unknown) {
             const detail = error instanceof Error ? error.message : String(error);
             console.error(`[CommonPdkSwitchCoordinator] 小结算打开失败: ${detail}`);
-            await this.showMessage('小结算打开失败，请重试');
+            await this.showMessage(`小结算打开失败：${detail}`);
         }
     }
 
@@ -462,7 +495,11 @@ export class CommonPdkSwitchCoordinator {
                         if (stateVersion >= 0 && this.terminalStateVersion >= 0 && stateVersion <= this.terminalStateVersion) return;
                         this.terminalStateVersion = stateVersion >= 0 ? stateVersion : Number.MAX_SAFE_INTEGER;
                         this.dissolveVoteActive = false;
-                        this.forms.close(DISSOLVE_ROOM_FORM);
+                        // A terminal result can arrive during the final vote's
+                        // pointer-up/click transaction. Keep the form manager's
+                        // continuation shield active while revealing the room
+                        // below, otherwise that same gesture hits gameplay UI.
+                        this.forms.closeAfterPointer(DISSOLVE_ROOM_FORM);
                         this.requestLeave('pdk-room-dissolved');
                         return;
                     }
@@ -859,11 +896,12 @@ export class CommonPdkSwitchCoordinator {
         });
         try {
             if (!staticRestore) {
-                // Settlement reveal is independent of each device's animation
-                // queue. Every client starts the same fixed delay from the same
-                // authoritative terminal push, so the winner cannot open first.
+                // Operation timing is authoritative and independent from visual
+                // duration. Effects start with the play; at this boundary any
+                // unfinished effect is truncated to its final state, never awaited.
                 await new Promise<void>((resolve) => globalThis.setTimeout(resolve,
                     settlementPresentation === 'FLOATING' && !matchFinished && !finalSettlement ? 2000 : 1000));
+                await this.playController?.truncateRoundEndPresentation();
             }
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             // A delayed/reconnect settlement task can finish after both players have

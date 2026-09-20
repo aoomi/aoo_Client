@@ -8,6 +8,18 @@ export interface PdkHintRules {
     singleAttachmentCapacityPerTriple?: number;
     /** Exact authoritative triple attachment family used by future-hand planning. */
     tripleAttachmentMode?: 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER';
+    /** Maximum card-count gap where an exact two-hand control play leads first. */
+    twoHandMaximumLeadSizeTolerance?: number;
+    /** Regional maximum leads whenever exactly one ordinary legal play remains. */
+    prioritizeMaximumWithOneOrdinaryPlay?: boolean;
+    /** Regional self-lead uses the legal play with most cards when no maximum is held. */
+    prioritizeLargestLeadWithoutMaximum?: boolean;
+    /** Regional self-lead keeps a longest connected run ahead of the maximum single. */
+    prioritizeMaximumLeadUnlessConnectedRun?: boolean;
+    /** Within a three-play finish, regional responses spend the maximum control first. */
+    prioritizeMaximumResponseWithinThreePlays?: boolean;
+    /** Regional lead sheds the largest legal shape unless a straight reaches the maximum. */
+    prioritizeLargestLeadUnlessMaximumStraight?: boolean;
     /** Multi-card responses rank the resulting loose-single count before structures. */
     prioritizeLooseSingles?: boolean;
     /** Hint ranking plans the whole hand instead of maximizing the current play. */
@@ -313,6 +325,32 @@ export function isRegionalMaximumPdkCombination(
             .map(([candidateRank]) => candidateRank));
         return cardRank === maximum;
     });
+}
+
+/**
+ * Ranks that no opponent can beat with a single card, based only on the
+ * immutable deck plus authoritative public cards and the local hand. A lower
+ * rank joins the control chain only when every physical higher card is known.
+ */
+export function effectivePdkMaximumSingleRanks(
+    deck: readonly number[], hand: readonly number[], playedCards: readonly number[],
+): number[] {
+    const deckCounts = new Map<number, number>();
+    const knownCounts = new Map<number, number>();
+    for (const card of deck) {
+        const cardRank = rank(Number(card));
+        deckCounts.set(cardRank, (deckCounts.get(cardRank) ?? 0) + 1);
+    }
+    for (const card of [...hand, ...playedCards]) {
+        const cardRank = rank(Number(card));
+        if (!deckCounts.has(cardRank)) continue;
+        knownCounts.set(cardRank, Math.min(deckCounts.get(cardRank) ?? 0,
+            (knownCounts.get(cardRank) ?? 0) + 1));
+    }
+    const ranks = [...deckCounts.keys()].sort((left, right) => left - right);
+    return ranks.filter((candidate) => ranks
+        .filter((higher) => higher > candidate)
+        .every((higher) => (knownCounts.get(higher) ?? 0) >= (deckCounts.get(higher) ?? 0)));
 }
 
 /** Count intact same-rank hands that are maximal for their deck multiplicity. */
@@ -1030,6 +1068,18 @@ export function rankCleanPdkHints(
         tripleAttachmentMode: rules.tripleAttachmentMode
             ?? ((rules.singleAttachmentCapacityPerTriple ?? 0) >= 2 ? 'EITHER'
                 : (rules.singleAttachmentCapacityPerTriple ?? 0) >= 1 ? 'SINGLES' : 'DISABLED'),
+        twoHandMaximumLeadSizeTolerance: Math.max(0,
+            Math.trunc(rules.twoHandMaximumLeadSizeTolerance ?? 2)),
+        prioritizeMaximumWithOneOrdinaryPlay:
+            Boolean(rules.prioritizeMaximumWithOneOrdinaryPlay),
+        prioritizeLargestLeadWithoutMaximum:
+            Boolean(rules.prioritizeLargestLeadWithoutMaximum),
+        prioritizeMaximumLeadUnlessConnectedRun:
+            Boolean(rules.prioritizeMaximumLeadUnlessConnectedRun),
+        prioritizeMaximumResponseWithinThreePlays:
+            Boolean(rules.prioritizeMaximumResponseWithinThreePlays),
+        prioritizeLargestLeadUnlessMaximumStraight:
+            Boolean(rules.prioritizeLargestLeadUnlessMaximumStraight),
         prioritizeLooseSingles: Boolean(rules.prioritizeLooseSingles),
         optimizeWholeHand: Boolean(rules.optimizeWholeHand),
         compareTripleAttachments: Boolean(rules.compareTripleAttachments),
@@ -1037,10 +1087,14 @@ export function rankCleanPdkHints(
         maximumSingleRanks: [...(rules.maximumSingleRanks ?? [15])],
         deckCards: [...(rules.deckCards ?? [])],
     };
-    // Hinting treats every bomb as one atomic hand in every context. Regional
-    // special bombs come from protectedBombs; ordinary four-of-a-kind bombs are
-    // derived defensively from the physical hand. This gate is intentionally
-    // independent of lead/response and scoring mode.
+    const deckMaximumRank = normalizedRules.deckCards?.length
+        ? Math.max(...normalizedRules.deckCards.map(rank)) : 15;
+    const liangshanMaximumPairResponse = deckMaximumRank === 14
+        && hand.filter((card) => rank(card) === deckMaximumRank).length === 2;
+    // Bomb recognition is shared by every regional game. Whether that bomb is
+    // protected is decided separately by the authoritative scoring switch:
+    // scoring bombs stay atomic, while non-scoring four-card bombs may only be
+    // consumed through a legal four-with attachment candidate.
     const hintBombs = [...(normalizedRules.protectedBombs ?? []), ...ordinaryBombGroups(hand)]
         .filter((group, index, groups) => groups.findIndex((candidate) =>
             [...candidate].sort((left, right) => left - right).join(',')
@@ -1057,13 +1111,14 @@ export function rankCleanPdkHints(
             const remaining = subtract(hand, candidate.cards);
             const protectedImpact = protectedBombImpact(hand, candidate.cards, normalizedRules.protectedBombs ?? []);
             const hintBombImpact = protectedBombImpact(hand, candidate.cards, hintBombs);
-            // A prompt may expose the complete standalone bomb, but must never
-            // borrow any bomb card or use the complete bomb as the body/wings of
-            // another combination. Manual legality remains owned by the rule
-            // engine; this is the unified Hint policy requested by the game.
-            if (hintBombImpact.split > 0
-                || (hintBombImpact.consumed > 0
-                    && !isCompleteProtectedBomb(candidate.cards, hintBombs))) return null;
+            const completeBomb = isCompleteProtectedBomb(candidate.cards, hintBombs);
+            const legalNonScoringFourWith = !normalizedRules.preserveScoringBombs
+                && Boolean(candidate.usesFourCardBody);
+            // A non-scoring bomb may be opened only by the regional engine's
+            // legal four-with attachment shape. It must not leak cards into a
+            // straight, pair, triple body or aircraft wing.
+            if ((hintBombImpact.split > 0 || hintBombImpact.consumed > 0)
+                && !completeBomb && !legalNonScoringFourWith) return null;
             if (normalizedRules.preserveScoringBombs
                 && !isCompleteProtectedBomb(candidate.cards, normalizedRules.protectedBombs ?? [])
                 && protectedImpact.consumed > 0) return null;
@@ -1120,6 +1175,11 @@ export function rankCleanPdkHints(
                 straightBody: isStraightCandidate(candidate.cards, normalizedRules),
                 leavesStraightBody: runs(countsOf(remaining), 1,
                     normalizedRules.minimumStraightLength, normalizedRules.allowTwoInRuns).length > 0,
+                retainsHigherStraight: isStraightCandidate(candidate.cards, normalizedRules)
+                    && runs(countsOf(remaining), 1,
+                        normalizedRules.minimumStraightLength, normalizedRules.allowTwoInRuns)
+                        .some(([start, end]) => end - start + 1 === candidate.cards.length
+                            && start > Math.min(...candidate.cards.map(rank))),
                 retainsHigherPairRun: retainsHigherPairRun(hand, candidate.cards, normalizedRules),
                 retainsHigherLooseSingle: candidate.cards.length === 1
                     && countsOf(hand)[rank(candidate.cards[0])] === 1
@@ -1127,7 +1187,7 @@ export function rankCleanPdkHints(
                         && value > rank(candidate.cards[0])),
             };
         })
-        .filter((value): value is PdkHintCandidate & { splitBombs: number; splitTriples: number; splitPairs: number; completeBombs: number; consumesFourCardBody: boolean; wholeHandBombFinish: boolean; earlyAceBomb: boolean; remainingCount: number; remainingHighestRank: number; quality: HandQuality; planLooseSingles: number; attachmentDamage: number; attachmentSourceCost: number; attachmentPairPolicyCost: number; attachmentControlCost: number; usesTwoAttachment: boolean; usesMaximumAttachment: boolean; tripleBodyRank: number; tripleBodyCount: number; straightBody: boolean; leavesStraightBody: boolean; retainsHigherPairRun: boolean; retainsHigherLooseSingle: boolean } => value !== null);
+        .filter((value): value is PdkHintCandidate & { splitBombs: number; splitTriples: number; splitPairs: number; completeBombs: number; consumesFourCardBody: boolean; wholeHandBombFinish: boolean; earlyAceBomb: boolean; remainingCount: number; remainingHighestRank: number; quality: HandQuality; planLooseSingles: number; attachmentDamage: number; attachmentSourceCost: number; attachmentPairPolicyCost: number; attachmentControlCost: number; usesTwoAttachment: boolean; usesMaximumAttachment: boolean; tripleBodyRank: number; tripleBodyCount: number; straightBody: boolean; leavesStraightBody: boolean; retainsHigherStraight: boolean; retainsHigherPairRun: boolean; retainsHigherLooseSingle: boolean } => value !== null);
     // An intact pair is a complete legal wing source. If the same triple body
     // can carry the same number of cards without touching another complete
     // triple, never keep the variant that peels cards from that triple. Generic
@@ -1229,6 +1289,17 @@ export function rankCleanPdkHints(
         && originalQuality.pairRunCards === 0;
     const pairCount = originalCounts.filter((count) => count === 2).length;
     const rawSingleCount = originalCounts.filter((count) => count === 1).length;
+    // A sole ordinary pair and loose singles can probe below an intact maximum
+    // triple without spending that control body. Choose the lowest-ranked
+    // atomic group, not merely the lowest singleton: AAA,K,Q,8,77 starts from
+    // 77, while AAA,Q,JJ,9,7 still starts from 7. This is derived from the deck
+    // maximum and hand structure, so it also applies to regional 5-A decks.
+    const maximumTripleControlHand = originalCounts[deckMaximumRank] === 3
+        && pairCount >= 1;
+    const maximumTripleProbeHand = maximumTripleControlHand
+        && pairCount === 1 && rawSingleCount >= 1;
+    const maximumTriplePairDominantHand = maximumTripleControlHand
+        && pairCount >= 2 && pairCount * 2 > rawSingleCount;
     const hasMaximumLooseSingle = attachmentSafeScored.some((candidate) => candidate.cards.length === 1
         && originalCounts[rank(candidate.cards[0])] === 1
         && Boolean(candidate.containsRuleMaximum));
@@ -1332,6 +1403,15 @@ export function rankCleanPdkHints(
         ? leadPool.filter((candidate) => candidate.splitBombs === 0)
         : leadPool;
     rankedPool.sort((left, right) => {
+            // LS201 has no rank 2; A is its immutable maximum. When a single is
+            // answered from AA plus another singleton, taking control with A
+            // outranks the generic minimum-play remainder calculation. Exactly
+            // two copies are required so AAA and four-card bombs remain atomic.
+            if (liangshanMaximumPairResponse && !preferLargest
+                && left.cards.length === 1 && right.cards.length === 1
+                && left.containsRuleMaximum !== right.containsRuleMaximum) {
+                return left.containsRuleMaximum ? -1 : 1;
+            }
             // A hand containing a bomb is never auto-finished through a
             // four-card-body combination. Keep that legal manual choice as the
             // final hint, after loose cards and the standalone bomb have both
@@ -1429,7 +1509,7 @@ export function rankCleanPdkHints(
             const sameSingleTripleBody = left.tripleBodyCount === 1
                 && right.tripleBodyCount === 1
                 && left.tripleBodyRank === right.tripleBodyRank;
-            if (sameSingleTripleBody) {
+            if (sameSingleTripleBody && !normalizedRules.compareTripleAttachments) {
                 const leftUsesPreferredLowPair = usesPreferredLowPairAttachment(
                     hand, left.cards, normalizedRules,
                 );
@@ -1440,8 +1520,7 @@ export function rankCleanPdkHints(
                     return leftUsesPreferredLowPair ? -1 : 1;
                 }
             }
-            const sameTripleAttachmentShape = !normalizedRules.compareTripleAttachments
-                && left.tripleBodyCount > 0
+            const sameTripleAttachmentShape = left.tripleBodyCount > 0
                 && left.tripleBodyCount === right.tripleBodyCount
                 && left.tripleBodyRank === right.tripleBodyRank
                 && left.cards.length === right.cards.length
@@ -1455,6 +1534,17 @@ export function rankCleanPdkHints(
                 if (Boolean(left.finishesInTwo) !== Boolean(right.finishesInTwo)) {
                     return left.finishesInTwo ? -1 : 1;
                 }
+                const attachmentRankDifference = compareTripleAttachmentRanks(
+                    hand, left.cards, right.cards,
+                );
+                if (normalizedRules.compareTripleAttachments && left.tripleBodyCount === 1) {
+                    // “三带比带” makes the carried cards part of the play's
+                    // strength. For the same triple body and attachment count,
+                    // lead the higher legal attachment; without the option the
+                    // ordinary shedding policy below continues to use the
+                    // lowest attachment while preserving atomic structures.
+                    if (attachmentRankDifference !== 0) return -attachmentRankDifference;
+                }
                 // "No attachment comparison" removes only the regional point
                 // contest; it does not allow a lower card to destroy an atomic
                 // pair. Base grouping has already classified pairs, so two true
@@ -1463,13 +1553,12 @@ export function rankCleanPdkHints(
                 // rank 10. The explicit low-pair/high-single exception above is
                 // intentionally stronger. Example: 33,555,1010,J,K,A,2 carries
                 // J+K, retaining both pairs plus A/2 as recovery controls.
-                const pairPolicyDifference = left.attachmentPairPolicyCost
-                    - right.attachmentPairPolicyCost;
-                if (pairPolicyDifference !== 0) return pairPolicyDifference;
-                const attachmentRankDifference = compareTripleAttachmentRanks(
-                    hand, left.cards, right.cards,
-                );
-                if (attachmentRankDifference !== 0) return attachmentRankDifference;
+                if (!normalizedRules.compareTripleAttachments) {
+                    const pairPolicyDifference = left.attachmentPairPolicyCost
+                        - right.attachmentPairPolicyCost;
+                    if (pairPolicyDifference !== 0) return pairPolicyDifference;
+                    if (attachmentRankDifference !== 0) return attachmentRankDifference;
+                }
             }
             // Exact two-hand maximum control applies only to near-sized plays.
             // With 332 the one-card 2 and pair 33 differ by one, so 2 takes
@@ -1477,7 +1566,9 @@ export function rankCleanPdkHints(
             // in 2 + 66677788899JKA, shed the large family and retain 2 as the
             // final control. A maximum used only as an attachment is excluded.
             const comparableTwoHandSizes = left.finishesInTwo && right.finishesInTwo
-                && Math.abs(left.cards.length - right.cards.length) <= 2;
+                && (Boolean(normalizedRules.prioritizeMaximumWithOneOrdinaryPlay)
+                    || Math.abs(left.cards.length - right.cards.length)
+                        <= (normalizedRules.twoHandMaximumLeadSizeTolerance ?? 2));
             const leftTwoHandMaximum = comparableTwoHandSizes && left.containsRuleMaximum
                 && !left.usesMaximumAttachment;
             const rightTwoHandMaximum = comparableTwoHandSizes && right.containsRuleMaximum
@@ -1503,8 +1594,10 @@ export function rankCleanPdkHints(
             // A complete bomb/four-card body is a control fallback. Ordinary
             // structures are exhausted before it, while a bomb-splitting long
             // straight is assessed by the resulting whole-hand plan.
-            const leftBombBody = left.completeBombs > 0 || left.consumesFourCardBody;
-            const rightBombBody = right.completeBombs > 0 || right.consumesFourCardBody;
+            const leftBombBody = left.completeBombs > 0
+                || (normalizedRules.preserveScoringBombs && left.consumesFourCardBody);
+            const rightBombBody = right.completeBombs > 0
+                || (normalizedRules.preserveScoringBombs && right.consumesFourCardBody);
             if ((normalizedRules.optimizeWholeHand || !preferLargest) && leftBombBody !== rightBombBody) {
                 // A scoring rule makes the bomb atomic; it does not make a
                 // self-led bomb strategically preferable. While leading, keep
@@ -1514,6 +1607,20 @@ export function rankCleanPdkHints(
                 return normalizedRules.preserveScoringBombs
                     ? leftBombBody ? -1 : 1
                     : leftBombBody ? 1 : -1;
+            }
+            const equalSingleResponsePlan = !preferLargest
+                && normalizedRules.prioritizeMaximumResponseWithinThreePlays
+                && left.cards.length === 1 && right.cards.length === 1
+                && left.quality.turns === right.quality.turns
+                && left.quality.structuredCards === right.quality.structuredCards
+                && left.quality.isolated === right.quality.isolated;
+            if (equalSingleResponsePlan
+                && Boolean(left.containsRuleMaximum) !== Boolean(right.containsRuleMaximum)) {
+                // Once two legal single responses leave the same number of
+                // plays and the same complete structures, spend the larger
+                // regional control now. Example: answering from 7899KA uses A
+                // and leaves the intact 789 straight; K has no plan advantage.
+                return left.containsRuleMaximum ? -1 : 1;
             }
             // Public self-lead rule: evaluate the complete remainder before
             // inserting local shape preferences. The first hint must belong to
@@ -1525,7 +1632,7 @@ export function rankCleanPdkHints(
                 const sameTripleCandidate = left.tripleBodyRank < Number.MAX_SAFE_INTEGER
                     && left.tripleBodyRank === right.tripleBodyRank
                     && left.cards.length === right.cards.length;
-                if (sameTripleCandidate
+                if (sameTripleCandidate && !normalizedRules.compareTripleAttachments
                     && left.usesMaximumAttachment !== right.usesMaximumAttachment) {
                     return left.usesMaximumAttachment ? 1 : -1;
                 }
@@ -1546,6 +1653,21 @@ export function rankCleanPdkHints(
                 if (nearSizedPlays && leftRecoveryTriple && rightRecoveryTriple
                     && left.tripleBodyRank !== right.tripleBodyRank) {
                     return left.tripleBodyRank - right.tripleBodyRank;
+                }
+                // Equal-turn straight decompositions preserve complete groups
+                // before maximizing the current body size. After structural
+                // damage is tied, lead the lower equal-length run so the higher
+                // run remains available to recapture. This derives entirely
+                // from the decomposition; it is not tied to ranks or a region.
+                if (left.quality.turns === right.quality.turns
+                    && left.straightBody && right.straightBody) {
+                    const splitPairDifference = left.splitPairs - right.splitPairs;
+                    if (splitPairDifference !== 0) return splitPairDifference;
+                    if (left.cards.length === right.cards.length) {
+                        const lowDifference = Math.min(...left.cards.map(rank))
+                            - Math.min(...right.cards.map(rank));
+                        if (lowDifference !== 0) return lowDifference;
+                    }
                 }
                 // If either opening empties the hand in exactly two plays, the
                 // larger first play is authoritative unless one alternative
@@ -1598,6 +1720,9 @@ export function rankCleanPdkHints(
                 // same number of plays and the aircraft sheds more cards now.
                 const turnDifference = left.quality.turns - right.quality.turns;
                 if (turnDifference !== 0) return turnDifference;
+                if (left.retainsHigherStraight !== right.retainsHigherStraight) {
+                    return left.retainsHigherStraight ? -1 : 1;
+                }
                 // With the same total number of plays, near-sized complete
                 // combinations lead from the low control band first. This
                 // preserves the higher body as a later recapture hand: 7788
@@ -1621,12 +1746,6 @@ export function rankCleanPdkHints(
                 if (cardCountDifference !== 0) return cardCountDifference;
                 const looseDifference = left.planLooseSingles - right.planLooseSingles;
                 if (looseDifference !== 0) return looseDifference;
-                if (left.straightBody && right.straightBody
-                    && left.cards.length === right.cards.length) {
-                    const lowDifference = Math.min(...left.cards.map(rank))
-                        - Math.min(...right.cards.map(rank));
-                    if (lowDifference !== 0) return lowDifference;
-                }
                 const leftCompleteTripleFamily = left.tripleBodyCount > 0
                     && left.cards.length > left.tripleBodyCount * 3;
                 const rightCompleteTripleFamily = right.tripleBodyCount > 0
@@ -1963,7 +2082,9 @@ export function rankCleanPdkHints(
         const largestTwoHandSize = cyclePool.reduce((maximum, alternative) =>
             alternative.finishesInTwo
                 ? Math.max(maximum, alternative.cards.length) : maximum, 0);
-        return largestTwoHandSize - candidate.cards.length <= 2;
+        return Boolean(normalizedRules.prioritizeMaximumWithOneOrdinaryPlay)
+            || largestTwoHandSize - candidate.cards.length
+                <= (normalizedRules.twoHandMaximumLeadSizeTolerance ?? 2);
     };
     if (preferLargest) {
         const twoHandMaximumIndex = cyclePool.findIndex((candidate) =>
@@ -2072,8 +2193,10 @@ export function rankCleanPdkHints(
         // non-transitive and let 888+J+A cycle back ahead of 888+33. Once the
         // exact public condition is met, pin the smallest low-pair attachment
         // before every alternative of the same hand.
-        const preferredLowPairIndex = cyclePool.findIndex((candidate) =>
-            usesPreferredLowPairAttachment(hand, candidate.cards, normalizedRules));
+        const preferredLowPairIndex = normalizedRules.compareTripleAttachments
+            ? -1
+            : cyclePool.findIndex((candidate) =>
+                usesPreferredLowPairAttachment(hand, candidate.cards, normalizedRules));
         if (preferredLowPairIndex > 0) {
             const [preferredLowPair] = cyclePool.splice(preferredLowPairIndex, 1);
             cyclePool.unshift(preferredLowPair);
@@ -2124,6 +2247,9 @@ export function rankCleanPdkHints(
     // structure, but prevents 4-10 from breaking both 99 and 1010 when 4-8 keeps
     // those pairs intact.
     if (longestCleanStraightIndex > 0 && strategicPrimary && longestCleanStraight
+        // A rule-qualified exact two-hand maximum is already the authoritative
+        // control lead; the later long-straight queue refinement cannot replace it.
+        && !isNearSizedTwoHandMaximum(strategicPrimary)
         // The strategic sorter may deliberately lead a low pair run so a
         // higher recovery structure remains. Longest-straight promotion is
         // only a tie refinement and must never overwrite that decision.
@@ -2310,7 +2436,8 @@ export function rankCleanPdkHints(
                 && tripleFamilyAttachments(hand, candidate.cards)
                     .some((card) => originalCounts[rank(card)] === 2 && rank(card) >= 10);
             return opensHighPair
-                || (candidate.usesMaximumAttachment && candidate.remainingCount > 0);
+                || (!normalizedRules.compareTripleAttachments
+                    && candidate.usesMaximumAttachment && candidate.remainingCount > 0);
         };
         if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb
             && isUnsafeTripleAttachment(firstLead)) {
@@ -2365,6 +2492,366 @@ export function rankCleanPdkHints(
                 cyclePool.unshift(bestExactFinish);
             }
         }
+        // LS201 has no rank 2 and treats A as its immutable control card. When
+        // the complete hand has no A, its regional policy is deliberately
+        // direct: lead the legal candidate that sheds the most cards. Apply it
+        // at the final queue boundary so generic single/pair refinements cannot
+        // move a shorter play back ahead of the selected complete body.
+        const handContainsRegionalMaximum = hand.some((card) =>
+            (normalizedRules.maximumSingleRanks ?? []).includes(rank(card)));
+        if (normalizedRules.prioritizeLargestLeadWithoutMaximum
+            && !handContainsRegionalMaximum) {
+            const largestLead = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .sort((left, right) => left.candidate.quality.turns
+                    - right.candidate.quality.turns
+                    || right.candidate.cards.length - left.candidate.cards.length
+                    || left.index - right.index)[0];
+            if (largestLead && largestLead.index > 0) {
+                const [candidate] = cyclePool.splice(largestLead.index, 1);
+                cyclePool.unshift(candidate);
+            }
+        }
+        // LS201's A is the absolute single-card control. Keep it as the first
+        // lead unless the hand can shed a connected straight/pair-run of at
+        // least four cards. Triple attachments are not a connected recovery
+        // body, so hands such as A,K,Q,999,77 still lead A; KKQQ remains the
+        // larger coherent lead in A,KK,QQ,10,88.
+        if (normalizedRules.prioritizeMaximumLeadUnlessConnectedRun
+            && handContainsRegionalMaximum) {
+            const connectedLead = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .filter(({ candidate }) => candidate.cards.length >= 4
+                    && (candidate.straightBody
+                        || pairRunBounds(candidate.cards, normalizedRules) !== null))
+                .sort((left, right) => right.candidate.cards.length
+                    - left.candidate.cards.length || left.index - right.index)[0];
+            const maximumSingle = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .find(({ candidate }) => candidate.cards.length === 1
+                    && Boolean(candidate.containsRuleMaximum));
+            const preferred = connectedLead ?? maximumSingle;
+            if (preferred && preferred.index > 0) {
+                const [candidate] = cyclePool.splice(preferred.index, 1);
+                cyclePool.unshift(candidate);
+            }
+        }
+        // Final LS201 lead boundary. A straight reaching A remains a complete
+        // control shape; otherwise shed the legal shape with the most cards.
+        // Equal-size choices use the complete remainder first, then preserve
+        // an atomic triple family. This selects QQQ+77, 777+88 and 777+A over
+        // shorter/split alternatives while keeping JJQQKK ahead of single A.
+        if (normalizedRules.prioritizeLargestLeadUnlessMaximumStraight) {
+            const maximumStraight = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .filter(({ candidate }) => candidate.straightBody
+                    && candidate.cards.some((card) =>
+                        (normalizedRules.maximumSingleRanks ?? []).includes(rank(card))))
+                .sort((left, right) => right.candidate.cards.length
+                    - left.candidate.cards.length
+                    || left.candidate.quality.turns - right.candidate.quality.turns
+                    || left.index - right.index)[0];
+            const pairDominantRun = pairCount * 2 > rawSingleCount
+                ? cyclePool
+                    .map((candidate, index) => ({ candidate, index }))
+                    .filter(({ candidate }) =>
+                        pairRunBounds(candidate.cards, normalizedRules) !== null
+                        && candidate.splitTriples === 0
+                        && candidate.splitBombs === 0)
+                    .sort((left, right) => right.candidate.cards.length
+                        - left.candidate.cards.length
+                        || left.candidate.quality.turns - right.candidate.quality.turns
+                        || left.index - right.index)[0]
+                : undefined;
+            const largestShape = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .sort((left, right) => left.candidate.quality.turns
+                    - right.candidate.quality.turns
+                    || right.candidate.cards.length - left.candidate.cards.length
+                    || Number(right.candidate.tripleBodyCount > 0)
+                        - Number(left.candidate.tripleBodyCount > 0)
+                    || left.candidate.planLooseSingles - right.candidate.planLooseSingles
+                    || left.index - right.index)[0];
+            // When pair cards strictly outnumber loose singles, their complete
+            // consecutive run is the larger preserved structure even if a
+            // one-card-longer straight could be formed by peeling both pairs.
+            // Equality keeps the ordinary largest-shape rule (K,QQ,JJ,10,9,7
+            // still leads the 9-K straight).
+            const preferred = maximumStraight ?? pairDominantRun ?? largestShape;
+            if (preferred && preferred.index > 0) {
+                const [candidate] = cyclePool.splice(preferred.index, 1);
+                cyclePool.unshift(candidate);
+            }
+
+            const promote = (candidate: (typeof cyclePool)[number] | undefined): void => {
+                if (!candidate) return;
+                const index = cyclePool.indexOf(candidate);
+                if (index <= 0) return;
+                cyclePool.splice(index, 1);
+                cyclePool.unshift(candidate);
+            };
+            const maximumRanks = new Set(normalizedRules.maximumSingleRanks ?? []);
+            const maximumSingle = cyclePool.find((candidate) => candidate.cards.length === 1
+                && maximumRanks.has(rank(candidate.cards[0])));
+            const maximumPair = cyclePool.find((candidate) => candidate.cards.length === 2
+                && rank(candidate.cards[0]) === rank(candidate.cards[1])
+                && maximumRanks.has(rank(candidate.cards[0])));
+
+            // If the same physical hand retains a higher equal-length straight,
+            // lead the lower straight and keep the maximum run as a recovery.
+            // A,KK,Q,1010,9,8 therefore leads 8-10 and keeps Q-K-A. This is
+            // different from a hand whose only complete straight reaches A.
+            const maximumStraights = cyclePool.filter((candidate) => candidate.straightBody
+                && candidate.cards.some((card) => maximumRanks.has(rank(card))));
+            const recoveryLead = cyclePool
+                .filter((candidate) => candidate.straightBody
+                    && !candidate.cards.some((card) => maximumRanks.has(rank(card))))
+                .filter((candidate) => {
+                    const remaining = subtract(hand, candidate.cards);
+                    return Boolean(remaining && maximumStraights.some((maximum) =>
+                        maximum.cards.length === candidate.cards.length
+                        && containsCards(remaining, maximum.cards)));
+                })
+                .sort((left, right) => Math.min(...left.cards.map(rank))
+                    - Math.min(...right.cards.map(rank)))[0];
+            if (recoveryLead) promote(recoveryLead);
+
+            // AAA is an ordinary maximum triple in LS201. When carrying the
+            // lowest loose card leaves one complete play (for example 1010JJ),
+            // it is the two-play lead rather than the remaining pair run.
+            const maximumTripleLead = cyclePool
+                .filter((candidate) => candidate.quality.turns === 1)
+                .filter((candidate) => {
+                    const counts = countsOf(candidate.cards);
+                    return [...maximumRanks].some((value) => counts[value] === 3)
+                        && candidate.cards.length === 4;
+                })
+                .sort((left, right) => left.planLooseSingles - right.planLooseSingles
+                    || left.order - right.order)[0];
+            if (maximumTripleLead) promote(maximumTripleLead);
+
+            // Complete two-play A + pair spends A first. With three simple
+            // plays, retain the unique A as recapture and shed the other loose
+            // card; if AA is the retained control pair, shed the lowest loose
+            // card. An all-single hand likewise starts from its minimum.
+            const simpleMaximumPlan = originalCounts.every((count) => count <= 2);
+            if (simpleMaximumPlan && (maximumPair || maximumSingle) && originalQuality.turns === 2
+                && hand.length === 3 && pairCount === 1 && rawSingleCount === 1) {
+                // Two-play tail always spends the complete maximum control:
+                // A+77 leads A, while AA+7 leads the intact AA pair.
+                promote(maximumPair ?? maximumSingle);
+            } else if (simpleMaximumPlan && originalQuality.turns === 3) {
+                // Three complete atomic plays spend the middle control first:
+                // the highest play is retained for recapture and the lowest
+                // play remains the tail. This is the shared endgame ordering
+                // for A,10,7; AA,9,7; and A,J,77, rather than a hand-specific
+                // card combination exception.
+                const completeAtomicPlays = cyclePool
+                    .filter((candidate) => {
+                        if (candidate.cards.length === 1) {
+                            const value = rank(candidate.cards[0]);
+                            return originalCounts[value] === 1
+                                || maximumRanks.has(value);
+                        }
+                        return candidate.cards.every((card) =>
+                            rank(card) === rank(candidate.cards[0]))
+                            && candidate.cards.length === originalCounts[rank(candidate.cards[0])];
+                    })
+                    .sort((left, right) => rank(right.cards[0]) - rank(left.cards[0])
+                        || right.cards.length - left.cards.length
+                        || left.order - right.order);
+                promote(completeAtomicPlays[1]);
+            } else if (simpleMaximumPlan && pairCount === 1 && rawSingleCount === 2) {
+                const maximumIsDeckTop = maximumSingle
+                    && rank(maximumSingle.cards[0]) === deckMaximumRank;
+                if (!maximumIsDeckTop) {
+                    // When the effective control has fallen below the deck's
+                    // natural maximum (for example K after all aces are
+                    // visible), keep it for recovery and shed the intact pair.
+                    // K,9,88 therefore starts from 88; the absolute-A case
+                    // A,J,JJ,7 still probes with 7 and lets A recapture.
+                    promote(cyclePool
+                        .filter((candidate) => candidate.cards.length === 2
+                            && rank(candidate.cards[0]) === rank(candidate.cards[1])
+                            && originalCounts[rank(candidate.cards[0])] === 2)
+                        .sort((left, right) => rank(left.cards[0]) - rank(right.cards[0]))[0]);
+                } else {
+                const ordinarySingles = cyclePool
+                    .filter((candidate) => candidate.cards.length === 1
+                        && !maximumRanks.has(rank(candidate.cards[0])))
+                    .sort((left, right) => {
+                        const maximumIsLoose = [...maximumRanks]
+                            .some((value) => originalCounts[value] === 1);
+                        return maximumIsLoose
+                            ? rank(right.cards[0]) - rank(left.cards[0])
+                            : rank(left.cards[0]) - rank(right.cards[0]);
+                    });
+                promote(ordinarySingles[0]);
+                }
+            } else if (simpleMaximumPlan && pairCount === 0 && rawSingleCount > 3) {
+                const minimumSingle = cyclePool
+                    .filter((candidate) => candidate.cards.length === 1)
+                    .sort((left, right) => rank(left.cards[0]) - rank(right.cards[0]))[0];
+                promote(minimumSingle);
+            }
+        }
+    } else if (normalizedRules.prioritizeMaximumResponseWithinThreePlays
+        && originalQuality.turns <= 3) {
+        const maximumResponseIndex = cyclePool.findIndex((candidate) =>
+            Boolean(candidate.containsRuleMaximum) && !candidate.usesMaximumAttachment);
+        if (maximumResponseIndex > 0) {
+            const [maximumResponse] = cyclePool.splice(maximumResponseIndex, 1);
+            cyclePool.unshift(maximumResponse);
+        } else if (maximumResponseIndex < 0 && cyclePool[0]?.cards.length === 1) {
+            // Without A, minimize newly exposed singles first and only then use
+            // the lowest legal point to answer. This keeps response splitting
+            // aligned with the complete-hand decomposition.
+            const bestSingle = cyclePool
+                .map((candidate, index) => ({ candidate, index }))
+                .filter(({ candidate }) => candidate.cards.length === 1)
+                .sort((left, right) => left.candidate.planLooseSingles
+                    - right.candidate.planLooseSingles
+                    || rank(left.candidate.cards[0]) - rank(right.candidate.cards[0])
+                    || left.index - right.index)[0];
+            if (bestSingle && bestSingle.index > 0) {
+                const [candidate] = cyclePool.splice(bestSingle.index, 1);
+                cyclePool.unshift(candidate);
+            }
+        }
+    }
+    if (preferLargest && !normalizedRules.preserveScoringBombs) {
+        // Public non-scoring-bomb rule: a regionally legal four-with attachment
+        // is an ordinary shedding shape, not a protected bomb. Prefer the plan
+        // that leaves the fewest plays, then sheds the most cards now.
+        const fourWith = cyclePool
+            .map((candidate, index) => ({ candidate, index }))
+            .filter(({ candidate }) => candidate.consumesFourCardBody)
+            .sort((left, right) => left.candidate.quality.turns - right.candidate.quality.turns
+                || right.candidate.cards.length - left.candidate.cards.length
+                || left.index - right.index)[0];
+        if (fourWith && fourWith.index > 0) {
+            const [candidate] = cyclePool.splice(fourWith.index, 1);
+            cyclePool.unshift(candidate);
+        }
+    }
+    // Final ordering invariant for near-sized, equal-turn straights: do not
+    // lengthen the current run by peeling one card from a complete pair when an
+    // intact alternative keeps a higher equal-length run for recapture.
+    cyclePool.sort((left, right) => {
+        if (!left.straightBody || !right.straightBody
+            || left.quality.turns !== right.quality.turns
+            || Math.abs(left.cards.length - right.cards.length) > 1
+            || (!left.retainsHigherStraight && !right.retainsHigherStraight)) return 0;
+        const maximumRanks = new Set(normalizedRules.maximumSingleRanks ?? []);
+        // A longer straight that spends the only maximum control is the
+        // current hand's largest safe shedding shape. Do not demote it merely
+        // to preserve a pair: A,KK,Q,J,9,8,7 leads J-Q-K-A rather than 7-8-9.
+        // The ordinary lower-run recovery rule still applies when both runs
+        // are equal length or the maximum remains independently available.
+        const leftReachesMaximum = left.cards.some((card) => maximumRanks.has(rank(card)));
+        const rightReachesMaximum = right.cards.some((card) => maximumRanks.has(rank(card)));
+        if (left.cards.length !== right.cards.length
+            && leftReachesMaximum !== rightReachesMaximum) return 0;
+        const splitPairDifference = left.splitPairs - right.splitPairs;
+        if (splitPairDifference !== 0) return splitPairDifference;
+        return 0;
+    });
+    if (preferLargest && normalizedRules.prioritizeLargestLeadUnlessMaximumStraight) {
+        const maximumRanks = new Set(normalizedRules.maximumSingleRanks ?? []);
+        const maximumStraight = cyclePool
+            .filter((candidate) => candidate.straightBody
+                && candidate.cards.some((card) => maximumRanks.has(rank(card))))
+            .sort((left, right) => right.cards.length - left.cards.length
+                || left.quality.turns - right.quality.turns
+                || left.order - right.order)[0];
+        const hasEqualLengthRecoveryLead = maximumStraight && cyclePool
+            .filter((candidate) => candidate.straightBody
+                && candidate.cards.length === maximumStraight.cards.length
+                && !candidate.cards.some((card) => maximumRanks.has(rank(card))))
+            .some((candidate) => {
+                const remaining = subtract(hand, candidate.cards);
+                return Boolean(remaining && containsCards(remaining, maximumStraight.cards));
+            });
+        // Reassert the longest maximum-reaching run after the generic stable
+        // sort. A chain of shorter overlapping runs can otherwise move 789
+        // ahead of JQKA even though no equal-length recovery plan exists.
+        if (maximumStraight && !hasEqualLengthRecoveryLead) {
+            const index = cyclePool.indexOf(maximumStraight);
+            if (index > 0) {
+                cyclePool.splice(index, 1);
+                cyclePool.unshift(maximumStraight);
+            }
+        }
+    }
+    const highRecoveryPairCount = originalCounts
+        .filter((count, value) => value >= 11 && count === 2).length;
+    if (preferLargest && pairCount >= 3 && pairCount * 2 > rawSingleCount
+        && highRecoveryPairCount >= 1) {
+        const completePairRunExists = cyclePool.some((candidate) =>
+            pairRunBounds(candidate.cards, normalizedRules) !== null
+            && candidate.splitTriples === 0 && candidate.splitBombs === 0);
+        if (!completePairRunExists) {
+            // A pair-dominant hand uses an intact J-or-higher pair as its
+            // recovery chain. Pair quantity alone is insufficient: low pairs
+            // cannot reliably take the lead back and must not activate this.
+            // Lead the lowest intact pair instead of peeling high pairs into a
+            // straight: AA,K,Q,JJ,99 starts from 99, not J-Q-K-A.
+            const lowestPair = cyclePool
+                .filter((candidate) => candidate.cards.length === 2
+                    && rank(candidate.cards[0]) === rank(candidate.cards[1])
+                    && originalCounts[rank(candidate.cards[0])] === 2)
+                .sort((left, right) => rank(left.cards[0]) - rank(right.cards[0])
+                    || left.order - right.order)[0];
+            if (lowestPair) {
+                const index = cyclePool.indexOf(lowestPair);
+                if (index > 0) {
+                    cyclePool.splice(index, 1);
+                    cyclePool.unshift(lowestPair);
+                }
+            }
+        }
+    }
+    // A complete consecutive-pair body that leaves exactly one legal hand is a
+    // proven two-play decomposition. It precedes a destructive straight whose
+    // remainder needs more plays; ordinary low-straight preservation remains
+    // unchanged when the pair run does not actually finish in two.
+    const exactTwoPlayPairRun = cyclePool
+        .map((candidate, index) => ({ candidate, index }))
+        .filter(({ candidate }) => pairRunBounds(candidate.cards, normalizedRules) !== null
+            && rawSingleCount === 0
+            && candidate.quality.turns === 1
+            && candidate.splitBombs === 0
+            && candidate.splitTriples === 0)
+        .sort((left, right) => right.candidate.cards.length - left.candidate.cards.length
+            || left.candidate.order - right.candidate.order)[0];
+    if (exactTwoPlayPairRun && exactTwoPlayPairRun.index > 0
+        && (cyclePool[0]?.quality.turns ?? Number.MAX_SAFE_INTEGER) > 1) {
+        const [candidate] = cyclePool.splice(exactTwoPlayPairRun.index, 1);
+        cyclePool.unshift(candidate);
+    }
+    const hasExactTwoHandLead = cyclePool.some((candidate) => candidate.finishesInTwo);
+    if (preferLargest && !hasExactTwoHandLead
+        && (maximumTripleProbeHand || maximumTriplePairDominantHand)) {
+        // This is a hand-level opening policy, so apply it after every generic
+        // decomposition reorder. Keeping it inside the pairwise comparator can
+        // create a non-transitive cycle between a singleton, a pair and a
+        // triple-with-attachment candidate. An exact two-hand decomposition is
+        // stronger and must never be replaced by a low-card probe.
+        const probe = cyclePool
+            .map((candidate, index) => ({ candidate, index }))
+            .filter(({ candidate }) => (!maximumTriplePairDominantHand
+                && candidate.cards.length === 1
+                && originalCounts[rank(candidate.cards[0])] === 1)
+                || (candidate.cards.length === 2
+                    && rank(candidate.cards[0]) === rank(candidate.cards[1])
+                    && originalCounts[rank(candidate.cards[0])] === 2))
+            .sort((left, right) => rank(left.candidate.cards[0]) - rank(right.candidate.cards[0])
+                || right.candidate.cards.length - left.candidate.cards.length
+                || left.index - right.index)[0];
+        if (probe && probe.index > 0) {
+            const [candidate] = cyclePool.splice(probe.index, 1);
+            cyclePool.unshift(candidate);
+        }
     }
     const expanded: number[][] = [];
     const deferredPhysicalVariants: number[][] = [];
@@ -2381,4 +2868,3 @@ export function rankCleanPdkHints(
     }
     return [...expanded, ...deferredPhysicalVariants];
 }
-

@@ -165,7 +165,8 @@ export class SceneRouter {
             return 'LOGIN_REQUIRED';
         }
         const savedRoute = hostRouteStore.load(String(account.accountId));
-        const waitingClubRoom = activeRoom?.gameName?.trim().toUpperCase() === 'LS201'
+        const waitingClubRoom = Number(activeRoom?.clubId ?? 0) > 0
+            && activeRoom?.gameName?.trim().toUpperCase() === 'LS201'
             && Number(activeRoom.roundNo ?? 0) <= 0
             && activeRoom.waitingFull !== true && activeRoom.state !== 'PLAYING';
         if (activeRoom && waitingClubRoom) {

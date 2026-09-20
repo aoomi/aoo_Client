@@ -57,8 +57,9 @@ function legacyPatternOptions(ruleOptions: Record<string, unknown>): number[] {
     }
     const patterns: number[] = [];
     if (ruleOptions.allowTerminalAttachmentShortage === true) patterns.push(0);
-    if (triple === 'SINGLES' || triple === 'EITHER') patterns.push(1, 3);
-    if (triple === 'PAIRS' || triple === 'EITHER') patterns.push(2);
+    if (triple === 'SINGLES' || triple === 'SINGLE_OR_PAIR' || triple === 'EITHER') patterns.push(1);
+    if (triple === 'PAIRS' || triple === 'SINGLE_OR_PAIR' || triple === 'EITHER') patterns.push(2);
+    if (triple === 'EITHER') patterns.push(3);
     patterns.push(4);
     if (ruleOptions.allowFourBombWithOne === true) patterns.push(5);
     if (specialBombRanks.length > 0) patterns.push(6);
@@ -230,8 +231,15 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     // the whole packet here leaves a player with an empty hand. Prefer the atomic
     // snapshot when present; otherwise use the former currentTrick/lastActions
     // projection until that service instance is restarted on the new contract.
+    // A trick reset is an authoritative empty-comparison state. During a
+    // rolling deployment `lastActions` still contains the completed trick, so
+    // using its final play as a fallback here turns the winner's next lead into
+    // a response turn. That also makes Hint discard legal lower leads (for
+    // example the middle card from three loose singles). History may restore
+    // visuals, but it must never reconstruct the active comparison hand.
     const comparison = snapshotComplete
         ? snapshotComparison
+        : Boolean(source.trickReset) ? {}
         : cardValues(legacyTrick.cards).length > 0 ? legacyTrick : lastAction;
     const operations = snapshotComplete && Array.isArray(tableSnapshot.operations)
         ? tableSnapshot.operations : lastActions;

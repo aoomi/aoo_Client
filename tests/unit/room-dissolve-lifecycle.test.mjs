@@ -11,6 +11,8 @@ const coordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSw
 const dissolve = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkDissolveController.ts');
 const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
 const play = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+const forms = read('assets/Common/Code/Runtime/ui/LegacyFormManager.ts');
+const roomModel = read('assets/Games/Poker/PDK/Common/Code/Runtime/model/CommonPdkRoom.ts');
 
 test('approved dissolve has one authoritative terminal projection and one navigation owner', () => {
   assert.match(runtime, /terminalStateVersion/);
@@ -26,7 +28,8 @@ test('room overlays close before the sole lobby navigation callback', () => {
 });
 
 test('dissolve applicant has no agree or reject actions', () => {
-  assert.match(dissolve, /const canVote = createPos !== clientPos && clientVote === 0/);
+  assert.match(dissolve, /const voteEstablished = Number\.isSafeInteger\(createPos\)/);
+  assert.match(dissolve, /const canVote = voteEstablished && createPos !== clientPos && clientVote === 0/);
   assert.match(dissolve, /this\.active\('Btn_Reject', canVote\)/);
   assert.match(dissolve, /this\.active\('Btn_Agree', canVote\)/);
 });
@@ -49,6 +52,21 @@ test('dissolve modal blocks the room and consumes the closing pointer transactio
   assert.doesNotMatch(dissolve, /root\.addComponent\(BlockInputEvents\)/);
   assert.match(dissolve, /bindPointerButton\('Btn_Close', this\.onClose\)/);
   assert.match(coordinator, /new CommonPdkDissolveController\([\s\S]*forms\.closeAfterPointer\(DISSOLVE_ROOM_FORM\)/);
+  assert.match(coordinator, /event === 'CommonPdk_DissolveRoom'[\s\S]*forms\.closeAfterPointer\(DISSOLVE_ROOM_FORM\)/);
+  assert.match(forms, /this\.modalMask\.layer = this\.uiLayer\.layer/);
+});
+
+test('an out-of-order legacy vote cannot crash after the authoritative ballot was cleared', () => {
+  assert.match(roomModel, /if\(!dissolveInfo \|\| typeof dissolveInfo !== "object"\)/);
+  assert.match(roomModel, /OnPosDealVote ignored without active dissolve ballot/);
+  assert.match(roomModel, /return null/);
+});
+
+test('vote request is blocked until the authoritative ballot exists', () => {
+  assert.match(dissolve, /blocked before authoritative ballot/);
+  assert.match(dissolve, /!Number\.isSafeInteger\(createPos\) \|\| createPos < 0/);
+  assert.match(dissolve, /endSec <= Date\.now\(\) \/ 1000/);
+  assert.match(dissolve, /const generation = \+\+this\.requestGeneration/);
 });
 
 test('the final voter consumes the authoritative terminal response before fallback reconciliation', () => {
@@ -58,6 +76,7 @@ test('the final voter consumes the authoritative terminal response before fallba
   assert.match(runtime, /CommonPdk_DissolveRoom/);
   assert.match(runtime, /const terminalRoom = \/room \(\?:is \)\?dissolved/);
   assert.match(runtime, /room \(\?:not found\|does not exist\)/);
+  assert.match(runtime, /room authority is not active/);
   assert.doesNotMatch(runtime, /\\b3008\\b/);
   assert.match(dissolve, /room \(\?:is \)\?dissolved[\s\S]*this\.runtime\.reconcileAuthority\(\)/);
 });
