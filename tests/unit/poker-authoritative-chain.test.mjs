@@ -141,20 +141,22 @@ test('final settlement reads the authoritative cumulative room record', () => {
 
 test('round settlement preserves operation timing and truncates unfinished visual effects', () => {
     const settlement = switchCoordinator.slice(switchCoordinator.indexOf('private async showSettlementAfterPresentation'));
-    assert.match(settlement, /globalThis\.setTimeout\(resolve,[\s\S]*\? 2000 : 1000\)/);
-    const delay = settlement.indexOf('globalThis.setTimeout(resolve');
-    const presentation = settlement.indexOf('truncateRoundEndPresentation()');
-    assert.ok(delay >= 0 && presentation > delay);
+    assert.doesNotMatch(settlement, /\? 2000 : 1000/);
+    assert.match(settlement, /waitForTerminalCardHold\(1500\)/);
+    assert.match(settlement, /await terminalHold;[\s\S]*truncateRoundEndPresentation\(\)[\s\S]*await this\.forms\.show/);
     assert.doesNotMatch(settlement, /waitForRoundEndPresentation\(\)/);
     assert.match(switchCoordinator, /generation !== this\.settlementPresentationGeneration/);
     assert.match(switchCoordinator, /key === this\.settlementPendingKey \|\| key === this\.settlementShownKey/);
-    assert.match(switchCoordinator, /if \(!staticRestore\)/);
     assert.match(switchCoordinator, /stage: 'opened'/);
 });
 
 test('non-popup settlement never opens the blocking small-settlement form', () => {
     assert.match(switchCoordinator, /settlementPresentation === 'FLOATING' && !matchFinished && !finalSettlement/);
-    assert.match(switchCoordinator, /浮动结算在最后一局也不能重新退回阻塞式小结算/);
+    const floating = switchCoordinator.slice(
+        switchCoordinator.indexOf("settlementPresentation === 'FLOATING'"),
+        switchCoordinator.indexOf('// The terminal round is still a completed round'),
+    );
+    assert.doesNotMatch(floating, /forms\.show\(this\.smallSettlementForm/);
 });
 
 test('settlement authority restores terminal snapshots without replaying presentation', () => {

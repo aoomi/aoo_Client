@@ -64,6 +64,18 @@ test('submitting emits target player, stage and selected cards as one payload', 
   assert.match(source, /this\.node\.emit\('poker-card-selection-submit', detail\)/);
 });
 
+test('selection uses the authoritative hand limit and restores per-player state', () => {
+  assert.match(source, /readonly handLimit: number/);
+  assert.match(source, /readonly selectedCards: readonly number\[\]/);
+  assert.match(source, /readonly unavailableCards: readonly number\[\]/);
+  assert.match(source, /this\.selectedCards\.size >= \(this\.context\?\.handLimit \?\? 0\)/);
+  assert.match(source, /this\.node\.emit\('poker-card-selection-limit'/);
+  assert.match(source, /this\.unavailableCards\.has\(rawCard\)/);
+  assert.match(pdkCoordinator, /ruleOptions as Record<string, unknown>\)\.cardsPerPlayer/);
+  assert.match(pdkCoordinator, /GetRoomProperty\('selectedInitialHands'\)/);
+  assert.match(pdkCoordinator, /selectionMode: 'REPLACE'/);
+});
+
 test('PokerTest owns a backmost modal mask and resilient authored controls', () => {
   assert.match(source, /new Node\('CardSelectionModalMask'\)/);
   assert.match(source, /mask\.addComponent\(BlockInputEvents\)/);
@@ -71,10 +83,10 @@ test('PokerTest owns a backmost modal mask and resilient authored controls', () 
   assert.match(source, /this\.node\.getComponent\(BlockInputEvents\)/);
   assert.match(source, /this\.content\?\.setSiblingIndex\(1\)/);
   assert.match(source, /this\.bindPointerBlocker\(mask\)/);
-  assert.match(source, /card\.on\(Node\.EventType\.TOUCH_END, activate, this\)/);
-  assert.match(source, /card\.on\(Node\.EventType\.MOUSE_UP, activate, this\)/);
-  assert.match(source, /node\.on\(Node\.EventType\.TOUCH_END, pointerEnd, this\)/);
-  assert.match(source, /node\.on\(Node\.EventType\.MOUSE_UP, pointerEnd, this\)/);
+  assert.doesNotMatch(source, /card\.on\(Node\.EventType\.TOUCH_END, activate, this\)/);
+  assert.doesNotMatch(source, /card\.on\(Node\.EventType\.MOUSE_UP, activate, this\)/);
+  assert.doesNotMatch(source, /node\.on\(Node\.EventType\.TOUCH_END, pointerEnd, this\)/);
+  assert.doesNotMatch(source, /node\.on\(Node\.EventType\.MOUSE_UP, pointerEnd, this\)/);
   assert.match(source, /event\.propagationStopped = true/);
   assert.match(source, /now - this\.lastControlPointerAt < 180/);
   assert.match(pdkCoordinator, /onCardSelectionClose[\s\S]*closeAfterPointer\(POKER_CARD_SELECTION_FORM\)/);
@@ -89,6 +101,7 @@ test('deal-once PDK keeps PokerTest available to the room owner', () => {
 
 test('PDK submits the complete selection with replace semantics', () => {
   assert.match(pdkCoordinator, /selectionMode: 'REPLACE'/);
+  assert.match(pdkCoordinator, /if \(this\.cardSelectionSubmitPending\) return/);
   assert.match(pdkCoordinator, /this\.forms\.closeAfterPointer\(POKER_CARD_SELECTION_FORM\)/);
   assert.match(pdkCoordinator, /this\.showMessage\('OK了'\)/);
   assert.match(pdkCoordinator, /this\.forms\.closeAfterPointer\(POKER_CARD_SELECTION_FORM\)/);

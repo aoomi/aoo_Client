@@ -100,6 +100,8 @@ test('BootStrap is the only startup-route owner and presentation scenes only con
         'only the authored Boot path may construct/start client services');
     assert.match(bootstrap, /if \(!isBootstrapScene\) \{[\s\S]*getStartedClientServices\(\)[\s\S]*mountLoginPresentation\(epoch\)[\s\S]*return;/,
         'LoginScene must consume the existing runtime and return before startup routing');
+    assert.match(bootstrap, /if \(!services\) \{[\s\S]*action: 'ENTER_BOOTSTRAP'[\s\S]*director\.loadScene\('BootStrap'/,
+        'an editor preview opened on LoginScene must enter the authored BootStrap instead of inventing a route owner');
     assert.match(bootstrap, /__aoo_BOOTSTRAP_ROUTE_OWNER__/);
     assert.doesNotMatch(bootstrap, /addPersistRootNode\s*\(/);
 

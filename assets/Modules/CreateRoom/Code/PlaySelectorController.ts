@@ -150,7 +150,11 @@ export class PlaySelectorController {
             playVersion: game.playVersion, selectionGeneration,
         });
         try {
-            const configuration = await this.gateway.configuration(game);
+            // The workbook watcher publishes a new immutable schema under the same
+            // gameId/playVersion.  A normal metadata cache hit would hide that sourceHash
+            // for up to one minute, so the one-second schema poll must explicitly bypass
+            // the cache while the create-room panel is open.
+            const configuration = await this.gateway.configuration(game, { refresh: true });
             if (this.disposed || selectionGeneration !== this.selectionGeneration) return;
             const fields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
             console.info('[CreateRoomSelector]', {
@@ -197,7 +201,7 @@ export class PlaySelectorController {
     }
     private async refreshSchema(game: HallCatalogGame, selectionGeneration: number): Promise<void> {
         try {
-            const configuration = await this.gateway.configuration(game);
+            const configuration = await this.gateway.configuration(game, { refresh: true });
             if (this.disposed || selectionGeneration !== this.selectionGeneration
                 || Number(this.selectedGame?.gameId) !== Number(game.gameId)) return;
             const fields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];

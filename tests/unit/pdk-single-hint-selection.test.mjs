@@ -309,15 +309,17 @@ test('overlapping asynchronous hand renders cannot leave a deferred-destroy layo
   assert.ok(render.indexOf('card.removeFromParent()') < render.indexOf('card.destroy()'));
 });
 
-test('hint cannot mutate selection while a play transaction owns the hand', () => {
+test('hint queues without mutating selection while a play transaction owns the hand', () => {
   const source = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const tip = source.slice(source.indexOf('private tip(): void'),
     source.indexOf('private prepareHintCache'));
-  const lock = tip.indexOf('if (this.playInFlight) return');
-  assert.ok(lock >= 0);
-  assert.ok(lock < tip.indexOf('this.cancelAutoPlay()'));
-  assert.ok(lock < tip.indexOf('this.logic.ChangeSelectCard'));
+  const lock = tip.indexOf('if (this.playInFlight || this.keepOperationsVisibleDuringPlay)');
+  const queued = tip.indexOf('this.hintRequestedDuringPlay = true', lock);
+  const guardedReturn = tip.indexOf('return;', queued);
+  assert.ok(lock >= 0 && queued > lock && guardedReturn > queued);
+  assert.ok(guardedReturn < tip.indexOf('this.cancelAutoPlay()'));
+  assert.ok(guardedReturn < tip.indexOf('this.logic.ChangeSelectCard'));
 });
 
 test('manual Hint invalidates an older automatic hint waiting for hand compaction', () => {
@@ -434,8 +436,8 @@ test('single-response prompt source enumerates every higher hand card', () => {
   assert.match(method, /this\.pushTipCandidates\(candidates, this\.logic\.GetZhaDanTip\(\)\)/);
   assert.match(controller, /leading \? this\.leadTipCandidates\(\) : this\.responseTipCandidates\(\)/);
   assert.match(controller, /protectedBombs: this\.protectedBombGroups\(\)/);
-  assert.match(controller, /authoritativeNextPlayerCardCount\(\) === 1/);
-  assert.match(controller, /GetRoomSetInfo\(\)[\s\S]*posInfo[\s\S]*cardCount/);
+  assert.match(controller, /private nextPlayerReportedSingle\(\): boolean/);
+  assert.match(controller, /GetRoomSetInfo\(\)[\s\S]*posInfo[\s\S]*Number\(nextPlayer\?\.cardCount\)/);
 
   const hand = [113, 213, 313, 112, 111, 211, 311, 110, 210, 109, 108, 107, 106, 206, 105];
   const ranked = rankCleanPdkHints(hand, [
@@ -531,10 +533,45 @@ test('Liangshan two-play lead exposes maximum ace before retaining the 8-to-J st
     minimumPairRunLength: 2,
     allowTwoInRuns: false,
     tripleAttachmentMode: 'SINGLE_OR_PAIR',
-    twoHandMaximumLeadSizeTolerance: 3,
   }, true, true);
 
   assert.deepEqual(ranked[0], ace);
+});
+
+test('COMMON exact two-play lead spends a maximum single before a much longer straight', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const maximumSingle = [115];
+  const straight = [106, 107, 108, 109, 110];
+  const ranked = rankCleanPdkHints([...maximumSingle, ...straight], [
+    { cards: straight, order: 0, finishesInTwo: true, containsRuleMaximum: false },
+    { cards: maximumSingle, order: 1, finishesInTwo: true, containsRuleMaximum: true },
+  ], { minimumStraightLength: 5, minimumPairRunLength: 2, allowTwoInRuns: false }, true, true);
+
+  assert.deepEqual(ranked[0], maximumSingle);
+});
+
+test('COMMON exact two-play lead spends the maximum pair before a longer triple family', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const maximumPair = [114, 214];
+  const tripleFamily = [109, 209, 309, 107, 108];
+  const ranked = rankCleanPdkHints([...maximumPair, ...tripleFamily], [
+    { cards: tripleFamily, order: 0, finishesInTwo: true, containsRuleMaximum: false },
+    { cards: maximumPair, order: 1, finishesInTwo: true, containsRuleMaximum: true },
+  ], { minimumStraightLength: 5, minimumPairRunLength: 2, allowTwoInRuns: false }, true, true);
+
+  assert.deepEqual(ranked[0], maximumPair);
+});
+
+test('COMMON exact two-play lead spends the maximum triple family before a longer pair run', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const maximumTripleFamily = [114, 214, 314, 106, 107];
+  const pairRun = [108, 208, 109, 209, 110, 210];
+  const ranked = rankCleanPdkHints([...maximumTripleFamily, ...pairRun], [
+    { cards: pairRun, order: 0, finishesInTwo: true, containsRuleMaximum: false },
+    { cards: maximumTripleFamily, order: 1, finishesInTwo: true, containsRuleMaximum: true },
+  ], { minimumStraightLength: 5, minimumPairRunLength: 2, allowTwoInRuns: false }, true, true);
+
+  assert.deepEqual(ranked[0], maximumTripleFamily);
 });
 
 test('two-play maximum priority never splits a protected regional bomb', () => {
@@ -1332,7 +1369,7 @@ test('lead hint keeps an independent bomb behind an ordinary pair', () => {
   assert.deepEqual(ranked[1], completeBomb.cards);
 });
 
-test('four-with-two is never prompted by dismantling an independent bomb', () => {
+test('a non-scoring four-card body may lead its legal four-with-two shape', () => {
   const { rankCleanPdkHints } = loadHelper();
   const hand = [114, 214, 113, 110, 210, 310, 410, 109];
   const fourWithTwo = {
@@ -1348,8 +1385,9 @@ test('four-with-two is never prompted by dismantling an independent bomb', () =>
     minimumPairRunLength: 2,
     allowTwoInRuns: false,
   }, true);
-  assert.deepEqual(ranked[0], [109]);
-  assert.ok(!ranked.some((cards) => cards.length === fourWithTwo.cards.length));
+  assert.deepEqual(ranked[0], fourWithTwo.cards,
+    'the public bomb policy allows four-with-two when bombs do not score');
+  assert.deepEqual(ranked[1], [109]);
 });
 
 test('a scoring bomb leads an exact two-play endgame and four-with-two is excluded', () => {

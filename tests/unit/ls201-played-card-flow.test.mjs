@@ -7,6 +7,7 @@ const flow = readFileSync(new URL('LSPDK/Code/LS201PlayedCardFlow.ts', root), 'u
 const controller = readFileSync(new URL('Common/Code/Runtime/CommonPdkPlayController.ts', root), 'utf8');
 const coordinator = readFileSync(new URL('Common/Code/Runtime/CommonPdkSwitchCoordinator.ts', root), 'utf8');
 const retainedLayout = readFileSync(new URL('Common/Code/Runtime/Room/PdkRetainedPlayedCardFlow.ts', root), 'utf8');
+const roundLifecycle = readFileSync(new URL('Common/Code/Runtime/Room/PdkRoundPresentationLifecycle.ts', root), 'utf8');
 const nodePaths = readFileSync(new URL('Common/Code/Runtime/Room/PdkRoomNodePaths.ts', root), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL('Common/Prefab/PDK_CommonRoom.prefab', root), 'utf8'));
 
@@ -16,6 +17,7 @@ test('LS201 alone moves the live Out_Card nodes into Table_Cards after a fixed t
   assert.match(flow, /public flushPendingHolds\(\): void/);
   assert.match(flow, /public async waitForPendingTransfers\(\): Promise<void>/);
   assert.match(flow, /public async finishPendingImmediately\(\): Promise<void>/);
+  assert.match(flow, /public async cancelPendingForSettlement\(\): Promise<void>/);
   assert.match(flow, /this\.flushPendingHolds\(\)[\s\S]*this\.pendingTransferFinishes/);
   assert.match(flow, /private readonly activeTransfers = new Set<Promise<void>>\(\)/);
   assert.match(flow, /this\.pendingHoldReleases\.add\(finish\)/);
@@ -77,6 +79,58 @@ test('LS201 alone moves the live Out_Card nodes into Table_Cards after a fixed t
   assert.match(coordinator, /runtime\.getGameCode\(\) === PDK_BUSINESS_CODES\.LIANGSHAN[\s\S]*new LS201PlayedCardFlow\(\)/);
 });
 
+test('terminal settlement cancels a transient final hand instead of archiving it', () => {
+  const cancel = flow.slice(flow.indexOf('public async cancelPendingForSettlement'),
+    flow.indexOf('public async moveAfterLiveHold'));
+  const truncate = controller.slice(controller.indexOf('public async truncateRoundEndPresentation'),
+    controller.indexOf('public async waitForInitialPresentation'));
+  assert.match(flow, /private readonly transientHands = new Set<Node>\(\)/);
+  assert.match(flow, /this\.transientHands\.add\(hand\)/);
+  assert.match(cancel, /if \(hand\.isValid\) \{[\s\S]*hand\.removeFromParent\(\);[\s\S]*hand\.destroy\(\)/);
+  assert.match(cancel, /this\.flushPendingHolds\(\)/);
+  assert.match(cancel, /this\.pendingTransferFinishes/);
+  assert.match(truncate, /this\.endRoundPresentation\('SET_END'\)/);
+  assert.doesNotMatch(truncate, /finishPendingImmediately\(\)/);
+});
+
+test('an old public-operation continuation cannot adopt the next round lease', () => {
+  const presentation = controller.slice(controller.indexOf('private async presentPublicOperation'),
+    controller.indexOf('private resolveAuthorityPlayIndex'));
+  const capture = presentation.indexOf('const lease = this.roundPresentation.lease()');
+  const render = presentation.indexOf('const landing = this.rememberLatestPublicCardLanding(this.renderPublicOperation(packet))');
+  const boundary = presentation.indexOf('!this.roundPresentation.isCurrent(lease)');
+  const move = presentation.indexOf('retainedPlayedCardFlow?.moveAfterLiveHold');
+  assert.ok(capture >= 0 && capture < render);
+  assert.ok(boundary > render && boundary < move);
+});
+
+test('a transfer completing after the round boundary cannot restore its card or PlayCount', () => {
+  const afterTransfer = flow.slice(flow.indexOf('await transfer;'),
+    flow.indexOf('public addStoppedPlayCount'));
+  const ownership = afterTransfer.indexOf('!request.isCurrent()');
+  const detach = afterTransfer.indexOf('hand.removeFromParent()');
+  const badge = afterTransfer.indexOf('this.addStoppedPlayCount');
+  assert.ok(ownership >= 0 && ownership < badge);
+  assert.ok(detach > ownership && detach < badge);
+  const cancellation = flow.slice(flow.indexOf('public async cancelPendingForRoundBoundary'),
+    flow.indexOf('public async moveAfterLiveHold'));
+  assert.match(cancellation, /hand\.removeFromParent\(\);\s*hand\.destroy\(\)/);
+});
+
+test('next-round ownership is represented by one lifecycle rather than a cross-round id cache', () => {
+  const boundary = controller.slice(controller.indexOf('private acceptPresentationRound'),
+    controller.indexOf('private clearTableCards'));
+  const live = controller.slice(controller.indexOf('private async presentLatestAuthorityAction'),
+    controller.indexOf('private async presentNewAuthorityAction'));
+  assert.match(controller, /roundPresentation = new PdkRoundPresentationLifecycle\(\)/);
+  assert.match(boundary, /this\.roundPresentation\.accept/);
+  assert.doesNotMatch(controller, /previousRoundActionIds/);
+  assert.match(live, /this\.roundPresentation\.isCurrent\(expectedLease\)/);
+  assert.match(roundLifecycle, /public end\(\)/);
+  assert.match(roundLifecycle, /this\.revision \+= 1/);
+  assert.match(roundLifecycle, /this\.active = false/);
+});
+
 test('a rapid next play releases the preceding shared Out_Card without blocking its own flight', () => {
   const play = controller.slice(controller.indexOf('private async outCard('),
     controller.indexOf('private selectedIntrinsicType'));
@@ -89,9 +143,12 @@ test('a rapid next play releases the preceding shared Out_Card without blocking 
   assert.match(play, /void this\.advanceLatestAuthorityPlayToRetained\(setInfo\)/);
 });
 
-test('an already retained authority hand still reconciles its missing play count', () => {
+test('a recovery copy cannot coexist with physical Out_Card nodes for the same operation', () => {
   assert.match(flow, /const retainedHand = request\.tableCards\.getChildByName\(nodeName\)/);
-  assert.match(flow, /if \(retainedHand\) \{[\s\S]*this\.addStoppedPlayCount\(retainedHand,[\s\S]*request\.playIndex\)[\s\S]*return true;/);
+  assert.match(flow, /if \(retainedHand\) \{[\s\S]*retainedHand\.removeFromParent\(\)[\s\S]*retainedHand\.destroy\(\)/);
+  const collision = flow.slice(flow.indexOf('const retainedHand = request.tableCards.getChildByName(nodeName)'),
+    flow.indexOf('const landingPoses'));
+  assert.doesNotMatch(collision, /return true/);
   assert.doesNotMatch(flow, /const recoveredHand = request\.tableCards\.getChildByName\(nodeName\)/);
   assert.match(controller, /const existingHand = parent\.getChildByName\(nodeName\)/);
   assert.match(controller, /if \(existingHand\) \{[\s\S]*addStoppedPlayCount\([\s\S]*existingHand,[\s\S]*Number\(packet\.playIndex \?\? 0\)[\s\S]*layoutPdkRetainedHands\(parent\)/);
@@ -117,11 +174,12 @@ test('a retained operation releases the shared Out_Card before its hold and move
   assert.ok(claim >= 0 && release > claim && hold > release && archive > hold && transfer > archive);
 });
 
-test('an operation that already owns retained nodes always finishes its PlayCount', () => {
+test('an operation that loses its round lease destroys retained nodes before PlayCount', () => {
   const claim = flow.indexOf('for (const card of cards) card.parent = hand');
   const owned = flow.slice(claim, flow.indexOf('public addStoppedPlayCount'));
   assert.ok(claim >= 0);
-  assert.doesNotMatch(owned, /!request\.isCurrent\(\)/);
+  assert.match(owned, /!request\.isCurrent\(\)/);
+  assert.match(owned, /if \(hand\.isValid\) \{\s*hand\.removeFromParent\(\);\s*hand\.destroy\(\);\s*\}[\s\S]*return false/);
   assert.match(owned, /this\.addStoppedPlayCount\(hand, request\.playCountTemplate, request\.playIndex\)/);
 });
 
@@ -185,7 +243,7 @@ test('every committed play receives its ordinal from the complete authority ledg
   assert.match(controller, /playIndex: authorityPlayIndex/);
   assert.match(restore, /let playIndex = 0/);
   assert.match(restore, /cards\.length === 0[\s\S]*playIndex \+= 1/);
-  assert.match(restore, /playIndex,\n\s*}, generation\)/);
+  assert.match(restore, /playIndex,\n\s*}, expectedLease/);
   assert.match(controller, /private resolveAuthorityPlayIndex\(operationId: string, fallback: number\)/);
   assert.match(controller, /playIndex: this\.resolveAuthorityPlayIndex\(operationId, Number\(packet\.playIndex \?\? 0\)\)/);
   assert.match(controller, /tableOperations[\s\S]*playIndex \+= 1;[\s\S]*operationId\) return playIndex/);
@@ -196,7 +254,7 @@ test('the final committed play uses the live Out_Card pipeline while history res
     controller.indexOf("event === 'CommonPdkSetStart'"));
   const arrangement = authority.slice(authority.indexOf('this.runtime.arrangementEnabled()'),
     authority.indexOf(': this.reconcileAuthorityPublicCards(setInfo)'));
-  assert.match(arrangement, /this\.presentLatestAuthorityAction\(setInfo\)/);
+  assert.match(arrangement, /this\.presentLatestAuthorityAction\(setInfo, snapshotPresentationLease\)/);
   assert.doesNotMatch(arrangement, /this\.restoreTableCards\(setInfo\)/);
   assert.doesNotMatch(arrangement, /presentLatestAuthorityAction\(setInfo\)[\s\S]*\.then\(\(\) => this\.restoreTableCards/);
   assert.doesNotMatch(arrangement, /formalCardPlayPhase[\s\S]*\? this\.presentLatestAuthorityAction/);
@@ -221,19 +279,64 @@ test('a consecutive own lead cannot be restored directly into Table_Cards', () =
 test('a new authoritative round clears the previous retained archive before projecting cards', () => {
   const authority = controller.slice(controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
     controller.indexOf("} else if (event === 'CommonPdkSetStart')"));
-  assert.match(controller, /private presentationRoundKey = ''/);
-  assert.match(authority, /const nextRoundKey = this\.continueReadyRoundKey\(setInfo\)/);
-  assert.match(authority, /roundPresentationChanged[\s\S]*this\.resetRoundPresentation\(\)/);
-  assert.match(authority, /this\.presentationRoundKey = nextRoundKey/);
-  assert.match(authority, /this\.runtime\.arrangementEnabled\(\)[\s\S]*this\.presentLatestAuthorityAction\(setInfo\)/);
+  assert.match(controller, /private readonly roundPresentation = new PdkRoundPresentationLifecycle\(\)/);
+  assert.match(authority, /const roundAcceptance = this\.acceptPresentationRound\(setInfo, 'AUTHORITY_STATE'\)/);
+  assert.match(controller, /if \(!acceptance\.changed && acceptance\.previousKey\) return acceptance;[\s\S]*this\.clearRoundPresentationNodes\(\)/);
+  assert.match(authority, /this\.runtime\.arrangementEnabled\(\)[\s\S]*this\.presentLatestAuthorityAction\(setInfo, snapshotPresentationLease\)/);
   assert.doesNotMatch(authority, /presentLatestAuthorityAction\(setInfo\)[\s\S]*\.then\(\(\) => this\.restoreTableCards/);
-  assert.match(controller, /private resetRoundPresentation\(\): void \{[\s\S]*this\.authorityActionsInitialized = false/);
+  assert.match(controller, /private clearRoundPresentationNodes\(\): Promise<void> \{[\s\S]*this\.authorityActionsInitialized = false/);
+});
+
+test('the new-round boundary packet cannot replay the completed round ledger', () => {
+  const authority = controller.slice(controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
+    controller.indexOf("} else if (event === 'CommonPdkSetStart')"));
+  const accept = controller.slice(controller.indexOf('private acceptPresentationRound'),
+    controller.indexOf('private clearTableCards'));
+  assert.match(authority, /const roundPresentationChanged = roundAcceptance\.changed/);
+  assert.match(authority, /!projectRoundCards \|\| roundPresentationChanged\s*\? Promise\.resolve\(\)/);
+  assert.match(accept, /if \(!acceptance\.changed && acceptance\.previousKey\) return acceptance/);
+  assert.match(accept, /this\.clearRoundPresentationNodes\(\)/);
+});
+
+test('a round reset cancels retained hands that are still waiting outside Out_Card', () => {
+  assert.match(controller,
+    /clearRoundPresentationNodes\(\): Promise<void> \{[\s\S]*cancelPendingForRoundBoundary\(\)[\s\S]*clearPublicCards\(\)/);
+  assert.match(flow,
+    /if \(!request\.isCurrent\(\)[\s\S]*hand\.destroy\(\)/);
+});
+
+test('small settlement clears at modal mount while floating waits from terminal landing', () => {
+  const setEnd = controller.slice(controller.indexOf("event === 'CommonPdkSetEnd'"),
+    controller.indexOf("event === 'ChatMessage'"));
+  assert.doesNotMatch(setEnd, /truncateRoundEndPresentation/);
+  assert.match(coordinator, /waitForTerminalCardHold\(1500\)/);
+  assert.match(coordinator, /await terminalHold;[\s\S]*truncateRoundEndPresentation\(\)[\s\S]*await this\.forms\.show/);
+});
+
+test('settlement invalidates a held hand before deferred node destruction completes', () => {
+  const end = controller.slice(controller.indexOf('private endRoundPresentation'),
+    controller.indexOf('private clearHandVisuals'));
+  assert.ok(end.indexOf('this.roundPresentation.end()') < end.indexOf('this.clearRoundPresentationNodes()'));
+  assert.match(flow, /remaining awaits only drain[\s\S]*request\.isCurrent\(\)/);
+  assert.doesNotMatch(flow, /lifecycleGeneration/);
+});
+
+test('small settlement clears both pending and already-retained terminal cards', () => {
+  const truncate = controller.slice(controller.indexOf('public async truncateRoundEndPresentation'),
+    controller.indexOf('public async waitForInitialPresentation'));
+  assert.match(truncate, /this\.completedRoundVisualsCleared = true/);
+  assert.match(truncate, /this\.endRoundPresentation\('SET_END'\)/);
+  const clear = controller.slice(controller.indexOf('private clearRoundPresentationNodes'),
+    controller.indexOf('private clearHandVisuals'));
+  assert.match(clear, /cancelPendingForRoundBoundary\(\)/);
+  assert.match(clear, /this\.clearPublicCards\(\)/);
+  assert.match(clear, /this\.clearTableCards\(\)/);
 });
 
 test('every live retained-table authority commit uses the physical Out_Card pipeline', () => {
-  assert.match(controller, /this\.runtime\.arrangementEnabled\(\)[\s\S]*\? this\.presentLatestAuthorityAction\(setInfo\)/);
+  assert.match(controller, /this\.runtime\.arrangementEnabled\(\)[\s\S]*\? this\.presentLatestAuthorityAction\(setInfo, snapshotPresentationLease\)/);
   assert.doesNotMatch(controller, /this\.authorityActionsInitialized \|\| roundPresentationChanged[\s\S]*this\.restoreTableCards\(setInfo\)/);
-  assert.match(controller, /if \(formalCardPlayPhase \|\| waitingForContinue\)[\s\S]*this\.restoreTableCards\(snapshot\)/);
+  assert.match(controller, /if \(formalCardPlayPhase \|\| waitingForContinue\)[\s\S]*this\.restoreTableCards\(\s*snapshot,\s*snapshotPresentationLease/);
 });
 
 test('reconnect history freezes its ledger before asynchronous card creation', () => {
@@ -250,17 +353,16 @@ test('a consecutive hand starts without waiting for the preceding archive transf
   assert.doesNotMatch(play, /await this\.retainedPlayedCardFlow\?\.waitForPendingTransfers\(\)/);
 });
 
-test('continued or next-round generation invalidates an in-flight retained history restore', () => {
+test('continued or next-round lease invalidates an in-flight retained history restore', () => {
   const append = controller.slice(controller.indexOf('private async appendTableCards'),
     controller.indexOf('private async restoreTableCards'));
   const restore = controller.slice(controller.indexOf('private async restoreTableCards'),
     controller.indexOf('private showCurrentPlayArrow'));
-  assert.match(append, /expectedGeneration: number/);
-  assert.match(append, /expectedGeneration !== this\.presentationGeneration/);
+  assert.match(append, /expectedLease: PdkRoundPresentationLease/);
+  assert.match(append, /!this\.roundPresentation\.isCurrent\(expectedLease\)/);
   assert.match(append, /if \(hand\.isValid\) hand\.destroy\(\)/);
-  assert.match(restore, /const generation = expectedGeneration/);
-  assert.match(restore, /generation === this\.presentationGeneration/);
-  assert.match(restore, /}, generation, ownsReconciliation\)/);
+  assert.match(restore, /this\.roundPresentation\.isCurrent\(expectedLease\)/);
+  assert.match(restore, /}, expectedLease, ownsReconciliation\)/);
 });
 
 test('only the latest authority state version may reconcile retained five-card hands', () => {
@@ -272,13 +374,14 @@ test('only the latest authority state version may reconcile retained five-card h
   assert.match(adapter, /const set = \{[\s\S]*stateVersion,/);
   assert.match(restore, /const authorityVersion = Number\(packet\.stateVersion/);
   assert.match(restore, /authorityVersion === currentAuthorityVersion\(\)/);
-  assert.match(restore, /if \(!ownsReconciliation\(\)\) return;/);
-  assert.match(restore, /}, generation, ownsReconciliation\)/);
+  assert.match(restore, /!this\.roundPresentation\.isCurrent\(expectedLease\) \|\| !ownsReconciliation\(\)/);
+  assert.match(restore, /}, expectedLease, ownsReconciliation\)/);
   assert.match(append, /ownsReconciliation: \(\) => boolean/);
   assert.match(append, /await this\.cards\.create\(hand, value\);[\s\S]*!ownsReconciliation\(\)/);
 });
 
-test('Liangshan auto hint does not wait for the two-second retained-card animation', () => {
-  assert.match(controller, /const hintReady = this\.runtime\.arrangementEnabled\(\)[\s\S]*\? handRender[\s\S]*: Promise\.all\(\[handRender, settledPublicPresentation\]\)/);
-  assert.match(controller, /hintReady[\s\S]*autoHintForAuthoritativeTurn\(setInfo, authoritySelectionRevision\)/);
+test('auto hint does not wait for the retained-card presentation', () => {
+  assert.match(controller, /const hintReady = handRender;/);
+  assert.match(controller, /this\.trackPresentation\(settledPublicPresentation\);[\s\S]*const turnPresentation = hintReady/);
+  assert.match(controller, /hintReady[\s\S]*autoHintForAuthoritativeTurn\(\s*setInfo,\s*authoritySelectionRevision/);
 });

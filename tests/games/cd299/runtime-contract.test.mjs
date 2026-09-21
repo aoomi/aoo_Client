@@ -103,6 +103,20 @@ test('CD299 schedules only the local authoritative deadline and cancels stale ti
     assert.match(entry, /this\.controller\?\.destroy\(\)/);
 });
 
+test('CD299 owner advances settlement with the XQP one-second cadence', async () => {
+    const [controller, presenter] = await Promise.all([
+        source('CD299RuntimeController.ts'),
+        source('CD299RoomPresenter.ts'),
+    ]);
+    assert.match(presenter, /nextRound: 1000/);
+    assert.match(controller, /snapshot\.phase !== 'ROUND_SETTLEMENT'/);
+    assert.match(controller, /snapshot\.players\[seat\] !== snapshot\.ownerId/);
+    assert.match(controller, /current\.stateVersion !== stateVersion/);
+    assert.match(controller, /current\.phase !== 'ROUND_SETTLEMENT'/);
+    assert.match(controller, /void this\.continueRound\(\)\.catch/);
+    assert.match(controller, /clearTimeout\(this\.nextRoundTimer\)/);
+});
+
 test('CD299 exports a feature-owned GameRuntimeEntry without replay', async () => {
     const entry = await source('CD299GameRuntimeEntry.ts');
     assert.match(entry, /implements GameRuntimeEntry/);
@@ -170,4 +184,24 @@ test('CD299 landscape uses the same dynamic CommonHead framework as PDK', async 
     assert.match(view, /controller\.showPlayerAvatar\(playerId\)/);
     assert.match(view, /controller\.showReady/);
     assert.match(view, /Players\/Seat_\$\{index\}/);
+});
+
+test('CD299 deal and add-card animation keeps the XQP cadence and flight geometry', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    assert.match(view, /index >= previousCount/);
+    assert.match(view, /this\.path\('Deal'\) \?\? this\.path\('DealPos'\)/);
+    assert.match(view, /\(newCardIndex \* 8 \+ seat\) \* 0\.08/);
+    assert.match(view, /\.to\(0\.2, \{ worldPosition: targetWorld, scale: targetScale \}\)/);
+    assert.match(view, /targetScale\.x \* 0\.2, targetScale\.y \* 0\.2/);
+    assert.match(view, /card\.setPosition\(index \* 75, 0, index\)/);
+    assert.match(view, /const overlap = seat >= 5 \? 5 : -5/);
+});
+
+test('CD299 XQP operation slots never expose overlapping actions', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    assert.match(view, /const canRest = actions\.canBet && actions\.betActions\.includes\('REST'\)/);
+    assert.match(view, /actions\.betActions\.includes\('FOLLOW'\) && !canRest/);
+    assert.match(view, /const canRaise = actions\.canBet && actions\.betActions\.includes\('RAISE'\)/);
+    assert.match(view, /actions\.betActions\.includes\('ALL_IN'\) && !canRaise/);
+    assert.match(view, /target - actions\.currentBet > actions\.availableScore \? 'ALL_IN' : 'RAISE'/);
 });

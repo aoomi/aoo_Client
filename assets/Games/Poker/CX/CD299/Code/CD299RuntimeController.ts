@@ -1,6 +1,6 @@
 import type { ProtocolClient } from '../../../../../Common/Code/Runtime/network/ProtocolClient';
 import { CD299BetAction, CD299Envelope, CD299ProtocolAdapter, CD299Transport } from './CD299Protocol';
-import { CD299RoomPresenter, CD299RoomView } from './CD299RoomPresenter';
+import { CD299RoomPresenter, CD299RoomView, CD299_TIMING_MS } from './CD299RoomPresenter';
 import { CD299Snapshot } from './CD299RoomState';
 import { CD299_PLAY_VERSION } from './CD299Rules';
 
@@ -43,6 +43,7 @@ export class CD299RuntimeController {
     private snapshot: CD299Snapshot | null = null;
     private pending = false;
     private timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+    private nextRoundTimer: ReturnType<typeof setTimeout> | null = null;
 
     public constructor(client: ProtocolClient, view: CD299RoomView, private readonly roomId: number,
         requestPrefix: string) {
@@ -87,7 +88,9 @@ export class CD299RuntimeController {
 
     public destroy(): void {
         if (this.timeoutTimer !== null) clearTimeout(this.timeoutTimer);
+        if (this.nextRoundTimer !== null) clearTimeout(this.nextRoundTimer);
         this.timeoutTimer = null;
+        this.nextRoundTimer = null;
     }
 
     private async run(action: string, request: () => Promise<CD299Snapshot>): Promise<boolean> {
@@ -116,6 +119,7 @@ export class CD299RuntimeController {
         if (!accepted) return false;
         this.snapshot = incoming;
         this.scheduleAuthoritativeTimeout(incoming);
+        this.scheduleNextRound(incoming);
         console.info('[CD299] authoritative snapshot applied', { source, roomId: this.roomId,
             stateVersion: incoming.stateVersion, phase: incoming.phase,
             viewerSeat: incoming.viewerSeat, viewerRole: incoming.viewerRole });
@@ -159,5 +163,33 @@ export class CD299RuntimeController {
                 reason: error instanceof Error ? error.message : String(error),
             }));
         }, delay);
+    }
+
+    /**
+     * XQP enters the next hand one second after round settlement. Only the
+     * room owner submits the authority command, and the immutable settlement
+     * version prevents a stale timer from advancing a newer room state.
+     */
+    private scheduleNextRound(snapshot: CD299Snapshot): void {
+        if (this.nextRoundTimer !== null) clearTimeout(this.nextRoundTimer);
+        this.nextRoundTimer = null;
+        const seat = snapshot.viewerRole === 'SEATED' ? snapshot.viewerSeat : -1;
+        if (snapshot.phase !== 'ROUND_SETTLEMENT' || seat < 0
+            || snapshot.players[seat] !== snapshot.ownerId) return;
+        const stateVersion = snapshot.stateVersion;
+        const round = snapshot.round;
+        this.nextRoundTimer = setTimeout(() => {
+            this.nextRoundTimer = null;
+            const current = this.snapshot;
+            if (!current || current.stateVersion !== stateVersion || current.round !== round
+                || current.phase !== 'ROUND_SETTLEMENT') return;
+            console.info('[CD299] next round deadline reached', {
+                roomId: this.roomId, seatId: seat, stateVersion, round,
+            });
+            void this.continueRound().catch((error: unknown) => console.error('[CD299] next round dispatch failed', {
+                roomId: this.roomId, seatId: seat, stateVersion, round,
+                reason: error instanceof Error ? error.message : String(error),
+            }));
+        }, CD299_TIMING_MS.nextRound);
     }
 }

@@ -30,7 +30,7 @@ export function testPreviewGatewayOrigin(
     explicit: string | undefined,
     page: Pick<Location, 'protocol' | 'hostname' | 'port'> | undefined = globalThis.location,
 ): string | undefined {
-    const previewPorts = new Set(['7456', '7457', '7458', '7459', '7460', '5173', '5188']);
+    const previewPorts = new Set(['7456', '7457', '7458', '7459', '7460', '7461', '5173', '5188']);
     if (!page || page.protocol !== 'http:' || !previewPorts.has(page.port)
         || (!isLoopback(page.hostname) && !isPrivateIpv4(page.hostname))) return explicit;
     if (!explicit) return `http://${page.hostname}:8080/`;

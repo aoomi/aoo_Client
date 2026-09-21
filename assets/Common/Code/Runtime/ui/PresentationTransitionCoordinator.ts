@@ -144,12 +144,14 @@ export class PresentationTransitionCoordinator {
         // inner room transaction must not capture its source scene (notably
         // LoginScene), otherwise releasing the navigation cover can expose that
         // stale snapshot for one browser-compositor frame before the room canvas.
-        const visibleOwnerActive = [...this.records.values()].some(item => item.id !== id
+        // Creator 3.8.8 loose Web output does not lower iterator spread correctly:
+        // `[...map.values()]` becomes `[].concat(iterator)`. Materialize it explicitly.
+        const visibleOwnerActive = Array.from(this.records.values()).some(item => item.id !== id
             && item.options.showDuringProgress !== false);
         if (options.retainCurrentFrame && !visibleOwnerActive) this.captureCurrentFrame();
         // A nested prefab/network transaction must stay behind an active silent
         // handoff; otherwise its delayed loading cover flashes over the retained frame.
-        const silentHandoff = [...this.records.values()].some(item => item.options.retainCurrentFrame
+        const silentHandoff = Array.from(this.records.values()).some(item => item.options.retainCurrentFrame
             && item.options.showDuringProgress === false);
         const initialPresentationVisible = this.initialPresentationActive
             || (this.initialPresentation?.isVisible() ?? false);

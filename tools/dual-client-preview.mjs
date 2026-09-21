@@ -1,13 +1,21 @@
 import http from 'node:http';
 import net from 'node:net';
 import process from 'node:process';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 7460;
 const DEFAULT_PREVIEW_PORT = 7456;
 const DEFAULT_CLIENT_COUNT = 2;
 const MAX_CLIENT_COUNT = 4;
-const DEFAULT_FOURTH_CLIENT_PORT = 5188;
+// 7457 is reserved by the XQP Creator preview. Keep Aoo test origins stable so
+// browser storage stays isolated without competing with the other project.
+// Creator 7456 is only the mutable snapshot source. Every browser gets an
+// isolated, immutable origin managed by PreviewSnapshotSupervisor.
+const DEFAULT_CLIENT_PORTS = [7458, 7459, 5188, 7461];
+const maintenanceFile = resolve('work/fw003-dashboard-maintenance.txt');
+const maintenanceMessage = existsSync(maintenanceFile) ? readFileSync(maintenanceFile, 'utf8').trim() : '';
 
 function parsePort(value, option) {
   const port = Number(value);
@@ -69,12 +77,13 @@ function renderPage(clientPorts) {
         <span>${escapeHtml(client.url)}</span>
         <button type="button" data-frame="client-${index}">重新加载</button>
       </header>
-      <iframe
+      ${maintenanceMessage ? `<div class="maintenance"><strong>维护中</strong><span>${escapeHtml(maintenanceMessage)}</span></div>` : `<div class="device-viewport"><iframe
         id="client-${index}"
         title="${escapeHtml(client.name)}"
-        src="${escapeHtml(client.url)}"
+        data-src="${escapeHtml(client.url)}?autoReload=false"
+        scrolling="no"
         allow="autoplay; clipboard-read; clipboard-write; fullscreen"
-      ></iframe>
+      ></iframe></div>`}
     </section>`).join('');
 
   return `<!doctype html>
@@ -84,28 +93,50 @@ function renderPage(clientPorts) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Aoo ${clientCount} 客户端预览</title>
   <style>
-    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    :root {
+      --pane-width: 922px;
+      --iphone-landscape-width: 852px;
+      --iphone-landscape-height: 393px;
+      --creator-toolbar-height: 50px;
+      --iphone-preview-scale: 1.0821596244;
+      --scaled-device-height: 480px;
+      --header-height: 34px;
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #101216; }
-    main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(${clientCount > 2 ? 2 : 1}, minmax(0, 1fr)); width: 100%; height: 100%; gap: 2px; }
-    .client-pane { display: grid; grid-template-rows: 34px minmax(0, 1fr); min-width: 0; min-height: 0; background: #171a20; }
+    html, body { min-width: 100%; min-height: 100%; margin: 0; background: #101216; }
+    body { overflow: auto; }
+    main { display: grid; grid-template-columns: repeat(2, var(--pane-width)); grid-auto-rows: calc(var(--header-height) + var(--scaled-device-height)); width: max-content; margin: 0 auto; gap: 2px; }
+    .client-pane { display: grid; grid-template-rows: var(--header-height) var(--scaled-device-height); width: var(--pane-width); height: calc(var(--header-height) + var(--scaled-device-height)); background: #171a20; }
     header { display: flex; align-items: center; gap: 10px; padding: 0 10px; color: #dce3ee; background: #242933; border-bottom: 1px solid #343b48; }
     header strong { white-space: nowrap; }
     header span { min-width: 0; overflow: hidden; color: #9aa7b8; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
     header button { margin-left: auto; padding: 4px 9px; color: #e6edf7; background: #343c49; border: 1px solid #4a5668; border-radius: 5px; cursor: pointer; }
     header button:hover { background: #414b5b; }
-    iframe { width: 100%; height: 100%; border: 0; background: #111; }
+    .device-viewport { width: var(--pane-width); height: var(--scaled-device-height); overflow: hidden; background: #111; }
+    iframe { width: var(--iphone-landscape-width); height: calc(var(--creator-toolbar-height) + var(--iphone-landscape-height)); border: 0; background: #111; transform: scale(var(--iphone-preview-scale)); transform-origin: top left; }
+    .maintenance { display: grid; place-content: center; gap: 10px; padding: 24px; color: #dce3ee; background: #11151b; text-align: center; }
+    .maintenance strong { color: #f0c674; font-size: 22px; }
+    .maintenance span { color: #9aa7b8; font-size: 14px; }
   </style>
 </head>
 <body>
   <main>${panes}
   </main>
   <script>
+    const frames = [...document.querySelectorAll('iframe[data-src]')];
+    // Four Cocos engines booting in the same Chrome tab can saturate that tab's
+    // module loader and turn otherwise healthy 200 responses into SystemJS
+    // load failures. Keep all panes visible, but stagger only their cold start.
+    frames.forEach((frame, index) => {
+      window.setTimeout(() => { frame.src = frame.dataset.src; }, index * 2000);
+    });
     document.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-frame]');
       if (!button) return;
       const frame = document.getElementById(button.dataset.frame);
-      if (frame) frame.src = frame.src;
+      if (frame?.dataset.src) frame.src = frame.dataset.src + '&reload=' + Date.now();
     });
   </script>
 </body>
@@ -127,12 +158,10 @@ if (options.help) {
   process.exit(0);
 }
 
-const clientPorts = Array.from(
-  { length: options.clientCount },
-  (_, index) => options.previewPort === DEFAULT_PREVIEW_PORT && index === 3
-    ? DEFAULT_FOURTH_CLIENT_PORT
-    : options.previewPort + index,
-);
+const usesManagedAooPorts = options.previewPort === DEFAULT_PREVIEW_PORT;
+const clientPorts = usesManagedAooPorts
+  ? DEFAULT_CLIENT_PORTS.slice(0, options.clientCount)
+  : Array.from({ length: options.clientCount }, (_, index) => options.previewPort + index);
 if (clientPorts.some((port) => port === options.port)) {
   throw new Error('四客户端代理端口与工具端口冲突，请通过 --port 指定其他工具端口');
 }
@@ -177,7 +206,9 @@ function createPreviewProxy(listenPort) {
   return proxy;
 }
 
-const proxyServers = clientPorts.slice(1).map(createPreviewProxy);
+// Default Aoo proxy ports are persistent LaunchAgents. Custom preview ports
+// remain self-contained and are owned by this process.
+const proxyServers = usesManagedAooPorts ? [] : clientPorts.slice(1).map(createPreviewProxy);
 const page = renderPage(clientPorts);
 const server = http.createServer((request, response) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);

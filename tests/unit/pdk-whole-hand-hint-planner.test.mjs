@@ -25,6 +25,7 @@ const group = (rank, count) => Array.from({ length: count }, (_value, index) => 
 const flatten = (...groups) => groups.flat();
 const candidate = (cards, order) => ({ cards, order });
 const rules = {
+  policyId: 'COMMON',
   minimumStraightLength: 5,
   minimumPairRunLength: 2,
   allowTwoInRuns: false,
@@ -38,6 +39,7 @@ const liangshanDeck = Array.from({ length: 4 }, (_value, suit) =>
   Array.from({ length: 8 }, (_rank, index) => card(index + 7, suit + 1))).flat();
 const liangshanLeadRules = {
   ...rules,
+  policyId: 'LS201',
   minimumStraightLength: 3,
   tripleAttachmentMode: 'SINGLE_OR_PAIR',
   maximumSingleRanks: [14],
@@ -48,6 +50,35 @@ const liangshanLeadRules = {
   prioritizeMaximumResponseWithinThreePlays: true,
   prioritizeLargestLeadUnlessMaximumStraight: true,
 };
+
+test('COMMON policy ignores every LS201-only priority even with an ace-high deck', () => {
+  const rank = loadRanker();
+  const ace = card(14);
+  const straight = [card(7), card(8), card(9), card(10), card(11)];
+  const hand = [ace, ...straight];
+  const candidates = [
+    { ...candidate(straight, 0), finishesInTwo: true },
+    { ...candidate([ace], 1), finishesInTwo: true, containsRuleMaximum: true },
+  ];
+  const common = {
+    ...rules,
+    minimumStraightLength: 3,
+    maximumSingleRanks: [14],
+    deckCards: liangshanDeck,
+  };
+  const contaminated = {
+    ...common,
+    prioritizeMaximumWithOneOrdinaryPlay: true,
+    prioritizeLargestLeadWithoutMaximum: true,
+    prioritizeMaximumLeadUnlessConnectedRun: true,
+    prioritizeMaximumResponseWithinThreePlays: true,
+    prioritizeLargestLeadUnlessMaximumStraight: true,
+    didCompeteDealer: true,
+  };
+
+  assert.deepEqual(rank(hand, candidates, contaminated, true, true),
+    rank(hand, candidates, common, true, true));
+});
 
 test('Liangshan lead keeps the maximum triple as recapture control and sheds the lowest pair', () => {
   const rank = loadRanker();
@@ -148,7 +179,7 @@ test('Liangshan AA plus ten answers a single with its rule-maximum A', () => {
   const ranked = rank(flatten(aces, [ten]), [
     { ...candidate([ten], 0), finishesInTwo: true, containsRuleMaximum: false },
     { ...candidate([aces[0]], 1), finishesInTwo: false, containsRuleMaximum: true },
-  ], { ...rules, minimumStraightLength: 3, maximumSingleRanks: [14],
+  ], { ...rules, policyId: 'LS201', minimumStraightLength: 3, maximumSingleRanks: [14],
     deckCards: liangshanDeck }, false, true);
 
   assert.deepEqual(ranked[0], [aces[0]]);
@@ -441,7 +472,7 @@ test('exactly two hands left exposes the regional maximum 2 before the lower sin
   assert.deepEqual(ranked[0], [two]);
 });
 
-test('two-hand lead sheds a much larger aircraft family before the lone maximum 2', () => {
+test('two-hand lead spends the lone maximum 2 before a much larger aircraft family', () => {
   const rank = loadRanker();
   const two = card(15);
   const largeFamily = flatten(group(6, 3), group(7, 3), group(8, 3),
@@ -452,7 +483,7 @@ test('two-hand lead sheds a much larger aircraft family before the lone maximum 
     { ...candidate(largeFamily, 1), finishesInTwo: true, containsRuleMaximum: false },
   ], rules, true, true);
 
-  assert.deepEqual(ranked[0], largeFamily);
+  assert.deepEqual(ranked[0], [two]);
 });
 
 test('pair response consumes independent 99 before opening 445566', () => {
@@ -608,17 +639,17 @@ test('Liangshan two-hand endgame leads the JQKA maximum straight before 9997', (
     { ...candidate(maximumStraight, 1), finishesInTwo: true, containsRuleMaximum: true },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     tripleAttachmentMode: 'SINGLE_OR_PAIR',
     maximumSingleRanks: [14],
-    twoHandMaximumLeadSizeTolerance: 3,
     prioritizeMaximumWithOneOrdinaryPlay: true,
   }, true, true);
 
   assert.deepEqual(ranked[0], maximumStraight);
 });
 
-test('Liangshan maximum lead ignores card-count gap when only one ordinary play remains', () => {
+test('public two-hand maximum lead ignores card-count gap', () => {
   const rank = loadRanker();
   const ace = [card(14)];
   const longOrdinaryPlay = [card(7), card(8), card(9), card(10), card(11)];
@@ -628,10 +659,9 @@ test('Liangshan maximum lead ignores card-count gap when only one ordinary play 
     { ...candidate(ace, 1), finishesInTwo: true, containsRuleMaximum: true },
   ], {
     ...rules,
+    policyId: 'COMMON',
     minimumStraightLength: 3,
     maximumSingleRanks: [14],
-    twoHandMaximumLeadSizeTolerance: 0,
-    prioritizeMaximumWithOneOrdinaryPlay: true,
   }, true, true);
 
   assert.deepEqual(ranked[0], ace);
@@ -647,6 +677,7 @@ test('Liangshan hand without ace leads its largest legal shape', () => {
     { ...candidate(straight, 2), containsRuleMaximum: false },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     maximumSingleRanks: [14],
     prioritizeLargestLeadWithoutMaximum: true,
@@ -665,6 +696,7 @@ test('Liangshan no-ace hand leads triple with intact pair', () => {
     { ...candidate(tripleWithPair, 2), containsRuleMaximum: false },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     tripleAttachmentMode: 'SINGLE_OR_PAIR',
     maximumSingleRanks: [14],
@@ -684,6 +716,7 @@ test('Liangshan lead uses A before a disconnected triple family', () => {
     { ...candidate(ace, 1), containsRuleMaximum: true },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     tripleAttachmentMode: 'SINGLE_OR_PAIR',
     maximumSingleRanks: [14],
@@ -721,6 +754,7 @@ test('Liangshan response within three plays uses A first', () => {
     { ...candidate(ace, 1), containsRuleMaximum: true },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     maximumSingleRanks: [14],
     prioritizeMaximumResponseWithinThreePlays: true,
@@ -804,6 +838,7 @@ test('Liangshan equal-size two-play lead chooses triple carrying A', () => {
       containsRuleMaximum: true },
   ], {
     ...rules,
+    policyId: 'LS201',
     minimumStraightLength: 3,
     tripleAttachmentMode: 'SINGLE_OR_PAIR',
     maximumSingleRanks: [14],
@@ -1108,16 +1143,19 @@ test('Liangshan K nine pair eights leads the intact pair when K is only an effec
   assert.deepEqual(ranked[0], eights);
 });
 
-test('Liangshan keeps three-pair recovery chain by probing seven first', () => {
+test('Liangshan leads JJQQKK before its loose seven and ten', () => {
   const rank = loadRanker();
-  const hand = flatten(group(14, 2), group(13, 2), group(12, 2), group(9, 1), group(7, 1));
+  const pairRun = flatten(group(11, 2), group(12, 2), group(13, 2));
+  const ten = card(10);
+  const seven = card(7);
+  const hand = flatten(pairRun, [ten, seven]);
   const ranked = rank(hand, [
-    candidate(group(14, 2), 0), candidate(group(13, 2), 1), candidate(group(12, 2), 2),
-    candidate([...group(12, 2), ...group(13, 2)], 3),
-    candidate([...group(13, 2), ...group(14, 2)], 4),
-    candidate([card(9)], 5), candidate([card(7)], 6),
+    candidate(group(13, 2), 0), candidate(group(12, 2), 1), candidate(group(11, 2), 2),
+    candidate([...group(11, 2), ...group(12, 2)], 3),
+    candidate([...group(12, 2), ...group(13, 2)], 4), candidate(pairRun, 5),
+    candidate([ten], 6), candidate([seven], 7),
   ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], [card(7)]);
+  assert.deepEqual(ranked.slice(0, 3), [pairRun, [seven], [ten]]);
 });
 
 test('Liangshan leads QQKK pair run then A when no probing seven exists', () => {

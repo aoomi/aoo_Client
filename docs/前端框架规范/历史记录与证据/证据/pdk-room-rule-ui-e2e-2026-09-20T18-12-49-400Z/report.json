@@ -1,0 +1,1852 @@
+{
+  "runId": "2026-09-20T18-12-49-400Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "pageUrl": "http://127.0.0.1:7456/",
+  "apiUrl": "http://127.0.0.1:8080",
+  "chrome": "Chrome/153.0.8010.48",
+  "assertions": {
+    "LS201HasRules": true,
+    "LS201NoOverlap": true,
+    "LS201NoInternalLabels": true,
+    "LS201VisibleFields": true,
+    "LS201ChineseOptions": true,
+    "LS201Defaults": true,
+    "SequentialCanvasClicks": true,
+    "LS201ConfigurationSourceHash": true,
+    "ConfigurationResponsesOk": true,
+    "ConsoleClean": true
+  },
+  "preCleanup": {
+    "skipped": "inactive"
+  },
+  "LS201": {
+    "fields": [
+      {
+        "key": "dealCardCount",
+        "label": "发牌张数",
+        "options": [
+          {
+            "name": "Option_dealCardCount_8",
+            "label": "8张(7-A)",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 351.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_dealCardCount_10",
+            "label": "10张(5-A)",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 351.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "jinHuaScore",
+        "label": "比金花",
+        "options": [
+          {
+            "name": "Option_jinHuaScore_1",
+            "label": "1分",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 281.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_jinHuaScore_2",
+            "label": "2分",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 281.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_jinHuaScore_3",
+            "label": "3分",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 281.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_jinHuaScore_4",
+            "label": "4分",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 211.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_jinHuaScore_5",
+            "label": "5分",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 211.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_jinHuaScore_no_compare",
+            "label": "不比",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 211.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "operationTime",
+        "label": "操作时间",
+        "options": [
+          {
+            "name": "Option_operationTime_10000",
+            "label": "10000秒",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 421.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_operationTime_15",
+            "label": "15秒",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 421.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_operationTime_20",
+            "label": "20秒",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 421.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "playerCount",
+        "label": "人数",
+        "options": [
+          {
+            "name": "Option_playerCount_2",
+            "label": "2人",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 561.306,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playerCount_3",
+            "label": "3人",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 561.306,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playerCount_4",
+            "label": "4人",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 561.306,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "playRule",
+        "label": "玩法",
+        "options": [
+          {
+            "name": "Option_playRule_compare_attachments",
+            "label": "三带比带",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": -68.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playRule_triple_with_one",
+            "label": "三带一",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": -68.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playRule_four_with_two",
+            "label": "四带二",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": -68.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playRule_four_ace_rank",
+            "label": "四张A,7",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": -138.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_playRule_all_special_patterns",
+            "label": "全单,全顺,全连对,全对,全黑,全红,全大,全小",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": -208.69399999999996,
+              "w": 655.7999999999998,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "robDealerRule",
+        "label": "抢庄",
+        "options": [
+          {
+            "name": "Option_robDealerRule_dealer_first",
+            "label": "庄家先抢",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 141.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_robDealerRule_dealer_last",
+            "label": "庄家后抢",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 141.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_robDealerRule_first_round_no_compete",
+            "label": "首局不抢",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 141.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_robDealerRule_no_compete",
+            "label": "不抢庄",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 71.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "roomRestriction",
+        "label": "其他",
+        "options": [
+          {
+            "name": "Option_roomRestriction_ip_limit",
+            "label": "IP限制",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": -278.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roomRestriction_gps_limit",
+            "label": "GPS限制",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": -278.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roomRestriction_timeout_auto_play",
+            "label": "超时托管",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": -278.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roomRestriction_distance_warning",
+            "label": "距离过近警告",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": -348.69399999999996,
+              "w": 204,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roomRestriction_interaction_forbidden",
+            "label": "禁止互动",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 918.4580152671756,
+              "y": -348.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roomRestriction_chat_muted",
+            "label": "禁言",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1122.4580152671756,
+              "y": -348.69399999999996,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "roundCount",
+        "label": "局数",
+        "options": [
+          {
+            "name": "Option_roundCount_8",
+            "label": "8局",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 491.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roundCount_12",
+            "label": "12局",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 894.4580152671756,
+              "y": 491.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          },
+          {
+            "name": "Option_roundCount_16",
+            "label": "16局",
+            "checked": false,
+            "interactable": true,
+            "box": {
+              "x": 1098.4580152671756,
+              "y": 491.30600000000004,
+              "w": 180,
+              "h": 60
+            }
+          }
+        ]
+      },
+      {
+        "key": "rule_ls201_0001",
+        "label": "小结算",
+        "options": [
+          {
+            "name": "Option_rule_ls201_0001_option_0001",
+            "label": "小局结算弹窗",
+            "checked": true,
+            "interactable": true,
+            "box": {
+              "x": 690.4580152671756,
+              "y": 1.30600000000004,
+              "w": 204,
+              "h": 60
+            }
+          }
+        ]
+      }
+    ],
+    "overlaps": [],
+    "labels": [
+      "发牌张数",
+      "8张(7-A)",
+      "10张(5-A)",
+      "比金花",
+      "1分",
+      "2分",
+      "3分",
+      "4分",
+      "5分",
+      "不比",
+      "操作时间",
+      "10000秒",
+      "15秒",
+      "20秒",
+      "人数",
+      "2人",
+      "3人",
+      "4人",
+      "玩法",
+      "三带比带",
+      "三带一",
+      "四带二",
+      "四张A,7",
+      "全单,全顺,全连对,全对,全黑,全红,全大,全小",
+      "抢庄",
+      "庄家先抢",
+      "庄家后抢",
+      "首局不抢",
+      "不抢庄",
+      "其他",
+      "IP限制",
+      "GPS限制",
+      "超时托管",
+      "距离过近警告",
+      "禁止互动",
+      "禁言",
+      "局数",
+      "8局",
+      "12局",
+      "16局",
+      "小结算",
+      "小局结算弹窗"
+    ],
+    "screenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-room-rule-ui-e2e-2026-09-20T18-12-49-400Z/LS201-rules.png",
+    "bottomScreenshot": "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-room-rule-ui-e2e-2026-09-20T18-12-49-400Z/LS201-rules-bottom.png"
+  },
+  "catalogConfiguration": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/catalog?regionCode=ALL&clientVersion=3.8.8",
+      "status": 200,
+      "data": [
+        {
+          "gameId": 5,
+          "gameCode": "CN298",
+          "displayName": "牛牛",
+          "categoryCode": "POKER",
+          "familyCode": "poker:betting",
+          "playVersion": "cn298-v1.0.0",
+          "releaseId": 502026091903,
+          "indexGeneration": 2026091903,
+          "cacheEpoch": 2,
+          "classificationRegionCode": "GLOBAL",
+          "classificationName": "全国/全球",
+          "regionType": "GLOBAL",
+          "parentRegionCode": null,
+          "parentRegionName": null
+        },
+        {
+          "gameId": 8,
+          "gameCode": "CD201",
+          "displayName": "成都跑得快",
+          "categoryCode": "POKER",
+          "familyCode": "poker:pao-de-kuai",
+          "playVersion": "1.0.0",
+          "releaseId": 2034091005,
+          "indexGeneration": 2026091005,
+          "cacheEpoch": 9,
+          "classificationRegionCode": "GLOBAL",
+          "classificationName": "全国/全球",
+          "regionType": "GLOBAL",
+          "parentRegionCode": null,
+          "parentRegionName": null
+        },
+        {
+          "gameId": 9,
+          "gameCode": "CN297",
+          "displayName": "金花",
+          "categoryCode": "POKER",
+          "familyCode": "poker:compare-hand",
+          "playVersion": "cn297-v1.0.0",
+          "releaseId": 902026091902,
+          "indexGeneration": 2026091902,
+          "cacheEpoch": 2,
+          "classificationRegionCode": "GLOBAL",
+          "classificationName": "全国/全球",
+          "regionType": "GLOBAL",
+          "parentRegionCode": null,
+          "parentRegionName": null
+        },
+        {
+          "gameId": 629,
+          "gameCode": "NJ201",
+          "displayName": "内江跑得快",
+          "categoryCode": "POKER",
+          "familyCode": "poker:pao-de-kuai",
+          "playVersion": "legacy-equivalent-1",
+          "releaseId": 2655090708,
+          "indexGeneration": 2026090708,
+          "cacheEpoch": 6,
+          "classificationRegionCode": "CN-51-10",
+          "classificationName": "内江",
+          "regionType": "CITY",
+          "parentRegionCode": "CN-51",
+          "parentRegionName": "四川"
+        },
+        {
+          "gameId": 90005,
+          "gameCode": "LS201",
+          "displayName": "凉山跑得快",
+          "categoryCode": "POKER",
+          "familyCode": "poker:pao-de-kuai",
+          "playVersion": "xqp-equivalent-1",
+          "releaseId": 92031091804,
+          "indexGeneration": 2026091804,
+          "cacheEpoch": 13,
+          "classificationRegionCode": "CN-51-34",
+          "classificationName": "凉山",
+          "regionType": "CITY",
+          "parentRegionCode": "CN-51",
+          "parentRegionName": "四川"
+        },
+        {
+          "gameId": 630,
+          "gameCode": "CD299",
+          "displayName": "扯旋",
+          "categoryCode": "POKER",
+          "familyCode": "poker:cd299",
+          "playVersion": "cd299-v1.0.0",
+          "releaseId": 6302026091907,
+          "indexGeneration": 2026091907,
+          "cacheEpoch": 4,
+          "classificationRegionCode": "CN-51-01",
+          "classificationName": "成都",
+          "regionType": "CITY",
+          "parentRegionCode": "CN-51",
+          "parentRegionName": "四川"
+        }
+      ]
+    },
+    {
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/catalog?regionCode=ALL&clientVersion=3.8.8",
+      "status": 204
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=8&playVersion=1.0.0&clientVersion=3.8.8",
+      "status": 200,
+      "data": {
+        "gameId": 8,
+        "playVersion": "1.0.0",
+        "indexGeneration": 2026091005,
+        "releaseId": 2034091005,
+        "roomRuleSourceHash": "5d06f359aee46e4eaf269645dd977223e9b368da05b5d5655e98582735afea1f",
+        "fields": [
+          {
+            "key": "playerCount",
+            "label": "人数",
+            "order": 70,
+            "control": "radio",
+            "options": [
+              {
+                "label": "2人",
+                "order": 10,
+                "value": 2,
+                "disabled": false
+              },
+              {
+                "label": "3人",
+                "order": 20,
+                "value": 3,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 2,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "roundCount",
+            "label": "局数",
+            "order": 80,
+            "control": "radio",
+            "options": [
+              {
+                "label": "8局",
+                "order": 10,
+                "value": 8,
+                "disabled": false
+              },
+              {
+                "label": "12局",
+                "order": 20,
+                "value": 12,
+                "disabled": false
+              },
+              {
+                "label": "16局",
+                "order": 30,
+                "value": 16,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 8,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "operationTimeoutSeconds",
+            "label": "操作时间",
+            "order": 90,
+            "control": "radio",
+            "options": [
+              {
+                "label": "10000秒",
+                "order": 10,
+                "value": 10000,
+                "disabled": false
+              },
+              {
+                "label": "15秒",
+                "order": 20,
+                "value": 15,
+                "disabled": false
+              },
+              {
+                "label": "20秒",
+                "order": 30,
+                "value": 20,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 10000,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "firstPlayRule",
+            "label": "先出牌",
+            "order": 100,
+            "control": "radio",
+            "options": [
+              {
+                "label": "赢家先出",
+                "order": 10,
+                "value": "winner_first",
+                "disabled": false
+              },
+              {
+                "label": "黑桃3优先",
+                "order": 20,
+                "value": "spade_three_first",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": "winner_first",
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "bombScore",
+            "label": "炸弹记分",
+            "order": 110,
+            "control": "radio",
+            "options": [
+              {
+                "label": "5分",
+                "order": 10,
+                "value": 5,
+                "disabled": false
+              },
+              {
+                "label": "10分",
+                "order": 20,
+                "value": 10,
+                "disabled": false
+              },
+              {
+                "label": "20分",
+                "order": 30,
+                "value": 20,
+                "disabled": false
+              },
+              {
+                "label": "30分",
+                "order": 40,
+                "value": 30,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 5,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "rule_cd201_0001",
+            "label": "小结算",
+            "order": 120,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "小局结算弹窗",
+                "order": 10,
+                "value": "option_0001",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [
+              "option_0001"
+            ],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "playRule",
+            "label": "玩法",
+            "order": 130,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "三不带",
+                "order": 10,
+                "value": "three_no_attachment",
+                "disabled": false
+              },
+              {
+                "label": "四带二",
+                "order": 20,
+                "value": "four_with_two",
+                "disabled": false
+              },
+              {
+                "label": "3A算炸弹",
+                "order": 30,
+                "value": "triple_ace_bomb",
+                "disabled": false
+              },
+              {
+                "label": "去掉3、4",
+                "order": 40,
+                "value": "remove_three_four",
+                "disabled": false
+              },
+              {
+                "label": "必须出黑桃3",
+                "order": 50,
+                "value": "require_spade_three",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [
+              "four_with_two",
+              "triple_ace_bomb",
+              "remove_three_four",
+              "require_spade_three"
+            ],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "key": "roomRestriction",
+            "label": "其他",
+            "order": 140,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "IP限制",
+                "order": 10,
+                "value": "ip_limit",
+                "disabled": false
+              },
+              {
+                "label": "GPS限制",
+                "order": 20,
+                "value": "gps_limit",
+                "disabled": false
+              },
+              {
+                "label": "超时托管",
+                "order": 30,
+                "value": "timeout_auto_play",
+                "disabled": false
+              },
+              {
+                "label": "距离过近警告",
+                "order": 40,
+                "value": "distance_warning",
+                "disabled": false
+              },
+              {
+                "label": "禁止互动",
+                "order": 50,
+                "value": "interaction_forbidden",
+                "disabled": false
+              },
+              {
+                "label": "禁言",
+                "order": 60,
+                "value": "chat_muted",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": []
+          }
+        ]
+      }
+    },
+    {
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=8&playVersion=1.0.0&clientVersion=3.8.8",
+      "status": 204,
+      "data": {}
+    },
+    {
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=90005&playVersion=xqp-equivalent-1&clientVersion=3.8.8",
+      "status": 204,
+      "data": {}
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=90005&playVersion=xqp-equivalent-1&clientVersion=3.8.8",
+      "status": 200,
+      "data": {
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1",
+        "indexGeneration": 2026091804,
+        "releaseId": 92031091804,
+        "roomRuleSourceHash": "818ffc128bdbdad531d0fa7a6ffdc0fd006f3ba9df8af48c1f78c246a2e2fbae",
+        "fields": [
+          {
+            "key": "playerCount",
+            "label": "人数",
+            "order": 80,
+            "control": "radio",
+            "options": [
+              {
+                "label": "2人",
+                "order": 10,
+                "value": 2,
+                "disabled": false
+              },
+              {
+                "label": "3人",
+                "order": 20,
+                "value": 3,
+                "disabled": false
+              },
+              {
+                "label": "4人",
+                "order": 30,
+                "value": 4,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 2,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "roundCount",
+            "label": "局数",
+            "order": 90,
+            "control": "radio",
+            "options": [
+              {
+                "label": "8局",
+                "order": 10,
+                "value": 8,
+                "disabled": false
+              },
+              {
+                "label": "12局",
+                "order": 20,
+                "value": 12,
+                "disabled": false
+              },
+              {
+                "label": "16局",
+                "order": 30,
+                "value": 16,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 8,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "operationTime",
+            "label": "操作时间",
+            "order": 100,
+            "control": "radio",
+            "options": [
+              {
+                "label": "10000秒",
+                "order": 10,
+                "value": 10000,
+                "disabled": false
+              },
+              {
+                "label": "15秒",
+                "order": 20,
+                "value": 15,
+                "disabled": false
+              },
+              {
+                "label": "20秒",
+                "order": 30,
+                "value": 20,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 10000,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "dealCardCount",
+            "label": "发牌张数",
+            "order": 110,
+            "control": "radio",
+            "options": [
+              {
+                "label": "8张(7-A)",
+                "order": 10,
+                "value": 8,
+                "disabled": false
+              },
+              {
+                "label": "10张(5-A)",
+                "order": 20,
+                "value": 10,
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": 8,
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "jinHuaScore",
+            "label": "比金花",
+            "order": 120,
+            "control": "radio",
+            "options": [
+              {
+                "label": "1分",
+                "order": 10,
+                "value": 1,
+                "disabled": false
+              },
+              {
+                "label": "2分",
+                "order": 20,
+                "value": 2,
+                "disabled": false
+              },
+              {
+                "label": "3分",
+                "order": 30,
+                "value": 3,
+                "disabled": false
+              },
+              {
+                "label": "4分",
+                "order": 40,
+                "value": 4,
+                "disabled": false
+              },
+              {
+                "label": "5分",
+                "order": 50,
+                "value": 5,
+                "disabled": false
+              },
+              {
+                "label": "不比",
+                "order": 60,
+                "value": "no_compare",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": "no_compare",
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              6
+            ]
+          },
+          {
+            "key": "robDealerRule",
+            "label": "抢庄",
+            "order": 130,
+            "control": "radio",
+            "options": [
+              {
+                "label": "庄家先抢",
+                "order": 10,
+                "value": "dealer_first",
+                "disabled": false
+              },
+              {
+                "label": "庄家后抢",
+                "order": 20,
+                "value": "dealer_last",
+                "disabled": false
+              },
+              {
+                "label": "首局不抢",
+                "order": 30,
+                "value": "first_round_no_compete",
+                "disabled": false
+              },
+              {
+                "label": "不抢庄",
+                "order": 40,
+                "value": "no_compete",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": true,
+            "defaultValue": "dealer_first",
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "rule_ls201_0001",
+            "label": "小结算",
+            "order": 140,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "小局结算弹窗",
+                "order": 10,
+                "value": "option_0001",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [
+              "option_0001"
+            ],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1
+            ]
+          },
+          {
+            "key": "playRule",
+            "label": "玩法",
+            "order": 150,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "三带比带",
+                "order": 10,
+                "value": "compare_attachments",
+                "disabled": false
+              },
+              {
+                "label": "三带一",
+                "order": 20,
+                "value": "triple_with_one",
+                "disabled": false
+              },
+              {
+                "label": "四带二",
+                "order": 30,
+                "value": "four_with_two",
+                "disabled": false
+              },
+              {
+                "label": "四张A,7",
+                "order": 40,
+                "value": "four_ace_rank",
+                "disabled": false
+              },
+              {
+                "label": "全单,全顺,全连对,全对,全黑,全红,全大,全小",
+                "order": 50,
+                "value": "all_special_patterns",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [
+              "compare_attachments",
+              "triple_with_one",
+              "four_with_two",
+              "four_ace_rank",
+              "all_special_patterns"
+            ],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "key": "roomRestriction",
+            "label": "其他",
+            "order": 160,
+            "control": "checkbox",
+            "options": [
+              {
+                "label": "IP限制",
+                "order": 10,
+                "value": "ip_limit",
+                "disabled": false
+              },
+              {
+                "label": "GPS限制",
+                "order": 20,
+                "value": "gps_limit",
+                "disabled": false
+              },
+              {
+                "label": "超时托管",
+                "order": 30,
+                "value": "timeout_auto_play",
+                "disabled": false
+              },
+              {
+                "label": "距离过近警告",
+                "order": 40,
+                "value": "distance_warning",
+                "disabled": false
+              },
+              {
+                "label": "禁止互动",
+                "order": 50,
+                "value": "interaction_forbidden",
+                "disabled": false
+              },
+              {
+                "label": "禁言",
+                "order": 60,
+                "value": "chat_muted",
+                "disabled": false
+              }
+            ],
+            "visible": true,
+            "disabled": false,
+            "required": false,
+            "defaultValue": [],
+            "trusteeCount": 3,
+            "defaultCandidateIndexes": []
+          }
+        ]
+      }
+    }
+  ],
+  "requests": [
+    {
+      "requestId": "49196.875",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"active\":false},\"traceId\":\"32d17d62-694d-42b2-9941-8476857934ac\"}"
+    },
+    {
+      "requestId": "0CB1FC4A268B19AE14EA8C49EB28CD8E",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.1076",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"active\":false},\"traceId\":\"526c2bb7-ba26-4918-8e31-1ca933a6c4ba\"}"
+    },
+    {
+      "requestId": "F31EE60B2C71C04F23482D774378EA16",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.1900",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"active\":false},\"traceId\":\"3b68810f-719b-4f6a-abb4-cfe55f6630e5\"}"
+    },
+    {
+      "requestId": "90989F91FEAFFF63768A1E81BD3C128D",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.2230",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/catalog?regionCode=ALL&clientVersion=3.8.8",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":[{\"gameId\":5,\"gameCode\":\"CN298\",\"displayName\":\"牛牛\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:betting\",\"playVersion\":\"cn298-v1.0.0\",\"releaseId\":502026091903,\"indexGeneration\":2026091903,\"cacheEpoch\":2,\"classificationRegionCode\":\"GLOBAL\",\"classificationName\":\"全国/全球\",\"regionType\":\"GLOBAL\",\"parentRegionCode\":null,\"parentRegionName\":null},{\"gameId\":8,\"gameCode\":\"CD201\",\"displayName\":\"成都跑得快\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:pao-de-kuai\",\"playVersion\":\"1.0.0\",\"releaseId\":2034091005,\"indexGeneration\":2026091005,\"cacheEpoch\":9,\"classificationRegionCode\":\"GLOBAL\",\"classificationName\":\"全国/全球\",\"regionType\":\"GLOBAL\",\"parentRegionCode\":null,\"parentRegionName\":null},{\"gameId\":9,\"gameCode\":\"CN297\",\"displayName\":\"金花\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:compare-hand\",\"playVersion\":\"cn297-v1.0.0\",\"releaseId\":902026091902,\"indexGeneration\":2026091902,\"cacheEpoch\":2,\"classificationRegionCode\":\"GLOBAL\",\"classificationName\":\"全国/全球\",\"regionType\":\"GLOBAL\",\"parentRegionCode\":null,\"parentRegionName\":null},{\"gameId\":629,\"gameCode\":\"NJ201\",\"displayName\":\"内江跑得快\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:pao-de-kuai\",\"playVersion\":\"legacy-equivalent-1\",\"releaseId\":2655090708,\"indexGeneration\":2026090708,\"cacheEpoch\":6,\"classificationRegionCode\":\"CN-51-10\",\"classificationName\":\"内江\",\"regionType\":\"CITY\",\"parentRegionCode\":\"CN-51\",\"parentRegionName\":\"四川\"},{\"gameId\":90005,\"gameCode\":\"LS201\",\"displayName\":\"凉山跑得快\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:pao-de-kuai\",\"playVersion\":\"xqp-equivalent-1\",\"releaseId\":92031091804,\"indexGeneration\":2026091804,\"cacheEpoch\":13,\"classificationRegionCode\":\"CN-51-34\",\"classificationName\":\"凉山\",\"regionType\":\"CITY\",\"parentRegionCode\":\"CN-51\",\"parentRegionName\":\"四川\"},{\"gameId\":630,\"gameCode\":\"CD299\",\"displayName\":\"扯旋\",\"categoryCode\":\"POKER\",\"familyCode\":\"poker:cd299\",\"playVersion\":\"cd299-v1.0.0\",\"releaseId\":6302026091907,\"indexGeneration\":2026091907,\"cacheEpoch\":4,\"classificationRegionCode\":\"CN-51-01\",\"classificationName\":\"成都\",\"regionType\":\"CITY\",\"parentRegionCode\":\"CN-51\",\"parentRegionName\":\"四川\"}],\"traceId\":\"852ed4ae-f836-46a4-919c-7a0c1b1b8682\"}"
+    },
+    {
+      "requestId": "82B76A5EB10689CFDE0BED643C593F6B",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/catalog?regionCode=ALL&clientVersion=3.8.8",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.2236",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"active\":false},\"traceId\":\"49d06c6b-3d20-449d-ac6d-3f95bcfc9862\"}"
+    },
+    {
+      "requestId": "32107F88C2542DA78F02101C1CE1DF69",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/rooms/active",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.2858",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=8&playVersion=1.0.0&clientVersion=3.8.8",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"releaseId\":2034091005,\"indexGeneration\":2026091005,\"bundleHash\":\"defe5e6e1741c0e5389c2dd7ccdc74bf7b8598783fcce6783fd17092a5fad284\",\"cacheEpoch\":9,\"gameId\":8,\"classificationRegionCode\":\"CN-51-01\",\"playVersion\":\"1.0.0\",\"components\":[\"com.aoo.bcg.poker.PdkGameProvider:CD201@1.0.0\"],\"rules\":{\"fields\":[{\"key\":\"playerCount\",\"order\":70,\"control\":\"radio\",\"options\":[{\"label\":\"2人\",\"order\":10,\"value\":2,\"disabled\":false},{\"label\":\"3人\",\"order\":20,\"value\":3,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":2,\"trusteeCount\":3},{\"key\":\"roundCount\",\"order\":80,\"control\":\"radio\",\"options\":[{\"label\":\"8局\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"12局\",\"order\":20,\"value\":12,\"disabled\":false},{\"label\":\"16局\",\"order\":30,\"value\":16,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3},{\"key\":\"operationTimeoutSeconds\",\"order\":90,\"control\":\"radio\",\"options\":[{\"label\":\"10000秒\",\"order\":10,\"value\":10000,\"disabled\":false},{\"label\":\"15秒\",\"order\":20,\"value\":15,\"disabled\":false},{\"label\":\"20秒\",\"order\":30,\"value\":20,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":10000,\"trusteeCount\":3},{\"key\":\"firstPlayRule\",\"order\":100,\"control\":\"radio\",\"options\":[{\"label\":\"赢家先出\",\"order\":10,\"value\":\"winner_first\",\"disabled\":false},{\"label\":\"黑桃3优先\",\"order\":20,\"value\":\"spade_three_first\",\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":\"winner_first\",\"trusteeCount\":3},{\"key\":\"bombScore\",\"order\":110,\"control\":\"radio\",\"options\":[{\"label\":\"5分\",\"order\":10,\"value\":5,\"disabled\":false},{\"label\":\"10分\",\"order\":20,\"value\":10,\"disabled\":false},{\"label\":\"20分\",\"order\":30,\"value\":20,\"disabled\":false},{\"label\":\"30分\",\"order\":40,\"value\":30,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":5,\"trusteeCount\":3},{\"key\":\"rule_cd201_0001\",\"order\":120,\"control\":\"checkbox\",\"options\":[{\"label\":\"小局结算弹窗\",\"order\":10,\"value\":\"option_0001\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[\"option_0001\"],\"trusteeCount\":3},{\"key\":\"playRule\",\"order\":130,\"control\":\"checkbox\",\"options\":[{\"label\":\"三不带\",\"order\":10,\"value\":\"three_no_attachment\",\"disabled\":false},{\"label\":\"四带二\",\"order\":20,\"value\":\"four_with_two\",\"disabled\":false},{\"label\":\"3A算炸弹\",\"order\":30,\"value\":\"triple_ace_bomb\",\"disabled\":false},{\"label\":\"去掉3、4\",\"order\":40,\"value\":\"remove_three_four\",\"disabled\":false},{\"label\":\"必须出黑桃3\",\"order\":50,\"value\":\"require_spade_three\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[\"four_with_two\",\"triple_ace_bomb\",\"remove_three_four\",\"require_spade_three\"],\"trusteeCount\":3},{\"key\":\"roomRestriction\",\"order\":140,\"control\":\"checkbox\",\"options\":[{\"label\":\"IP限制\",\"order\":10,\"value\":\"ip_limit\",\"disabled\":false},{\"label\":\"GPS限制\",\"order\":20,\"value\":\"gps_limit\",\"disabled\":false},{\"label\":\"超时托管\",\"order\":30,\"value\":\"timeout_auto_play\",\"disabled\":false},{\"label\":\"距离过近警告\",\"order\":40,\"value\":\"distance_warning\",\"disabled\":false},{\"label\":\"禁止互动\",\"order\":50,\"value\":\"interaction_forbidden\",\"disabled\":false},{\"label\":\"禁言\",\"order\":60,\"value\":\"chat_muted\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[],\"trusteeCount\":3},{\"key\":\"hostingMissThreshold\",\"max\":100,\"min\":1,\"step\":1,\"order\":9999,\"control\":\"number\",\"options\":[],\"disabled\":true,\"required\":true,\"defaultValue\":3},{\"key\":\"payerMode\",\"order\":10000,\"control\":\"radio\",\"options\":[{\"order\":10,\"value\":\"OWNER\",\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":\"OWNER\"}],\"source\":\"CD201-room-rule-workbook\",\"sourceHash\":\"5d06f359aee46e4eaf269645dd977223e9b368da05b5d5655e98582735afea1f\",\"playVersion\":\"1.0.0\"},\"ui\":{\"scene\":\"GameRoom2D\",\"bundle\":\"paodekuai-common\",\"fields\":[{\"key\":\"playerCount\",\"label\":\"人数\",\"order\":70,\"control\":\"radio\",\"options\":[{\"label\":\"2人\",\"order\":10,\"value\":2,\"disabled\":false},{\"label\":\"3人\",\"order\":20,\"value\":3,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":2,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"roundCount\",\"label\":\"局数\",\"order\":80,\"control\":\"radio\",\"options\":[{\"label\":\"8局\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"12局\",\"order\":20,\"value\":12,\"disabled\":false},{\"label\":\"16局\",\"order\":30,\"value\":16,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"operationTimeoutSeconds\",\"label\":\"操作时间\",\"order\":90,\"control\":\"radio\",\"options\":[{\"label\":\"10000秒\",\"order\":10,\"value\":10000,\"disabled\":false},{\"label\":\"15秒\",\"order\":20,\"value\":15,\"disabled\":false},{\"label\":\"20秒\",\"order\":30,\"value\":20,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":10000,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"firstPlayRule\",\"label\":\"先出牌\",\"order\":100,\"control\":\"radio\",\"options\":[{\"label\":\"赢家先出\",\"order\":10,\"value\":\"winner_first\",\"disabled\":false},{\"label\":\"黑桃3优先\",\"order\":20,\"value\":\"spade_three_first\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":\"winner_first\",\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"bombScore\",\"label\":\"炸弹记分\",\"order\":110,\"control\":\"radio\",\"options\":[{\"label\":\"5分\",\"order\":10,\"value\":5,\"disabled\":false},{\"label\":\"10分\",\"order\":20,\"value\":10,\"disabled\":false},{\"label\":\"20分\",\"order\":30,\"value\":20,\"disabled\":false},{\"label\":\"30分\",\"order\":40,\"value\":30,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":5,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"rule_cd201_0001\",\"label\":\"小结算\",\"order\":120,\"control\":\"checkbox\",\"options\":[{\"label\":\"小局结算弹窗\",\"order\":10,\"value\":\"option_0001\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[\"option_0001\"],\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"playRule\",\"label\":\"玩法\",\"order\":130,\"control\":\"checkbox\",\"options\":[{\"label\":\"三不带\",\"order\":10,\"value\":\"three_no_attachment\",\"disabled\":false},{\"label\":\"四带二\",\"order\":20,\"value\":\"four_with_two\",\"disabled\":false},{\"label\":\"3A算炸弹\",\"order\":30,\"value\":\"triple_ace_bomb\",\"disabled\":false},{\"label\":\"去掉3、4\",\"order\":40,\"value\":\"remove_three_four\",\"disabled\":false},{\"label\":\"必须出黑桃3\",\"order\":50,\"value\":\"require_spade_three\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[\"four_with_two\",\"triple_ace_bomb\",\"remove_three_four\",\"require_spade_three\"],\"trusteeCount\":3,\"defaultCandidateIndexes\":[2,3,4,5]},{\"key\":\"roomRestriction\",\"label\":\"其他\",\"order\":140,\"control\":\"checkbox\",\"options\":[{\"label\":\"IP限制\",\"order\":10,\"value\":\"ip_limit\",\"disabled\":false},{\"label\":\"GPS限制\",\"order\":20,\"value\":\"gps_limit\",\"disabled\":false},{\"label\":\"超时托管\",\"order\":30,\"value\":\"timeout_auto_play\",\"disabled\":false},{\"label\":\"距离过近警告\",\"order\":40,\"value\":\"distance_warning\",\"disabled\":false},{\"label\":\"禁止互动\",\"order\":50,\"value\":\"interaction_forbidden\",\"disabled\":false},{\"label\":\"禁言\",\"order\":60,\"value\":\"chat_muted\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[],\"trusteeCount\":3,\"defaultCandidateIndexes\":[]}],\"playFamily\":\"poker:pao-de-kuai\",\"regionalProfile\":\"CD201\",\"bigSettleTemplate\":\"BigSettleTpl_00\",\"roomRuleSourceHash\":\"5d06f359aee46e4eaf269645dd977223e9b368da05b5d5655e98582735afea1f\",\"smallSettleTemplate\":\"SmallSettleTpl_pdk_00\",\"publicRoomRuleSchemaVersion\":2}},\"traceId\":\"5102c35c-4c20-401a-80ba-03b64d046527\"}"
+    },
+    {
+      "requestId": "6146C1FE6274A26A9DD33568C841145E",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=8&playVersion=1.0.0&clientVersion=3.8.8",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "CCCFEA2DF05955985A280548378B564B",
+      "method": "OPTIONS",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=90005&playVersion=xqp-equivalent-1&clientVersion=3.8.8",
+      "postData": "",
+      "status": 204,
+      "responseBodyError": "{\"code\":-32000,\"message\":\"No resource with given identifier found\"}"
+    },
+    {
+      "requestId": "49196.3224",
+      "method": "GET",
+      "url": "http://127.0.0.1:8080/api/v2/hall/configuration?gameId=90005&playVersion=xqp-equivalent-1&clientVersion=3.8.8",
+      "postData": "",
+      "status": 200,
+      "responseBody": "{\"code\":\"OK\",\"data\":{\"releaseId\":92031091804,\"indexGeneration\":2026091804,\"bundleHash\":\"cb0acf6dff22a717ccc10784807a40a7cab9d3f416360e4fe1775194dd786f2b\",\"cacheEpoch\":13,\"gameId\":90005,\"classificationRegionCode\":\"CN-51-34\",\"playVersion\":\"xqp-equivalent-1\",\"components\":[\"com.aoo.bcg.poker.PdkGameProvider:LS201@xqp-equivalent-1\"],\"rules\":{\"fields\":[{\"key\":\"playerCount\",\"order\":80,\"control\":\"radio\",\"options\":[{\"label\":\"2人\",\"order\":10,\"value\":2,\"disabled\":false},{\"label\":\"3人\",\"order\":20,\"value\":3,\"disabled\":false},{\"label\":\"4人\",\"order\":30,\"value\":4,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":2,\"trusteeCount\":3},{\"key\":\"roundCount\",\"order\":90,\"control\":\"radio\",\"options\":[{\"label\":\"8局\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"12局\",\"order\":20,\"value\":12,\"disabled\":false},{\"label\":\"16局\",\"order\":30,\"value\":16,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3},{\"key\":\"operationTime\",\"order\":100,\"control\":\"radio\",\"options\":[{\"label\":\"10000秒\",\"order\":10,\"value\":10000,\"disabled\":false},{\"label\":\"15秒\",\"order\":20,\"value\":15,\"disabled\":false},{\"label\":\"20秒\",\"order\":30,\"value\":20,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":10000,\"trusteeCount\":3},{\"key\":\"dealCardCount\",\"order\":110,\"control\":\"radio\",\"options\":[{\"label\":\"8张(7-A)\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"10张(5-A)\",\"order\":20,\"value\":10,\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3},{\"key\":\"jinHuaScore\",\"order\":120,\"control\":\"radio\",\"options\":[{\"label\":\"1分\",\"order\":10,\"value\":1,\"disabled\":false},{\"label\":\"2分\",\"order\":20,\"value\":2,\"disabled\":false},{\"label\":\"3分\",\"order\":30,\"value\":3,\"disabled\":false},{\"label\":\"4分\",\"order\":40,\"value\":4,\"disabled\":false},{\"label\":\"5分\",\"order\":50,\"value\":5,\"disabled\":false},{\"label\":\"不比\",\"order\":60,\"value\":\"no_compare\",\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":\"no_compare\",\"trusteeCount\":3},{\"key\":\"robDealerRule\",\"order\":130,\"control\":\"radio\",\"options\":[{\"label\":\"庄家先抢\",\"order\":10,\"value\":\"dealer_first\",\"disabled\":false},{\"label\":\"庄家后抢\",\"order\":20,\"value\":\"dealer_last\",\"disabled\":false},{\"label\":\"首局不抢\",\"order\":30,\"value\":\"first_round_no_compete\",\"disabled\":false},{\"label\":\"不抢庄\",\"order\":40,\"value\":\"no_compete\",\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":\"dealer_first\",\"trusteeCount\":3},{\"key\":\"rule_ls201_0001\",\"order\":140,\"control\":\"checkbox\",\"options\":[{\"label\":\"小局结算弹窗\",\"order\":10,\"value\":\"option_0001\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[\"option_0001\"],\"trusteeCount\":3},{\"key\":\"playRule\",\"order\":150,\"control\":\"checkbox\",\"options\":[{\"label\":\"三带比带\",\"order\":10,\"value\":\"compare_attachments\",\"disabled\":false},{\"label\":\"三带一\",\"order\":20,\"value\":\"triple_with_one\",\"disabled\":false},{\"label\":\"四带二\",\"order\":30,\"value\":\"four_with_two\",\"disabled\":false},{\"label\":\"四张A,7\",\"order\":40,\"value\":\"four_ace_rank\",\"disabled\":false},{\"label\":\"全单,全顺,全连对,全对,全黑,全红,全大,全小\",\"order\":50,\"value\":\"all_special_patterns\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[\"compare_attachments\",\"triple_with_one\",\"four_with_two\",\"four_ace_rank\",\"all_special_patterns\"],\"trusteeCount\":3},{\"key\":\"roomRestriction\",\"order\":160,\"control\":\"checkbox\",\"options\":[{\"label\":\"IP限制\",\"order\":10,\"value\":\"ip_limit\",\"disabled\":false},{\"label\":\"GPS限制\",\"order\":20,\"value\":\"gps_limit\",\"disabled\":false},{\"label\":\"超时托管\",\"order\":30,\"value\":\"timeout_auto_play\",\"disabled\":false},{\"label\":\"距离过近警告\",\"order\":40,\"value\":\"distance_warning\",\"disabled\":false},{\"label\":\"禁止互动\",\"order\":50,\"value\":\"interaction_forbidden\",\"disabled\":false},{\"label\":\"禁言\",\"order\":60,\"value\":\"chat_muted\",\"disabled\":false}],\"disabled\":false,\"required\":false,\"defaultValue\":[],\"trusteeCount\":3},{\"key\":\"hostingMissThreshold\",\"max\":100,\"min\":1,\"step\":1,\"order\":9999,\"control\":\"number\",\"options\":[],\"disabled\":true,\"required\":true,\"defaultValue\":3},{\"key\":\"payerMode\",\"order\":10000,\"control\":\"radio\",\"options\":[{\"order\":10,\"value\":\"OWNER\",\"disabled\":false}],\"disabled\":false,\"required\":true,\"defaultValue\":\"OWNER\"}],\"source\":\"LS201-room-rule-workbook\",\"sourceHash\":\"818ffc128bdbdad531d0fa7a6ffdc0fd006f3ba9df8af48c1f78c246a2e2fbae\",\"playVersion\":\"xqp-equivalent-1\"},\"ui\":{\"scene\":\"GameRoom2D\",\"bundle\":\"pdk-common-room\",\"fields\":[{\"key\":\"playerCount\",\"label\":\"人数\",\"order\":80,\"control\":\"radio\",\"options\":[{\"label\":\"2人\",\"order\":10,\"value\":2,\"disabled\":false},{\"label\":\"3人\",\"order\":20,\"value\":3,\"disabled\":false},{\"label\":\"4人\",\"order\":30,\"value\":4,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":2,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"roundCount\",\"label\":\"局数\",\"order\":90,\"control\":\"radio\",\"options\":[{\"label\":\"8局\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"12局\",\"order\":20,\"value\":12,\"disabled\":false},{\"label\":\"16局\",\"order\":30,\"value\":16,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"operationTime\",\"label\":\"操作时间\",\"order\":100,\"control\":\"radio\",\"options\":[{\"label\":\"10000秒\",\"order\":10,\"value\":10000,\"disabled\":false},{\"label\":\"15秒\",\"order\":20,\"value\":15,\"disabled\":false},{\"label\":\"20秒\",\"order\":30,\"value\":20,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":10000,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"dealCardCount\",\"label\":\"发牌张数\",\"order\":110,\"control\":\"radio\",\"options\":[{\"label\":\"8张(7-A)\",\"order\":10,\"value\":8,\"disabled\":false},{\"label\":\"10张(5-A)\",\"order\":20,\"value\":10,\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":8,\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"jinHuaScore\",\"label\":\"比金花\",\"order\":120,\"control\":\"radio\",\"options\":[{\"label\":\"1分\",\"order\":10,\"value\":1,\"disabled\":false},{\"label\":\"2分\",\"order\":20,\"value\":2,\"disabled\":false},{\"label\":\"3分\",\"order\":30,\"value\":3,\"disabled\":false},{\"label\":\"4分\",\"order\":40,\"value\":4,\"disabled\":false},{\"label\":\"5分\",\"order\":50,\"value\":5,\"disabled\":false},{\"label\":\"不比\",\"order\":60,\"value\":\"no_compare\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":\"no_compare\",\"trusteeCount\":3,\"defaultCandidateIndexes\":[6]},{\"key\":\"robDealerRule\",\"label\":\"抢庄\",\"order\":130,\"control\":\"radio\",\"options\":[{\"label\":\"庄家先抢\",\"order\":10,\"value\":\"dealer_first\",\"disabled\":false},{\"label\":\"庄家后抢\",\"order\":20,\"value\":\"dealer_last\",\"disabled\":false},{\"label\":\"首局不抢\",\"order\":30,\"value\":\"first_round_no_compete\",\"disabled\":false},{\"label\":\"不抢庄\",\"order\":40,\"value\":\"no_compete\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":true,\"defaultValue\":\"dealer_first\",\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"rule_ls201_0001\",\"label\":\"小结算\",\"order\":140,\"control\":\"checkbox\",\"options\":[{\"label\":\"小局结算弹窗\",\"order\":10,\"value\":\"option_0001\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[\"option_0001\"],\"trusteeCount\":3,\"defaultCandidateIndexes\":[1]},{\"key\":\"playRule\",\"label\":\"玩法\",\"order\":150,\"control\":\"checkbox\",\"options\":[{\"label\":\"三带比带\",\"order\":10,\"value\":\"compare_attachments\",\"disabled\":false},{\"label\":\"三带一\",\"order\":20,\"value\":\"triple_with_one\",\"disabled\":false},{\"label\":\"四带二\",\"order\":30,\"value\":\"four_with_two\",\"disabled\":false},{\"label\":\"四张A,7\",\"order\":40,\"value\":\"four_ace_rank\",\"disabled\":false},{\"label\":\"全单,全顺,全连对,全对,全黑,全红,全大,全小\",\"order\":50,\"value\":\"all_special_patterns\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[\"compare_attachments\",\"triple_with_one\",\"four_with_two\",\"four_ace_rank\",\"all_special_patterns\"],\"trusteeCount\":3,\"defaultCandidateIndexes\":[1,2,3,4,5]},{\"key\":\"roomRestriction\",\"label\":\"其他\",\"order\":160,\"control\":\"checkbox\",\"options\":[{\"label\":\"IP限制\",\"order\":10,\"value\":\"ip_limit\",\"disabled\":false},{\"label\":\"GPS限制\",\"order\":20,\"value\":\"gps_limit\",\"disabled\":false},{\"label\":\"超时托管\",\"order\":30,\"value\":\"timeout_auto_play\",\"disabled\":false},{\"label\":\"距离过近警告\",\"order\":40,\"value\":\"distance_warning\",\"disabled\":false},{\"label\":\"禁止互动\",\"order\":50,\"value\":\"interaction_forbidden\",\"disabled\":false},{\"label\":\"禁言\",\"order\":60,\"value\":\"chat_muted\",\"disabled\":false}],\"visible\":true,\"disabled\":false,\"required\":false,\"defaultValue\":[],\"trusteeCount\":3,\"defaultCandidateIndexes\":[]}],\"regionalProfile\":\"LS201\",\"roomRuleViewHash\":\"11d1cc8d47ed609f3c4f664e1865442bbcb3ca99c4e2fcf060d72b52dd443a3a\",\"roomRuleWorkbook\":\"开房规则表/跑得快/凉山跑得快.xlsx\",\"roomRuleSourceHash\":\"818ffc128bdbdad531d0fa7a6ffdc0fd006f3ba9df8af48c1f78c246a2e2fbae\"}},\"traceId\":\"df2c9b80-5ed1-4537-9f75-b984e994e474\"}"
+    }
+  ],
+  "clicks": [
+    {
+      "name": "Btn_AccountLogin",
+      "x": 578.1666666666667,
+      "y": 697.6666666666666,
+      "world": {
+        "x": 840,
+        "y": 160.00000000000006
+      },
+      "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+    },
+    {
+      "name": "AccountInput",
+      "x": 469,
+      "y": 556.2139583333334,
+      "world": {
+        "x": 640,
+        "y": 419.15000000000003
+      },
+      "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput (EditBox activation)"
+    },
+    {
+      "name": "PasswordInput",
+      "x": 469,
+      "y": 619.5994000000001,
+      "world": {
+        "x": 640,
+        "y": 303.02400000000006
+      },
+      "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput (EditBox activation)"
+    },
+    {
+      "name": "Btn_Login",
+      "x": 559.5739458333334,
+      "y": 686.3826541666667,
+      "world": {
+        "x": 805.937,
+        "y": 180.67300000000006
+      },
+      "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+    },
+    {
+      "name": "Btn_Login",
+      "x": 559.5739458333334,
+      "y": 621.3826541666667,
+      "world": {
+        "x": 805.937,
+        "y": 180.67300000000006
+      },
+      "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+    },
+    {
+      "name": "CreateRoom",
+      "x": 878.1332416666667,
+      "y": 373.69166666666666,
+      "world": {
+        "x": 1137.9540305343512,
+        "y": 454
+      },
+      "path": "MainScene/should_hide_in_hierarchy/LobbyMain/Right/CreateRoom"
+    },
+    {
+      "name": "Game_LS201",
+      "x": 366.41666666666674,
+      "y": 474.12500000000006,
+      "world": {
+        "x": 200.4580152671756,
+        "y": 270
+      },
+      "path": "MainScene/should_hide_in_hierarchy/CreateRoom/Left/FavoriteList/ScrollView/Viewport/Content/Game_LS201"
+    }
+  ],
+  "errors": [],
+  "failedResources": [],
+  "infoLogs": [
+    [
+      "[BootstrapOwner]",
+      "{\"action\":\"CLAIM\",\"bootId\":\"f2b5f43b-a2dd-4762-8e8f-1e87bf7040ec\",\"sceneName\":\"UnnamedScene\",\"nodeUuid\":\"nCanvas\"}"
+    ],
+    [
+      "[AuthRestore] cache=present",
+      {
+        "account": "3",
+        "hasRefreshToken": true
+      }
+    ],
+    [
+      "[AuthRestore] result=success",
+      {
+        "account": "3"
+      }
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976445}"
+    ],
+    [
+      "[AuthNavigation]",
+      "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"3\",\"navigationGeneration\":1}"
+    ],
+    [
+      "[SessionLifecycle] client-created",
+      {
+        "clientId": "ws-1",
+        "owner": "hall"
+      }
+    ],
+    [
+      "[SessionLifecycle] connect",
+      {
+        "clientId": "ws-1",
+        "owner": "hall",
+        "endpoint": "ws://127.0.0.1:8080/api/v2/gateway/ws"
+      }
+    ],
+    [
+      "[AuthNavigation]",
+      "{\"operationId\":1,\"stage\":\"ACTIVE_ROOM_RESOLVED\",\"accountId\":\"3\",\"playerId\":517344,\"roomId\":0,\"stateVersion\":0,\"hasActiveRoom\":false,\"navigationGeneration\":1}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在加载大厅公共资源...\",\"progress\":0.68,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976489}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅界面...\",\"progress\":0.78,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976507}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976511}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976543}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976554}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976577}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976577}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976616}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8661538461538462,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976616}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8714285714285714,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976641}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8828571428571429,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976643}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8942857142857144,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976676}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9057142857142857,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976677}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9171428571428571,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976694}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9285714285714286,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976694}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9400000000000001,\"progressKind\":\"MEASURED\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976726}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0.9400000000000001,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789927976741}"
+    ],
+    [
+      "[AuthNavigation]",
+      "{\"operationId\":1,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789927976776}"
+    ],
+    [
+      "[AuthNavigation]",
+      "{\"operationId\":1,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":1}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"begin\",\"id\":2,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927976777}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":2,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927976777}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":2,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927977143}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"commit\",\"id\":2,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789927977174}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"begin\",\"id\":3,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927977178}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927977214}"
+    ],
+    [
+      "[AooTransition]",
+      "aoo-transition-20260907-coordinator-1",
+      "target:ready-check",
+      {
+        "scene": "MainScene",
+        "sceneValid": true,
+        "canvasValid": true,
+        "canvasActive": true
+      }
+    ],
+    [
+      "[AooBackgroundWarmup] started",
+      {
+        "total": 221,
+        "concurrency": 1
+      }
+    ],
+    [
+      "[AooTransition]",
+      "aoo-transition-20260907-coordinator-1",
+      "target:after-draw"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":3,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927977226}"
+    ],
+    [
+      "[LobbyCreateRoomEntry]",
+      {
+        "action": "CLICK",
+        "controllerReady": true,
+        "disposed": false,
+        "lifecycleEpoch": 1,
+        "scene": "MainScene"
+      }
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "OPEN",
+        "gameName": "",
+        "disposed": false,
+        "formCached": false
+      }
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"begin\",\"id\":4,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789927977255}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":4,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789927977255}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789927977274}"
+    ],
+    [
+      "[AooTransition]",
+      "aoo-transition-20260907-coordinator-1",
+      "overlay:destroy"
+    ],
+    [
+      "[AuthNavigation]",
+      "{\"operationId\":1,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"commit\",\"id\":3,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789927977274}"
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"progress\",\"id\":4,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789927977592}"
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_REQUEST",
+        "gameCode": "CD201",
+        "gameId": 8,
+        "playVersion": "1.0.0",
+        "selectionGeneration": 1
+      }
+    ],
+    [
+      "[HallRoomConfiguration]",
+      {
+        "action": "REQUEST",
+        "gameCode": "CD201",
+        "gameId": 8,
+        "playVersion": "1.0.0"
+      }
+    ],
+    [
+      "[HallRoomConfiguration]",
+      {
+        "action": "RESPONSE",
+        "gameCode": "CD201",
+        "gameId": 8,
+        "playVersion": "1.0.0",
+        "fieldCount": 8
+      }
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_RESPONSE",
+        "gameCode": "CD201",
+        "gameId": 8,
+        "playVersion": "1.0.0",
+        "selectionGeneration": 1,
+        "fieldCount": 8,
+        "schemaHash": "5d06f359aee46e4eaf269645dd977223e9b368da05b5d5655e98582735afea1f"
+      }
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_FINALLY",
+        "gameCode": "CD201",
+        "gameId": 8,
+        "playVersion": "1.0.0",
+        "selectionGeneration": 1,
+        "activeSelection": true,
+        "disposed": false,
+        "rulesReady": true
+      }
+    ],
+    [
+      "[AooPresentationTransition]",
+      "{\"action\":\"commit\",\"id\":4,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789927977667}"
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_REQUEST",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1",
+        "selectionGeneration": 2
+      }
+    ],
+    [
+      "[HallRoomConfiguration]",
+      {
+        "action": "REQUEST",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1"
+      }
+    ],
+    [
+      "[HallRoomConfiguration]",
+      {
+        "action": "RESPONSE",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1",
+        "fieldCount": 9
+      }
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_RESPONSE",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1",
+        "selectionGeneration": 2,
+        "fieldCount": 9,
+        "schemaHash": "818ffc128bdbdad531d0fa7a6ffdc0fd006f3ba9df8af48c1f78c246a2e2fbae"
+      }
+    ],
+    [
+      "[CreateRoomSelector]",
+      {
+        "action": "CONFIG_FINALLY",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1",
+        "selectionGeneration": 2,
+        "activeSelection": true,
+        "disposed": false,
+        "rulesReady": true
+      }
+    ],
+    [
+      "[HallRoomConfiguration]",
+      {
+        "action": "CACHE_HIT",
+        "gameCode": "LS201",
+        "gameId": 90005,
+        "playVersion": "xqp-equivalent-1"
+      }
+    ]
+  ]
+}

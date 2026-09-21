@@ -57,6 +57,7 @@ type LoadingRuntimeState = typeof globalThis & {
     }>;
     __aoo_BOOT_TRANSITION_ROOT__?: Node;
     __aoo_BOOTSTRAP_ROUTE_OWNER__?: Readonly<{ bootId: string; nodeUuid: string }>;
+    __aoo_BOOTSTRAP_ENTRY_REDIRECT__?: boolean;
 };
 
 @ccclass('LoginScreenBootstrap')
@@ -125,7 +126,24 @@ export class LoginScreenBootstrap extends Component {
         if (!isBootstrapScene) {
             const services = getStartedClientServices();
             if (!services) {
-                this.showBootstrapBlock(`启动所有者缺失：${sceneName} 只能消费 BootStrap 已启动的服务`);
+                // Creator Preview starts from whichever scene is currently
+                // open. If that is LoginScene there is no process owner yet;
+                // enter the authored BootStrap scene so it can establish the
+                // real environment, services and route owner before LoginScene
+                // consumes them. This is an initial-entry correction, not a
+                // runtime route and never manufactures a presentation owner.
+                if (loadingRuntime.__aoo_BOOTSTRAP_ENTRY_REDIRECT__) {
+                    this.showBootstrapBlock(`启动入口循环：${sceneName} 未能进入 BootStrap`);
+                    return;
+                }
+                loadingRuntime.__aoo_BOOTSTRAP_ENTRY_REDIRECT__ = true;
+                this.logBootstrapOwner({ action: 'ENTER_BOOTSTRAP', sceneName, nodeUuid: this.node.uuid });
+                this.setBootstrapStatus('正在进入启动场景...', 0.01);
+                director.loadScene('BootStrap', (error) => {
+                    if (!error) return;
+                    loadingRuntime.__aoo_BOOTSTRAP_ENTRY_REDIRECT__ = false;
+                    if (this.isCurrent(epoch)) this.showBootstrapBlock(`启动场景打开失败：${error.message}`);
+                });
                 return;
             }
             this.services = services;

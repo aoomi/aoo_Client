@@ -14,6 +14,10 @@
     "version": "3.8.8"
   },
   "scripts": {
+    "preview:snapshot": "node scripts/preview-snapshot-manager.mjs capture",
+    "preview:snapshot:status": "node scripts/preview-snapshot-manager.mjs status",
+    "preview:snapshot:supervisor": "node scripts/preview-snapshot-supervisor.mjs",
+    "test:preview:snapshot": "node --test tests/infrastructure/preview-snapshot-contract.test.mjs",
     "preview:dual": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs",
     "preview:quad": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs --clients 4",
     "audit:client-runtime": "node scripts/verify-unresolved-identifiers.mjs && node scripts/audit-client-runtime-deps.mjs",

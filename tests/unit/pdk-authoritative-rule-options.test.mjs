@@ -9,6 +9,8 @@ const logicPath = join(clientRoot,
   'assets/Games/Poker/PDK/Common/Code/Runtime/logic/CommonPdkGameLogic.ts');
 const rankerPath = join(clientRoot,
   'assets/Games/Poker/PDK/Common/Code/Runtime/logic/PdkCleanHintRanker.ts');
+const policyRegistryPath = join(clientRoot,
+  'assets/Games/Poker/PDK/Common/Code/Regional/PdkHintPolicyRegistry.ts');
 
 function loadLogic() {
   const source = readFileSync(logicPath, 'utf8');
@@ -49,9 +51,9 @@ function loadRanker() {
 }
 
 const regionalRules = {
-  CD201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
-  NJ201: { minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
-  LS201: { minimumStraightLength: 3, tripleAttachmentMode: 'SINGLE_OR_PAIR', fourAttachmentMode: 'DISABLED' },
+  CD201: { policyId: 'COMMON', minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  NJ201: { policyId: 'COMMON', minimumStraightLength: 5, tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'DISABLED' },
+  LS201: { policyId: 'LS201', minimumStraightLength: 3, tripleAttachmentMode: 'SINGLE_OR_PAIR', fourAttachmentMode: 'DISABLED' },
 };
 
 test('three regional clients derive straight length from the authoritative snapshot', () => {
@@ -60,6 +62,17 @@ test('three regional clients derive straight length from the authoritative snaps
     logic.ChangeSelectCard([103, 104, 105]);
     assert.equal(logic.CheckShunzi(), gameCode === 'LS201', gameCode);
   }
+});
+
+test('hint policy uses explicit business identity and freezes every non-LS201 game to COMMON', () => {
+  const registry = readFileSync(policyRegistryPath, 'utf8');
+  const controller = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  assert.match(registry, /\[PDK_BUSINESS_CODES\.LIANGSHAN\]: 'LS201'/);
+  assert.match(registry, /DEFAULT_PDK_HINT_POLICY: PdkHintPolicyId = 'COMMON'/);
+  assert.match(controller,
+    /policyId: resolvePdkHintPolicyId\(this\.runtime\.getGameCode\(\)\)/);
+  assert.doesNotMatch(registry, /deckMaximumRank|compareTripleAttachments/);
 });
 
 test('required opening card constrains decomposition before hint ranking', () => {
@@ -837,6 +850,80 @@ test('later Liangshan rounds rank a complete AAA attachment before a loose seven
   assert.equal(ranked[0].length, 4);
   assert.deepEqual([...ranked[0]].filter((card) => card % 100 === 14).sort(), [114, 214, 314]);
   assert.notDeepEqual(ranked[0], [107]);
+});
+
+test('only Liangshan exposes and leads a three-card straight before a retained triple-with-pair', () => {
+  const lsRules = {
+    ...regionalRules.LS201,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    deckCards: [
+      107, 207, 307, 407, 108, 208, 308, 408,
+      109, 209, 309, 409, 110, 210, 310, 410,
+      111, 211, 311, 411, 112, 212, 312, 412,
+      113, 213, 313, 413, 114, 214, 314, 414,
+    ],
+    prioritizeMaximumWithOneOrdinaryPlay: true,
+    prioritizeLargestLeadWithoutMaximum: true,
+    prioritizeMaximumLeadUnlessConnectedRun: true,
+    prioritizeMaximumResponseWithinThreePlays: true,
+    prioritizeLargestLeadUnlessMaximumStraight: true,
+    optimizeWholeHand: true,
+    compareTripleAttachments: true,
+  };
+  const hand = [112, 212, 312, 111, 110, 109, 108, 208];
+  const shortStraight = [111, 110, 109];
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRanker();
+  const lsLogic = createLogic(lsRules);
+  lsLogic.OutPokerCard(hand);
+  lsLogic.ClearCardData();
+  const legal = enumeratePdkRankMultisetCandidates(hand)
+    .filter((cards) => {
+      lsLogic.ChangeSelectCard(cards);
+      return lsLogic.GetCardType() > 0;
+    })
+    .map((cards, order) => {
+      const remaining = [...hand];
+      for (const card of cards) remaining.splice(remaining.indexOf(card), 1);
+      lsLogic.ChangeSelectCard(remaining);
+      return { cards, order, finishesInTwo: remaining.length > 0 && lsLogic.GetCardType() > 0 };
+    });
+  assert.ok(legal.some(({ cards }) => cards.length === shortStraight.length
+    && shortStraight.every((card) => cards.includes(card))),
+  'LS201 minimumStraightLength=3 must expose 9-10-J');
+  const ranked = rankCleanPdkHints(hand, legal, {
+    ...lsRules,
+    protectedBombs: [],
+    preserveScoringBombs: false,
+    maximumSingleRanks: [14],
+    // The stable LS201 policy identity, not an optional legacy hint flag,
+    // owns this regional decomposition rule.
+    prioritizeLargestLeadUnlessMaximumStraight: false,
+  }, true, true);
+  assert.deepEqual([...ranked[0]].sort((a, b) => a - b), [...shortStraight].sort((a, b) => a - b));
+
+  const commonRanked = rankCleanPdkHints(hand, legal, {
+    ...lsRules,
+    policyId: 'COMMON',
+    protectedBombs: [],
+    preserveScoringBombs: false,
+    maximumSingleRanks: [14],
+    prioritizeLargestLeadUnlessMaximumStraight: false,
+  }, true, true);
+  assert.notDeepEqual([...commonRanked[0]].sort((a, b) => a - b),
+    [...shortStraight].sort((a, b) => a - b),
+    'COMMON must retain its established ranking even when fed the same legal candidate pool');
+
+  const commonLogic = createLogic(regionalRules.CD201);
+  commonLogic.OutPokerCard(hand);
+  commonLogic.ClearCardData();
+  const commonLegal = enumeratePdkRankMultisetCandidates(hand).filter((cards) => {
+    commonLogic.ChangeSelectCard(cards);
+    return commonLogic.GetCardType() > 0;
+  });
+  assert.ok(!commonLegal.some((cards) => cards.length === shortStraight.length
+    && shortStraight.every((card) => cards.includes(card))),
+  'COMMON minimumStraightLength=5 must remain isolated from the LS201 strategy');
 });
 
 test('equal-turn straights lead the lower intact run and retain the higher recapture run', () => {

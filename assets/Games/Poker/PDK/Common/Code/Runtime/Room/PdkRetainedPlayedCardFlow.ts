@@ -129,5 +129,9 @@ export interface PdkRetainedPlayedCardFlow {
     waitForPendingTransfers(): Promise<void>;
     /** End unfinished visual-only holds/moves at their authored destination without delaying gameplay. */
     finishPendingImmediately(): Promise<void>;
+    /** Round settlement discards transient live cards instead of briefly archiving the terminal play. */
+    cancelPendingForSettlement(): Promise<void>;
+    /** A new deal invalidates every hold/transfer still owned by the preceding round. */
+    cancelPendingForRoundBoundary(): Promise<void>;
     addStoppedPlayCount(hand: Node, countTemplate: Node | null, playIndex: number): void;
 }

@@ -230,15 +230,19 @@ export class LegacyFormManager {
         // Keep the established priority order, but consume it only in browser idle
         // slices and yield again before every prefab.
         this.deferBackgroundWarmup(600);
-        const paths = [...new Set([
+        // Creator 3.8.8 loose Web output lowers iterable spread to Array#concat.
+        // A Set/Map iterator is then inserted as one route object instead of
+        // expanded, so normalize receives the Set itself. Materialize both
+        // iterable boundaries while keeping the authoritative string contract.
+        const paths = Array.from(new Set<string>([
             // The first post-refresh navigation is most often a room entry.
             // Decode game-room and shared-room forms before optional page/module
             // forms so entering a club can hit the room cache immediately.
             ...listGamePrefabForms(),
             ...listCommonPrefabForms(),
-            ...this.options.keys(),
+            ...Array.from(this.options.keys()),
             ...(includeModules ? listModulePrefabForms() : []),
-        ])];
+        ]));
         const startedAt = Date.now();
         console.info('[AooBackgroundWarmup] started', { total: paths.length, concurrency });
         let cursor = 0;

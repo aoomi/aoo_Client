@@ -1,4 +1,4 @@
-import { _decorator, assetManager, Button, Component, instantiate, Label, Node, Prefab, UITransform } from 'cc';
+import { _decorator, assetManager, Button, Component, instantiate, Label, Node, Prefab, tween, UITransform, Vec3 } from 'cc';
 import { CommonHeadController } from '../../../../../Common/Code/UI/CommonHeadController';
 import { NumpadHandle, NumpadService } from '../../../../../Common/Code/Runtime/ui/NumpadService';
 import { COMMON_ASSET_BUNDLE, NUMPAD_ASSET, resolveCommonNumpadAsset } from '../../../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
@@ -26,6 +26,7 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
     private readonly readySeats = new Map<number, boolean>();
     private readonly sittableSeats = new Set<number>();
     private readonly localCardNodes = new Map<number, Node>();
+    private readonly renderedCardCounts = new Map<number, number>();
     private readonly selectedSplitCards: number[] = [];
     private readonly splitDeadlines = new Map<number, number>();
     private localHandCards: readonly number[] = [];
@@ -136,8 +137,10 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         const parent = seat === 0 ? hand : hand.getChildByName('Cards');
         const addCard = seat === 0 ? null : seatNode.getChildByName('AddCard');
         if (!parent || (seat !== 0 && !addCard)) throw new Error(`[CD299] seat=${seat} authored card area missing`);
+        const previousCount = this.renderedCardCounts.get(seat) ?? 0;
         const generation = (this.cardGenerations.get(seat) ?? 0) + 1;
         this.cardGenerations.set(seat, generation);
+        this.renderedCardCounts.set(seat, cards.length);
         if (seat === 0) {
             this.localHandCards = [...cards];
             this.localCardNodes.clear();
@@ -183,9 +186,32 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
                 this.scaleCardTo(card, 78, 100);
                 card.setPosition((index - 2) * 79, 0, index);
             }
+            if (index >= previousCount) this.playDealTween(card, seat, index - previousCount);
         })).catch(error => console.error('[CD299] landscape card render failed', {
             seat, reason: error instanceof Error ? error.message : String(error),
         }));
+    }
+
+    /** XQP uses an 80 ms seat/card cadence and a 200 ms flight from DealPos. */
+    private playDealTween(card: Node, seat: number, newCardIndex: number): void {
+        const deal = this.path('Deal') ?? this.path('DealPos');
+        if (!deal?.isValid || !card.isValid) return;
+        const targetWorld = card.worldPosition.clone();
+        const targetScale = card.scale.clone();
+        const startWorld = deal.worldPosition.clone();
+        card.setWorldPosition(startWorld);
+        card.setScale(targetScale.x * 0.2, targetScale.y * 0.2, targetScale.z);
+        const delay = (newCardIndex * 8 + seat) * 0.08;
+        tween(card)
+            .delay(delay)
+            .to(0.2, { worldPosition: targetWorld, scale: targetScale })
+            .call(() => {
+                if (!card.isValid) return;
+                // Avoid accumulated floating-point drift after repeated deals.
+                card.setWorldPosition(new Vec3(targetWorld.x, targetWorld.y, targetWorld.z));
+                card.setScale(targetScale);
+            })
+            .start();
     }
 
     public showCommitted(seat: number, value: number): void {
@@ -264,13 +290,18 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         if (followLabel) followLabel.string = String(actions.followAmount);
         this.visible('Btn/Bet/Btn_Add', actions.canBet
             && (actions.betActions.includes('RAISE') || actions.betActions.includes('ALL_IN')));
-        this.visible('Btn/Bet/Btn_Add/Btn_AllIn', actions.canBet && actions.betActions.includes('ALL_IN'));
-        this.visible('Btn/Bet/Btn_Add/Add', actions.canBet && actions.betActions.includes('RAISE'));
+        // XQP gives the raise panel priority. The standalone All-in button is
+        // only shown when raising is unavailable; unaffordable quick targets
+        // inside the raise panel still submit ALL_IN through submitQuickRaise.
+        const canRaise = actions.canBet && actions.betActions.includes('RAISE');
+        this.visible('Btn/Bet/Btn_Add/Btn_AllIn', actions.canBet
+            && actions.betActions.includes('ALL_IN') && !canRaise);
+        this.visible('Btn/Bet/Btn_Add/Add', canRaise);
         actions.quickRaiseTargets.forEach((amount, index) => {
             const node = this.path(`Btn/Bet/Btn_Add/Add/Fast/Btn_Card_${index + 1}`);
             const label = node?.getChildByName('Lb_Value')?.getComponent(Label);
             if (label) label.string = String(amount);
-            if (node) node.active = actions.canBet && actions.betActions.includes('RAISE');
+            if (node) node.active = canRaise;
         });
         this.visible('Btn/Split', actions.canSplit);
         if (!actions.canSplit) this.clearSplitSelection();

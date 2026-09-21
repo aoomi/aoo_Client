@@ -24,6 +24,7 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
     private readonly activeTransfers = new Set<Promise<void>>();
     private readonly activeOperations = new Map<string, Promise<boolean>>();
     private readonly pendingTransferFinishes = new Set<() => void>();
+    private readonly transientHands = new Set<Node>();
 
     public flushPendingHolds(): void {
         for (const release of [...this.pendingHoldReleases]) release();
@@ -42,6 +43,30 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
     public async finishPendingImmediately(): Promise<void> {
         this.flushPendingHolds();
         // Released holds resume in a microtask and register their card finishes.
+        await Promise.resolve();
+        for (const finish of [...this.pendingTransferFinishes]) finish();
+        await this.waitForPendingTransfers();
+    }
+
+    public async cancelPendingForSettlement(): Promise<void> {
+        await this.cancelPendingForRoundBoundary();
+    }
+
+    public async cancelPendingForRoundBoundary(): Promise<void> {
+        // The controller invalidates the round lease before entering here. Detach
+        // every physical hand synchronously; the remaining awaits only drain
+        // callbacks that can no longer pass request.isCurrent().
+        for (const hand of [...this.transientHands]) {
+            for (const card of hand.children) Tween.stopAllByTarget(card);
+            if (hand.isValid) {
+                // destroy() is deferred until the end of the Cocos frame. Detach
+                // synchronously so a completed-round hand cannot remain visible
+                // in Table_Cards or be discovered by a late completion callback.
+                hand.removeFromParent();
+                hand.destroy();
+            }
+        }
+        this.flushPendingHolds();
         await Promise.resolve();
         for (const finish of [...this.pendingTransferFinishes]) finish();
         await this.waitForPendingTransfers();
@@ -73,10 +98,13 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
         const nodeName = `Play_${request.operationId}`;
         const retainedHand = request.tableCards.getChildByName(nodeName);
         if (retainedHand) {
-            setPdkRetainedPlayIndex(retainedHand, request.playIndex);
-            this.addStoppedPlayCount(retainedHand, request.playCountTemplate, request.playIndex);
-            layoutPdkRetainedHands(request.tableCards);
-            return true;
+            // Reconnect/history recovery can win the async race and manufacture
+            // the destination group while this operation's physical Out_Card
+            // nodes are still present. In that state the restored group is a
+            // duplicate, not proof that movement completed. Remove it and let
+            // the physical nodes below remain the single presentation owner.
+            retainedHand.removeFromParent();
+            retainedHand.destroy();
         }
 
         const landingPoses = cards.map((card) => ({
@@ -90,6 +118,7 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
         // layer. Parenting it into Table_Cards here made Widget/layout refreshes
         // expose the archive scale before the transfer actually started.
         hand.parent = holdLayer;
+        this.transientHands.add(hand);
         setPdkRetainedPlayIndex(hand, request.playIndex);
         hand.addComponent(UITransform).setContentSize(0, 0);
         for (const card of cards) card.parent = hand;
@@ -119,7 +148,14 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
             const timeout = globalThis.setTimeout(finish, OUT_CARD_HOLD_MS);
             this.pendingHoldReleases.add(finish);
         });
-        if (!request.tableCards.isValid || !hand.isValid) return false;
+        if (!request.isCurrent() || !request.tableCards.isValid || !hand.isValid) {
+            if (hand.isValid) {
+                hand.removeFromParent();
+                hand.destroy();
+            }
+            this.transientHands.delete(hand);
+            return false;
+        }
 
         const starts = cards.map((card) => ({
             position: card.worldPosition.clone(),
@@ -174,6 +210,17 @@ export class LS201PlayedCardFlow implements PdkRetainedPlayedCardFlow {
             await transfer;
         } finally {
             this.activeTransfers.delete(transfer);
+        }
+        this.transientHands.delete(hand);
+        // Settlement/new-deal cleanup can run while the 0.45-second transfer is
+        // already in progress. The tween finishers resolve normally, so validate
+        // ownership again before adding PlayCount or reporting a successful move.
+        if (!request.isCurrent() || !request.tableCards.isValid || !hand.isValid) {
+            if (hand.isValid) {
+                hand.removeFromParent();
+                hand.destroy();
+            }
+            return false;
         }
         // Pointer belongs to a completed retained hand. Keep it hidden throughout
         // Out_Card hold and transfer; create it only after every card has stopped

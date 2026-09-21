@@ -12,8 +12,9 @@ import { PdkGameAudioPresenter, pdkVoiceGender } from './Room/PdkGameAudioPresen
 import { PdkRoomAudioPresenter } from './Room/PdkRoomAudioPresenter';
 import type { CommonPdkSocialController } from './CommonPdkSocialController';
 import type { GameCapabilities } from '../../../../../Common/Code/Catalog/FamilyRuntimeRegistry';
+import { resolvePdkHintPolicyId } from '../Regional/PdkHintPolicyRegistry';
 import { CommonPdkGameLogic } from './logic/CommonPdkGameLogic';
-import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints } from './logic/PdkCleanHintRanker.ts';
+import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isAtomicPdkWholeHandCandidate, isAuthorityCompatiblePdkAircraft, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints } from './logic/PdkCleanHintRanker';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import { canLeaveRoom } from '../../../../../Common/Code/Room/RoomController';
 import { CommonRoomNodePath, PdkRoomNodePath } from './Room/PdkRoomNodePaths';
@@ -27,10 +28,15 @@ import {
     type PdkRetainedPlayedCardFlow,
 } from './Room/PdkRetainedPlayedCardFlow';
 import { PdkCurrentPlayArrowPresenter } from './Room/PdkCurrentPlayArrowPresenter';
+import {
+    PdkRoundPresentationLifecycle,
+    type PdkRoundPresentationAcceptance,
+    type PdkRoundPresentationLease,
+} from './Room/PdkRoundPresentationLifecycle';
 
 const DRAG_THRESHOLD_PX = 8;
 const CLICK_SUPPRESS_MS = 250;
-const AUTO_PLAY_SELECTION_DELAY_MS = 200;
+const AUTO_PLAY_SELECTION_DELAY_MS = 600;
 const HAND_COMPACT_DURATION_SECONDS = 0.35;
 const OWN_CARD_FLIGHT_DURATION_SECONDS = 0.32;
 // Every successful play owns its temporary Out_Card slot for at least two
@@ -100,6 +106,7 @@ export class CommonPdkPlayController {
     private suppressClickUntil = 0;
     private autoPassInFlight = false;
     private autoPlayTurnKey = '';
+    private autoPlayOperationId = '';
     private autoPlayInFlight = false;
     private autoPlayTimer = 0;
     /** A rejected automatic whole-hand request must fall back to manual controls for that turn. */
@@ -117,10 +124,26 @@ export class CommonPdkPlayController {
     private keepOperationsVisibleDuringPlay = false;
     /** Manual Hint clicked while play_req still owns the old authority hand. */
     private hintRequestedDuringPlay = false;
+    /**
+     * Monotonic ownership token for manual Hint intent. Authority rendering is
+     * asynchronous, so an automatic hint must not overwrite a newer manual
+     * selection made while that hand projection was still being prepared.
+     */
+    private selectionIntentRevision = 0;
     private handCompaction: Promise<void> = Promise.resolve();
     private ownCardFlight: Promise<void> = Promise.resolve();
     private ownCardFlightActive = false;
     private ownLandingCards: Node[] = [];
+    /** The newest committed physical hand has fully landed in its Out_Card slot. */
+    private latestPublicCardLanding: Promise<void> = Promise.resolve();
+    /**
+     * One terminal-round clock owns both the 1.5-second hold and release of the
+     * next deal. Authority may announce that deal before the physical card has
+     * completed its client-side flight; those events are buffered here so they
+     * cannot shorten the visible hold.
+     */
+    private terminalCardHoldBarrier: Promise<void> | null = null;
+    private readonly deferredNextRoundEvents: Array<{ event: string; body: unknown }> = [];
     private readonly publicCardShownAt = new Map<number, number>();
     private readonly publicSeatOperationIds = new Map<number, string>();
     private readonly publicCardClearTimers = new Map<number, number>();
@@ -129,7 +152,7 @@ export class CommonPdkPlayController {
     private completedRoundVisualsCleared = false;
     private playRequestScope: { roomId: number; stateVersion: number; trickId: number; operationId: string } | null = null;
     private selectionAuthorityKey = '';
-    private presentationGeneration = 0;
+    private readonly roundPresentation = new PdkRoundPresentationLifecycle();
     private publicProjectionGeneration = 0;
     private readonly publicSeatRenderRevisions = new Map<number, number>();
     private handRenderGeneration = 0;
@@ -142,8 +165,6 @@ export class CommonPdkPlayController {
     /** One physical Liangshan Out_Card -> Table_Cards transfer per authority action. */
     private readonly tableActionPresentations = new Map<string, Promise<void>>();
     private authorityActionsInitialized = false;
-    /** Room/round identity that owns every live Out_Card and retained Table_Cards node. */
-    private presentationRoundKey = '';
     private lastDealAnimationKey = '';
     private lastMoreToggleAt = 0;
     private commonMoreItems: Node | null = null;
@@ -339,7 +360,8 @@ export class CommonPdkPlayController {
         this.renderCompeteDealerControls();
         this.logic.InitHandCard();
         const snapshot = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
-        this.presentationRoundKey = this.continueReadyRoundKey(snapshot);
+        const roundAcceptance = this.acceptPresentationRound(snapshot, 'ON_SHOW');
+        if (!roundAcceptance.accepted) return;
         this.competeDealerPhase = String(snapshot.authorityPhase ?? '').toUpperCase() === 'COMPETE_DEALER';
         const formalCardPlayPhase = this.isFormalCardPlayPhase(snapshot);
         const roomPlaying = Number(this.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1;
@@ -349,7 +371,7 @@ export class CommonPdkPlayController {
         this.completedRoundVisualsCleared = !roomPlaying && Boolean(localPlayer?.isContinue);
         this.activeOpPos = Number(snapshot.opPos ?? -1);
         if (this.completedRoundVisualsCleared) {
-            this.resetRoundPresentation();
+            this.endRoundPresentation('ON_SHOW_COMPLETED_ROUND');
             this.clearHandVisuals('ON_SHOW_COMPLETED_ROUND');
             this.trackPresentation(this.renderHeads()
                 .catch((error: unknown) => this.report(error, '头像加载失败')));
@@ -359,9 +381,15 @@ export class CommonPdkPlayController {
         // A reconnect during dealer competition can still carry the completed
         // round's operation ledger for settlement continuity. That ledger is not
         // part of the new round's card-play projection and must never be restored.
-        if (this.competeDealerPhase) this.resetRoundPresentation();
+        if (this.competeDealerPhase) this.clearRoundPresentationNodes();
+        const showSelectionRevision = this.selectionIntentRevision;
+        const showProjectionStartedAt = globalThis.performance?.now?.() ?? Date.now();
         this.trackPresentation(this.renderHand()
-            .then(() => this.autoHintForAuthoritativeTurn(snapshot))
+            .then(() => this.autoHintForAuthoritativeTurn(
+                snapshot,
+                showSelectionRevision,
+                showProjectionStartedAt,
+            ))
             .catch((error: unknown) => this.report(error, '手牌加载失败')));
         this.trackPresentation(this.renderHeads()
             .catch((error: unknown) => this.report(error, '头像加载失败')));
@@ -370,7 +398,11 @@ export class CommonPdkPlayController {
             // Retained-table presentation is an explicit variant capability. Card
             // cleanup and dealing remain owned by this common lifecycle controller.
             if (this.runtime.arrangementEnabled()) {
-                this.trackPresentation(this.restoreTableCards(snapshot));
+                const snapshotPresentationLease = this.roundPresentation.lease();
+                this.trackPresentation(this.restoreTableCards(
+                    snapshot,
+                    snapshotPresentationLease,
+                ));
             }
         }
         this.startClockFromSetInfo(snapshot);
@@ -379,6 +411,7 @@ export class CommonPdkPlayController {
 
     public onEvent(event: string, body: unknown): void {
         const packet = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+        if (this.deferNextRoundEventUntilTerminalHold(event, body)) return;
         if (event === 'CommonPdk_AuthoritativeState') {
             // V2 Authority 每次提交后推送完整视图，不再额外伪造旧版 CommonPdkSetStart。
             // RoomRuntime 在发出本事件前已经把权威视图写入 RoomSet，因此这里必须以
@@ -388,19 +421,9 @@ export class CommonPdkPlayController {
             // interaction state. Selection from an older hint/play must never
             // survive into the next turn or the next trick.
             const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
-            const nextRoundKey = this.continueReadyRoundKey(setInfo);
-            const roundPresentationChanged = Boolean(this.presentationRoundKey
-                && nextRoundKey !== this.presentationRoundKey);
-            if (roundPresentationChanged) {
-                this.resetRoundPresentation();
-                console.info('[CommonRoomRoundVisualBoundary]', {
-                    roomId: this.roomId(),
-                    previousRoundKey: this.presentationRoundKey,
-                    nextRoundKey,
-                    stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
-                });
-            }
-            this.presentationRoundKey = nextRoundKey;
+            const roundAcceptance = this.acceptPresentationRound(setInfo, 'AUTHORITY_STATE');
+            if (!roundAcceptance.accepted) return;
+            const roundPresentationChanged = roundAcceptance.changed;
             this.competeDealerPhase = String(packet.phase ?? setInfo.authorityPhase ?? '').toUpperCase() === 'COMPETE_DEALER';
             const formalCardPlayPhase = this.isFormalCardPlayPhase(setInfo);
             this.applyAuthoritativeTurnBoundary(setInfo);
@@ -415,9 +438,6 @@ export class CommonPdkPlayController {
             const localPlayer = this.runtime.getRoomPosManager().GetRoomAllPlayerInfo()?.[this.clientSeat()];
             const completedRound = setInfo.setEnd ?? this.runtime.getRoomSet().GetRoomSetProperty('setEnd');
             const waitingForContinue = !playing && Boolean(completedRound) && !Boolean(localPlayer?.isContinue);
-            // COMPETE_DEALER owns the next round. A finished round, however,
-            // continues owning its cards until this client explicitly continues.
-            if (this.competeDealerPhase) this.resetRoundPresentation();
             // A Continue acknowledgement is the completed round's visual death
             // boundary for that client. Its snapshot legitimately still carries
             // the old operation ledger for settlement/replay, but the live table
@@ -435,7 +455,7 @@ export class CommonPdkPlayController {
             }
             if (playing) this.initializeRemainingCards();
             if (!playing && this.completedRoundVisualsCleared) {
-                this.resetRoundPresentation();
+                this.endRoundPresentation('AUTHORITY_COMPLETED_ROUND');
                 this.clearHandVisuals('AUTHORITY_COMPLETED_ROUND');
                 this.activeOpPos = -1;
                 this.trackPresentation(this.renderHeadsThenScheduleContinueClear(setInfo)
@@ -449,6 +469,8 @@ export class CommonPdkPlayController {
             // response arrives. Do not destroy and rebuild those nodes mid-tween.
             // A normal authority refresh is never a deal boundary. Deal movement
             // is driven only by the explicit round/phase transition events below.
+            const authoritySelectionRevision = this.selectionIntentRevision;
+            const authorityProjectionStartedAt = globalThis.performance?.now?.() ?? Date.now();
             const handRender = this.handCompaction.then(() => this.renderHand(false, authorityHand))
                 .catch((error: unknown) => {
                     this.reportPresentationError(error, 'HAND_RENDER', setInfo);
@@ -457,7 +479,8 @@ export class CommonPdkPlayController {
             this.trackPresentation(this.renderHeadsThenScheduleContinueClear(setInfo)
                 .catch((error: unknown) => this.report(error, '头像加载失败')));
             const projectRoundCards = formalCardPlayPhase || waitingForContinue;
-            const publicPresentation = !projectRoundCards
+            const snapshotPresentationLease = this.roundPresentation.lease();
+            const publicPresentation = !projectRoundCards || roundPresentationChanged
                 ? Promise.resolve()
                 : this.runtime.arrangementEnabled()
                     // This handler only receives live authoritative commits. Even
@@ -465,7 +488,7 @@ export class CommonPdkPlayController {
                     // Hand_Cards -> Out_Card -> Table_Cards. Snapshot restoration
                     // belongs exclusively to onShow/reconnect; using it here made
                     // the first committed hand flash directly into Table_Cards.
-                    ? this.presentLatestAuthorityAction(setInfo)
+                    ? this.presentLatestAuthorityAction(setInfo, snapshotPresentationLease)
                     : this.reconcileAuthorityPublicCards(setInfo);
             // Bind cleanup to the flight that existed for this exact authority
             // snapshot. A preceding retained-card presentation can finish after
@@ -499,7 +522,9 @@ export class CommonPdkPlayController {
             this.trackPresentation(settledPublicPresentation);
             const turnPresentation = hintReady
                 .then(() => this.consumeQueuedHintAfterPlay()
-                    ? undefined : this.autoHintForAuthoritativeTurn(setInfo))
+                    ? undefined : this.autoHintForAuthoritativeTurn(
+                        setInfo, authoritySelectionRevision, authorityProjectionStartedAt,
+                    ))
                 .catch((error: unknown) => this.report(error, '牌面与自动提示加载失败'));
             this.trackPresentation(turnPresentation);
             this.startClockFromSetInfo(setInfo);
@@ -508,11 +533,10 @@ export class CommonPdkPlayController {
             void this.roomAudio?.play('xipai');
             void this.roomAudio?.play('zhuang', 350);
             void this.roomAudio?.play('fapai', 700);
-            this.resetRoundPresentation();
             this.logic.InitHandCard();
             this.initializeRemainingCards();
             const setInfo = this.record(packet.setInfo) ?? packet;
-            this.presentationRoundKey = this.continueReadyRoundKey(setInfo);
+            if (!this.acceptPresentationRound(setInfo, 'SET_START').accepted) return;
             this.activeOpPos = Number(setInfo.opPos ?? -1);
             void this.renderHand(this.shouldAnimateDeal(setInfo));
             this.startClockFromSetInfo(setInfo);
@@ -532,11 +556,8 @@ export class CommonPdkPlayController {
                 // already the next round's visual lifetime even though PLAYING
                 // has not started. Old-round cleanup must not erase the new hand.
                 this.completedRoundVisualsCleared = false;
-                // COMPETE_DEALER is also a hard round boundary. Clear the old
-                // Out_Card/Table_Cards archive before projecting the new deal.
-                this.resetRoundPresentation();
                 const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
-                this.presentationRoundKey = this.continueReadyRoundKey(setInfo);
+                if (!this.acceptPresentationRound(setInfo, 'PHASE_COMPETE_DEALER').accepted) return;
                 console.info('[CommonRoomRoundStart]', {
                     roomId: this.roomId(),
                     stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
@@ -553,7 +574,7 @@ export class CommonPdkPlayController {
                 this.initializeRemainingCards();
                 this.trackPresentation(this.renderHand(this.shouldAnimateDeal(setInfo)));
                 // The authoritative snapshot starts the first turn clock before
-                // this phase-boundary event. resetRoundPresentation deliberately
+                // this phase-boundary event. The round lifecycle deliberately
                 // clears the preceding round, including that clock, so restore
                 // the same authoritative deadline after the reset.
                 this.startClockFromSetInfo(setInfo);
@@ -565,11 +586,10 @@ export class CommonPdkPlayController {
                 // old round before projecting the newly dealt hand; otherwise the
                 // stale callback clears valid second-round cards until refresh.
                 this.completedRoundVisualsCleared = false;
-                this.resetRoundPresentation();
                 void this.roomAudio?.play('zhuang');
                 void this.roomAudio?.play('fapai', 350);
                 const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
-                this.presentationRoundKey = this.continueReadyRoundKey(setInfo);
+                if (!this.acceptPresentationRound(setInfo, 'PHASE_PLAYING').accepted) return;
                 this.logic.InitHandCard();
                 this.initializeRemainingCards();
                 console.info('[CommonRoomRoundStart]', {
@@ -594,7 +614,14 @@ export class CommonPdkPlayController {
             this.social?.receiveLegacyChat(body);
         }
         const folderKey = String(packet.animationFolderKey ?? '').trim();
-        if (folderKey) void this.animations?.play(folderKey).catch((error: unknown) => this.report(error, '动画加载失败'));
+        if (folderKey) {
+            void this.animations?.play(folderKey, 0, {
+                roomId: this.roomId(),
+                playerId: this.runtime.getPlayerId(),
+                operationId: String(packet.operationId ?? ''),
+                stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+            }).catch((error: unknown) => this.report(error, '动画加载失败'));
+        }
         this.refresh();
         this.renderCompeteDealerControls();
     }
@@ -679,7 +706,10 @@ export class CommonPdkPlayController {
     public destroy(): void {
         const diagnostics = globalThis as typeof globalThis & { __PDK_PLAY_CONTROLLER__?: CommonPdkPlayController };
         if (diagnostics.__PDK_PLAY_CONTROLLER__ === this) delete diagnostics.__PDK_PLAY_CONTROLLER__;
-        this.presentationGeneration += 1;
+        // A cached CommonRoom node tree can outlive this controller. End the
+        // lease and detach its complete card surface before releasing services,
+        // otherwise the next controller may inherit the previous deal's nodes.
+        void this.endRoundPresentation('DESTROY');
         this.handRenderGeneration += 1;
         this.playInFlight = false;
         this.keepOperationsVisibleDuringPlay = false;
@@ -798,8 +828,12 @@ export class CommonPdkPlayController {
         this.commonView?.visible(CommonRoomNodePath.startButton, manualStart);
         const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
         const authorityDeadline = this.record(setInfo.operationDeadline);
-        const snapshotTurnSeat = Number(setInfo.opPos ?? authorityDeadline?.seatId ?? -1);
-        const authorityLocalTurn = state === 1 && snapshotTurnSeat === positions.GetClientPos();
+        const authorityOperationId = String(authorityDeadline?.operationId ?? '');
+        const authorityTurnSeat = Number(setInfo.opPos ?? authorityDeadline?.seatId ?? -1);
+        const authorityLocalTurn = state === 1 && authorityTurnSeat === positions.GetClientPos();
+        const automaticPlayOwnsTurn = this.autoPlayInFlight
+            && authorityOperationId === this.autoPlayOperationId
+            && authorityTurnSeat === positions.GetClientPos();
         const localTurn = authorityLocalTurn
             || (state === 1 && this.keepOperationsVisibleDuringPlay);
         if (state !== 1) this.hideClocks();
@@ -813,8 +847,8 @@ export class CommonPdkPlayController {
             // Do not hide actions merely because the whole hand appears legal.
             // maybeAutoPlay owns the transition: only its real in-flight state may
             // hide the buttons. This avoids a blank turn before its timer exists.
-            canTip: localTurn && !this.autoPlayInFlight,
-            canPlay: localTurn && !this.autoPlayInFlight,
+            canTip: localTurn && !automaticPlayOwnsTurn,
+            canPlay: localTurn && !automaticPlayOwnsTurn,
             isCompeteDealer: this.competeDealerPhase,
         });
         for (const entry of entries) {
@@ -860,7 +894,7 @@ export class CommonPdkPlayController {
 
     /**
      * The last player's badge must complete its actual head render before the
-     * one-second all-ready hold begins. Starting the timer from packet receipt
+     * 1.5-second all-ready hold begins. Starting the timer from packet receipt
      * can expire while asynchronous avatar/head rendering is still in flight,
      * making the last continuer appear to have never shown a badge.
      */
@@ -999,9 +1033,90 @@ export class CommonPdkPlayController {
 
     /** Settlement/round transitions own timing; visual effects must converge, never delay them. */
     public async truncateRoundEndPresentation(): Promise<void> {
-        this.animations?.clear();
-        await this.retainedPlayedCardFlow?.finishPendingImmediately();
-        this.cancelPendingPresentations();
+        this.completedRoundVisualsCleared = true;
+        // Invalidate the round before starting any asynchronous drain. Every
+        // visible node is detached synchronously below; awaiting the regional
+        // flow may overlap the next deal but can no longer mutate its surface.
+        const drain = this.endRoundPresentation('SET_END');
+        await drain;
+    }
+
+    /**
+     * Retain the terminal hand for 1.5 seconds after its physical Out_Card landing.
+     * This method deliberately does not clear the table: popup settlement clears
+     * after this boundary, while FLOATING settlement lets the accepted next deal
+     * replace the old round atomically so an imprecise server lifecycle tick can
+     * never expose an empty table between cleanup and dealing.
+     */
+    public async waitForTerminalCardHold(holdMs = 1500): Promise<boolean> {
+        if (this.terminalCardHoldBarrier) {
+            await this.terminalCardHoldBarrier;
+            return true;
+        }
+        const lease = this.roundPresentation.lease();
+        const landing = this.latestPublicCardLanding;
+        let heldCurrentRound = false;
+        const barrier = (async () => {
+            await landing.catch((error: unknown) => {
+                this.reportPresentationError(error, 'TERMINAL_CARD_LANDING', {
+                    ...this.roundPresentation.currentIdentity(),
+                });
+            });
+            if (!this.roundPresentation.isCurrent(lease)) return;
+            const landedAt = Date.now();
+            await new Promise<void>((resolve) => globalThis.setTimeout(resolve, Math.max(0, holdMs)));
+            if (!this.roundPresentation.isCurrent(lease)) return;
+            heldCurrentRound = true;
+            console.info('[CommonRoomRoundPresentation]', {
+                stage: 'TERMINAL_HOLD_COMPLETE', roomId: this.roomId(),
+                roundNo: this.roundPresentation.currentIdentity()?.roundNo ?? 0,
+                stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+                operationId: String(this.record(
+                    this.runtime.getRoomSet().GetRoomSetInfo()?.operationDeadline,
+                )?.operationId ?? ''),
+                landedAt, holdMs: Math.max(0, holdMs),
+            });
+        })();
+        this.terminalCardHoldBarrier = barrier;
+        await barrier;
+        if (this.terminalCardHoldBarrier === barrier) {
+            this.terminalCardHoldBarrier = null;
+            const deferred = this.deferredNextRoundEvents.splice(0);
+            console.info('[CommonRoomRoundPresentation]', {
+                stage: 'NEXT_DEAL_RELEASED', roomId: this.roomId(),
+                deferredEventCount: deferred.length,
+                holdMs: Math.max(0, holdMs),
+            });
+            for (const pending of deferred) this.onEvent(pending.event, pending.body);
+        }
+        return heldCurrentRound;
+    }
+
+    private deferNextRoundEventUntilTerminalHold(event: string, body: unknown): boolean {
+        if (!this.terminalCardHoldBarrier || ![
+            'CommonPdk_AuthoritativeState',
+            'CommonPdkSetStart',
+            'CommonPdk_AuthoritativePhaseChanged',
+        ].includes(event)) return false;
+        const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+        const current = this.roundPresentation.currentIdentity();
+        if (!current) return false;
+        const nextRoundNo = Number(setInfo.roundNo ?? setInfo.setID
+            ?? this.runtime.getRoom().GetRoomProperty('setID') ?? 0);
+        const nextShuffleSequence = Number(setInfo.shuffleSequence ?? setInfo.dealSequence ?? -1);
+        const nextDealIdentity = String(setInfo.dealId ?? setInfo.dealIdentity ?? '');
+        const changed = nextRoundNo !== current.roundNo
+            || (nextShuffleSequence >= 0 && nextShuffleSequence !== current.shuffleSequence)
+            || Boolean(nextDealIdentity && nextDealIdentity !== current.dealIdentity);
+        if (!changed) return false;
+        this.deferredNextRoundEvents.push({ event, body });
+        console.info('[CommonRoomRoundPresentation]', {
+            stage: 'NEXT_DEAL_DEFERRED', roomId: this.roomId(), event,
+            currentRoundNo: current.roundNo, nextRoundNo,
+            currentShuffleSequence: current.shuffleSequence, nextShuffleSequence,
+            deferredEventCount: this.deferredNextRoundEvents.length,
+        });
+        return true;
     }
 
     /** 房间首帧必须包含权威头像和牌面，避免重连时先暴露空场景或黑色底帧。 */
@@ -1825,7 +1940,7 @@ export class CommonPdkPlayController {
         expectedProjectionGeneration?: number,
     ): Promise<void> {
         if (!this.view) return;
-        const generation = this.presentationGeneration;
+        const lease = this.roundPresentation.lease();
         const dataSeat = Number(packet.pos ?? packet.opPos ?? -1);
         const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat()).find((item) => item.dataSeat === dataSeat);
         if (!entry) return;
@@ -1846,21 +1961,21 @@ export class CommonPdkPlayController {
         } else {
             await this.waitForPublicCardHold(dataSeat);
         }
-        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) return;
+        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) return;
         let destinationCleared = false;
         // The authority acknowledgement can arrive before the local flight
         // finishes. Clear and hide the destination before waiting, otherwise a
         // stale card is visible underneath the one physical card that is moving.
         if (dataSeat === this.clientSeat() && this.ownLandingCards.length > 0) {
             await this.clearActionSlot(parent);
-            if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) return;
+            if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) return;
             destinationCleared = true;
             this.setOutCardVisible(outCardPath, false);
             await this.ownCardFlight;
-            if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) return;
+            if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) return;
         }
         if (!destinationCleared) await this.clearActionSlot(parent);
-        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) return;
+        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) return;
         // The flying cards themselves become the final Out_Card nodes. This is
         // one physical presentation moving and stopping, never two card copies.
         this.setOutCardVisible(outCardPath, false);
@@ -1888,7 +2003,7 @@ export class CommonPdkPlayController {
         } else if (parent && values.length > 0) for (const value of values) {
             const card = await this.cards.create(parent, value);
             if (!parent.isValid
-                || !this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) {
+                || !this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) {
                 if (card.isValid) card.destroy();
                 return;
             }
@@ -1912,7 +2027,7 @@ export class CommonPdkPlayController {
         if (parent && values.length > 0 && !this.runtime.arrangementEnabled()) {
             this.showCurrentPlayArrow(parent, packet, true);
         }
-        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, generation, expectedProjectionGeneration)) return;
+        if (!this.isPublicSeatRenderCurrent(dataSeat, seatRevision, lease, expectedProjectionGeneration)) return;
         this.view.visible(`Players/Play_${entry.physicalSlot}/Tip/Pass`, values.length === 0);
         if (values.length > 0) {
             this.publicSeatOperationIds.set(dataSeat, String(packet.operationId ?? packet.actionId ?? ''));
@@ -1931,9 +2046,17 @@ export class CommonPdkPlayController {
     }
 
     private async presentPublicOperation(packet: Record<string, unknown>): Promise<void> {
-        await this.renderPublicOperation(packet);
-        if (!this.view || !this.runtime.arrangementEnabled()) return;
-        const generation = this.presentationGeneration;
+        const lease = this.roundPresentation.lease();
+        const landing = this.rememberLatestPublicCardLanding(this.renderPublicOperation(packet));
+        await landing;
+        // The public renderer may yield while cards load, a local flight lands,
+        // or a preceding retained transfer drains. A round boundary invalidates
+        // the whole operation during any of those awaits. Never capture the
+        // generation after the await: doing so lets an old-round continuation
+        // adopt the new round's generation and archive its stale operation into
+        // an opponent Table_Cards container.
+        if (!this.roundPresentation.isCurrent(lease)
+            || !this.view || !this.runtime.arrangementEnabled()) return;
         const dataSeat = Number(packet.pos ?? packet.opPos ?? -1);
         const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat())
             .find((item) => item.dataSeat === dataSeat);
@@ -1951,22 +2074,33 @@ export class CommonPdkPlayController {
             playCountTemplate: this.view.find(PdkRoomNodePath.playCountTemplate),
             operationId,
             playIndex: this.resolveAuthorityPlayIndex(operationId, Number(packet.playIndex ?? 0)),
-            isCurrent: () => generation === this.presentationGeneration && Boolean(this.view),
+            isCurrent: () => this.roundPresentation.isCurrent(lease) && Boolean(this.view),
         });
         this.traceOutCards('liangshan-arrangement-move-finish', {
             operationId, dataSeat, physicalSlot: entry.physicalSlot, moved: Boolean(moved),
         });
+        if (!this.roundPresentation.isCurrent(lease) || !this.view) return;
         if (moved) {
             const retainedHand = tableCards.getChildByName(`Play_${operationId}`);
             if (retainedHand) this.showCurrentPlayArrow(retainedHand, packet, true);
         }
-        if (generation !== this.presentationGeneration || !this.view || moved) return;
+        if (moved) return;
         // A live Liangshan action is never reconstructed directly in Table_Cards.
         // If its presentation was superseded, the newer authority action owns the
         // screen; reconnect history is restored separately by restoreTableCards.
         this.traceOutCards('liangshan-arrangement-move-superseded', {
             operationId, dataSeat, physicalSlot: entry.physicalSlot,
         });
+    }
+
+    /**
+     * Both ordinary and retained-table PDK must expose the same physical landing
+     * boundary to settlement. Keeping that ownership here prevents SetEnd from
+     * starting its hold against a stale, already-resolved Promise.
+     */
+    private rememberLatestPublicCardLanding(landing: Promise<void>): Promise<void> {
+        this.latestPublicCardLanding = landing;
+        return landing;
     }
 
     /**
@@ -1994,7 +2128,11 @@ export class CommonPdkPlayController {
         return playIndex + 1;
     }
 
-    private async presentLatestAuthorityAction(setInfo: Record<string, unknown>): Promise<void> {
+    private async presentLatestAuthorityAction(
+        setInfo: Record<string, unknown>,
+        expectedLease: PdkRoundPresentationLease,
+    ): Promise<void> {
+        if (!this.roundPresentation.isCurrent(expectedLease)) return;
         const actions = Array.isArray(setInfo.tableOperations) ? setInfo.tableOperations : [];
         if (actions.length === 0) {
             await this.reconcileAuthorityPublicCards(setInfo);
@@ -2020,6 +2158,7 @@ export class CommonPdkPlayController {
             const existingPresentation = this.tableActionPresentations.get(actionKey);
             if (existingPresentation) {
                 await existingPresentation;
+                if (!this.roundPresentation.isCurrent(expectedLease)) return;
                 continue;
             }
             if (this.tableActionIds.has(actionKey)) continue;
@@ -2028,6 +2167,7 @@ export class CommonPdkPlayController {
             this.tableActionPresentations.set(actionKey, presentation);
             try {
                 await presentation;
+                if (!this.roundPresentation.isCurrent(expectedLease)) return;
             } finally {
                 if (this.tableActionPresentations.get(actionKey) === presentation) {
                     this.tableActionPresentations.delete(actionKey);
@@ -2074,7 +2214,6 @@ export class CommonPdkPlayController {
         this.publicCardShownAt.clear();
         this.publicSeatOperationIds.clear();
         this.cancelPendingPresentations();
-        this.presentationGeneration += 1;
         this.publicProjectionGeneration += 1;
         this.publicSeatRenderRevisions.clear();
         this.renderedActionIds.clear();
@@ -2110,6 +2249,51 @@ export class CommonPdkPlayController {
             ?? this.runtime.getRoom().GetRoomProperty('setID') ?? 0)}`;
     }
 
+    /**
+     * Gives one authority deal exclusive ownership of every asynchronous table
+     * projection. Phase-only packets for the same deal never reopen the archive;
+     * a newer shuffle may legitimately wrap an in-place rematch back to round 1.
+     */
+    private acceptPresentationRound(
+        setInfo: Record<string, unknown>,
+        source: string,
+    ): PdkRoundPresentationAcceptance {
+        const acceptance = this.roundPresentation.accept({
+            roomId: this.roomId(),
+            roundNo: Number(setInfo.roundNo ?? setInfo.setID
+                ?? this.runtime.getRoom().GetRoomProperty('setID') ?? 0),
+            shuffleSequence: Number(setInfo.shuffleSequence ?? setInfo.dealSequence ?? -1),
+            dealIdentity: String(setInfo.dealId ?? setInfo.dealIdentity ?? ''),
+        });
+        if (!acceptance.accepted) {
+            console.info('[CommonRoomRoundVisualBoundary]', {
+                stage: `REJECT_${acceptance.rejection}`,
+                source,
+                roomId: this.roomId(),
+                roundNo: acceptance.identity.roundNo,
+                shuffleSequence: acceptance.identity.shuffleSequence,
+                current: this.roundPresentation.currentIdentity(),
+            });
+            return acceptance;
+        }
+        if (!acceptance.changed && acceptance.previousKey) return acceptance;
+        // accept() invalidates all old leases before any old node is detached.
+        // The first activation is cleared too because CommonRoom itself may be
+        // cached across controller instances even though this lifecycle is new.
+        void this.clearRoundPresentationNodes();
+        console.info('[CommonRoomRoundVisualBoundary]', {
+            stage: acceptance.previousKey ? 'ACCEPT_NEW_DEAL' : 'ACTIVATE_DEAL',
+            source, roomId: this.roomId(),
+            previousRoundKey: acceptance.previousKey,
+            nextRoundKey: acceptance.lease.key,
+            roundNo: acceptance.identity.roundNo,
+            shuffleSequence: acceptance.identity.shuffleSequence,
+            dealIdentity: acceptance.identity.dealIdentity,
+            stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+        });
+        return acceptance;
+    }
+
     private clearTableCards(): void {
         this.currentPlayArrow?.hide();
         // Cleanup is unconditional. The capability only controls whether retained
@@ -2126,10 +2310,11 @@ export class CommonPdkPlayController {
 
     private async appendTableCards(
         packet: Record<string, unknown>,
-        expectedGeneration: number,
+        expectedLease: PdkRoundPresentationLease,
+        ownsReconciliation: () => boolean,
     ): Promise<void> {
         if (!this.view || !this.runtime.arrangementEnabled()) return;
-        if (expectedGeneration !== this.presentationGeneration) return;
+        if (!this.roundPresentation.isCurrent(expectedLease) || !ownsReconciliation()) return;
         const dataSeat = Number(packet.pos ?? packet.opPos ?? -1);
         const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat())
             .find((item) => item.dataSeat === dataSeat);
@@ -2173,7 +2358,8 @@ export class CommonPdkPlayController {
         hand.addComponent(UITransform).setContentSize(0, 0);
         for (const value of values) {
             const card = await this.cards.create(hand, value);
-            if (expectedGeneration !== this.presentationGeneration || !parent.isValid || !hand.isValid) {
+            if (!this.roundPresentation.isCurrent(expectedLease) || !ownsReconciliation()
+                || !parent.isValid || !hand.isValid) {
                 if (card.isValid) card.destroy();
                 if (hand.isValid) hand.destroy();
                 return;
@@ -2190,9 +2376,21 @@ export class CommonPdkPlayController {
         layoutPdkRetainedHands(parent);
     }
 
-    private async restoreTableCards(packet: Record<string, unknown>): Promise<void> {
+    private async restoreTableCards(
+        packet: Record<string, unknown>,
+        expectedLease: PdkRoundPresentationLease,
+        ownsReconciliation: () => boolean = () => true,
+    ): Promise<void> {
         if (!this.view || !this.runtime.arrangementEnabled()) return;
-        const generation = this.presentationGeneration;
+        if (!this.roundPresentation.isCurrent(expectedLease) || !ownsReconciliation()) return;
+        const authorityVersion = Number(packet.stateVersion
+            ?? this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1);
+        const currentAuthorityVersion = (): number => Number(
+            this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1,
+        );
+        const ownsCurrentAuthority = (): boolean => ownsReconciliation()
+            && this.roundPresentation.isCurrent(expectedLease)
+            && authorityVersion === currentAuthorityVersion();
         // RoomSet exposes a mutable projection. Freeze the reconnect ledger at
         // method entry: live commits may append to the original array while card
         // assets are awaiting, and must never be consumed by this history loop.
@@ -2206,7 +2404,7 @@ export class CommonPdkPlayController {
         // groups and appends only the missing hands in server order.
         let playIndex = 0;
         for (const value of operations) {
-            if (generation !== this.presentationGeneration || !this.view) return;
+            if (!ownsCurrentAuthority() || !this.view) return;
             const operation = this.record(value);
             if (!operation || String(operation.action).toLowerCase() !== 'play') continue;
             const cards = Array.isArray(operation.cards) ? operation.cards.map(Number) : [];
@@ -2230,13 +2428,31 @@ export class CommonPdkPlayController {
                 cardList: cards,
                 operationId: String(operation.operationId ?? ''),
                 playIndex,
-            }, generation);
+            }, expectedLease, ownsReconciliation);
             // Reconnect history is complete after append. Seed the live ledger
             // gate so the next authority commit presents only genuinely new
             // operations through Out_Card instead of replaying restored hands.
             this.tableActionIds.add(actionKey);
         }
-        if (generation !== this.presentationGeneration || !this.view) return;
+        if (!ownsCurrentAuthority() || !this.view) return;
+        // Reconnect is a complete ledger projection. Remove groups that are not
+        // present in the authoritative snapshot so old trick/round nodes cannot
+        // survive an in-place refresh and appear beside the current hand.
+        const authoritativeHandNames = new Set(operations
+            .map((value) => this.record(value))
+            .filter((operation) => operation && String(operation.action).toLowerCase() === 'play')
+            .map((operation) => `Play_${String(operation?.operationId ?? '')}`));
+        for (let slot = 0; slot < 4; slot += 1) {
+            const path = `Players/Play_${slot}/Card/Table_Cards`;
+            const table = this.view.find(path);
+            if (!table) continue;
+            for (const hand of [...table.children]) {
+                if (!hand.name.startsWith('Play_') || authoritativeHandNames.has(hand.name)) continue;
+                hand.removeFromParent();
+                hand.destroy();
+            }
+            this.view.visible(path, table.children.length > 0);
+        }
         // Pass operations do not take ownership of the arrow. On reconnect the
         // ledger can end in one or more passes, so locate the last actual play
         // instead of assuming the final ledger entry contains cards.
@@ -2297,14 +2513,33 @@ export class CommonPdkPlayController {
         }
     }
 
-    private resetRoundPresentation(): void {
+    private endRoundPresentation(reason: string): Promise<void> {
+        const identity = this.roundPresentation.currentIdentity();
+        this.roundPresentation.end();
+        console.info('[CommonRoomRoundPresentation]', {
+            stage: 'END', reason, roomId: this.roomId(),
+            roundNo: identity?.roundNo ?? 0,
+            shuffleSequence: identity?.shuffleSequence ?? -1,
+            stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+            operationId: String(this.record(
+                this.runtime.getRoomSet().GetRoomSetInfo()?.operationDeadline,
+            )?.operationId ?? ''),
+        });
+        return this.clearRoundPresentationNodes();
+    }
+
+    /** Detach the complete public-card surface synchronously, then drain old animations. */
+    private clearRoundPresentationNodes(): Promise<void> {
         this.lastDealAnimationKey = '';
+        const drain = this.retainedPlayedCardFlow?.cancelPendingForRoundBoundary()
+            ?? Promise.resolve();
         this.clearPublicCards();
         this.animations?.clear();
         if (this.flyingOverlay?.isValid) this.flyingOverlay.destroy();
         this.flyingOverlay = null;
         this.ownCardFlightActive = false;
         this.ownCardFlight = Promise.resolve();
+        this.latestPublicCardLanding = Promise.resolve();
         this.clearOwnLandingCards();
         this.clearTableCards();
         this.tableActionIds.clear();
@@ -2326,6 +2561,11 @@ export class CommonPdkPlayController {
         this.hintRequestedDuringPlay = false;
         this.playRequestScope = null;
         this.selectionAuthorityKey = '';
+        return drain.catch((error: unknown) => {
+            this.reportPresentationError(error, 'ROUND_PRESENTATION_DRAIN', {
+                ...this.roundPresentation.currentIdentity(),
+            });
+        });
     }
 
     private clearHandVisuals(reason: string): void {
@@ -2356,7 +2596,7 @@ export class CommonPdkPlayController {
     /** Clear every visual owned by the completed round at the Continue boundary. */
     public clearCompletedRound(): void {
         this.completedRoundVisualsCleared = true;
-        this.resetRoundPresentation();
+        void this.endRoundPresentation('CONTINUE');
         this.clearHandVisuals('CONTINUE');
         this.competeDealerPhase = false;
         this.renderCompeteDealerControls();
@@ -2464,12 +2704,13 @@ export class CommonPdkPlayController {
                         this.clearCompletedTrickAfterHold(winningSeat);
                         return Promise.resolve();
                     }
-                    return this.renderPublicOperation({
+                    const landing = this.rememberLatestPublicCardLanding(this.renderPublicOperation({
                         pos: winningSeat,
                         cardList: latestPlay.cards,
                         operationId: winningOperationId,
                         playIndex: Number(latestPlay.playIndex ?? 0),
-                    }, projectionGeneration).then(() => this.clearCompletedTrickAfterHold(winningSeat))
+                    }, projectionGeneration));
+                    return landing.then(() => this.clearCompletedTrickAfterHold(winningSeat))
                         .catch((error: unknown) => this.report(error, '胜出牌停留显示失败'));
                 }
                 this.clearLatestPublicCards();
@@ -2477,12 +2718,12 @@ export class CommonPdkPlayController {
                 // Each seat owns one live Out_Card slot for the current trick.
                 // A response replaces only that same seat's previous slot; plays
                 // from the other seats remain until the trick-level clear.
-                return this.renderPublicOperation({
+                return this.rememberLatestPublicCardLanding(this.renderPublicOperation({
                     pos: dataSeat,
                     cardList,
                     operationId: String(comparison.operationId ?? ''),
                     playIndex: Number(comparison.playIndex ?? 0),
-                }, projectionGeneration).catch((error: unknown) => this.report(error, '桌面牌恢复失败'));
+                }, projectionGeneration)).catch((error: unknown) => this.report(error, '桌面牌恢复失败'));
             }
             return Promise.resolve();
         }
@@ -2511,7 +2752,7 @@ export class CommonPdkPlayController {
 
     private async restoreSeatPlayStates(raw: unknown[], projectionGeneration: number): Promise<void> {
         if (!this.view) return;
-        const generation = this.presentationGeneration;
+        const lease = this.roundPresentation.lease();
         const incomingSeats = new Set<number>();
         // The server contract already contains exactly one complete play per seat.
         // Keep a defensive map so malformed duplicates cannot create two groups.
@@ -2545,11 +2786,11 @@ export class CommonPdkPlayController {
             const path = `Players/Play_${entry.physicalSlot}/Card/Out_Card`;
             await this.waitForPublicCardHold(entry.dataSeat);
             if (!this.isPublicSeatRenderCurrent(
-                entry.dataSeat, seatRevision, generation, projectionGeneration,
+                entry.dataSeat, seatRevision, lease, projectionGeneration,
             )) return;
             await this.clearActionSlot(this.view.find(path));
             if (!this.isPublicSeatRenderCurrent(
-                entry.dataSeat, seatRevision, generation, projectionGeneration,
+                entry.dataSeat, seatRevision, lease, projectionGeneration,
             )) return;
             this.view.visible(`Players/Play_${entry.physicalSlot}/Tip/Pass`, false);
             const values = Array.isArray(action.cards) ? action.cards.map(Number) : [];
@@ -2557,9 +2798,7 @@ export class CommonPdkPlayController {
                 const actionType = String(action.action) === 'pass' ? 1
                     : this.gameAudioOperationType(action.opCardType ?? action.opType ?? action.cardType ?? action.type);
                 this.playGameOperation(entry.dataSeat, actionType, values);
-                const operationAnimation = this.animations?.playOperation(actionType, entry.physicalSlot)
-                    .catch((error: unknown) => this.report(error, '牌型动画加载失败'));
-                if (operationAnimation) this.trackPresentation(operationAnimation);
+                this.playOperationAnimationOnce(operationId || actionKey, actionType, entry.physicalSlot);
                 if (actionType !== 1) void this.roomAudio?.play('chupai');
                 const remaining = this.remainingCards.get(entry.dataSeat);
                 if (operationId && remaining !== undefined && remaining > 0 && remaining <= 2
@@ -2581,14 +2820,14 @@ export class CommonPdkPlayController {
                 this.setOutCardVisible(path, false);
                 await this.flyRemoteCards(entry.physicalSlot, values);
                 if (!this.isPublicSeatRenderCurrent(
-                    entry.dataSeat, seatRevision, generation, projectionGeneration,
+                    entry.dataSeat, seatRevision, lease, projectionGeneration,
                 )) return;
             }
             this.setOutCardVisible(path, values.length > 0);
             if (parent) for (const value of values) {
                 const card = await this.cards.create(parent, value);
                 if (!parent.isValid || !this.isPublicSeatRenderCurrent(
-                    entry.dataSeat, seatRevision, generation, projectionGeneration,
+                    entry.dataSeat, seatRevision, lease, projectionGeneration,
                 )) {
                     if (card.isValid) card.destroy();
                     return;
@@ -2602,7 +2841,7 @@ export class CommonPdkPlayController {
             });
             this.clearOutCardPlayCount(parent);
             if (!this.isPublicSeatRenderCurrent(
-                entry.dataSeat, seatRevision, generation, projectionGeneration,
+                entry.dataSeat, seatRevision, lease, projectionGeneration,
             )) return;
             this.renderedActionIds.set(entry.dataSeat, actionKey);
             if (values.length > 0) {
@@ -2790,6 +3029,7 @@ export class CommonPdkPlayController {
         );
     }
     private tip(): void {
+        this.selectionIntentRevision += 1;
         const startedAt = globalThis.performance?.now?.() ?? Date.now();
         const diagnostics = globalThis as typeof globalThis & {
             __PDK_E2E_LOGS__?: unknown[];
@@ -2838,12 +3078,25 @@ export class CommonPdkPlayController {
         this.tipIndex = (this.tipIndex + 1) % tips.length;
         this.updateSelection();
         const selectedCards = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+        const diagnosticRules = this.authoritativeRuleOptions();
+        const diagnosticGameCode = this.runtime.getGameCode();
+        const diagnosticPolicyId = resolvePdkHintPolicyId(diagnosticGameCode);
+        this.traceOutCards('hint-selection', {
+            gameCode: diagnosticGameCode,
+            policyId: diagnosticPolicyId,
+            minimumStraightLength: Number(diagnosticRules.minimumStraightLength),
+            selectedCards,
+            candidateCount: tips.length,
+        });
         const computedAt = globalThis.performance?.now?.() ?? Date.now();
         globalThis.requestAnimationFrame?.(() => {
             const paintedAt = globalThis.performance?.now?.() ?? Date.now();
             console.info('[CommonRoomHintLatency]', {
                 roomId: this.roomId(),
                 playerId: this.runtime.getPlayerId(),
+                gameCode: diagnosticGameCode,
+                policyId: diagnosticPolicyId,
+                minimumStraightLength: Number(diagnosticRules.minimumStraightLength),
                 candidateCount: tips.length,
                 selectedCards,
                 computeMs: Number((computedAt - startedAt).toFixed(2)),
@@ -2873,11 +3126,19 @@ export class CommonPdkPlayController {
         const legal = this.sortedLegalTipCandidates(local, leading, leading);
         const required = leading ? this.activeRequiredFirstCard() : 0;
         this.hintCache = required > 0 ? legal.filter((cards) => cards.includes(required)) : legal;
+        const rules = this.authoritativeRuleOptions();
+        const gameCode = this.runtime.getGameCode();
         this.traceOutCards('hint-cache', {
+            gameCode,
+            policyId: resolvePdkHintPolicyId(gameCode),
+            minimumStraightLength: Number(rules.minimumStraightLength),
+            prioritizeLargestLeadUnlessMaximumStraight:
+                Boolean(rules.prioritizeLargestLeadUnlessMaximumStraight),
             leading,
             targetType: Number(this.logic.GetLastCardType()),
             targetCards: [...(this.logic.lastCardList ?? [])].map(Number),
             candidates: this.hintCache.map((cards) => [...cards]),
+            finalSelection: [...(this.hintCache[0] ?? [])],
         });
     }
 
@@ -3110,7 +3371,12 @@ export class CommonPdkPlayController {
     private playOperationAnimationOnce(operationId: string, opType: number, physicalSlot: number): void {
         if (!operationId || opType <= 1 || this.animatedOperationIds.has(operationId)) return;
         this.animatedOperationIds.add(operationId);
-        const animation = this.animations?.playOperation(opType, physicalSlot)
+        const animation = this.animations?.playOperation(opType, physicalSlot, {
+            roomId: this.roomId(),
+            playerId: this.runtime.getPlayerId(),
+            operationId,
+            stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+        })
             .catch((error: unknown) => this.report(error, '牌型动画加载失败'));
         if (animation) this.trackPresentation(animation);
     }
@@ -3178,11 +3444,11 @@ export class CommonPdkPlayController {
     private isPublicSeatRenderCurrent(
         dataSeat: number,
         seatRevision: number,
-        presentationGeneration: number,
+        lease: PdkRoundPresentationLease,
         expectedProjectionGeneration?: number,
     ): boolean {
         return Boolean(this.view)
-            && presentationGeneration === this.presentationGeneration
+            && this.roundPresentation.isCurrent(lease)
             && this.publicSeatRenderRevisions.get(dataSeat) === seatRevision
             && (expectedProjectionGeneration === undefined
                 || expectedProjectionGeneration === this.publicProjectionGeneration);
@@ -3600,7 +3866,11 @@ export class CommonPdkPlayController {
             group.push(card);
             groups.set(cardRank, group);
         }
-        const rankGroups = [...groups.entries()]
+        // The web-mobile release transpiler lowers `[...map.entries()]` to
+        // `[].concat(map.entries())`, leaving the iterator itself as the only
+        // element. Array.from materializes the entries before Babel processes
+        // the following array pipeline, so every recursive group is an array.
+        const rankGroups = Array.from(groups.entries())
             .sort(([left], [right]) => left - right)
             .map(([, cards]) => cards);
         const result: number[][] = [];
@@ -3649,6 +3919,7 @@ export class CommonPdkPlayController {
                 this.logic.ChangeSelectCard(cards);
                 const cardType = Number(this.logic.GetCardType());
                 if (cardType <= 0) continue;
+                if (!isAuthorityCompatiblePdkAircraft(cards, cardType)) continue;
                 if (!isPdkResponseShape(cardType, cards.length, targetType, targetCount)) continue;
                 if (targetType === 2 && targetCount === 1 && cardType === 2
                     && !isStrictlyHigherPdkSingle(cards[0], this.logic.lastCardList[0])) continue;
@@ -3693,13 +3964,13 @@ export class CommonPdkPlayController {
             }
         }
         const rankCandidates = (values: typeof constrained): number[][] => rankCleanPdkHints(this.logic.GetHandCard() ?? [], values, {
+            policyId: resolvePdkHintPolicyId(this.runtime.getGameCode()),
             minimumStraightLength,
             minimumPairRunLength,
             allowTwoInRuns: Boolean(rules.allowTwoInRuns),
             protectedBombs: this.protectedBombGroups(),
             tripleAttachmentMode: String(rules.tripleAttachmentMode ?? '') as
                 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER',
-            twoHandMaximumLeadSizeTolerance: Number(rules.twoHandMaximumLeadSizeTolerance ?? 2),
             prioritizeMaximumWithOneOrdinaryPlay:
                 Boolean(rules.prioritizeMaximumWithOneOrdinaryPlay),
             prioritizeLargestLeadWithoutMaximum:
@@ -3862,7 +4133,22 @@ export class CommonPdkPlayController {
             || cards.length === 0 || type <= 0;
     }
 
-    private async autoHintForAuthoritativeTurn(setInfo: Record<string, unknown>): Promise<void> {
+    private async autoHintForAuthoritativeTurn(
+        setInfo: Record<string, unknown>,
+        expectedSelectionRevision: number,
+        authorityProjectionStartedAt = globalThis.performance?.now?.() ?? Date.now(),
+    ): Promise<void> {
+        if (expectedSelectionRevision !== this.selectionIntentRevision) {
+            console.info('[CommonRoomAutoHintSkipped]', {
+                reason: 'MANUAL_SELECTION_OWNS_TURN',
+                roomId: this.roomId(),
+                playerId: this.runtime.getPlayerId(),
+                stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+                expectedSelectionRevision,
+                currentSelectionRevision: this.selectionIntentRevision,
+            });
+            return;
+        }
         if (!this.view || this.cardNodes.length === 0) return;
         // During dealer competition Authority deliberately exposes the current
         // responder as opPos. That seat owns only the rob/pass decision; it does
@@ -3903,6 +4189,7 @@ export class CommonPdkPlayController {
         if (!operationId || stateVersion < 0 || this.autoHintTurnKey === key) return;
         this.autoHintTurnKey = key;
         this.autoPassInFlight = true;
+        let autoPassFailed = false;
         try {
             const latestSet = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
             const latestDeadline = this.record(latestSet.operationDeadline);
@@ -3921,6 +4208,7 @@ export class CommonPdkPlayController {
             // Validate the exact whole hand directly with the regional rule engine;
             // when legal, it is the only possible final action and is auto-played.
             if ((required <= 0 || hand.includes(required)) && wholeHandType > 0 && wholeHandAllowed
+                && this.isAutomaticWholeHandCandidate(hand, wholeHandType)
                 && this.maybeAutoPlay(latestSet, true, { cards: hand, opType: wholeHandType })) {
                 console.info('[CommonRoomLastHandAutoPlay]', {
                     roomId, stateVersion, operationId, turnSeat, trickId,
@@ -3936,9 +4224,28 @@ export class CommonPdkPlayController {
                 this.updateSelection();
                 return;
             }
+            const hintComputeStartedAt = globalThis.performance?.now?.() ?? Date.now();
             const localSource = leading ? this.leadTipCandidates() : this.responseTipCandidates();
             const legal = this.sortedLegalTipCandidates(localSource, leading);
             const tips = required > 0 ? legal.filter((cards) => cards.includes(required)) : legal;
+            const hintComputedAt = globalThis.performance?.now?.() ?? Date.now();
+            const completeResponse = tips.find((cards) => this.sameCards(cards, hand));
+            if (completeResponse) {
+                const completeType = this.intrinsicOperationTypeForCards(completeResponse);
+                if (this.isAutomaticWholeHandCandidate(completeResponse, completeType)
+                    && this.maybeAutoPlay(latestSet, true, {
+                        cards: completeResponse,
+                        opType: completeType,
+                    })) {
+                    console.info('[CommonRoomLastHandAutoPlay]', {
+                        roomId, stateVersion, operationId, turnSeat, trickId,
+                        source: 'AUTHORITY_LEGAL_CANDIDATE',
+                        opType: completeType,
+                        cards: [...completeResponse],
+                    });
+                    return;
+                }
+            }
             if (tips.length > 0) {
                 const automatic = tips[0];
                 // Keep the automatic convenience selection outside the manual
@@ -3954,6 +4261,8 @@ export class CommonPdkPlayController {
                     roomId, stateVersion, operationId, turnSeat, trickId,
                     finalCards: [...automatic],
                     nodeY: this.cardNodes.map((node) => Number(node.position.y)),
+                    authorityToHintMs: Number((hintComputedAt - authorityProjectionStartedAt).toFixed(2)),
+                    hintComputeMs: Number((hintComputedAt - hintComputeStartedAt).toFixed(2)),
                 });
                 return;
             }
@@ -3967,6 +4276,7 @@ export class CommonPdkPlayController {
             });
             await this.pass();
         } catch (error: unknown) {
+            autoPassFailed = true;
             if (this.view && this.roomId() === roomId
                 && Number(this.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1
                 && Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2) === stateVersion) {
@@ -3979,6 +4289,7 @@ export class CommonPdkPlayController {
             }
         } finally {
             this.autoPassInFlight = false;
+            if (autoPassFailed) this.refresh();
         }
     }
 
@@ -3986,8 +4297,26 @@ export class CommonPdkPlayController {
         const previous = [...(this.logic.GetSelectCard() ?? [])].map(Number);
         try {
             this.logic.ChangeSelectCard([...cards]);
-            return Number(this.logic.GetCardType());
+            const cardType = Number(this.logic.GetCardType());
+            return isAuthorityCompatiblePdkAircraft(cards, cardType) ? cardType : 0;
         } finally {
+            this.logic.ChangeSelectCard(previous);
+        }
+    }
+
+    private intrinsicOperationTypeForCards(cards: readonly number[]): number {
+        const previous = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+        const previousType = Number(this.logic.GetLastCardType());
+        const previousCards = [...(this.logic.lastCardList ?? [])];
+        try {
+            this.logic.lastCardType = 0;
+            this.logic.lastCardList = [];
+            this.logic.ChangeSelectCard([...cards]);
+            const cardType = Number(this.logic.GetCardType());
+            return isAuthorityCompatiblePdkAircraft(cards, cardType) ? cardType : 0;
+        } finally {
+            this.logic.lastCardType = previousType;
+            this.logic.lastCardList = previousCards;
             this.logic.ChangeSelectCard(previous);
         }
     }
@@ -3997,6 +4326,7 @@ export class CommonPdkPlayController {
         const rules = this.authoritativeRuleOptions();
         const triple = String(rules.tripleAttachmentMode ?? 'DISABLED');
         const four = String(rules.fourAttachmentMode ?? 'DISABLED');
+        const scoringBomb = String(rules.bombScoreMode ?? 'DISABLED') !== 'DISABLED';
         switch (opType) {
             case 6:
             case 16:
@@ -4008,13 +4338,13 @@ export class CommonPdkPlayController {
             case 17:
                 return triple === 'PAIRS' || triple === 'SINGLE_OR_PAIR' || triple === 'EITHER';
             case 8:
-                return rules.allowFourBombWithOne === true;
+                return rules.allowFourBombWithOne === true && !scoringBomb;
             case 9:
-                return four === 'SINGLES' || four === 'EITHER';
+                return (four === 'SINGLES' || four === 'EITHER') && !scoringBomb;
             case 20:
-                return four === 'PAIRS' || four === 'EITHER';
+                return (four === 'PAIRS' || four === 'EITHER') && !scoringBomb;
             case 10:
-                return rules.allowFourWithThree === true;
+                return rules.allowFourWithThree === true && !scoringBomb;
             default:
                 return opType > 0;
         }
@@ -4025,12 +4355,18 @@ export class CommonPdkPlayController {
         if (!localTurn || !this.isFormalCardPlayPhase(setInfo)) return false;
         const hand = [...(this.logic.GetHandCard() ?? [])].map(Number);
         if (hand.length === 0) return false;
-        if (this.autoPlayRejectedTurnKey === this.autoPlayKey(setInfo, hand)) return false;
         const leading = this.isAuthoritativeLeadingTurn();
         const required = leading ? this.activeRequiredFirstCard() : 0;
         if (required > 0 && !hand.includes(required)) return false;
         const opType = this.operationTypeForCards(hand);
-        return opType > 0 && this.isWholeHandTypeEnabled(opType);
+        return opType > 0 && this.isAutomaticWholeHandCandidate(hand, opType)
+            && this.autoPlayRejectedTurnKey !== this.autoPlayKey(setInfo, hand);
+    }
+
+    private isAutomaticWholeHandCandidate(cards: readonly number[], opType: number): boolean {
+        return opType > 0
+            && this.isWholeHandTypeEnabled(opType)
+            && isAtomicPdkWholeHandCandidate(cards, this.protectedBombGroups());
     }
 
     /** The atomic table snapshot is the only source allowed to mutate rule comparison state. */
@@ -4063,14 +4399,17 @@ export class CommonPdkPlayController {
         if (this.autoPlayInFlight) return true;
         const hand = [...(candidate?.cards ?? [])].map(Number);
         const opType = Number(candidate?.opType ?? 0);
-        if (!hand.length || opType <= 0 || !this.isWholeHandTypeEnabled(opType)
+        if (!hand.length || opType <= 0 || !this.isAutomaticWholeHandCandidate(hand, opType)
             || !this.sameCards(hand, this.logic.GetHandCard() ?? [])) return false;
+        const deadline = this.record(setInfo.operationDeadline);
+        const operationId = String(deadline?.operationId ?? '');
         const turnKey = this.autoPlayKey(setInfo, hand);
         if (this.autoPlayRejectedTurnKey === turnKey) return false;
         if (this.autoPlayTurnKey === turnKey) {
             return false;
         }
         this.autoPlayTurnKey = turnKey;
+        this.autoPlayOperationId = operationId;
         this.autoPlayInFlight = true;
         this.autoPassInFlight = false;
         // Hide manual actions in the same frame that Authority's whole-hand
@@ -4091,8 +4430,12 @@ export class CommonPdkPlayController {
         this.autoPlayTimer = globalThis.setTimeout(() => {
             this.autoPlayTimer = 0;
             const latest = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+            const latestDeadline = this.record(latest.operationDeadline);
+            const latestOperationId = String(latestDeadline?.operationId ?? '');
+            const latestTurnSeat = Number(latest.opPos ?? latestDeadline?.seatId ?? -1);
             const stillLocalTurn = Number(this.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1
-                && this.activeOpPos === this.clientSeat()
+                && latestTurnSeat === this.clientSeat()
+                && latestOperationId === this.autoPlayOperationId
                 && this.isFormalCardPlayPhase(latest);
             const latestHand = [...(this.logic.GetHandCard() ?? [])].map(Number);
             const latestOpType = this.operationTypeForCards(latestHand);
@@ -4103,7 +4446,7 @@ export class CommonPdkPlayController {
             }
             // Revalidate after the delay. The hand, comparison state, or dynamic
             // room rule can change while the automatic flight is pending.
-            if (latestOpType <= 0 || !this.isWholeHandTypeEnabled(latestOpType)) {
+            if (latestOpType <= 0 || !this.isAutomaticWholeHandCandidate(latestHand, latestOpType)) {
                 this.traceOutCards('last-hand-auto-play-cancelled', {
                     turnKey, cards: [...latestHand], opType: latestOpType,
                     reason: 'CURRENT_RULE_REJECTED_WHOLE_HAND',
@@ -4115,7 +4458,7 @@ export class CommonPdkPlayController {
                 return;
             }
             this.logic.ChangeSelectCard(latestHand);
-            void this.outCard(latestOpType, true)
+            void this.outCard(opType, true)
                 .catch((error: unknown) => {
                     // Authority rejection ends automatic ownership of this turn.
                     // Keep the same hand/turn available through manual Hint/Play
@@ -4187,8 +4530,6 @@ export class CommonPdkPlayController {
         return [
             this.roomId(),
             this.clientSeat(),
-            this.activeOpPos,
-            Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? 0),
             Number(setInfo.trickId ?? trick?.trickId ?? -1),
             String(deadline?.operationId ?? ''),
             Number(setInfo.opType ?? setInfo.opCardType ?? trick?.opType ?? trick?.opCardType ?? this.logic.GetLastCardType() ?? 0),
@@ -4208,6 +4549,7 @@ export class CommonPdkPlayController {
         if (this.autoPlayTimer) globalThis.clearTimeout(this.autoPlayTimer);
         this.autoPlayTimer = 0;
         this.autoPlayInFlight = false;
+        this.autoPlayOperationId = '';
     }
 
     private startClockFromSetInfo(packet: Record<string, unknown>): void {

@@ -27,6 +27,9 @@ export interface PokerDeckSelectionContext {
     readonly targetSeat: number;
     readonly dealFlow: PokerDealFlow;
     readonly deckCards: readonly number[];
+    readonly handLimit: number;
+    readonly selectedCards: readonly number[];
+    readonly unavailableCards: readonly number[];
 }
 
 export interface PokerDeckSelectionSubmit extends PokerDeckSelectionContext {
@@ -50,12 +53,14 @@ export class Poker_Deck_Presenter extends Component {
     private generation = 0;
     private lastControlPointerAt = 0;
     private readonly selectedCards = new Set<number>();
+    private readonly unavailableCards = new Set<number>();
 
     public present(gameCode: string, deckCards: readonly number[]): void {
         if (!gameCode.trim()) throw new Error('Poker deck gameCode is required');
         const deck = this.validateDeck(deckCards);
         this.gameCode = gameCode.trim().toUpperCase();
         this.selectedCards.clear();
+        this.unavailableCards.clear();
         this.generation += 1;
         this.prepareRoot();
         this.rebuild(deck);
@@ -69,9 +74,32 @@ export class Poker_Deck_Presenter extends Component {
         if (!Number.isInteger(context.targetSeat) || context.targetSeat < 0) {
             throw new Error('Poker card-selection targetSeat is invalid');
         }
-        this.context = Object.freeze({ ...context, deckCards: Object.freeze([...context.deckCards]) });
+        if (!Number.isInteger(context.handLimit) || context.handLimit <= 0) {
+            throw new Error('Poker card-selection handLimit is invalid');
+        }
+        const deck = this.validateDeck(context.deckCards);
+        const selected = this.validateCardSet(context.selectedCards, deck, 'selectedCards');
+        const unavailable = this.validateCardSet(context.unavailableCards, deck, 'unavailableCards');
+        if (selected.size > context.handLimit) throw new Error('Poker card-selection exceeds authoritative handLimit');
+        if ([...selected].some(card => unavailable.has(card))) {
+            throw new Error('Poker card-selection contains a card assigned to another player');
+        }
+        this.context = Object.freeze({
+            ...context,
+            deckCards: Object.freeze([...context.deckCards]),
+            selectedCards: Object.freeze([...selected]),
+            unavailableCards: Object.freeze([...unavailable]),
+        });
         this.dealStage = 'INITIAL';
-        this.present(context.gameCode, context.deckCards);
+        this.gameCode = context.gameCode.trim().toUpperCase();
+        this.selectedCards.clear();
+        selected.forEach(card => this.selectedCards.add(card));
+        this.unavailableCards.clear();
+        unavailable.forEach(card => this.unavailableCards.add(card));
+        this.generation += 1;
+        this.prepareRoot();
+        this.rebuild(deck);
+        this.refreshSelectedContent();
         this.ensureModalMask();
         this.bindAuthoredControls();
     }
@@ -181,18 +209,15 @@ export class Poker_Deck_Presenter extends Component {
         const suits = [Poker_Card_Suit.Diamond, Poker_Card_Suit.Club, Poker_Card_Suit.Heart, Poker_Card_Suit.Spade] as const;
         presenter.present(protocolRank === 15 ? 2 : protocolRank, suits[protocolSuit - 1], undefined, false, false);
         const button = card.getComponent(Button) ?? card.addComponent(Button);
-        button.interactable = true;
-        let lastActivationAt = 0;
+        const unavailable = this.unavailableCards.has(rawCard);
+        presenter.setDisabled(unavailable);
+        presenter.setSelected(this.selectedCards.has(rawCard));
+        button.interactable = !unavailable;
         const activate = (event?: EventMouse | EventTouch): void => {
             if (event) event.propagationStopped = true;
-            const now = Date.now();
-            if (now - lastActivationAt < 180) return;
-            lastActivationAt = now;
             this.toggleCard(card, rawCard, presenter);
         };
         card.on(Button.EventType.CLICK, activate, this);
-        card.on(Node.EventType.TOUCH_END, activate, this);
-        card.on(Node.EventType.MOUSE_UP, activate, this);
         group.addChild(card);
     }
 
@@ -231,8 +256,16 @@ export class Poker_Deck_Presenter extends Component {
     }
 
     private toggleCard(cardNode: Node, rawCard: number, presenter: Poker_Card_Presenter): void {
-        if (!cardNode.isValid) return;
+        if (!cardNode.isValid || this.unavailableCards.has(rawCard)) return;
         const selected = !this.selectedCards.has(rawCard);
+        if (selected && this.selectedCards.size >= (this.context?.handLimit ?? 0)) {
+            this.node.emit('poker-card-selection-limit', Object.freeze({
+                targetPlayerId: this.context?.targetPlayerId ?? 0,
+                targetSeat: this.context?.targetSeat ?? -1,
+                handLimit: this.context?.handLimit ?? 0,
+            }));
+            return;
+        }
         if (selected) this.selectedCards.add(rawCard);
         else this.selectedCards.delete(rawCard);
         presenter.setSelected(selected);
@@ -290,12 +323,6 @@ export class Poker_Deck_Presenter extends Component {
         const button = node.getComponent(Button) ?? node.addComponent(Button);
         node.targetOff(this);
         node.on(Button.EventType.CLICK, () => this.activateControl(handler), this);
-        const pointerEnd = (event: EventMouse | EventTouch): void => {
-            event.propagationStopped = true;
-            this.activateControl(handler);
-        };
-        node.on(Node.EventType.TOUCH_END, pointerEnd, this);
-        node.on(Node.EventType.MOUSE_UP, pointerEnd, this);
         button.interactable = true;
     }
 
@@ -321,6 +348,9 @@ export class Poker_Deck_Presenter extends Component {
 
     private submit(): void {
         if (!this.context) throw new Error('Poker card-selection context is missing');
+        if (this.selectedCards.size > this.context.handLimit) {
+            throw new Error('Poker card-selection exceeds authoritative handLimit');
+        }
         const detail: PokerDeckSelectionSubmit = Object.freeze({
             ...this.context,
             dealStage: this.context.dealFlow === 'DEAL_ONCE' ? 'INITIAL' : this.dealStage,
@@ -352,5 +382,19 @@ export class Poker_Deck_Presenter extends Component {
             deck.add(card);
         }
         return deck;
+    }
+
+    private validateCardSet(cards: readonly number[], deck: ReadonlySet<number>, field: string): ReadonlySet<number> {
+        if (!Array.isArray(cards)) throw new Error(`Poker card-selection ${field} is invalid`);
+        const values = new Set<number>();
+        for (const raw of cards) {
+            const card = Number(raw);
+            if (!Number.isInteger(card) || !deck.has(card)) {
+                throw new Error(`Poker card-selection ${field} contains an invalid card`);
+            }
+            if (values.has(card)) throw new Error(`Poker card-selection ${field} contains duplicates`);
+            values.add(card);
+        }
+        return values;
     }
 }

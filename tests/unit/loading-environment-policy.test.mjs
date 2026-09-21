@@ -195,7 +195,9 @@ test('Creator keeps the three properties without rewriting the user-owned switch
     const launchSelectionRead = bootstrapSource.indexOf('const launchSelection = loadingBoot.resolveLaunchSelection');
     assert.ok(presentationGuard >= 0 && presentationGuard < launchSelectionRead,
         'LoginScene exits through presentation-only consumption before serialized launch settings are read');
-    assert.match(bootstrapSource, /启动所有者缺失：\$\{sceneName\} 只能消费 BootStrap 已启动的服务/);
+    assert.match(bootstrapSource, /if \(loadingRuntime\.__aoo_BOOTSTRAP_ENTRY_REDIRECT__\)/);
+    assert.match(bootstrapSource, /director\.loadScene\('BootStrap'/);
+    assert.match(bootstrapSource, /启动入口循环：\$\{sceneName\} 未能进入 BootStrap/);
     assert.match(bootstrapSource, /resolveLaunchSelection\(isBootstrapScene/);
     assert.match(bootstrapSource, /source=\{\$\{authoritySource\}\}/);
 });

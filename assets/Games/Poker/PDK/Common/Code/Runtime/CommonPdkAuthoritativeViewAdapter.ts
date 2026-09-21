@@ -410,6 +410,7 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
             dissolved,
             dissolveReason: String(source.dissolveReason ?? ''),
             dissolveVote: record(source.dissolveVote),
+            selectedInitialHands: record(source.selectedInitialHands) ?? {},
         },
     };
 }

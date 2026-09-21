@@ -44,10 +44,20 @@ test('PDK animation registry maps protocol card types to Common/Spine SkeletonDa
         assert.match(registry, new RegExp(`(?:^|\\s)${opType}:`));
     }
     assert.match(resolver, /sp\.SkeletonData/);
-    assert.match(resolver, /pdkAnimationDefinition\(folderKey\)\.assetPath/);
+    assert.match(resolver, /const definition = pdkAnimationDefinition\(folderKey\)/);
+    assert.match(resolver, /loadAsset\(bundle, definition\.assetPath, sp\.SkeletonData\)/);
+    assert.match(resolver, /`\$\{definition\.assetPath\}\/texture`/);
+    assert.match(resolver, /data\.textures = \[texture\]/);
+    assert.match(resolver, /data\.textureNames = \[textureName\]/);
+    assert.match(resolver, /data\.reset\(\)/);
+    assert.match(resolver, /TEXTURE_BOUND/);
+    assert.match(resolver, /mountRevisions\.get\(mount\) !== revision/);
+    assert.match(resolver, /this\.bundlePromise = null;[\s\S]*throw error/);
+    assert.match(resolver, /\[PdkAnimation\][\s\S]*LOAD_FAILED/);
+    assert.match(resolver, /\[PdkAnimation\][\s\S]*PLAY_STARTED/);
     assert.doesNotMatch(resolver, /AnimationClips|JsonAsset|AnimationClip|manifest/);
     assert.match(presenter, /pdkAnimationForOpCardType/);
-    assert.match(controller, /playOperation\(opType\)/);
+    assert.match(controller, /playOperation\(opType, physicalSlot/);
 });
 
 test('PDK room prefab gives every seat one shared card-pattern animation mount', () => {
@@ -80,7 +90,7 @@ test('authority reconciliation removes flight copies and reflows an unchanged ha
         controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
         controller.indexOf("} else if (event === 'CommonPdkSetStart')"),
     );
-    assert.match(authority, /await this\.ownCardFlight;\s*this\.clearOwnLandingCards\(\)/);
+    assert.match(authority, /await snapshotOwnCardFlight;[\s\S]*this\.clearOwnLandingCards\(\)/);
     const render = controller.slice(
         controller.indexOf('private async renderHand'),
         controller.indexOf('private shouldAnimateDeal'),

@@ -224,10 +224,10 @@ export class HallRoomGateway {
         this.catalogCache.set(key, { expiresAt: Date.now() + HallRoomGateway.metadataCacheMs, value });
         return value;
     }
-    public configuration(game: HallCatalogGame): Promise<HallRoomConfiguration> {
+    public configuration(game: HallCatalogGame, options: { readonly refresh?: boolean } = {}): Promise<HallRoomConfiguration> {
         const key = `${game.gameId}:${game.playVersion}`;
         const cached = this.configurationCache.get(key);
-        if (cached && cached.expiresAt > Date.now()) {
+        if (!options.refresh && cached && cached.expiresAt > Date.now()) {
             console.info('[HallRoomConfiguration]', {
                 action: 'CACHE_HIT', gameCode: game.gameCode, gameId: Number(game.gameId),
                 playVersion: game.playVersion,
@@ -235,7 +235,7 @@ export class HallRoomGateway {
             return cached.value;
         }
         console.info('[HallRoomConfiguration]', {
-            action: 'REQUEST', gameCode: game.gameCode, gameId: Number(game.gameId),
+            action: options.refresh ? 'REFRESH_REQUEST' : 'REQUEST', gameCode: game.gameCode, gameId: Number(game.gameId),
             playVersion: game.playVersion,
         });
         const value = this.api.get<HallRoomConfiguration>('/api/v2/hall/configuration', {

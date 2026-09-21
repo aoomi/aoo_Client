@@ -1,0 +1,5883 @@
+{
+  "runId": "2026-09-20T20-24-28-678Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://127.0.0.1:7456",
+  "assertions": {},
+  "failure": {
+    "message": "desktop: timeout waiting for game scene",
+    "stack": "Error: desktop: timeout waiting for game scene\n    at Page.wait (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:90:11)\n    at async createRoom (file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:307:3)\n    at async file:///Users/aoo/Code/Game/BCG/Aoo/Client/work/pdk-small-settlement-background-e2e.mjs:614:19"
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-20T20-24-28-678Z/desktop-failure.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-20T20-24-28-678Z/mobile-failure.png"
+  ],
+  "sceneDiagnostics": {
+    "desktop": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "Label",
+          "value": "字牌"
+        },
+        {
+          "name": "Label",
+          "value": "长牌"
+        },
+        {
+          "name": "Label",
+          "value": "麻将"
+        },
+        {
+          "name": "Label",
+          "value": "扑克"
+        },
+        {
+          "name": "Label",
+          "value": "规则"
+        },
+        {
+          "name": "Label",
+          "value": "扯旋"
+        },
+        {
+          "name": "Label",
+          "value": "凉山跑得快"
+        },
+        {
+          "name": "Label",
+          "value": "内江跑得快"
+        },
+        {
+          "name": "Label",
+          "value": "金花"
+        },
+        {
+          "name": "Label",
+          "value": "成都跑得快"
+        },
+        {
+          "name": "Label",
+          "value": "牛牛"
+        },
+        {
+          "name": "Label",
+          "value": "创建房间"
+        },
+        {
+          "name": "Label",
+          "value": "X5"
+        },
+        {
+          "name": "Label",
+          "value": "底分"
+        },
+        {
+          "name": "Label",
+          "value": "1"
+        },
+        {
+          "name": "Label",
+          "value": "禁言"
+        },
+        {
+          "name": "Label",
+          "value": "禁止互动"
+        },
+        {
+          "name": "Label",
+          "value": "距离过近警告"
+        },
+        {
+          "name": "Label",
+          "value": "超时托管"
+        },
+        {
+          "name": "Label",
+          "value": "GPS限制"
+        },
+        {
+          "name": "Label",
+          "value": "IP限制"
+        },
+        {
+          "name": "Label",
+          "value": "其他"
+        },
+        {
+          "name": "Label",
+          "value": "四个3关门"
+        },
+        {
+          "name": "Label",
+          "value": "必须出黑桃3"
+        },
+        {
+          "name": "Label",
+          "value": "去掉3、4"
+        },
+        {
+          "name": "Label",
+          "value": "3A算炸弹"
+        },
+        {
+          "name": "Label",
+          "value": "四带二"
+        },
+        {
+          "name": "Label",
+          "value": "三不带"
+        },
+        {
+          "name": "Label",
+          "value": "玩法"
+        },
+        {
+          "name": "Label",
+          "value": "小局结算弹窗"
+        },
+        {
+          "name": "Label",
+          "value": "小结算"
+        },
+        {
+          "name": "Label",
+          "value": "30分"
+        },
+        {
+          "name": "Label",
+          "value": "20分"
+        },
+        {
+          "name": "Label",
+          "value": "10分"
+        },
+        {
+          "name": "Label",
+          "value": "5分"
+        },
+        {
+          "name": "Label",
+          "value": "炸弹记分"
+        },
+        {
+          "name": "Label",
+          "value": "黑桃3优先"
+        },
+        {
+          "name": "Label",
+          "value": "赢家先出"
+        },
+        {
+          "name": "Label",
+          "value": "先出牌"
+        },
+        {
+          "name": "Label",
+          "value": "20秒"
+        },
+        {
+          "name": "Label",
+          "value": "15秒"
+        },
+        {
+          "name": "Label",
+          "value": "1000秒"
+        },
+        {
+          "name": "Label",
+          "value": "操作时间"
+        },
+        {
+          "name": "Label",
+          "value": "16局"
+        },
+        {
+          "name": "Label",
+          "value": "12局"
+        },
+        {
+          "name": "Label",
+          "value": "8局"
+        },
+        {
+          "name": "Label",
+          "value": "局数"
+        },
+        {
+          "name": "Label",
+          "value": "3人"
+        },
+        {
+          "name": "Label",
+          "value": "2人"
+        },
+        {
+          "name": "Label",
+          "value": "人数"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "Camera",
+        "CreateRoom",
+        "Top",
+        "CardSelection",
+        "WordCard",
+        "Label",
+        "LongCard",
+        "Label",
+        "Mahjong",
+        "Label",
+        "Poker",
+        "Label",
+        "Btn_Reset",
+        "Label",
+        "Btn_Close",
+        "Left",
+        "FavoriteList",
+        "ScrollView",
+        "Viewport",
+        "Content",
+        "Game_CD299",
+        "Label",
+        "Game_LS201",
+        "Label",
+        "Game_NJ201",
+        "Label",
+        "Icon_Selected",
+        "Game_CN297",
+        "Label",
+        "Game_CD201",
+        "Label",
+        "Game_CN298",
+        "Label",
+        "Bottom",
+        "Btn_Create",
+        "Label",
+        "Ante",
+        "RoomCard",
+        "Label",
+        "Icon_RoomCard",
+        "Label",
+        "Btn_BaseScore",
+        "Label",
+        "Bg",
+        "Rules",
+        "ScrollView",
+        "Viewport",
+        "Content",
+        "Rule_roomRestriction",
+        "Option_roomRestriction_chat_muted",
+        "Label",
+        "Icon_Unselected",
+        "Option_roomRestriction_interaction_forbidden",
+        "Label",
+        "Icon_Unselected",
+        "Option_roomRestriction_distance_warning",
+        "Label",
+        "Icon_Unselected",
+        "Option_roomRestriction_timeout_auto_play",
+        "Label",
+        "Icon_Unselected",
+        "Option_roomRestriction_gps_limit",
+        "Label",
+        "Icon_Unselected",
+        "Option_roomRestriction_ip_limit",
+        "Label",
+        "Icon_Unselected",
+        "Divider",
+        "Label",
+        "Rule_playRule",
+        "Option_playRule_four_threes_close",
+        "Label",
+        "Icon_Unselected",
+        "Option_playRule_require_spade_three",
+        "Label",
+        "Icon_Selected",
+        "Option_playRule_remove_three_four",
+        "Label",
+        "Icon_Selected",
+        "Option_playRule_triple_ace_bomb",
+        "Label",
+        "Icon_Selected",
+        "Option_playRule_four_with_two",
+        "Label",
+        "Icon_Selected",
+        "Option_playRule_three_no_attachment",
+        "Label",
+        "Icon_Unselected",
+        "Divider",
+        "Label",
+        "Rule_rule_nj201_0004",
+        "Option_rule_nj201_0004_option_0001",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Rule_bombScore",
+        "Option_bombScore_30",
+        "Label",
+        "Icon_Unselected",
+        "Option_bombScore_20",
+        "Label",
+        "Icon_Unselected",
+        "Option_bombScore_10",
+        "Label",
+        "Icon_Unselected",
+        "Option_bombScore_5",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Rule_firstPlayRule",
+        "Option_firstPlayRule_spade_three_first",
+        "Label",
+        "Icon_Unselected",
+        "Option_firstPlayRule_winner_first",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Rule_operationTime",
+        "Option_operationTime_20",
+        "Label",
+        "Icon_Unselected",
+        "Option_operationTime_15",
+        "Label",
+        "Icon_Unselected",
+        "Option_operationTime_1000",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Rule_roundCount",
+        "Option_roundCount_16",
+        "Label",
+        "Icon_Unselected",
+        "Option_roundCount_12",
+        "Label",
+        "Icon_Unselected",
+        "Option_roundCount_8",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Rule_playerCount",
+        "Option_playerCount_3",
+        "Label",
+        "Icon_Unselected",
+        "Option_playerCount_2",
+        "Label",
+        "Icon_Selected",
+        "Divider",
+        "Label",
+        "Bg",
+        "MainPanel",
+        "Bg"
+      ]
+    },
+    "mobile": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "Label",
+          "value": "绑定微信"
+        },
+        {
+          "name": "Version",
+          "value": "V0.1.0"
+        },
+        {
+          "name": "Value",
+          "value": "10000"
+        },
+        {
+          "name": "PlayerName",
+          "value": "Player53"
+        },
+        {
+          "name": "PlayerId",
+          "value": "ID:915777"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "Camera",
+        "LobbyMain",
+        "Middle",
+        "GiftRoomCard",
+        "Support",
+        "Right",
+        "JoinRoom",
+        "CreateRoom",
+        "JoinClub",
+        "Left",
+        "Rewards",
+        "InviteRewards",
+        "LuckyDraw",
+        "Rebate",
+        "Bounty",
+        "Agent",
+        "Practice",
+        "Bottom",
+        "BindWeChat",
+        "Label",
+        "Navigation",
+        "Notice",
+        "Settings",
+        "Share",
+        "Records",
+        "More",
+        "Shop",
+        "Highlight",
+        "Top",
+        "Version",
+        "Logout",
+        "Balances",
+        "RoomCard",
+        "AddIcon",
+        "Value",
+        "AddRoomCard",
+        "Player",
+        "PlayerName",
+        "PlayerId",
+        "PlayerBackground",
+        "AvatarMask",
+        "Avatar",
+        "BG",
+        "Background"
+      ]
+    }
+  },
+  "errors": {
+    "desktop": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8080/api/v2/hall/rooms",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/rewards-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/43/432c2839-face-4a43-b734-edfe6aac76f4@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/73/73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/ee/ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/d8/d8ad1b27-bdcd-41d0-adfd-20aa503b90a0.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/14/148f292e-fd9e-4991-8857-85248333a58b@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/51/5130d1c4-bed4-4e80-9584-66677e173041@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/club/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/43/432c2839-face-4a43-b734-edfe6aac76f4@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/73/73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941.json"
+    ],
+    "mobile": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/rewards-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/43/432c2839-face-4a43-b734-edfe6aac76f4@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/73/73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/ee/ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941.json",
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json"
+    ]
+  },
+  "console": {
+    "desktop": [
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Base: 0.31298828125 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "WebGL device initialized."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VENDOR: Google Inc. (Google)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'Blit Pass' compilation succeeded."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Infrastructure: 35.694091796875 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "meshopt wasm decoder initialized"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[bullet]:bullet wasm lib loaded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS2D]: register box2d."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: register bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: using bullet."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init SubSystem: 133.92919921875 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Cocos Creator v3.8.8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Using custom pipeline: Builtin"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Project: 389.37890625 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CLAIM\",\"bootId\":\"4bd3b513-daed-4183-85b4-a17385f11023\",\"sceneName\":\"UnnamedScene\",\"nodeUuid\":\"nCanvas\"}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[LoadingEnvironment] boot=beadd438-8b0e-434c-808b-bb8d5a8ce015 environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:start",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:success"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:progress",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthRestore] cache=missing"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:success",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:skipped"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:start"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789935871414}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:start"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "LoadScene LoginScene: 12.844970703125 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"4bd3b513-daed-4183-85b4-a17385f11023\",\"nodeUuid\":\"nCanvas\"}}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[MessageDrift] bound",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789935871511}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874884}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874884}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"52\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ACTIVE_ROOM_RESOLVED\",\"accountId\":\"52\",\"playerId\":453247,\"roomId\":0,\"stateVersion\":0,\"hasActiveRoom\":false,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在加载大厅公共资源...\",\"progress\":0.68,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874929}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅界面...\",\"progress\":0.78,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874972}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874977}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935874981}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875018}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875019}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875056}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875056}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8661538461538462,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875112}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8714285714285714,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875112}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8828571428571429,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875131}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8942857142857144,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875131}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9057142857142857,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875164}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9171428571428571,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875164}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9285714285714286,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875197}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9400000000000001,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875197}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0.9400000000000001,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935875212}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935875249}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875250}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875251}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875647}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935875679}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875682}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875709}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooBackgroundWarmup] started",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935875717}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935875745}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789935875794}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[LobbyCreateRoomEntry]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":5,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935878283}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":5,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935878283}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":5,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935878429}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-clear-stencil|sprite-vs:vert|sprite-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-graphics|vs:vert|fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":5,\"name\":\"form:lobby/UICreateRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789935878565}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSelector]",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSubmit] click",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CreateRoomSubmit] validated",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":6,\"name\":\"create-room:NJ201\",\"message\":\"正在创建房间...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935879947}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomCreate] request",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "[ProductionApiMutation] failed",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "[CreateRoomSubmit] failed",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":6,\"name\":\"create-room:NJ201\",\"message\":\"hall request failed\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":true,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935880036}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"failure\",\"id\":6,\"name\":\"create-room:NJ201\",\"message\":\"hall request failed\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":true,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935880036}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":7,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935880038}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935880038}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935880049}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":7,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935880050}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Tasks{cc.Prefab(a0fb7e69-e534-4338-afb2-f37d67181b61)} is missing! \nNode path: Tasks/right_main/mark/layout/layout2/newer_layout/demo2/rich_title\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by InviteTask{cc.Prefab(ea10ccc9-4c61-42bd-bf3b-437c6056ceee)} is missing! \nNode path: InviteTask/left_main/richText\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Invite{cc.Prefab(d91a55cb-e928-435d-b3e0-208ea1099cc4)} is missing! \nNode path: Invite/image01/LabelMessage\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_wx\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_dd\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_xl\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list2/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list3/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list4/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/list/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by ClubMsg{cc.Prefab(f4502c89-565e-4e16-b341-8ef2e3ccbdda)} is missing! \nNode path: ClubMsg/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset d8ad1b27-bdcd-41d0-adfd-20aa503b90a0 used by ClubDiamond{cc.Prefab(1827db35-160c-438c-bad8-2d8d470b50bc)} is missing! \nPropName: asset"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetPL{cc.Prefab(d98570e0-644f-45c6-af6a-ca62156332ca)} is missing! \nNode path: UserSetPL/TargetClubCent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserOutRace{cc.Prefab(e3954fd9-a7ec-4c0c-8294-7d36ba4542d3)} is missing! \nNode path: UserOutRace/TargetClubCent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle1/Background\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle1/checkmark\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 148f292e-fd9e-4991-8857-85248333a58b@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle2/Background\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 5130d1c4-bed4-4e80-9584-66677e173041@f9941 used by ClubPromoterSet{cc.Prefab(7589f1a7-12f8-4ff5-b368-dc5773a075d9)} is missing! \nNode path: ClubPromoterSet/ToggleContainer/toggle2/checkmark\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterSetActive{cc.Prefab(5bffc581-3795-48f8-90e3-50b365531b0c)} is missing! \nNode path: PromoterSetActive/lb_TargetActive\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterSetActiveNum{cc.Prefab(10b4f9af-5832-4445-a5ae-6cec17e07ccc)} is missing! \nNode path: PromoterSetActiveNum/lb_TargetActive\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterMsg{cc.Prefab(d5773f41-8523-4530-87c9-598ed68b8c39)} is missing! \nNode path: PromoterMsg/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by PromoterManager{cc.Prefab(12622382-61fd-49a9-87d5-e221e86b872e)} is missing! \nNode path: PromoterManager/right/btn_PromoterMsgNode/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetBaoMingFei{cc.Prefab(ae8f6022-9b47-4199-9863-6bf78b80af4f)} is missing! \nNode path: UserSetBaoMingFei/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSelfBaoMingFei{cc.Prefab(886d18f1-1373-415b-93a4-a9fd032d092c)} is missing! \nNode path: UserSelfBaoMingFei/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UserSetPercent{cc.Prefab(8d6b7467-0541-456d-8c40-27ce34cb9ed7)} is missing! \nNode path: UserSetPercent/lb_TargetPercent\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionRankTip{cc.Prefab(1b5d91e0-1202-4031-8510-61c4d074149d)} is missing! \nNode path: UnionRankTip/lb_unionName\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionRankTip{cc.Prefab(1b5d91e0-1202-4031-8510-61c4d074149d)} is missing! \nNode path: UnionRankTip/lb_rank\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by UnionManager{cc.Prefab(d36b9366-ac98-4dd9-9555-ae2362fe6d9d)} is missing! \nNode path: UnionManager/right/btn_MessageNode/demo/lb_message\nPropName: _font"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 used by DrawResult{cc.Prefab(a56688bc-33c3-42b4-888a-65db7a419601)} is missing! \nNode path: DrawResult/image01/img_bjl_fx/btnSure_wx\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 used by DrawResult{cc.Prefab(a56688bc-33c3-42b4-888a-65db7a419601)} is missing! \nNode path: DrawResult/image01/img_bjl_fx/btnSure_dd\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooBackgroundWarmup] finished",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      }
+    ],
+    "mobile": [
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "System:",
+          "iPhone, iOS 17.6"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "Protocol:",
+          "HTTP"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "UA:",
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "navigationStart:",
+          1789935870210
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "navigation:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "dns:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "tcp:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "request:",
+          "2ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "response:",
+          "1ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "domComplete (domLoaded):",
+          "320ms (320ms)"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "loadEvent:",
+          "13ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "total (DOM):",
+          "338ms (325ms)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Base:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "WebGL device initialized."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VENDOR: Google Inc. (Google)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'Blit Pass' compilation succeeded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Infrastructure:",
+          "2036ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "meshopt wasm decoder initialized"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[bullet]:bullet wasm lib loaded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS2D]: register box2d."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: register bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: using bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init SubSystem:",
+          "472ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Cocos Creator v3.8.8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Using custom pipeline: Builtin"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Project:",
+          "355ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CLAIM\",\"bootId\":\"b1b6db63-9ad2-4990-bf0b-99e83575ae32\",\"sceneName\":\"UnnamedScene\",\"nodeUuid\":\"nCanvas\"}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[LoadingEnvironment] boot=d4e397f1-27fe-4bb2-971f-892cb29eb300 environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:start",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:success"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:progress",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthRestore] cache=missing"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:success",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:skipped"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:start"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789935875211}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:start"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "LoadScene LoginScene:",
+          "16ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"b1b6db63-9ad2-4990-bf0b-99e83575ae32\",\"nodeUuid\":\"nCanvas\"}}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[MessageDrift] bound",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789935875327}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877805}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877808}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"53\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ACTIVE_ROOM_RESOLVED\",\"accountId\":\"53\",\"playerId\":915777,\"roomId\":0,\"stateVersion\":0,\"hasActiveRoom\":false,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在加载大厅公共资源...\",\"progress\":0.68,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877871}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅界面...\",\"progress\":0.78,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877889}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877898}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877910}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877932}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877943}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877945}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.86,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877977}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8661538461538462,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935877980}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8714285714285714,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878002}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8828571428571429,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878004}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.8942857142857144,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878046}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9057142857142857,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878046}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9171428571428571,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878087}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9285714285714286,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878088}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在预加载大厅场景...\",\"progress\":0.9400000000000001,\"progressKind\":\"MEASURED\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878133}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0.9400000000000001,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789935878143}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935878190}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935878192}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935878194}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935879139}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":3,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935879287}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935879292}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935879438}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooBackgroundWarmup] started",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789935879480}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789935879536}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789935879548}"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Tasks{cc.Prefab(a0fb7e69-e534-4338-afb2-f37d67181b61)} is missing! \nNode path: Tasks/right_main/mark/layout/layout2/newer_layout/demo2/rich_title\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by InviteTask{cc.Prefab(ea10ccc9-4c61-42bd-bf3b-437c6056ceee)} is missing! \nNode path: InviteTask/left_main/richText\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Invite{cc.Prefab(d91a55cb-e928-435d-b3e0-208ea1099cc4)} is missing! \nNode path: Invite/image01/LabelMessage\nPropName: _font"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 432c2839-face-4a43-b734-edfe6aac76f4@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_wx\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 73a21aab-8f2e-4bb0-85ef-d374353f06ea@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_dd\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset ee00c953-1004-4aa6-8a6f-00b1c87261ee@f9941 used by RoomCopy{cc.Prefab(cf4130ab-870f-4ede-b08d-2dd101668c07)} is missing! \nNode path: RoomCopy/bg/btn_xl\nPropName: _spriteFrame"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list2/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list3/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/loglist/list4/rich_text\nPropName: _font"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Draw{cc.Prefab(e12e1549-019a-4a2a-a904-f36965619361)} is missing! \nNode path: Draw/list/rich_text\nPropName: _font"
+        ]
+      }
+    ]
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 510.7704309063894,
+        "y": 632.6991084695393,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 491.29894571879646,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput (EditBox activation)"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 554.6608415304606,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput (EditBox activation)"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 621.4192876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 574.1692876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "CreateRoom",
+        "x": 568.8628107602774,
+        "y": 472.283720282318,
+        "world": {
+          "x": 946.4287875185735,
+          "y": 454
+        },
+        "path": "MainScene/should_hide_in_hierarchy/LobbyMain/Right/CreateRoom"
+      },
+      {
+        "name": "Game_NJ201",
+        "x": 109.41666666666664,
+        "y": 518.1166883358098,
+        "world": {
+          "x": 104.69539375928673,
+          "y": 370
+        },
+        "path": "MainScene/should_hide_in_hierarchy/CreateRoom/Left/FavoriteList/ScrollView/Viewport/Content/Game_NJ201"
+      },
+      {
+        "name": "Btn_Create",
+        "x": 687.5136625,
+        "y": 699.0936190007429,
+        "world": {
+          "x": 1163.8043937592868,
+          "y": 38.315999999999974
+        },
+        "path": "MainScene/should_hide_in_hierarchy/CreateRoom/Bottom/Btn_Create"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 458.5,
+        "y": 315.66666666666663,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 164.21395833333335,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 227.59939999999997,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333333,
+        "y": 294.3826541666666,
+        "world": {
+          "x": 946.3950152671756,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      }
+    ]
+  },
+  "loginInputDiagnostic": {
+    "desktop": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 639.25,
+            "y": 11.625,
+            "width": 41,
+            "height": 24
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "52",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 484.4992980957031,
+            "y": 401.70465087890625,
+            "width": 315.0013732910156,
+            "height": 70.10415649414062
+          },
+          "focused": true
+        }
+      ]
+    },
+    "mobile": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "53",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 336.0270690917969,
+            "y": 207.13064575195312,
+            "width": 183.94583129882812,
+            "height": 40.9375
+          },
+          "focused": true
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "",
+          "value": "",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        }
+      ]
+    }
+  },
+  "preInputComponents": {
+    "desktop": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ],
+    "mobile": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ]
+  },
+  "preInputState": {
+    "desktop": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 484.4992980957031,
+        "y": 293.15911865234375,
+        "width": 315.0013732910156,
+        "height": 70.10415649414062
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 684.6953937592867,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    },
+    "mobile": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 336.0270690917969,
+        "y": 143.74520874023438,
+        "width": 183.94583129882812,
+        "height": 40.9375
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 780.4580152671756,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    }
+  }
+}

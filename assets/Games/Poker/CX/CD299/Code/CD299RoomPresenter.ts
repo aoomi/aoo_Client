@@ -113,6 +113,6 @@ export const CD299_TIMING_MS = Object.freeze({
     revealAfterAllSplit: 500,
     settlementEnter: 200,
     settlementExit: 200,
-    nextRound: 2500,
+    nextRound: 1000,
     finalCountdownSecond: 2,
 });

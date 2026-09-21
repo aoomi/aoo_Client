@@ -80,6 +80,7 @@ export class CommonPdkSwitchCoordinator {
     private roomUiGeneration = 0;
     private roomCapabilities: GameCapabilities = getGameCapabilities('');
     private cardSelectionRoot: Node | null = null;
+    private cardSelectionSubmitPending = false;
     private dealQualityRoot: Node | null = null;
     private dealQualityButtons: Node[] = [];
     private readonly onDealQualityAction = (): void => {
@@ -99,6 +100,9 @@ export class CommonPdkSwitchCoordinator {
     };
     private readonly onCardSelectionClose = (): void => {
         this.forms.closeAfterPointer(POKER_CARD_SELECTION_FORM);
+    };
+    private readonly onCardSelectionLimit = (detail: { handLimit: number }): void => {
+        void this.showMessage(`最多选择${detail.handLimit}张牌`);
     };
 
     public isInGameSession(): boolean {
@@ -893,38 +897,40 @@ export class CommonPdkSwitchCoordinator {
         console.info('[CommonRoomSettlement]', {
             stage: 'received', key, roomId, roundNo, stateVersion, operationId,
             phase: String(payload.authorityPhase ?? ''), finalSettlement, staticRestore,
+            settlementPresentation,
         });
         try {
-            if (!staticRestore) {
-                // Operation timing is authoritative and independent from visual
-                // duration. Effects start with the play; at this boundary any
-                // unfinished effect is truncated to its final state, never awaited.
-                await new Promise<void>((resolve) => globalThis.setTimeout(resolve,
-                    settlementPresentation === 'FLOATING' && !matchFinished && !finalSettlement ? 2000 : 1000));
-                await this.playController?.truncateRoundEndPresentation();
+            const terminalHold = staticRestore
+                ? Promise.resolve(true)
+                : this.playController?.waitForTerminalCardHold(1500) ?? Promise.resolve(true);
+            // FLOATING owns no modal. Its only visual boundary is the final hand
+            // landing in Out_Card plus the product-defined 1.5-second hold. Do not
+            // clear here: the accepted next-deal boundary clears the old round and
+            // starts hand projection in one transaction, so scheduler jitter cannot
+            // create a blank table between those two actions.
+            if (settlementPresentation === 'FLOATING' && !matchFinished && !finalSettlement) {
+                if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
+                await terminalHold;
+                if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
+                this.settlementShownKey = key;
+                return;
             }
+            const terminalRoundStillCurrent = await terminalHold;
+            if (!terminalRoundStillCurrent
+                || generation !== this.settlementPresentationGeneration || !this.inGame) return;
+            await (this.playController?.truncateRoundEndPresentation() ?? Promise.resolve());
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             // A delayed/reconnect settlement task can finish after both players have
             // continued and Authority has already dealt the next round. Never mount
             // the old modal over a live table.
             if (Number(this.runtime?.getRoom().GetRoomProperty('state') ?? 0) === 1) return;
-            // The first terminal projection can precede the complete per-seat
-            // settlement payload. Re-read the model after presentation delay so
-            // both players render immediately instead of requiring reconnect.
+            // The terminal snapshot already owns complete settlement data. Re-read
+            // immediately before opening without inserting a presentation timer.
             const latestSetEnd = this.runtime?.getRoomSet().GetRoomSetProperty('setEnd');
             if (latestSetEnd && typeof latestSetEnd === 'object' && !Array.isArray(latestSetEnd)) {
                 payload = { ...payload, ...latestSetEnd as Record<string, unknown> };
                 this.resultController?.recordSettlement(payload);
                 this.lastSmallSettlementPayload = this.cloneSettlementPayload(payload);
-            }
-            // FLOATING is selected by the authoritative room rule. The server's
-            // authoritative settlement timer advances the round; sending a
-            // client continue acknowledgement here races that transition and is
-            // rejected with 3008 once the next round has already started.
-            if (settlementPresentation === 'FLOATING' && !matchFinished && !finalSettlement) {
-                if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
-                this.settlementShownKey = key;
-                return;
             }
             // The terminal round is still a completed round and must be visible as
             // roundLimit/roundLimit in SmallSettlement. BigSettlement is opened by
@@ -932,6 +938,11 @@ export class CommonPdkSwitchCoordinator {
             // 7/8 and makes the final hand appear unrecorded.
             payload = await this.withReplayCode(payload, roomId, roundNo);
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
+            await terminalBoundary;
+            if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
+            // Node cleanup is synchronous at method entry. Start it in the same
+            // terminal boundary that mounts the modal, while regional animation
+            // drains remain detached from the settlement screen.
             await this.forms.show(this.smallSettlementForm, payload);
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             this.settlementShownKey = key;
@@ -1279,10 +1290,21 @@ export class CommonPdkSwitchCoordinator {
             await this.showMessage('当前玩法牌堆配置缺失');
             return;
         }
+        const handLimit = Number((ruleOptions as Record<string, unknown>).cardsPerPlayer);
+        if (!Number.isInteger(handLimit) || handLimit <= 0 || handLimit > deckCards.length) {
+            await this.showMessage('当前玩法权威手牌数量无效');
+            return;
+        }
+        const configured = this.cardSelectionBySeat(runtime.getRoom().GetRoomProperty('selectedInitialHands'));
+        const selectedCards = configured.get(targetSeat) ?? [];
+        const unavailableCards = [...configured.entries()]
+            .filter(([seat]) => seat !== targetSeat)
+            .flatMap(([, cards]) => cards);
         await this.forms.show(POKER_CARD_SELECTION_FORM, {
             gameCode: runtime.getGameCode(), targetPlayerId, targetSeat,
             // PDK 属于整局一次发完类，因此不显示 CurrentRound / NextRound。
-            dealFlow: 'DEAL_ONCE', deckCards: deckCards.map(Number),
+            dealFlow: 'DEAL_ONCE', deckCards: deckCards.map(Number), handLimit,
+            selectedCards, unavailableCards,
         });
     }
 
@@ -1319,6 +1341,7 @@ export class CommonPdkSwitchCoordinator {
         this.cardSelectionRoot = form.node;
         form.node.on('poker-card-selection-submit', this.onCardSelectionSubmit, this);
         form.node.on('poker-card-selection-close', this.onCardSelectionClose, this);
+        form.node.on('poker-card-selection-limit', this.onCardSelectionLimit, this);
     }
 
     private showCardSelectionForm(form: LegacyForm, context: unknown): void {
@@ -1334,6 +1357,7 @@ export class CommonPdkSwitchCoordinator {
     private unbindCardSelectionForm(): void {
         this.cardSelectionRoot?.off('poker-card-selection-submit', this.onCardSelectionSubmit, this);
         this.cardSelectionRoot?.off('poker-card-selection-close', this.onCardSelectionClose, this);
+        this.cardSelectionRoot?.off('poker-card-selection-limit', this.onCardSelectionLimit, this);
         this.cardSelectionRoot = null;
     }
 
@@ -1366,6 +1390,8 @@ export class CommonPdkSwitchCoordinator {
     private async submitCardSelection(detail: PokerDeckSelectionSubmit): Promise<void> {
         const runtime = this.runtime;
         if (!runtime || !this.inGame) return;
+        if (this.cardSelectionSubmitPending) return;
+        this.cardSelectionSubmitPending = true;
         const roomId = Number(runtime.getRoomManager().GetEnterRoomID());
         console.info('[PokerCardSelection] submit', {
             roomId, gameCode: detail.gameCode, targetPlayerId: detail.targetPlayerId,
@@ -1390,7 +1416,21 @@ export class CommonPdkSwitchCoordinator {
                 roomId, targetPlayerId: detail.targetPlayerId, targetSeat: detail.targetSeat, error,
             });
             await this.showMessage(error instanceof Error ? error.message : '选牌设置失败');
+        } finally {
+            this.cardSelectionSubmitPending = false;
         }
+    }
+
+    private cardSelectionBySeat(raw: unknown): Map<number, number[]> {
+        const result = new Map<number, number[]>();
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return result;
+        for (const [seatText, cards] of Object.entries(raw as Record<string, unknown>)) {
+            const seat = Number(seatText);
+            if (!Number.isInteger(seat) || seat < 0 || !Array.isArray(cards)) continue;
+            const unique = [...new Set(cards.map(Number).filter(Number.isInteger))];
+            result.set(seat, unique);
+        }
+        return result;
     }
 
     private roomMediaClient(): CommonPdkMediaClient | null {

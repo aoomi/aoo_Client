@@ -10,12 +10,15 @@ test('refresh queues every registered and module-routed form after the current s
     const registry = read('assets/Common/Code/Runtime/ui/ModulePrefabRegistry.ts');
     const lobby = read('assets/Lobby/Code/LobbyScreenController.ts');
     assert.match(registry, /export function listModulePrefabForms/);
-    assert.match(manager, /\.\.\.this\.options\.keys\(\)/);
+    assert.match(manager, /const paths = Array\.from\(new Set<string>\(\[/);
+    assert.match(manager, /\.\.\.Array\.from\(this\.options\.keys\(\)\)/);
+    assert.doesNotMatch(manager, /const paths = \[\.\.\.new Set/);
+    assert.doesNotMatch(manager, /\.\.\.this\.options\.keys\(\)/);
     assert.match(manager, /\.\.\.listCommonPrefabForms\(\)/);
     assert.match(manager, /\.\.\.listGamePrefabForms\(\)/);
     assert.ok(manager.indexOf('...listGamePrefabForms()') < manager.indexOf('...listCommonPrefabForms()'),
         'game-room forms must lead the background preload queue');
-    assert.ok(manager.indexOf('...listCommonPrefabForms()') < manager.indexOf('...this.options.keys()'),
+    assert.ok(manager.indexOf('...listCommonPrefabForms()') < manager.indexOf('...Array.from(this.options.keys())'),
         'shared room forms must load before optional registered pages');
     assert.match(manager, /includeModules \? listModulePrefabForms\(\) : \[\]/);
     assert.match(manager, /preloadRefreshSurface\(includeModules = true, concurrency = 1\)/);

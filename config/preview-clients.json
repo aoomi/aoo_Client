@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "creatorUpstream": "http://127.0.0.1:7456/",
+  "dashboard": "http://127.0.0.1:7460/",
+  "clients": [
+    { "slot": "A", "port": 7458 },
+    { "slot": "B", "port": 7459 },
+    { "slot": "C", "port": 5188 },
+    { "slot": "D", "port": 7461 }
+  ],
+  "healthPath": "/__aoo/health",
+  "runtimeRoot": "work/preview-snapshots"
+}

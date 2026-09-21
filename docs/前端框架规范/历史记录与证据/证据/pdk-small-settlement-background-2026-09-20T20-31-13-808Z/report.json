@@ -1,0 +1,5162 @@
+{
+  "runId": "2026-09-20T20-31-13-808Z",
+  "buildId": "creator-preview-3.8.8",
+  "protocolVersion": "2.0",
+  "desktopUrl": "http://127.0.0.1:7456/",
+  "mobileUrl": "http://127.0.0.1:7456",
+  "assertions": {
+    "roomCleaned": true
+  },
+  "screenshots": [
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-20T20-31-13-808Z/desktop-cleanup-lobby.png",
+    "/Users/aoo/Code/Game/BCG/Aoo/Client/docs/前端框架规范/历史记录与证据/证据/pdk-small-settlement-background-2026-09-20T20-31-13-808Z/mobile-cleanup-lobby.png"
+  ],
+  "sceneDiagnostics": {
+    "desktop": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "Label",
+          "value": "绑定微信"
+        },
+        {
+          "name": "Version",
+          "value": "V0.1.0"
+        },
+        {
+          "name": "Value",
+          "value": "10000"
+        },
+        {
+          "name": "PlayerName",
+          "value": "Player52"
+        },
+        {
+          "name": "PlayerId",
+          "value": "ID:453247"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "Camera",
+        "LobbyMain",
+        "Middle",
+        "GiftRoomCard",
+        "Support",
+        "Right",
+        "JoinRoom",
+        "CreateRoom",
+        "JoinClub",
+        "Left",
+        "Rewards",
+        "InviteRewards",
+        "LuckyDraw",
+        "Rebate",
+        "Bounty",
+        "Agent",
+        "Practice",
+        "Bottom",
+        "BindWeChat",
+        "Label",
+        "Navigation",
+        "Notice",
+        "Settings",
+        "Share",
+        "Records",
+        "More",
+        "Shop",
+        "Highlight",
+        "Top",
+        "Version",
+        "Logout",
+        "Balances",
+        "RoomCard",
+        "AddIcon",
+        "Value",
+        "AddRoomCard",
+        "Player",
+        "PlayerName",
+        "PlayerId",
+        "PlayerBackground",
+        "AvatarMask",
+        "Avatar",
+        "BG",
+        "Background"
+      ]
+    },
+    "mobile": {
+      "scene": "MainScene",
+      "labels": [
+        {
+          "name": "LabelMessage",
+          "value": "房间已解散"
+        },
+        {
+          "name": "Label",
+          "value": "绑定微信"
+        },
+        {
+          "name": "Version",
+          "value": "V0.1.0"
+        },
+        {
+          "name": "Value",
+          "value": "10000"
+        },
+        {
+          "name": "PlayerName",
+          "value": "Player53"
+        },
+        {
+          "name": "PlayerId",
+          "value": "ID:915777"
+        }
+      ],
+      "nodes": [
+        "MainScene",
+        "PROFILER_NODE",
+        "Profiler_Root",
+        "should_hide_in_hierarchy",
+        "MsgDrift",
+        "LabelMessage",
+        "sprite",
+        "Camera",
+        "LobbyMain",
+        "Middle",
+        "GiftRoomCard",
+        "Support",
+        "Right",
+        "JoinRoom",
+        "CreateRoom",
+        "JoinClub",
+        "Left",
+        "Rewards",
+        "InviteRewards",
+        "LuckyDraw",
+        "Rebate",
+        "Bounty",
+        "Agent",
+        "Practice",
+        "Bottom",
+        "BindWeChat",
+        "Label",
+        "Navigation",
+        "Notice",
+        "Settings",
+        "Share",
+        "Records",
+        "More",
+        "Shop",
+        "Highlight",
+        "Top",
+        "Version",
+        "Logout",
+        "Balances",
+        "RoomCard",
+        "AddIcon",
+        "Value",
+        "AddRoomCard",
+        "Player",
+        "PlayerName",
+        "PlayerId",
+        "PlayerBackground",
+        "AvatarMask",
+        "Avatar",
+        "BG",
+        "Background"
+      ]
+    }
+  },
+  "errors": {
+    "desktop": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:7456/assets/activity-ui/import/7f/7ff29427-ffb3-4c5d-af00-5559dd8f086f.json"
+    ],
+    "mobile": []
+  },
+  "console": {
+    "desktop": [
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Base: 0.263916015625 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "WebGL device initialized."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VENDOR: Google Inc. (Google)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'Blit Pass' compilation succeeded."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Infrastructure: 28.197021484375 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "meshopt wasm decoder initialized"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[bullet]:bullet wasm lib loaded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS2D]: register box2d."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: register bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: using bullet."
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init SubSystem: 116.177978515625 ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Cocos Creator v3.8.8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Using custom pipeline: Builtin"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "Init Project: 353.286865234375 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CLAIM\",\"bootId\":\"4f1a31c6-d440-48f7-bf29-5a727a00fbf9\",\"sceneName\":\"UnnamedScene\",\"nodeUuid\":\"nCanvas\"}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[LoadingEnvironment] boot=95436d88-85c1-4f27-a6eb-0841e986f6dd environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:start",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:success"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:progress",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthRestore] cache=missing"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:success",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:skipped"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:start"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789936276447}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:start"
+        ]
+      },
+      {
+        "type": "timeEnd",
+        "values": [
+          "LoadScene LoginScene: 13.921875 ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"4f1a31c6-d440-48f7-bf29-5a727a00fbf9\",\"nodeUuid\":\"nCanvas\"}}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[MessageDrift] bound",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789936276542}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789936280087}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789936280087}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"52\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ACTIVE_ROOM_RESOLVED\",\"accountId\":\"52\",\"playerId\":453247,\"roomId\":120851,\"stateVersion\":0,\"hasActiveRoom\":true,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[StartupRoomRecovery] runtime-resolved",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936280154}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在加载玩法资源...\",\"progress\":0.18,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936280154}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在切换房间场景...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936280187}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280228}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280229}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280231}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280231}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonPdkRoomEntry] authority-connected",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "roomPosInfoList",
+          "Array(2)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "InitSetInfo",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomTurnState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:0"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:1"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:2"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:3"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:4"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:5"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:6"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:7"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:9"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280258}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280259}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280275}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936280309}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281175}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281209}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281209}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281227}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-graphics|vs:vert|fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281646}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281646}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281646}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281649}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281651}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281651}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281651}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281652}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281660}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936281663}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-clear-stencil|sprite-vs:vert|sprite-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_ALPHA_TEST1|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282125}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282126}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282168}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ROOM_PRESENTED\",\"owner\":\"authenticated-route\",\"roomId\":120851,\"scene\":\"GameRoom2D\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282176}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282209}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":11,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282209}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":11,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282242}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":11,\"name\":\"prefab-preload:settlement/poker/BigSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282276}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":12,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282276}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282309}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":12,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282564}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":12,\"name\":\"prefab-preload:room/ChatPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282608}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":13,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282608}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":13,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282696}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":13,\"name\":\"prefab-preload:room/VoiceRecordingPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282742}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":14,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282742}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":14,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282865}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":14,\"name\":\"prefab-preload:room/MagicExpressionPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282909}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":15,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936282909}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":15,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283008}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":15,\"name\":\"prefab-preload:room/SettingsPanel\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283041}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":16,\"name\":\"prefab-preload:poker/CardSelection\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283041}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":16,\"name\":\"prefab-preload:poker/CardSelection\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283067}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":16,\"name\":\"prefab-preload:poker/CardSelection\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283108}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":17,\"name\":\"prefab-preload:room/AddSubtract\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283108}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":17,\"name\":\"prefab-preload:room/AddSubtract\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283141}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":17,\"name\":\"prefab-preload:room/AddSubtract\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283175}"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "roomPosInfoList",
+          "Array(2)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "InitSetInfo",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomTurnState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "roomPosInfoList",
+          "Array(2)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "InitSetInfo",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomTurnState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":18,\"name\":\"game-return-lobby\",\"message\":\"正在返回大厅...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289907}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooRoomExit] begin",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":18,\"name\":\"game-return-lobby\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289997}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":18,\"name\":\"game-return-lobby\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936290059}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"RECOVER_LOBBY_TRANSPORT\",\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":19,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290089}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":19,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290090}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":19,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290527}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":19,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936290558}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":20,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290561}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":21,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936290574}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":21,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936290574}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":20,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936290589}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":21,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936290589}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":21,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290591}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":18,\"name\":\"game-return-lobby\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290591}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooBackgroundWarmup] started",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":20,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936290635}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":18,\"name\":\"game-return-lobby\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789936290641}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f is missing!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "query missing asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f failed"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "The asset 7ff29427-ffb3-4c5d-af00-5559dd8f086f used by Tasks{cc.Prefab(a0fb7e69-e534-4338-afb2-f37d67181b61)} is missing! \nNode path: Tasks/right_main/mark/layout/layout2/newer_layout/demo2/rich_title\nPropName: _font"
+        ]
+      }
+    ],
+    "mobile": [
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "System:",
+          "iPhone, iOS 17.6"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "Protocol:",
+          "HTTP"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "UA:",
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "navigationStart:",
+          1789936275290
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "navigation:",
+          "1ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "dns:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "tcp:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "request:",
+          "2ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "response:",
+          "1ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "domComplete (domLoaded):",
+          "314ms (313ms)"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "loadEvent:",
+          "13ms"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[system]",
+          "total (DOM):",
+          "333ms (320ms)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Base:",
+          "0ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "WebGL device initialized."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "RENDERER: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VENDOR: Google Inc. (Google)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "VERSION: WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "COMPRESSED_FORMAT: etc1 etc2 dxt astc "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "EXTENSIONS: ANGLE_instanced_arrays EXT_blend_minmax EXT_clip_control EXT_color_buffer_half_float EXT_depth_clamp EXT_disjoint_timer_query EXT_float_blend EXT_frag_depth EXT_polygon_offset_clamp EXT_shader_texture_lod EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_sRGB OES_element_index_uint OES_fbo_render_mipmap OES_standard_derivatives OES_texture_float OES_texture_float_linear OES_texture_half_float OES_texture_half_float_linear OES_vertex_array_object WEBGL_color_buffer_float WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_draw_buffers WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode "
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'Blit Pass' compilation succeeded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Infrastructure:",
+          "2113ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "meshopt wasm decoder initialized"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[bullet]:bullet wasm lib loaded."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS2D]: register box2d."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: register bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "[PHYSICS]: using bullet."
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init SubSystem:",
+          "456ms"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Cocos Creator v3.8.8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Using custom pipeline: Builtin"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "Init Project:",
+          "348ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/splash-screen|splash-screen-vs:vert|splash-screen-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CLAIM\",\"bootId\":\"69aa7acc-ed5e-4e90-8d2c-700b21c484b6\",\"sceneName\":\"UnnamedScene\",\"nodeUuid\":\"nCanvas\"}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'util/profiler|profiler-vs:vert|profiler-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[LoadingEnvironment] boot=4782a6e6-4475-48d5-933e-7a9298350abd environment=test source={scene=BootStrap node=Canvas component=LoginScreenBootstrap property=isClearLocalData} gateway=runtime-config clearRequested=false cleanupNow=false local=0 session=0 indexedDB=0 caches=0"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:start",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] version-check:success"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] services:success"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:progress",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthRestore] cache=missing"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] startup-route:success",
+          "Object"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:start"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-bundle:skipped"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:start"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineColor instead.)",
+          "LabelOutline.color"
+        ]
+      },
+      {
+        "type": "warning",
+        "values": [
+          "'%s' is deprecated. (Please use Label.outlineWidth instead.)",
+          "LabelOutline.width"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-preload:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"\",\"timestamp\":1789936280446}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:start"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "LoadScene LoginScene:",
+          "15ms"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "[BootstrapStage] login-scene-load:success"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[BootstrapOwner]",
+          "{\"action\":\"CONSUME_PRESENTATION\",\"sceneName\":\"LoginScene\",\"nodeUuid\":\"beI88Z2HpFELqR4T5EMHpg\",\"owner\":{\"bootId\":\"69aa7acc-ed5e-4e90-8d2c-700b21c484b6\",\"nodeUuid\":\"nCanvas\"}}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[MessageDrift] bound",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":1,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"LoginScene\",\"timestamp\":1789936280559}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "error",
+        "values": [
+          "getComponent: Type must be non-nil"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"visible\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789936283039}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":1,\"scene\":\"LoginScene\",\"timestamp\":1789936283042}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"START\",\"accountId\":\"53\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[HallRoomConfiguration]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ACTIVE_ROOM_RESOLVED\",\"accountId\":\"53\",\"playerId\":915777,\"roomId\":120851,\"stateVersion\":0,\"hasActiveRoom\":true,\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[StartupRoomRecovery] runtime-resolved",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在准备房间资源...\",\"progress\":0.05,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936283110}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在加载玩法资源...\",\"progress\":0.18,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936283111}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在切换房间场景...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"LoginScene\",\"timestamp\":1789936283146}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在建立房间连接...\",\"progress\":0.9,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283195}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283196}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283198}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283200}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonPdkRoomEntry] authority-connected",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "roomPosInfoList",
+          "Array(2)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "InitSetInfo",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomTurnState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:0"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:1"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:2"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:3"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:4"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:5"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:6"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:7"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:8"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "createPos:0,index:9"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283257}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283258}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":6,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283318}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":4,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283381}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":5,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283458}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-graphics|vs:vert|fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":7,\"name\":\"form:room/DissolveRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936283743}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":4,\"scene\":\"GameRoom2D\",\"timestamp\":1789936285461}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":6,\"name\":\"prefab-preload:pdk/PDK_CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936285518}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288593}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":5,\"name\":\"prefab-preload:room/CommonRoom\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288647}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288649}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288651}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288672}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":8,\"name\":\"form:room/CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288679}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolve] bound unified entry",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288684}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288685}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288830}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":9,\"name\":\"form:pdk/PDK_CommonRoom\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936288839}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'internal/builtin-clear-stencil|sprite-vs:vert|sprite-fs:frag' compilation succeeded."
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "Shader 'for2d/builtin-sprite|sprite-vs:vert|sprite-fs:frag|USE_ALPHA_TEST1|USE_TEXTURE1' compilation succeeded."
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289718}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolveVote] submit",
+          "Object"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "property===playVersionthis.roomConfig[property]===xqp-equivalent-1"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289755}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":3,\"name\":\"game:GameRoom2D\",\"message\":\"正在提交房间首帧...\",\"progress\":0.98,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289780}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":1,\"stage\":\"ROOM_PRESENTED\",\"owner\":\"authenticated-route\",\"roomId\":120851,\"scene\":\"GameRoom2D\",\"navigationGeneration\":1}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[RoomDissolveVote] accepted",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":11,\"name\":\"game-return-lobby\",\"message\":\"正在返回大厅...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289805}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "roomPosInfoList",
+          "Array(2)"
+        ]
+      },
+      {
+        "type": "log",
+        "values": [
+          "InitSetInfo",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[CommonRoomTurnState]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[PdkTableTransition]",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooRoomExit] begin",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":11,\"name\":\"game-return-lobby\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"GameRoom2D\",\"timestamp\":1789936289899}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_SCENE_LOAD_START\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":2,\"name\":\"scene-navigation\",\"message\":\"正在准备目标界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":true,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936290013}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"GameRoom2D\",\"timestamp\":1789936290255}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":10,\"name\":\"prefab-preload:settlement/poker/SmallSettlement\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"GameRoom2D\",\"timestamp\":1789936290350}"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "debug",
+        "values": [
+          "The asset  has been destroyed!"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":11,\"name\":\"game-return-lobby\",\"message\":\"大厅场景已加载，正在挂载界面...\",\"progress\":0.97,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936290411}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_MOUNT_START\",\"owner\":\"authenticated-route\",\"scene\":\"MainScene\",\"canvasActive\":true,\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"RECOVER_LOBBY_TRANSPORT\",\"navigationGeneration\":2}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] client-created",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[SessionLifecycle] connect",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":12,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290455}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":12,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936290458}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":12,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936293712}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":12,\"name\":\"form:lobby/UILobbyMain\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936293759}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":13,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"正在预加载界面资源...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936293764}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":13,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936293788}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"begin\",\"id\":14,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面...\",\"progress\":0,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936293804}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":14,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在加载界面资源...\",\"progress\":0.25,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936293806}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":14,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":3,\"scene\":\"MainScene\",\"timestamp\":1789936293826}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"cancel\",\"id\":14,\"name\":\"form:lobby/UIMessage_Drift\",\"message\":\"正在挂载界面...\",\"progress\":0.82,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936293830}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"progress\",\"id\":11,\"name\":\"game-return-lobby\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":2,\"scene\":\"MainScene\",\"timestamp\":1789936293832}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:ready-check",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooBackgroundWarmup] started",
+          "Object"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "target:after-draw"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":13,\"name\":\"prefab-preload:lobby/UIMessage_Drift\",\"message\":\"界面资源已就绪\",\"progress\":1,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":1,\"scene\":\"MainScene\",\"timestamp\":1789936293862}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooPresentationTransition]",
+          "{\"action\":\"commit\",\"id\":11,\"name\":\"game-return-lobby\",\"message\":\"大厅界面已挂载，正在提交首帧...\",\"progress\":0.99,\"progressKind\":\"STAGE\",\"visible\":false,\"failed\":false,\"activeCount\":0,\"scene\":\"MainScene\",\"timestamp\":1789936293879}"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AooTransition]",
+          "aoo-transition-20260907-coordinator-1",
+          "overlay:destroy"
+        ]
+      },
+      {
+        "type": "info",
+        "values": [
+          "[AuthNavigation]",
+          "{\"operationId\":2,\"stage\":\"LOBBY_PRESENTED\",\"owner\":\"authenticated-route\",\"navigationGeneration\":2}"
+        ]
+      }
+    ]
+  },
+  "clicks": {
+    "desktop": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 510.7704309063894,
+        "y": 632.6991084695393,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 491.29894571879646,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput (EditBox activation)"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 554.6608415304606,
+        "world": {
+          "x": 684.6953937592867,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput (EditBox activation)"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333334,
+        "y": 621.4192876532318,
+        "world": {
+          "x": 850.6323937592867,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "Btn_AccountLogin",
+        "x": 458.5,
+        "y": 315.66666666666663,
+        "world": {
+          "x": 840,
+          "y": 160.00000000000006
+        },
+        "path": "LoginScene/Canvas/Login/Btn_AccountLogin"
+      },
+      {
+        "name": "AccountInput",
+        "x": 426,
+        "y": 164.21395833333335,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 419.15000000000003
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput"
+      },
+      {
+        "name": "PasswordInput",
+        "x": 426,
+        "y": 227.59939999999997,
+        "world": {
+          "x": 780.4580152671756,
+          "y": 303.02400000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/PasswordInput"
+      },
+      {
+        "name": "Btn_Login",
+        "x": 516.5739458333333,
+        "y": 294.3826541666666,
+        "world": {
+          "x": 946.3950152671756,
+          "y": 180.67300000000006
+        },
+        "path": "LoginScene/Canvas/Login/AccountLoginPanel/Btn_Login"
+      },
+      {
+        "name": "Btn_Agree",
+        "x": 480.58333333333337,
+        "y": 285.8294458333333,
+        "world": {
+          "x": 880.4580152671756,
+          "y": 196.34300000000005
+        },
+        "path": "GameRoom2D/Canvas/TableLayer/DissolveRoom/Btn_Agree"
+      }
+    ]
+  },
+  "loginInputDiagnostic": {
+    "desktop": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 639.25,
+            "y": 11.625,
+            "width": 41,
+            "height": 24
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "52",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 484.4992980957031,
+            "y": 401.70465087890625,
+            "width": 315.0013732910156,
+            "height": 70.10415649414062
+          },
+          "focused": true
+        }
+      ]
+    },
+    "mobile": {
+      "activeTag": "INPUT",
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "id": "input-set-fps",
+          "value": "60",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "value": "1",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_1",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_2",
+          "value": "",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_3",
+          "value": "53",
+          "display": "none",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        },
+        {
+          "tag": "INPUT",
+          "id": "EditBoxId_4",
+          "value": "1",
+          "display": "block",
+          "visibility": "visible",
+          "rect": {
+            "x": 336.0270690917969,
+            "y": 207.13064575195312,
+            "width": 183.94583129882812,
+            "height": 40.9375
+          },
+          "focused": true
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "",
+          "value": "",
+          "display": "inline-block",
+          "visibility": "visible",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "focused": false
+        }
+      ]
+    }
+  },
+  "preInputComponents": {
+    "desktop": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ],
+    "mobile": [
+      {
+        "index": 0,
+        "className": "UITransform",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 1,
+        "className": "EditBox",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 2,
+        "className": "EditBoxLabelLayout",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      },
+      {
+        "index": 3,
+        "className": "Sprite",
+        "valid": true,
+        "flags": 59392,
+        "nodeSame": true,
+        "enabled": true
+      }
+    ]
+  },
+  "preInputState": {
+    "desktop": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 484.4992980957031,
+        "y": 293.15911865234375,
+        "width": 315.0013732910156,
+        "height": 70.10415649414062
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 684.6953937592867,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    },
+    "mobile": {
+      "editing": false,
+      "hasDom": true,
+      "active": true,
+      "value": "",
+      "rect": {
+        "x": 336.0270690917969,
+        "y": 143.74520874023438,
+        "width": 183.94583129882812,
+        "height": 40.9375
+      },
+      "editValid": true,
+      "nodeValid": true,
+      "hasPreload": true,
+      "hasInit": true,
+      "implClass": "EditBoxImpl",
+      "implKeys": [
+        "_editing",
+        "_delegate",
+        "_inputMode",
+        "_inputFlag",
+        "_returnType",
+        "__eventListeners",
+        "__autoResize",
+        "__orientationChanged",
+        "_edTxt",
+        "_isTextArea",
+        "_textLabelFont",
+        "_textLabelFontSize",
+        "_textLabelFontColor",
+        "_textLabelAlign",
+        "_placeholderLabelFont",
+        "_placeholderLabelFontSize",
+        "_placeholderLabelFontColor",
+        "_placeholderLabelAlign",
+        "_placeholderLineHeight",
+        "_placeholderStyleSheet",
+        "_domId",
+        "_forceUpdate"
+      ],
+      "documentClass": "HTMLDocument",
+      "matches": [
+        {
+          "path": "LoginScene/Canvas/Login/AccountLoginPanel/AccountInput",
+          "world": {
+            "x": 780.4580152671756,
+            "y": 419.15000000000003
+          },
+          "enabled": false
+        }
+      ]
+    }
+  }
+}
