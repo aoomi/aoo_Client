@@ -880,7 +880,7 @@ export class CommonPdkSwitchCoordinator {
         const operationId = String(payload.operationId ?? '');
         // A round may publish several terminal snapshots with newer versions or
         // operation ids. They are the same settlement and must not repeatedly
-        // cancel the two-second FLOATING continuation timer.
+        // restart the terminal-card hold for the same completed round.
         const key = `${roomId}:${roundNo}:${finalSettlement ? 'FINAL' : 'ROUND'}`;
         if (key === this.settlementPendingKey || key === this.settlementShownKey) return;
         const generation = ++this.settlementPresentationGeneration;
@@ -938,11 +938,9 @@ export class CommonPdkSwitchCoordinator {
             // 7/8 and makes the final hand appear unrecorded.
             payload = await this.withReplayCode(payload, roomId, roundNo);
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
-            await terminalBoundary;
-            if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             // Node cleanup is synchronous at method entry. Start it in the same
-            // terminal boundary that mounts the modal, while regional animation
-            // drains remain detached from the settlement screen.
+            // already-completed terminal hold that mounts the modal, while regional
+            // animation drains remain detached from the settlement screen.
             await this.forms.show(this.smallSettlementForm, payload);
             if (generation !== this.settlementPresentationGeneration || !this.inGame) return;
             this.settlementShownKey = key;

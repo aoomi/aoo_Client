@@ -34,7 +34,6 @@ import {
     type PdkRoundPresentationLease,
 } from './Room/PdkRoundPresentationLifecycle';
 
-const DRAG_THRESHOLD_PX = 8;
 const CLICK_SUPPRESS_MS = 250;
 const AUTO_PLAY_SELECTION_DELAY_MS = 600;
 const HAND_COMPACT_DURATION_SECONDS = 0.35;
@@ -87,12 +86,12 @@ export class CommonPdkPlayController {
     private readonly cardValues: number[] = [];
     private readonly remainingCards = new Map<number, number>();
     private clockTimer = 0;
+    private lastTurnPointerTraceKey = '';
     private activeOpPos = -1;
     private tipIndex = 0;
     private promptCycleKey = '';
     private dragStartIndex = -1;
     private dragLastIndex = -1;
-    private dragStartUi = new Vec3();
     private dragActive = false;
     private dragMoved = false;
     private readonly dragIndices = new Set<number>();
@@ -480,7 +479,16 @@ export class CommonPdkPlayController {
                 .catch((error: unknown) => this.report(error, '头像加载失败')));
             const projectRoundCards = formalCardPlayPhase || waitingForContinue;
             const snapshotPresentationLease = this.roundPresentation.lease();
-            const publicPresentation = !projectRoundCards || roundPresentationChanged
+            // Only Liangshan consumes the ordered historical ledger. Suppress
+            // that ledger at a new-deal boundary so completed-round operations
+            // cannot be restored into the next archive. Ordinary PDK projects
+            // only comparisonState, which is the authoritative current play and
+            // must remain visible even when this observer first accepts the deal.
+            // Skipping every variant here left the actor's local flight visible
+            // while remote clients silently discarded the same committed play.
+            const skipStaleRetainedLedger = roundPresentationChanged
+                && this.runtime.arrangementEnabled();
+            const publicPresentation = !projectRoundCards || skipStaleRetainedLedger
                 ? Promise.resolve()
                 : this.runtime.arrangementEnabled()
                     // This handler only receives live authoritative commits. Even
@@ -961,31 +969,53 @@ export class CommonPdkPlayController {
             this.bindGestureSurface(this.view?.find('Players/Play_0/Card/Hand_TouchArea') ?? null);
             return;
         }
+        // Build the complete replacement outside Hand_Cards. Asset loading may
+        // yield between any two cards; publishing each node immediately lets an
+        // older render leave partial children behind after a newer authority
+        // packet invalidates its generation.
+        const staging = new Node('PDK_Hand_Render_Staging');
+        const createdNodes: Node[] = [];
+        const createdValues: number[] = [];
+        try {
+            for (let index = 0; index < hand.length; index += 1) {
+                const card = await this.cards.create(staging, Number(hand[index]), false);
+                createdNodes.push(card);
+                createdValues.push(Number(hand[index]));
+                if (generation !== this.handRenderGeneration || !parent.isValid) {
+                    this.discardUncommittedHandNodes(staging, createdNodes);
+                    return;
+                }
+                const legacyHitTargets = [card];
+                while (legacyHitTargets.length > 0) {
+                    const target = legacyHitTargets.pop()!;
+                    const legacyButton = target.getComponent(Button);
+                    if (legacyButton) legacyButton.enabled = false;
+                    const cardTransform = target.getComponent(UITransform);
+                    if (cardTransform) cardTransform.hitTest = () => false;
+                    legacyHitTargets.push(...target.children);
+                }
+            }
+        } catch (error: unknown) {
+            this.discardUncommittedHandNodes(staging, createdNodes);
+            throw error;
+        }
+        if (generation !== this.handRenderGeneration || !parent.isValid) {
+            this.discardUncommittedHandNodes(staging, createdNodes);
+            return;
+        }
+        // Commit one complete generation. The formal hand container never sees
+        // an incomplete replacement and therefore never reserves a Layout slot
+        // for an abandoned asynchronous render.
         this.cards.stopAll(true);
         this.cards.clear(parent);
         this.cardNodes.length = 0;
         this.cardValues.length = 0;
         this.clearDragSelection();
         this.resetPromptCycle();
-        for (let index = 0; index < hand.length; index += 1) {
-            const card = await this.cards.create(parent, Number(hand[index]), false);
-            if (generation !== this.handRenderGeneration || !parent.isValid) {
-                if (card.isValid) card.destroy();
-                return;
-            }
-            const legacyHitTargets = [card];
-            while (legacyHitTargets.length > 0) {
-                const target = legacyHitTargets.pop()!;
-                const legacyButton = target.getComponent(Button);
-                if (legacyButton) legacyButton.enabled = false;
-                const cardTransform = target.getComponent(UITransform);
-                if (cardTransform) cardTransform.hitTest = () => false;
-                legacyHitTargets.push(...target.children);
-            }
-            this.cardNodes.push(card);
-            this.cardValues.push(Number(hand[index]));
-        }
-        if (generation !== this.handRenderGeneration) return;
+        for (const card of createdNodes) parent.addChild(card);
+        this.cardNodes.splice(0, this.cardNodes.length, ...createdNodes);
+        this.cardValues.splice(0, this.cardValues.length, ...createdValues);
+        if (staging.isValid) staging.destroy();
         const handLayout = parent.getComponent(Layout);
         if (handLayout) {
             // Hand_Cards owns visual arrangement only. Let Layout settle the cards,
@@ -1010,6 +1040,15 @@ export class CommonPdkPlayController {
         this.syncHandTouchArea();
         this.assertHandNodeInvariant(parent, hand.length);
         this.bindGestureSurface(this.view?.find('Players/Play_0/Card/Hand_TouchArea') ?? null);
+    }
+
+    private discardUncommittedHandNodes(staging: Node, createdNodes: readonly Node[]): void {
+        for (const card of createdNodes) {
+            if (!card.isValid) continue;
+            card.removeFromParent();
+            card.destroy();
+        }
+        if (staging.isValid) staging.destroy();
     }
 
     private shouldAnimateDeal(setInfo: Record<string, unknown>): boolean {
@@ -1304,20 +1343,9 @@ export class CommonPdkPlayController {
     private onHandTouchStart(event: EventTouch): void {
         if (this.capturedPointerId !== null || this.dragActive) return;
         const sample = this.sampleFromTouch(event);
+        if (sample.index < 0 && this.interactiveButtonAtUi(sample.ui.x, sample.ui.y)) return;
         event.propagationStopped = true;
-        const location = sample.ui;
-        this.dragActive = true;
-        this.dragMoved = false;
-        this.dragStartIndex = sample.index;
-        // Keep taps strict (an empty-area tap must do nothing), but remember the
-        // nearest hand slot as the drag anchor. Once movement starts, every
-        // horizontal path inside the bottom hand band participates even when it
-        // begins before the first card or ends after the last card.
-        this.dragLastIndex = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        this.dragStartUi.set(location.x, location.y, 0);
-        this.dragIndices.clear();
-        if (sample.index >= 0) this.dragIndices.add(sample.index);
-        this.lastPointerSample = sample;
+        this.beginDragSelection(sample);
         this.traceGesture('bridge-start', sample.index, [], sample);
     }
 
@@ -1434,6 +1462,15 @@ export class CommonPdkPlayController {
         }
         const sample = this.sampleFromPointer(event);
         this.traceDomPointer('down', sample);
+        if (this.isHandInteractionEnabled() && sample.index >= 0) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.capturedPointerId = event.pointerId;
+            this.beginDragSelection(sample);
+            try { this.gestureCanvas?.setPointerCapture(event.pointerId); } catch { /* detached Canvas */ }
+            this.traceGesture('dom-start', sample.index, [], sample);
+            return;
+        }
         const interactiveButton = this.interactiveButtonAtUi(sample.ui.x, sample.ui.y);
         if (interactiveButton) {
             event.preventDefault();
@@ -1443,21 +1480,16 @@ export class CommonPdkPlayController {
             try { this.gestureCanvas?.setPointerCapture(event.pointerId); } catch { /* detached Canvas */ }
             return;
         }
-        const dragIndex = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        if (!this.isHandInteractionEnabled() || dragIndex < 0) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        this.capturedPointerId = event.pointerId;
-        this.dragActive = true;
-        this.dragMoved = false;
-        this.dragStartIndex = sample.index;
-        this.dragLastIndex = dragIndex;
-        this.dragStartUi.set(sample.ui.x, sample.ui.y, 0);
-        this.dragIndices.clear();
-        if (sample.index >= 0) this.dragIndices.add(sample.index);
-        this.lastPointerSample = sample;
-        try { this.gestureCanvas?.setPointerCapture(event.pointerId); } catch { /* detached Canvas */ }
-        this.traceGesture('dom-start', sample.index, [], sample);
+        if (this.isHandInteractionEnabled() && this.isInsideHandGestureArea(sample)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.capturedPointerId = event.pointerId;
+            this.beginDragSelection(sample);
+            try { this.gestureCanvas?.setPointerCapture(event.pointerId); } catch { /* detached Canvas */ }
+            this.traceGesture('dom-start', sample.index, [], sample);
+            return;
+        }
+        if (this.isHandInteractionEnabled()) this.clearCardSelection();
     };
 
     private readonly onDomPointerMove = (event: PointerEvent): void => {
@@ -1473,20 +1505,7 @@ export class CommonPdkPlayController {
         const sample = this.sampleFromPointer(event);
         this.traceDomPointer('move', sample);
         this.lastPointerSample = sample;
-        if (Math.abs(sample.ui.x - this.dragStartUi.x) + Math.abs(sample.ui.y - this.dragStartUi.y) >= DRAG_THRESHOLD_PX) {
-            this.dragMoved = true;
-        }
-        const index = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        if (index >= 0) {
-            if (this.dragLastIndex >= 0) {
-                for (const item of this.coveredDragIndices(this.dragLastIndex, index)) this.dragIndices.add(item);
-            } else {
-                this.dragIndices.add(index);
-            }
-            this.dragLastIndex = index;
-            if (this.dragIndices.size > 1) this.dragMoved = true;
-            if (this.dragMoved) this.previewDragSelection();
-        }
+        this.updateDragSelection(sample.index);
         this.traceGesture('move', sample.index, [], sample);
     };
 
@@ -1496,6 +1515,7 @@ export class CommonPdkPlayController {
         event.stopImmediatePropagation();
         const sample = this.sampleFromPointer(event);
         this.traceDomPointer('up', sample);
+        this.updateDragSelection(sample.index);
         try { this.gestureCanvas?.releasePointerCapture(event.pointerId); } catch { /* already released */ }
         this.capturedPointerId = null;
         const bridgedButton = this.bridgedButton;
@@ -1508,6 +1528,12 @@ export class CommonPdkPlayController {
         }
         if (!this.dragActive) return;
         this.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
+        if (this.dragStartIndex < 0) {
+            this.traceGesture('blank-tap', -1, [], sample);
+            this.cancelDragSelection();
+            this.clearCardSelection();
+            return;
+        }
         if (this.dragMoved) {
             if (this.dragIndices.size > 0) this.commitSmartDragSelection(sample);
             else {
@@ -1539,21 +1565,36 @@ export class CommonPdkPlayController {
     };
 
     private interactiveButtonAtUi(uiX: number, uiY: number): Node | null {
-        const root = this.view?.root;
-        if (!root) return null;
         const world = new Vec3(uiX, uiY, 0);
-        const buttons = root.getComponentsInChildren(Button);
-        for (let index = buttons.length - 1; index >= 0; index -= 1) {
-            const button = buttons[index];
-            const candidate = button.node;
-            const transform = candidate.getComponent(UITransform);
-            if (!candidate.activeInHierarchy || !button.enabled || !button.interactable || !transform) continue;
-            const local = transform.convertToNodeSpaceAR(world);
-            const left = -transform.anchorPoint.x * transform.width;
-            const right = (1 - transform.anchorPoint.x) * transform.width;
-            const bottom = -transform.anchorPoint.y * transform.height;
-            const top = (1 - transform.anchorPoint.y) * transform.height;
-            if (local.x >= left && local.x <= right && local.y >= bottom && local.y <= top) return candidate;
+        const roots: Node[] = [];
+        for (const seed of [this.view?.root, this.commonView?.root]) {
+            if (!seed) continue;
+            let root = seed;
+            while (root.parent) root = root.parent;
+            if (!roots.includes(root)) roots.push(root);
+        }
+        for (const root of roots) {
+            const buttons = root.getComponentsInChildren(Button);
+            for (let index = buttons.length - 1; index >= 0; index -= 1) {
+                const button = buttons[index];
+                const candidate = button.node;
+                const transform = candidate.getComponent(UITransform);
+                if (!candidate.activeInHierarchy || !button.enabled || !button.interactable || !transform) continue;
+                // A full-screen form/backdrop is an event surface, not a visible
+                // control. Let the hand interaction band own its empty area.
+                const worldWidth = transform.width * Math.abs(candidate.worldScale.x);
+                const worldHeight = transform.height * Math.abs(candidate.worldScale.y);
+                const visibleSize = view.getVisibleSize();
+                if (candidate === root
+                    || (worldWidth >= visibleSize.width * 0.8
+                        && worldHeight >= visibleSize.height * 0.8)) continue;
+                const local = transform.convertToNodeSpaceAR(world);
+                const left = -transform.anchorPoint.x * transform.width;
+                const right = (1 - transform.anchorPoint.x) * transform.width;
+                const bottom = -transform.anchorPoint.y * transform.height;
+                const top = (1 - transform.anchorPoint.y) * transform.height;
+                if (local.x >= left && local.x <= right && local.y >= bottom && local.y <= top) return candidate;
+            }
         }
         return null;
     }
@@ -1689,22 +1730,9 @@ export class CommonPdkPlayController {
         if (!this.dragActive || this.capturedPointerId !== null) return;
         event.propagationStopped = true;
         const sample = this.sampleFromTouch(event);
-        const index = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        const location = sample.ui;
-        if (Math.abs(location.x - this.dragStartUi.x) + Math.abs(location.y - this.dragStartUi.y) >= DRAG_THRESHOLD_PX) {
-            this.dragMoved = true;
-        }
-        if (index < 0) return;
-        if (this.dragLastIndex >= 0) {
-            for (const item of this.coveredDragIndices(this.dragLastIndex, index)) this.dragIndices.add(item);
-        } else {
-            this.dragIndices.add(index);
-        }
-        this.dragLastIndex = index;
-        if (this.dragIndices.size > 1) this.dragMoved = true;
-        if (this.dragMoved) this.previewDragSelection();
+        this.updateDragSelection(sample.index);
         this.lastPointerSample = sample;
-        this.traceGesture('bridge-move', index, [], sample);
+        this.traceGesture('bridge-move', sample.index, [], sample);
     }
 
     private onHandTouchCancel(event: EventTouch): void {
@@ -1717,15 +1745,21 @@ export class CommonPdkPlayController {
     private onHandTouchEnd(event: EventTouch): void {
         if (!this.dragActive || this.capturedPointerId !== null) return;
         event.propagationStopped = true;
+        const sample = this.sampleFromTouch(event);
+        this.lastPointerSample = sample;
+        this.updateDragSelection(sample.index);
+        if (this.dragStartIndex < 0) {
+            this.traceGesture('blank-tap', -1, [], sample);
+            this.cancelDragSelection();
+            this.clearCardSelection();
+            return;
+        }
         if (this.dragMoved) {
-            const sample = this.lastPointerSample;
-            if (!sample) { this.cancelDragSelection(); return; }
             this.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
             this.commitSmartDragSelection(sample);
             return;
         }
         const index = this.dragStartIndex;
-        const sample = this.lastPointerSample;
         this.cancelDragSelection();
         this.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
         this.traceGesture('bridge-tap', index, [], sample);
@@ -1734,16 +1768,10 @@ export class CommonPdkPlayController {
 
     private onHandMouseDown(event: EventMouse): void {
         if (event.getButton() !== EventMouse.BUTTON_LEFT || this.capturedPointerId !== null || this.dragActive) return;
-        event.propagationStopped = true;
         const sample = this.sampleFromMouse(event);
-        this.dragActive = true;
-        this.dragMoved = false;
-        this.dragStartIndex = sample.index;
-        this.dragLastIndex = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        this.dragStartUi.set(sample.ui.x, sample.ui.y, 0);
-        this.dragIndices.clear();
-        if (sample.index >= 0) this.dragIndices.add(sample.index);
-        this.lastPointerSample = sample;
+        if (sample.index < 0 && this.interactiveButtonAtUi(sample.ui.x, sample.ui.y)) return;
+        event.propagationStopped = true;
+        this.beginDragSelection(sample);
         this.traceGesture('mouse-start', sample.index, [], sample);
     }
 
@@ -1751,20 +1779,7 @@ export class CommonPdkPlayController {
         if (!this.dragActive || this.capturedPointerId !== null) return;
         event.propagationStopped = true;
         const sample = this.sampleFromMouse(event);
-        if (Math.abs(sample.ui.x - this.dragStartUi.x) + Math.abs(sample.ui.y - this.dragStartUi.y) >= DRAG_THRESHOLD_PX) {
-            this.dragMoved = true;
-        }
-        const index = this.dragIndexAtUi(sample.ui.x, sample.ui.y);
-        if (index >= 0) {
-            if (this.dragLastIndex >= 0) {
-                for (const item of this.coveredDragIndices(this.dragLastIndex, index)) this.dragIndices.add(item);
-            } else {
-                this.dragIndices.add(index);
-            }
-            this.dragLastIndex = index;
-            if (this.dragIndices.size > 1) this.dragMoved = true;
-            if (this.dragMoved) this.previewDragSelection();
-        }
+        this.updateDragSelection(sample.index);
         this.lastPointerSample = sample;
         this.traceGesture('mouse-move', sample.index, [], sample);
     }
@@ -1774,6 +1789,13 @@ export class CommonPdkPlayController {
         event.propagationStopped = true;
         const sample = this.sampleFromMouse(event);
         this.lastPointerSample = sample;
+        this.updateDragSelection(sample.index);
+        if (this.dragStartIndex < 0) {
+            this.traceGesture('blank-tap', -1, [], sample);
+            this.cancelDragSelection();
+            this.clearCardSelection();
+            return;
+        }
         if (this.dragMoved) {
             if (this.dragIndices.size > 0) this.commitSmartDragSelection(sample);
             else this.cancelDragSelection();
@@ -1806,8 +1828,8 @@ export class CommonPdkPlayController {
             if (!transform) continue;
             if (UITransform.prototype.hitTest.call(transform, screenPoint, windowId)) return index;
         }
-        // Plain taps remain card-exact so empty-space clicks cannot select a
-        // nearby card. Moving swipes use dragIndexAtUi separately.
+        // Both taps and swipes use the same exact visible-card boundary.
+        // Empty space must never be projected to a nearby card.
         return -1;
     }
 
@@ -1828,28 +1850,52 @@ export class CommonPdkPlayController {
         return -1;
     }
 
-    private dragIndexAtUi(uiX: number, uiY: number): number {
-        if (this.cardNodes.length === 0) return -1;
-        const surface = this.gestureSurface?.getComponent(UITransform);
-        if (!surface) return -1;
-        const local = surface.convertToNodeSpaceAR(new Vec3(uiX, uiY, 0));
-        const left = -surface.anchorPoint.x * surface.width;
-        const right = (1 - surface.anchorPoint.x) * surface.width;
-        const bottom = -surface.anchorPoint.y * surface.height;
-        const top = (1 - surface.anchorPoint.y) * surface.height;
-        if (local.x < left || local.x > right || local.y < bottom || local.y > top) return -1;
-        let nearestIndex = -1;
-        let nearestDistance = Number.POSITIVE_INFINITY;
-        for (let index = 0; index < this.cardNodes.length; index += 1) {
-            const card = this.cardNodes[index];
-            if (!card?.isValid || !card.activeInHierarchy) continue;
-            const distance = Math.abs(card.worldPosition.x - uiX);
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearestIndex = index;
-            }
+    /**
+     * The complete visible bottom half is the hand gesture band. Do not derive
+     * its horizontal bounds from Hand_TouchArea: Creator's node-local width can
+     * lag one frame behind a Preview resize/device-shell transform, which makes
+     * the empty strips at either screen edge intermittently reject a drag.
+     * Exact card hit testing remains separate, so entering this band never
+     * projects an empty coordinate onto the nearest card.
+     */
+    private isInsideHandGestureArea(sample: HandPointerSample): boolean {
+        const origin = view.getVisibleOrigin();
+        const size = view.getVisibleSize();
+        if (!Number.isFinite(size.width) || size.width <= 0
+            || !Number.isFinite(size.height) || size.height <= 0) return false;
+        return sample.ui.x >= origin.x
+            && sample.ui.x <= origin.x + size.width
+            && sample.ui.y >= origin.y
+            && sample.ui.y <= origin.y + size.height * 0.5;
+    }
+
+    private beginDragSelection(sample: HandPointerSample): void {
+        this.dragActive = true;
+        this.dragMoved = false;
+        this.dragStartIndex = sample.index;
+        this.dragLastIndex = sample.index;
+        this.dragIndices.clear();
+        if (sample.index >= 0) this.dragIndices.add(sample.index);
+        this.lastPointerSample = sample;
+    }
+
+    /** The active swipe is always one interval from its first real card to its current real card. */
+    private updateDragSelection(index: number): void {
+        if (!this.dragActive || index < 0) return;
+        if (this.dragStartIndex < 0) {
+            this.dragStartIndex = index;
+            this.dragLastIndex = index;
+            this.dragIndices.clear();
+            this.dragIndices.add(index);
+            this.dragMoved = true;
+            this.previewDragSelection();
+            return;
         }
-        return nearestIndex;
+        if (index !== this.dragStartIndex) this.dragMoved = true;
+        this.dragIndices.clear();
+        for (const item of this.coveredDragIndices(this.dragStartIndex, index)) this.dragIndices.add(item);
+        this.dragLastIndex = index;
+        if (this.dragMoved) this.previewDragSelection();
     }
 
     private previewDragSelection(): void {
@@ -1860,13 +1906,16 @@ export class CommonPdkPlayController {
 
     private commitSmartDragSelection(sample: HandPointerSample): void {
         const hand = (this.logic.GetHandCard() ?? []).map(Number);
-        const touched = this.sortedDragIndices().map((index) => hand[index]);
-        const required = this.isAuthoritativeLeadingTurn() ? this.activeRequiredFirstCard() : 0;
-        if (required > 0 && !touched.includes(required)) {
+        // The gesture contributes only its physically crossed candidate pool.
+        // Card count is evaluated before the shared Hint strategy; equal-size
+        // candidates must therefore resolve exactly as the Hint button does.
+        const touched = this.orderedDragIndices().map((index) => hand[index]);
+        const required = this.missingRequiredFirstCard(touched);
+        if (required > 0) {
             this.traceGesture('required-card-missing', this.dragLastIndex, [], sample);
             this.cardNodes.forEach((node) => this.cards.previewDrag(node, false));
             this.clearDragSelection();
-            this.showMessage(`必包含${this.cardDisplayName(required)}`);
+            this.showMessage(`必须带${this.cardDisplayName(required)}牌`);
             return;
         }
         // A swipe is a complete selection action. Its candidate pool is exactly
@@ -1885,18 +1934,15 @@ export class CommonPdkPlayController {
     }
 
     private largestLegalDragCandidates(touched: readonly number[]): number[][] {
-        const required = this.isAuthoritativeLeadingTurn() ? this.activeRequiredFirstCard() : 0;
-        // Three crossed cards are an intentional partial selection. In regional
-        // rules where a triple must carry attachments, classifying this gesture
-        // immediately would reduce it to the locally legal pair and make it
-        // impossible to keep the complete triple raised while adding kickers.
-        // Selection itself is unrestricted; Authority validates only on Play.
-        if (touched.length === 3 && (required <= 0 || touched.includes(required))) {
-            return [[...touched]];
-        }
+        const leading = this.isAuthoritativeLeadingTurn();
+        const required = leading ? this.activeRequiredFirstCard() : 0;
         return largestLegalPdkSubsets(touched, (subsets) => {
             const candidates = required > 0 ? subsets.filter((cards) => cards.includes(required)) : [...subsets];
-            return this.sortedLegalTipCandidates(candidates, true);
+            // Reuse the single authoritative Hint pipeline for legality and all
+            // regional/whole-hand tie-breakers. largestLegalPdkSubsets remains
+            // outside it so a smaller strategically cleaner play can never beat
+            // a larger legal play during a swipe.
+            return this.sortedLegalTipCandidates(candidates, leading, leading);
         });
     }
 
@@ -1904,6 +1950,14 @@ export class CommonPdkPlayController {
         // Cancel only the transient drag preview; committed selection is restored below.
         this.cardNodes.forEach((node) => this.cards.previewDrag(node, false));
         this.clearDragSelection();
+        this.updateSelection();
+    }
+
+    private clearCardSelection(): void {
+        if ((this.logic.GetSelectCard() ?? []).length === 0) return;
+        this.logic.ChangeSelectCard([]);
+        this.resetPromptCycle();
+        this.cards.stopAll(false);
         this.updateSelection();
     }
 
@@ -1927,12 +1981,29 @@ export class CommonPdkPlayController {
         return [...this.dragIndices].sort((left, right) => left - right);
     }
 
+    private orderedDragIndices(): number[] {
+        if (this.dragStartIndex < 0 || this.dragLastIndex < 0) return [];
+        const step = this.dragLastIndex >= this.dragStartIndex ? 1 : -1;
+        const values: number[] = [];
+        for (let index = this.dragStartIndex;; index += step) {
+            values.push(index);
+            if (index === this.dragLastIndex) break;
+        }
+        return values;
+    }
+
     private traceGesture(stage: string, index: number, finalCards: readonly number[] = [], sample: HandPointerSample | null = null): void {
         const host = globalThis as typeof globalThis & { __PDK_GESTURE_TRACE__?: unknown[] };
         const trace = host.__PDK_GESTURE_TRACE__ ?? [];
-        trace.push({ stage, index, coveredIndexes: this.sortedDragIndices(), finalCards: [...finalCards], ...sample, at: Date.now() });
+        const entry = { stage, index, coveredIndexes: this.sortedDragIndices(), finalCards: [...finalCards], ...sample, at: Date.now() };
+        trace.push(entry);
         if (trace.length > 100) trace.splice(0, trace.length - 100);
         host.__PDK_GESTURE_TRACE__ = trace;
+        const terminalStage = stage === 'commit' || stage === 'required-card-missing'
+            || stage === 'cancel' || stage.endsWith('tap');
+        if (terminalStage) {
+            console.info('[PDKGesture]', JSON.stringify(entry));
+        }
     }
 
     private async renderPublicOperation(
@@ -1954,6 +2025,15 @@ export class CommonPdkPlayController {
         const values = Array.isArray(packet.cardList) ? packet.cardList.map(Number) : [];
         const outCardPath = `Players/Play_${entry.physicalSlot}/Card/Out_Card`;
         const parent = this.view.find(outCardPath);
+        this.tracePublicProjection('RENDER_BEGIN', {
+            dataSeat,
+            physicalSlot: entry.physicalSlot,
+            operationId: String(packet.operationId ?? packet.actionId ?? ''),
+            cardValues: values,
+            seatRevision,
+            expectedProjectionGeneration: expectedProjectionGeneration ?? null,
+            currentProjectionGeneration: this.publicProjectionGeneration,
+        });
         if (this.runtime.arrangementEnabled()) {
             // Liangshan moves the preceding physical nodes into Table_Cards.
             // Never clear/replace Out_Card until that transfer has stopped.
@@ -2043,6 +2123,14 @@ export class CommonPdkPlayController {
         } else {
             this.publicCardShownAt.delete(dataSeat);
         }
+        this.tracePublicProjection('RENDER_COMMIT', {
+            dataSeat,
+            physicalSlot: entry.physicalSlot,
+            operationId: String(packet.operationId ?? packet.actionId ?? ''),
+            cardValues: values,
+            childCount: parent?.children.filter((child) => child.name !== 'PlayCount').length ?? 0,
+            active: parent?.activeInHierarchy ?? false,
+        });
     }
 
     private async presentPublicOperation(packet: Record<string, unknown>): Promise<void> {
@@ -2612,8 +2700,8 @@ export class CommonPdkPlayController {
         const operationId = String(deadline?.operationId ?? '');
         const turnSeat = Number(setInfo.opPos ?? deadline?.seatId ?? -1);
         const selectionKey = `${roomId}:${trickId}:${turnSeat}:${operationId}`;
-        const trickReset = Boolean(setInfo.trickReset) || Boolean(setInfo.isFirstOp)
-            || !Array.isArray(setInfo.cardList) || setInfo.cardList.length === 0;
+        const comparison = this.authorityComparison(setInfo);
+        const trickReset = comparison.cards.length === 0 || comparison.type <= 0;
         if (selectionKey !== this.selectionAuthorityKey) {
             this.selectionAuthorityKey = selectionKey;
             this.logic.ChangeSelectCard([]);
@@ -2669,6 +2757,16 @@ export class CommonPdkPlayController {
         // responding turn as a fresh lead while the table still showed five cards.
         const opType = this.legacyOperationType(comparison.cardType ?? comparison.type);
         const trickReset = cardList.length === 0 || opType <= 0 || dataSeat < 0;
+        this.tracePublicProjection('RECONCILE', {
+            operationId: String(comparison.operationId ?? ''),
+            trickId,
+            dataSeat,
+            activeOpPos: this.activeOpPos,
+            cardValues: cardList,
+            opType,
+            trickReset,
+            projectionGeneration,
+        });
         console.info('[PdkTableTransition]', {
             roomId: this.roomId(),
             playerId: this.runtime.getPlayerId(),
@@ -3178,6 +3276,22 @@ export class CommonPdkPlayController {
             }
         }
         if (values.length === 0) { this.showMessage('请先选择要出的牌'); return; }
+        // Required opening-card UX is derived from the same authoritative room
+        // snapshot used by Hint and Play. Reject before any presentation node is
+        // detached or any request lock is acquired, so repeated clicks always
+        // report the exact card and cannot fall through to a generic animation
+        // or transport error. Authority keeps the identical validation as the
+        // security boundary for stale or non-conforming clients.
+        const missingRequiredCard = this.missingRequiredFirstCard(values);
+        if (missingRequiredCard > 0) {
+            console.info('[CommonRoomPlayBlocked]', {
+                reason: 'MISSING_REQUIRED_FIRST_CARD', roomId, stateVersion, trickId, operationId,
+                playerId: this.runtime.getPlayerId(), seatId: this.clientSeat(),
+                requiredCard: missingRequiredCard, selectedCards: [...values],
+            });
+            this.showMessage(`必须带${this.cardDisplayName(missingRequiredCard)}牌`);
+            return;
+        }
         // Local recognition drives Hint and immediate wording only. It is never
         // an admission gate: Authority decides whether these exact physical
         // cards are a bomb, a split-bomb triple-with-pair, or an illegal play.
@@ -3255,17 +3369,20 @@ export class CommonPdkPlayController {
         // the current Layout pass on some Creator frames, which reserves a wide
         // empty slot. The flight already owns a clone, so detach the source card
         // before calculating the remaining hand positions.
-        const compactPlan = this.buildHandCompactionPlan(selectedSlots);
+        const remainingNodes = this.cardNodes.filter((_node, index) => selectedSlots[index] !== true);
+        const remainingValues = this.cardValues.filter((_value, index) => selectedSlots[index] !== true);
+        const compactionStarts = new Map<Node, Vec3>(
+            remainingNodes.map((node) => [node, node.position.clone()]),
+        );
         for (const node of selectedNodes) {
             if (!node.isValid) continue;
             node.active = false;
             node.removeFromParent();
             node.destroy();
         }
-        const remainingNodes = this.cardNodes.filter((_node, index) => selectedSlots[index] !== true);
-        const remainingValues = this.cardValues.filter((_value, index) => selectedSlots[index] !== true);
         this.cardNodes.splice(0, this.cardNodes.length, ...remainingNodes);
         this.cardValues.splice(0, this.cardValues.length, ...remainingValues);
+        const compactPlan = this.buildCanonicalHandCompactionPlan(remainingNodes, compactionStarts);
         this.handCompaction = this.compactVisibleHand(compactPlan);
         this.ownCardFlightActive = true;
         const ownFlight = this.flyCardsToOwnAction(flyingCards).finally(() => {
@@ -3381,51 +3498,45 @@ export class CommonPdkPlayController {
         if (animation) this.trackPresentation(animation);
     }
 
-    private buildHandCompactionPlan(selectedSlots: readonly boolean[]): Map<Node, Vec3> {
-        const plan = new Map<Node, Vec3>();
-        const positions = this.cardNodes.map((card) => card.position.clone());
-        const selectedCount = selectedSlots.filter(Boolean).length;
-        let step = 0;
-        for (let index = 1; index < positions.length; index += 1) {
-            const delta = positions[index].x - positions[index - 1].x;
-            if (Math.abs(delta) > 0.01) { step = delta; break; }
+    private buildCanonicalHandCompactionPlan(
+        cards: readonly Node[],
+        starts: ReadonlyMap<Node, Vec3>,
+    ): Map<Node, Vec3> {
+        const targets = new Map<Node, Vec3>();
+        const parent = this.view?.find('Players/Play_0/Card/Hand_Cards');
+        const layout = parent?.getComponent(Layout);
+        if (!parent || !layout) {
+            for (const card of cards) {
+                const start = starts.get(card);
+                if (start) targets.set(card, this.cards.canonicalLayoutBase(card, start));
+            }
+            return targets;
         }
-        if (Math.abs(step) <= 0.01) {
-            const parent = this.view?.find('Players/Play_0/Card/Hand_Cards');
-            const layout = parent?.getComponent(Layout);
-            const width = this.cardNodes[0]?.getComponent(UITransform)?.contentSize.width ?? 0;
-            step = width + (layout?.spacingX ?? 0);
+        // Layout is the sole authority for horizontal hand slots. Recalculate it
+        // after the played nodes have been detached, capture the canonical slots,
+        // then restore the visual starts so the compaction can animate normally.
+        layout.enabled = true;
+        layout.updateLayout();
+        for (const card of cards) {
+            if (!card.isValid) continue;
+            targets.set(card, this.cards.canonicalLayoutBase(card, card.position));
         }
-        let removedBefore = 0;
-        this.cardNodes.forEach((card, index) => {
-            if (selectedSlots[index]) { removedBefore += 1; return; }
-            const start = positions[index];
-            const layoutSlot = new Vec3(
-                start.x + (-removedBefore + selectedCount / 2) * step,
-                start.y,
-                start.z,
-            );
-            // A hinted survivor may still be halfway through its deselect tween
-            // when another card is played. Keep the freshly calculated X/Z, but
-            // never persist that transient visual Y as the next hand baseline.
-            plan.set(card, this.cards.canonicalLayoutBase(card, layoutSlot));
-        });
-        return plan;
+        layout.enabled = false;
+        for (const card of cards) {
+            const start = starts.get(card);
+            if (card.isValid && start) card.setPosition(start);
+        }
+        return targets;
     }
 
     /** Animate directly from current coordinates; enabling Layout here causes a one-frame jump. */
     private compactVisibleHand(targets: ReadonlyMap<Node, Vec3>): Promise<void> {
         const visible = this.cardNodes.filter((card) => card.isValid && card.active);
-        return Promise.all(visible.map((card) => new Promise<void>((resolve) => {
+        return Promise.all(visible.map((card) => {
             const target = targets.get(card);
-            const start = card.position.clone();
-            if (!start || !target || Vec3.equals(start, target)) { resolve(); return; }
-            Tween.stopAllByTarget(card);
-            const movement = new Vec3(target.x - start.x, target.y - start.y, target.z - start.z);
-            tween(card).by(HAND_COMPACT_DURATION_SECONDS, { position: movement }, { easing: 'quadOut' })
-                .call(() => resolve())
-                .start();
-        }))).then(() => this.cards.synchronizeLayout(visible));
+            if (!target) return Promise.resolve();
+            return this.cards.moveBase(card, target, HAND_COMPACT_DURATION_SECONDS);
+        })).then(() => undefined);
     }
 
     private markPublicCardsShown(dataSeat: number): void {
@@ -3447,11 +3558,28 @@ export class CommonPdkPlayController {
         lease: PdkRoundPresentationLease,
         expectedProjectionGeneration?: number,
     ): boolean {
-        return Boolean(this.view)
-            && this.roundPresentation.isCurrent(lease)
-            && this.publicSeatRenderRevisions.get(dataSeat) === seatRevision
-            && (expectedProjectionGeneration === undefined
-                || expectedProjectionGeneration === this.publicProjectionGeneration);
+        const hasView = Boolean(this.view);
+        const roundCurrent = this.roundPresentation.isCurrent(lease);
+        const revisionCurrent = this.publicSeatRenderRevisions.get(dataSeat) === seatRevision;
+        const projectionCurrent = expectedProjectionGeneration === undefined
+            || expectedProjectionGeneration === this.publicProjectionGeneration;
+        const current = hasView && roundCurrent && revisionCurrent && projectionCurrent;
+        if (!current) {
+            this.tracePublicProjection('RENDER_CANCELLED', {
+                dataSeat,
+                hasView,
+                roundCurrent,
+                revisionCurrent,
+                projectionCurrent,
+                seatRevision,
+                currentSeatRevision: this.publicSeatRenderRevisions.get(dataSeat) ?? null,
+                expectedProjectionGeneration: expectedProjectionGeneration ?? null,
+                currentProjectionGeneration: this.publicProjectionGeneration,
+                leaseRevision: lease.revision,
+                currentLeaseRevision: this.roundPresentation.lease().revision,
+            });
+        }
+        return current;
     }
 
     private waitForPublicCardHold(dataSeat: number): Promise<void> {
@@ -3470,12 +3598,12 @@ export class CommonPdkPlayController {
         const shownAt = this.publicCardShownAt.get(dataSeat);
         const remaining = shownAt === undefined ? 0 : COMPLETED_TRICK_HOLD_MS - (Date.now() - shownAt);
         if (remaining <= 0) {
-            this.clearPublicCardsForSeat(dataSeat);
+            this.clearPublicCardsForSeat(dataSeat, 'NEXT_TURN_HOLD_ELAPSED');
             return;
         }
         const timer = globalThis.setTimeout(() => {
             this.publicCardClearTimers.delete(dataSeat);
-            this.clearPublicCardsForSeat(dataSeat);
+            this.clearPublicCardsForSeat(dataSeat, 'NEXT_TURN_HOLD_TIMER');
         }, remaining) as unknown as number;
         this.publicCardClearTimers.set(dataSeat, timer);
     }
@@ -3501,9 +3629,10 @@ export class CommonPdkPlayController {
             globalThis.setTimeout(clearTrick, remaining) as unknown as number);
     }
 
-    private clearPublicCardsForSeat(dataSeat: number): void {
+    private clearPublicCardsForSeat(dataSeat: number, reason = 'UNSPECIFIED'): void {
         this.claimPublicSeatRender(dataSeat);
         const timer = this.publicCardClearTimers.get(dataSeat);
+        const operationId = this.publicSeatOperationIds.get(dataSeat) ?? '';
         if (timer) globalThis.clearTimeout(timer);
         this.publicCardClearTimers.delete(dataSeat);
         this.publicCardShownAt.delete(dataSeat);
@@ -3513,6 +3642,13 @@ export class CommonPdkPlayController {
         if (!entry || !this.view) return;
         const path = `Players/Play_${entry.physicalSlot}/Card/Out_Card`;
         const parent = this.view.find(path);
+        this.tracePublicProjection('CLEAR_SEAT', {
+            dataSeat,
+            physicalSlot: entry.physicalSlot,
+            operationId,
+            reason,
+            childCount: parent?.children.filter((child) => child.name !== 'PlayCount').length ?? 0,
+        });
         this.cards.clear(parent);
         this.setOutCardVisible(path, false);
         this.view.visible(`Players/Play_${entry.physicalSlot}/Tip/Pass`, false);
@@ -3520,7 +3656,7 @@ export class CommonPdkPlayController {
 
     private clearLatestPublicCards(): void {
         for (const entry of createSeatEntries(this.authoritativePlayerCount(), this.clientSeat())) {
-            this.clearPublicCardsForSeat(entry.dataSeat);
+            this.clearPublicCardsForSeat(entry.dataSeat, 'TRICK_CLEAR');
         }
     }
 
@@ -3557,7 +3693,7 @@ export class CommonPdkPlayController {
             // delayed request result from deleting that newer presentation.
             if (this.publicCardShownAt.get(seat) !== previous.shownAt
                 || (this.publicSeatOperationIds.get(seat) ?? '') !== previous.operationId) continue;
-            this.clearPublicCardsForSeat(seat);
+            this.clearPublicCardsForSeat(seat, 'RAPID_PREVIOUS_COMMITTED');
             clearedSeats.push(seat);
         }
         console.info('[PdkRapidPlayClear]', {
@@ -4118,6 +4254,13 @@ export class CommonPdkPlayController {
         return `${suits[suit] ?? ''}${ranks[rank] ?? rank}`;
     }
 
+    /** Return the exact authority-owned opening card missing from this selection. */
+    private missingRequiredFirstCard(cards: readonly number[]): number {
+        if (!this.isAuthoritativeLeadingTurn()) return 0;
+        const required = this.activeRequiredFirstCard();
+        return required > 0 && !cards.includes(required) ? required : 0;
+    }
+
     private promptKey(): string {
         const hand = (this.logic.GetHandCard() ?? []).join(',');
         const last = (this.logic.lastCardList ?? []).join(',');
@@ -4126,11 +4269,11 @@ export class CommonPdkPlayController {
             Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? 0)].join('|');
     }
 
-    private isAuthoritativeLeadingTurn(): boolean {
-        const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+    private isAuthoritativeLeadingTurn(
+        setInfo: Record<string, unknown> = this.runtime.getRoomSet().GetRoomSetInfo() ?? {},
+    ): boolean {
         const { cards, type } = this.authorityComparison(setInfo);
-        return Boolean(setInfo.trickReset) || Boolean(setInfo.isFirstOp)
-            || cards.length === 0 || type <= 0;
+        return cards.length === 0 || type <= 0;
     }
 
     private async autoHintForAuthoritativeTurn(
@@ -4174,7 +4317,7 @@ export class CommonPdkPlayController {
         this.synchronizeAuthorityComparison(setInfo);
         const lastCardType = Number(this.logic.GetLastCardType());
         const lastCards = [...(this.logic.lastCardList ?? [])];
-        const leading = lastCardType <= 0 || lastCards.length === 0 || Boolean(setInfo.isFirstOp);
+        const leading = this.isAuthoritativeLeadingTurn(setInfo);
         const key = [
             roomId,
             Number(setInfo.roundNo ?? this.runtime.getRoom().GetRoomProperty('setID') ?? 0),
@@ -4380,6 +4523,14 @@ export class CommonPdkPlayController {
 
     /** One canonical comparison projection shared by Hint, autoplay, and Play. */
     private authorityComparison(setInfo: Record<string, unknown>): { cards: number[]; type: number } {
+        // `comparisonState` may still describe the winning hand from the
+        // completed trick. The explicit boundary flags own the next action and
+        // therefore suppress that historical comparison for every consumer.
+        // Keeping this rule here prevents Hint, automatic Hint and Play from
+        // independently disagreeing about whether the local turn is a lead.
+        if (Boolean(setInfo.trickReset) || Boolean(setInfo.isFirstOp)) {
+            return { cards: [], type: 0 };
+        }
         const comparison = this.record(setInfo.comparisonState);
         if (!comparison) return { cards: [], type: 0 };
         const cards = Array.isArray(comparison.cards) ? comparison.cards.map(Number) : [];
@@ -4567,14 +4718,31 @@ export class CommonPdkPlayController {
     private startClock(dataSeat: number, seconds: number): void {
         this.stopClock();
         let remaining = Math.max(0, Math.floor(seconds));
+        const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat())
+            .find((item) => item.dataSeat === dataSeat);
+        const rotationZ = entry ? (180 + entry.physicalSlot * 90) % 360 : 0;
+        const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+        const deadline = this.record(setInfo.operationDeadline);
+        const stateVersion = Number(setInfo.stateVersion
+            ?? this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1);
+        const operationId = String(deadline?.operationId ?? '');
+        const traceKey = `${stateVersion}:${operationId}:${dataSeat}:${this.clientSeat()}:${entry?.physicalSlot ?? -1}`;
+        if (traceKey !== this.lastTurnPointerTraceKey) {
+            this.lastTurnPointerTraceKey = traceKey;
+            console.info('[PdkTurnPointer]', JSON.stringify({
+                roomId: this.roomId(), stateVersion, operationId,
+                dataSeat, clientSeat: this.clientSeat(),
+                physicalSlot: entry?.physicalSlot ?? -1,
+                rotationZ, seconds: remaining,
+            }));
+        }
         const update = () => {
-            const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat()).find((item) => item.dataSeat === dataSeat);
             // The room-level clock is the single authority timer. Rotate its
             // one Pointer counter-clockwise around the clock centre using the
             // same physical-slot convention as the seats: local/down, right,
-            // opposite/up, left. The retained source sprite points down at 0°;
-            // normalize X/Y because reparenting it in Creator can serialize an
-            // equivalent 180° X/Y flip that cancels later Z-axis rotations.
+            // opposite/up, left. The atlas artwork extends upward at normalized
+            // 0°, so local/down has a 180° base offset. Normalize X/Y because
+            // the prefab also carries an equivalent serialized X/Y flip.
             for (let slot = 0; slot < 4; slot += 1) {
                 this.view?.visible(`Players/Play_${slot}/Clock`, false);
             }
@@ -4582,7 +4750,7 @@ export class CommonPdkPlayController {
             const pointer = this.view?.find('Clock/Pointer');
             if (pointer) {
                 pointer.active = Boolean(entry);
-                if (entry) pointer.setRotationFromEuler(0, 0, entry.physicalSlot * 90);
+                if (entry) pointer.setRotationFromEuler(0, 0, rotationZ);
             }
             if (entry) this.view?.label('Clock/Time', String(remaining));
             const countdownKey = `${dataSeat}:${remaining}`;
@@ -4675,6 +4843,17 @@ export class CommonPdkPlayController {
             trickId: Number(this.runtime.getRoomSet().GetRoomSetProperty('trickId') ?? -1),
             ...detail,
         });
+    }
+
+    /** Low-frequency authority/public-card lifecycle evidence for cross-client failures. */
+    private tracePublicProjection(stage: string, detail: Record<string, unknown>): void {
+        console.info('[PdkPublicProjection]', JSON.stringify({
+            stage,
+            roomId: this.roomId(),
+            playerId: this.runtime.getPlayerId(),
+            stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+            ...detail,
+        }));
     }
 
     private playGameOperation(dataSeat: number, opCardType: number, cards: readonly number[]): void {
@@ -4770,22 +4949,33 @@ export class CommonPdkPlayController {
     }
     private reportUserActionError(label: string, error: unknown): void {
         const message = error instanceof Error && error.message ? error.message : `${label}失败`;
+        if (/CONNECTION_NOT_READY|not connected|socket|network|timeout|timed out|网络|连接失败|尚未连接/i.test(message)) {
+            console.error(`[PDKActionError] ${label}`, error);
+            this.showMessage('网络未连接，请稍后重试');
+            return;
+        }
         if (message.includes('下家报单') || message.includes('must play highest single against reported single')) {
             this.showMessage('下家报单只能出最大单张');
             return;
         }
         if (label === '出牌' || label === '自动出牌') {
-            if (/required|must.*contain|opening card/i.test(message)) {
-                const required = this.activeRequiredFirstCard();
-                this.showMessage(required > 0 ? `首手必须包含${this.cardDisplayName(required)}` : '首手缺少指定必出牌');
+            const required = this.isAuthoritativeLeadingTurn() ? this.activeRequiredFirstCard() : 0;
+            const selected = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+            if (this.missingRequiredFirstCard(selected) > 0
+                || /required|must.*contain|opening card/i.test(message)) {
+                this.showMessage(required > 0 ? `必须带${this.cardDisplayName(required)}牌` : '必须带指定牌');
             } else if (/beat|higher|current trick|cannot play/i.test(message)) {
                 this.showMessage('所选牌不能压过上家的牌');
             } else if (/card type|pattern|attachment|invalid play|牌型/i.test(message)) {
                 this.showMessage('牌型错误');
             } else {
-                this.showMessage('这手牌不能出');
+                this.showMessage('出牌失败，请重试');
             }
-            console.error(`[PDKActionError] ${label}`, error);
+            console.error(`[PDKActionError] ${label}`, {
+                requiredCard: required,
+                selectedCards: selected,
+                stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
+            }, error);
             return;
         }
         const correlated = error as { aooCorrelation?: { msgId?: string; requestId?: string; traceId?: string } };

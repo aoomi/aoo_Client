@@ -178,8 +178,30 @@ test('round-end settlement failures are surfaced instead of silently dropping th
 });
 
 test('required opening card feedback names the exact authoritative card', () => {
-    assert.match(playController, /首手必须包含\$\{this\.cardDisplayName\(required\)\}/);
+    assert.match(playController, /必须带\$\{this\.cardDisplayName\(required\)\}牌/);
     assert.match(playController, /1: '方块', 2: '梅花', 3: '红桃', 4: '黑桃'/);
+    const play = playController.slice(
+        playController.indexOf('private async outCard'),
+        playController.indexOf('private selectedIntrinsicType'),
+    );
+    assert.match(play, /const missingRequiredCard = this\.missingRequiredFirstCard\(values\)/);
+    assert.match(play, /reason: 'MISSING_REQUIRED_FIRST_CARD'/);
+    assert.ok(
+        play.indexOf('missingRequiredFirstCard(values)') < play.indexOf('this.playInFlight = true'),
+        'the exact required-card feedback must run before presentation and request state mutate',
+    );
+    assert.match(playController, /private missingRequiredFirstCard\(cards: readonly number\[\]\): number/);
+    assert.doesNotMatch(playController, /必包含\$\{this\.cardDisplayName\(required\)\}/);
+});
+
+test('each corrected PDK action gets a fresh client intent idempotency key', () => {
+    assert.match(runtime, /private actionAttemptSequence = 0/);
+    const action = runtime.slice(runtime.indexOf('public action<T'), runtime.indexOf('public reconcileAuthority'));
+    assert.match(action, /const pending = this\.pendingActions\.get\(key\)/);
+    assert.match(action, /const requestBody = this\.withActionIdempotency\(body\)/);
+    assert.match(action, /this\.request<T>\(event, requestBody\)/);
+    assert.match(action, /idempotencyKey: `pdk:\$\{this\.authorityRoomId\}:\$\{this\.options\.playerId\}:\$\{nonce\}`/);
+    assert.match(action, /globalThis\.crypto\?\.randomUUID\?\.\(\)/);
 });
 
 test('authoritative trick reset destroys every stale table presentation', () => {

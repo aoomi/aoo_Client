@@ -166,16 +166,16 @@ export class CD299RuntimeController {
     }
 
     /**
-     * XQP enters the next hand one second after round settlement. Only the
-     * room owner submits the authority command, and the immutable settlement
-     * version prevents a stale timer from advancing a newer room state.
+     * XQP enters the next hand one second after round settlement. Every seated
+     * client is eligible to submit the authority command so a spectator or
+     * disconnected room owner cannot stall the table. The seat stagger avoids
+     * a request burst; the server accepts only the first matching state version.
      */
     private scheduleNextRound(snapshot: CD299Snapshot): void {
         if (this.nextRoundTimer !== null) clearTimeout(this.nextRoundTimer);
         this.nextRoundTimer = null;
         const seat = snapshot.viewerRole === 'SEATED' ? snapshot.viewerSeat : -1;
-        if (snapshot.phase !== 'ROUND_SETTLEMENT' || seat < 0
-            || snapshot.players[seat] !== snapshot.ownerId) return;
+        if (snapshot.phase !== 'ROUND_SETTLEMENT' || seat < 0) return;
         const stateVersion = snapshot.stateVersion;
         const round = snapshot.round;
         this.nextRoundTimer = setTimeout(() => {
@@ -190,6 +190,6 @@ export class CD299RuntimeController {
                 roomId: this.roomId, seatId: seat, stateVersion, round,
                 reason: error instanceof Error ? error.message : String(error),
             }));
-        }, CD299_TIMING_MS.nextRound);
+        }, CD299_TIMING_MS.nextRound + seat * 80);
     }
 }

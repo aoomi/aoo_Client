@@ -29,14 +29,16 @@ test('the room clock owns one pointer and one time label', () => {
   assert.ok(rootChildren.indexOf('Clock') < rootChildren.indexOf('Players'));
 });
 
-test('the authority seat rotates the central pointer counter-clockwise', () => {
+test('the authority seat rotates the central pointer from the artwork upward baseline toward its player', () => {
   const clock = controller.slice(controller.indexOf('private startClock(dataSeat'),
     controller.indexOf('private stopClock'));
   assert.match(clock, /createSeatEntries\(this\.authoritativePlayerCount\(\), this\.clientSeat\(\)\)/);
   assert.match(clock, /this\.view\?\.label\('Clock\/Time', String\(remaining\)\)/);
   assert.match(clock, /this\.view\?\.find\('Clock\/Pointer'\)/);
-  assert.match(clock, /entry\.physicalSlot \* 90/);
-  assert.doesNotMatch(clock, /180 \+ entry\.physicalSlot \* 90/);
+  assert.match(clock, /const rotationZ = entry \? \(180 \+ entry\.physicalSlot \* 90\) % 360 : 0/);
+  assert.match(clock, /pointer\.setRotationFromEuler\(0, 0, rotationZ\)/);
+  assert.match(clock, /\[PdkTurnPointer\]/);
+  assert.match(clock, /traceKey !== this\.lastTurnPointerTraceKey/);
   assert.doesNotMatch(clock, /Clock\/Pointer\/\$\{slot\}/);
   assert.match(clock, /Players\/Play_\$\{slot\}\/Clock`, false/);
 });

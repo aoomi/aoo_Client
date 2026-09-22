@@ -22,10 +22,14 @@ export interface CD299RoomView {
     showHand(seat: number, cards: readonly number[], revealed: boolean): void;
     showCommitted(seat: number, value: number): void;
     showScore(seat: number, value: number): void;
+    showRoundDelta(seat: number, value: number): void;
+    showBetAction(seat: number, action: CD299BetAction | null): void;
     showDropped(seat: number, dropped: boolean): void;
     showThreeFlower(seat: number, enabled: boolean): void;
     showSplit(seat: number, enabled: boolean): void;
     showSplitDeadline(seat: number, deadlineEpochMillis: number): void;
+    showOperationDeadline(seat: number, deadlineEpochMillis: number): void;
+    showTotals(mangoTotal: number, betTotal: number): void;
     setActions(actions: Readonly<CD299Actions>): void;
 }
 
@@ -46,6 +50,10 @@ export class CD299RoomPresenter {
 
     private render(snapshot: CD299Snapshot): void {
         this.view.showPhase(snapshot.phase, snapshot.round);
+        this.view.showTotals(
+            snapshot.mangoPool + Object.values(snapshot.mangos).reduce((sum, value) => sum + value, 0),
+            Object.values(snapshot.bets).reduce((sum, value) => sum + value, 0),
+        );
         const localSeat = snapshot.viewerRole === 'SEATED' ? snapshot.viewerSeat : -1;
         if (this.projectedLocalSeat !== localSeat) {
             this.projectedLocalSeat = localSeat;
@@ -68,10 +76,14 @@ export class CD299RoomPresenter {
             this.view.showHand(visualSeat, cards, cards.some(card => card !== 0));
             this.view.showCommitted(visualSeat, snapshot.committed[seat] ?? 0);
             this.view.showScore(visualSeat, snapshot.scores[seat] ?? 0);
+            this.view.showRoundDelta(visualSeat, this.deltaForPlayer(snapshot, playerId));
+            this.view.showBetAction(visualSeat, snapshot.lastBetActions[seat] ?? null);
             this.view.showDropped(visualSeat, snapshot.droppedSeats.includes(seat));
             this.view.showThreeFlower(visualSeat, snapshot.threeFlowerSeats.includes(seat));
             this.view.showSplit(visualSeat, snapshot.splitSeats.includes(seat));
             this.view.showSplitDeadline(visualSeat, snapshot.splitDeadlineEpochMillis[seat] ?? 0);
+            this.view.showOperationDeadline(visualSeat,
+                snapshot.operationDeadline.seatId === seat ? snapshot.operationDeadline.deadlineEpochMillis : 0);
         }
 
         // XQP only exposes the live operation panel to the seat named by the
@@ -97,6 +109,11 @@ export class CD299RoomPresenter {
             availableScore: snapshot.viewerAvailableScore,
             currentBet: localSeat < 0 ? 0 : snapshot.bets[localSeat] ?? 0,
         }));
+    }
+
+    private deltaForPlayer(snapshot: CD299Snapshot, playerId: number | null): number {
+        if (snapshot.phase !== 'ROUND_SETTLEMENT' || playerId === null) return 0;
+        return snapshot.lastDelta[playerId] ?? 0;
     }
 
     /** XQP GetSeatIndex equivalent: rotate authoritative seats so the local player is visual seat 0. */

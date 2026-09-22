@@ -603,7 +603,7 @@ test('pair-three response uses 88 and preserves the 34567 straight', () => {
   assert.deepEqual(ranked[0], pairEights);
 });
 
-test('self lead 77 plus QQKK sheds the four-card pair run before pair sevens', () => {
+test('self lead 77 plus QQKK probes with sevens and retains the higher run to recapture', () => {
   const rank = loadRanker();
   const sevens = group(7, 2);
   const highRun = flatten(group(12, 2), group(13, 2));
@@ -612,8 +612,8 @@ test('self lead 77 plus QQKK sheds the four-card pair run before pair sevens', (
     { ...candidate(sevens, 0), finishesInTwo: true, containsRuleMaximum: false },
     { ...candidate(highRun, 1), finishesInTwo: true, containsRuleMaximum: false },
   ], rules, true, true);
-  assert.deepEqual(ranked[0], highRun);
-  assert.deepEqual(ranked[1], sevens);
+  assert.deepEqual(ranked[0], sevens);
+  assert.deepEqual(ranked[1], highRun);
 });
 
 test('two-hand endgame leads maximum pair run KKAA before the larger JJJ33 family', () => {
@@ -1673,6 +1673,27 @@ test('lower pair run is led first while the higher pair run remains to recapture
   assert.deepEqual(ranked[0], lowRun);
 });
 
+test('6677 leads before QQKKAA because the retained high run can recapture', () => {
+  const rank = loadRanker();
+  const lowRun = flatten(group(6, 2), group(7, 2));
+  const highRun = flatten(group(12, 2), group(13, 2), group(14, 2));
+  const hand = flatten(highRun, group(11, 1), lowRun);
+  const candidates = [
+    candidate(highRun, 0),
+    candidate(lowRun, 1),
+    candidate(group(6, 2), 2),
+    candidate(group(7, 2), 3),
+    candidate(group(12, 2), 4),
+    candidate(group(13, 2), 5),
+    candidate(group(14, 2), 6),
+    candidate(group(11, 1), 7),
+  ];
+
+  assert.deepEqual(rank(hand, candidates, rules, true, true)[0], lowRun);
+  assert.deepEqual(rank(hand, candidates, liangshanLeadRules, true, true)[0], lowRun,
+    'regional largest-shape refinements must not overwrite a proven recovery lead');
+});
+
 test('independent pair five leads while the higher KKAA pair run remains to recapture', () => {
   const rank = loadRanker();
   const pairFives = group(5, 2);
@@ -2039,6 +2060,39 @@ test('pair-dominant hand leads 33 before loose singles including the maximum 2',
     candidate(threes, 7),
   ], rules, true, true);
   assert.deepEqual(ranked[0], threes);
+});
+
+test('self lead 2 AA KKKK J 9 88 6 keeps every high control and starts from 88', () => {
+  const rank = loadRanker();
+  const aces = group(14, 2);
+  const kings = group(13, 4);
+  const eights = group(8, 2);
+  const two = card(15);
+  const jack = card(11);
+  const nine = card(9);
+  const six = card(6);
+  const hand = flatten([two], aces, kings, [jack, nine], eights, [six]);
+  const standardDeck = [
+    ...Array.from({ length: 13 }, (_value, index) => card(index + 3, 1)),
+    ...Array.from({ length: 12 }, (_value, index) => card(index + 3, 2)),
+    ...Array.from({ length: 12 }, (_value, index) => card(index + 3, 3)),
+    ...Array.from({ length: 11 }, (_value, index) => card(index + 3, 4)),
+  ];
+  const ranked = rank(hand, [
+    candidate([six], 0), candidate([nine], 1), candidate([jack], 2),
+    { ...candidate([two], 3), containsRuleMaximum: true },
+    candidate(eights, 4),
+    { ...candidate(aces, 5), containsRuleMaximum: true },
+    { ...candidate(kings, 6), containsRuleMaximum: true },
+  ], {
+    ...rules,
+    protectedBombs: [kings],
+    preserveScoringBombs: true,
+    deckCards: standardDeck,
+  }, true, true);
+
+  assert.deepEqual(ranked[0], eights);
+  assert.notDeepEqual(ranked[0], aces);
 });
 
 test('self lead without the regional maximum prefers pair QQ over single J', () => {

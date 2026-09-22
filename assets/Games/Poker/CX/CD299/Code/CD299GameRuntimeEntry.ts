@@ -11,12 +11,8 @@ import { CD299_PLAY_VERSION } from './CD299Rules';
 const BUNDLE = 'poker-cx';
 const COMMON_ROOM_BUNDLE = 'games-common';
 const COMMON_ROOM_PREFAB = 'Prefab/CommonRoom';
-const LANDSCAPE_PREFAB = 'Common/Prefab/CX_CommonRoom';
+const LANDSCAPE_PREFAB = 'CD299/Prefab/Landscape/CD299RoomLandscape';
 const PORTRAIT_PREFAB = 'CD299/Prefab/Portrait/CD299RoomPortrait';
-const LANDSCAPE_SEAT_POSITIONS = Object.freeze([
-    [-300, -271.18], [450, -100], [450, 100], [280, 280],
-    [0, 280], [-280, 280], [-450, 100], [-450, -100],
-] as const);
 
 export interface CD299GameRuntimeEntryOptions {
     readonly parent: Node;
@@ -186,18 +182,16 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
         players.setPosition(0, 0, 0);
         players.setScale(1, 1, 1);
 
-        LANDSCAPE_SEAT_POSITIONS.forEach(([x, y], seat) => {
-            const seatNode = players.getChildByName(`Seat_${seat}`);
+        for (let seat = 0; seat < 8; seat += 1) {
+            const seatNode = players.getChildByName(String(seat));
             if (!seatNode) throw new Error(`[CD299] landscape prefab missing seat=${seat}`);
             const widget = seatNode.getComponent(Widget);
             if (widget) widget.enabled = false;
             const hitArea = seatNode.getComponent(UITransform) ?? seatNode.addComponent(UITransform);
             hitArea.setContentSize(160, 140);
-            seatNode.setPosition(x, y, 0);
-            seatNode.setScale(1, 1, 1);
-        });
+        }
         console.info('[CD299] landscape layout fixed', {
-            designWidth: 1280, designHeight: 720, seatCount: LANDSCAPE_SEAT_POSITIONS.length,
+            designWidth: 1280, designHeight: 720, seatCount: 8,
         });
     }
 

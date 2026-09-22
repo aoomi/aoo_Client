@@ -14,11 +14,11 @@ export function resolveRequestPolicy(msgId: string, body: unknown): ResolvedRequ
         ? record.payload as Record<string, unknown> : {};
     const action = String(record.action ?? record.command ?? '');
     const operation = `${msgId}.${action}`;
-    // A caller-supplied key upgrades a mutation to replay-safe: ProtocolClient uses
-    // the same value as the V2 requestId, so Gateway's durable idempotency ledger
-    // returns the committed result instead of applying the mutation twice.
-    const key = [record.idempotencyKey, record.operationId, record.requestId,
-        payload.idempotencyKey, payload.operationId, payload.requestId]
+    // Only an explicit idempotency identity may upgrade a mutation to replay-safe.
+    // operationId is authority-owned turn/deadline state: several corrected user
+    // attempts legitimately share it, so using it as requestId makes the second
+    // attempt collide with the first in Gateway's durable ledger.
+    const key = [record.idempotencyKey, payload.idempotencyKey]
         .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
     if (key) return { policy: 'IDEMPOTENT_KEYED', idempotencyKey: key };
     if (NON_REPLAYABLE.test(operation)) return { policy: 'NON_REPLAYABLE' };

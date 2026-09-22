@@ -3121,6 +3121,30 @@ export function rankCleanPdkHints(
             cyclePool.unshift(completePairRun!);
         }
     }
+    if (preferLargest && pairLeadWithoutSingleRecapture) {
+        // A proven recovery chain owns the final lead decision across every
+        // regional refinement: lead the lower complete pair body when the
+        // untouched higher run contains an equal-length segment that can take
+        // the same trick back. First preserve the minimum whole-hand plan,
+        // then shed the most cards among equally clean low probes. This keeps
+        // 6677 ahead of QQKKAA in AA,KK,QQ,J,77,66: QQKK remains available to
+        // beat an equal-length response, while choosing the six-card high run
+        // first spends the recovery resource without reducing total turns.
+        const recoverableLowPairLead = cyclePool
+            .filter((candidate) => candidate.retainsHigherPairRun
+                && candidate.quality.turns === minimumPlanTurns
+                && candidate.splitBombs === 0 && candidate.splitTriples === 0)
+            .sort((left, right) => left.planLooseSingles - right.planLooseSingles
+                || right.cards.length - left.cards.length
+                || Math.min(...left.cards.map(rank)) - Math.min(...right.cards.map(rank))
+                || left.order - right.order)[0];
+        const recoveryIndex = recoverableLowPairLead
+            ? cyclePool.indexOf(recoverableLowPairLead) : -1;
+        if (recoveryIndex > 0) {
+            cyclePool.splice(recoveryIndex, 1);
+            cyclePool.unshift(recoverableLowPairLead!);
+        }
+    }
     const expanded: number[][] = [];
     const deferredPhysicalVariants: number[][] = [];
     const seen = new Set<string>();

@@ -114,6 +114,17 @@ test('nested rematch idempotency key makes final-settlement continuation reconne
     assert.equal(connected.requests[0].idempotencyKey, 'rematch-operation-1');
 });
 
+test('authority operationId is never reused as a client idempotency key', () => {
+    assert.deepEqual(policy.resolveRequestPolicy('poker.CD201.dispatch', {
+        action: 'common.room.play_req',
+        payload: { operationId: '1-3-ready', cards: [105] },
+    }), { policy: 'NON_REPLAYABLE' });
+    assert.deepEqual(policy.resolveRequestPolicy('poker.CD201.dispatch', {
+        action: 'common.room.play_req',
+        payload: { operationId: '1-3-ready', cards: [105], idempotencyKey: 'play-attempt-2' },
+    }), { policy: 'IDEMPOTENT_KEYED', idempotencyKey: 'play-attempt-2' });
+});
+
 test('hall and game retries are independent single flights', async () => {
     const owner = new coordinator.ReconnectCoordinator();
     let hallAttempts = 0;

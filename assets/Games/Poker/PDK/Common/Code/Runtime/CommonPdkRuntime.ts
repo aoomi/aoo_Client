@@ -72,6 +72,8 @@ export class CommonPdkRuntime {
     private roomRestoreAttempt = 0;
     private authorityReconcilePending: Promise<void> | null = null;
     private authorityReconcileTimer = 0;
+    /** Client intent identity; authority operationId identifies a turn, not one click. */
+    private actionAttemptSequence = 0;
 
     public constructor(
         private readonly client: ProtocolClient,
@@ -289,11 +291,40 @@ export class CommonPdkRuntime {
         if (this.disposed) return Promise.reject(new Error('房间会话已结束'));
         const pending = this.pendingActions.get(key);
         if (pending) return pending as Promise<T>;
-        const request = this.request<T>(event, body).finally(() => {
+        const requestBody = this.withActionIdempotency(body);
+        console.info('[CommonPdkActionIntent]', {
+            roomId: this.authorityRoomId,
+            playerId: this.options.playerId,
+            actionKey: key,
+            event,
+            operationId: String((body as Record<string, unknown> | null)?.operationId ?? ''),
+            idempotencyKey: String(requestBody.idempotencyKey),
+        });
+        const request = this.request<T>(event, requestBody).finally(() => {
             if (this.pendingActions.get(key) === request) this.pendingActions.delete(key);
         });
         this.pendingActions.set(key, request);
         return request;
+    }
+
+    /**
+     * Allocate one identity per user intent. StableTransportFacade keeps this key
+     * unchanged only when replaying that same intent after a connection switch;
+     * a later click always receives a new key even inside the same authority turn.
+     */
+    private withActionIdempotency(body: unknown): Record<string, unknown> {
+        const source = body && typeof body === 'object' && !Array.isArray(body)
+            ? body as Record<string, unknown> : {};
+        const explicit = typeof source.idempotencyKey === 'string' ? source.idempotencyKey.trim() : '';
+        if (explicit) return source;
+        this.actionAttemptSequence = this.actionAttemptSequence >= Number.MAX_SAFE_INTEGER
+            ? 1 : this.actionAttemptSequence + 1;
+        const randomUuid = globalThis.crypto?.randomUUID?.();
+        const nonce = randomUuid || `${Date.now().toString(36)}-${this.actionAttemptSequence.toString(36)}`;
+        return {
+            ...source,
+            idempotencyKey: `pdk:${this.authorityRoomId}:${this.options.playerId}:${nonce}`.slice(0, 128),
+        };
     }
 
     public reconcileAuthority(): void {

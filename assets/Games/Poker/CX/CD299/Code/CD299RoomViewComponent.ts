@@ -107,6 +107,16 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
         if (label) label.string = String(value);
     }
 
+    public showRoundDelta(_seat: number, _value: number): void {}
+
+    public showBetAction(_seat: number, _action: import('./CD299Protocol').CD299BetAction | null): void {}
+
+    public showOperationDeadline(_seat: number, _deadlineEpochMillis: number): void {}
+
+    public showTotals(_mangoTotal: number, _betTotal: number): void {}
+
+    public showSplitDeadline(_seat: number, _deadlineEpochMillis: number): void {}
+
     public showDropped(seat: number, dropped: boolean): void {
         this.setMark(this.droppedMarks, seat, dropped);
     }

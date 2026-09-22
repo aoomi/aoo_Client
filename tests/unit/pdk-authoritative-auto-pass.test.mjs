@@ -176,6 +176,25 @@ test('hint, automatic hint, and play all resync the same atomic authority compar
   assert.match(auto, /synchronizeAuthorityComparison\(setInfo\)/);
 });
 
+test('a trick reset suppresses the stale winning comparison before automatic self-lead Hint', () => {
+  const comparison = play.slice(play.indexOf('private authorityComparison'),
+    play.indexOf('private maybeAutoPlay'));
+  assert.match(comparison,
+    /Boolean\(setInfo\.trickReset\)[\s\S]*Boolean\(setInfo\.isFirstOp\)[\s\S]*return \{ cards: \[\], type: 0 \}/);
+
+  const automatic = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'),
+    play.indexOf('private operationTypeForCards'));
+  assert.match(automatic, /const leading = this\.isAuthoritativeLeadingTurn\(setInfo\)/);
+  assert.doesNotMatch(automatic,
+    /const leading = lastCardType <= 0 \|\| lastCards\.length === 0 \|\| Boolean\(setInfo\.isFirstOp\)/);
+
+  const boundary = play.slice(play.indexOf('private applyAuthoritativeTurnBoundary'),
+    play.indexOf('private reconcileAuthorityPublicCards'));
+  assert.match(boundary,
+    /const comparison = this\.authorityComparison\(setInfo\);[\s\S]*const trickReset = comparison\.cards\.length === 0 \|\| comparison\.type <= 0/);
+  assert.doesNotMatch(boundary, /setInfo\.cardList/);
+});
+
 test('manual hint uses the authoritative trick reset instead of stale local response state', () => {
   assert.match(play, /private tip\(\): void \{[\s\S]*this\.cancelAutoPlay\(\)[\s\S]*this\.logic\.ChangeSelectCard\(tips\[this\.tipIndex\]\)/);
   assert.match(play, /private prepareHintCache\(\): void \{[\s\S]*const leading = this\.isAuthoritativeLeadingTurn\(\)/);

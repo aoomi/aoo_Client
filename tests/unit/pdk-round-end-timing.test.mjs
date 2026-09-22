@@ -54,3 +54,9 @@ test('POPUP clears in the same task that opens SmallSettlement', () => {
   assert.ok(boundaryAt >= 0 && clearAt > boundaryAt && showAt > clearAt);
   assert.doesNotMatch(coordinator.slice(boundaryAt, showAt), /setTimeout|await new Promise/);
 });
+
+test('the final round opens settlement after the shared terminal hold without a stale second barrier', () => {
+  assert.match(coordinator, /const terminalRoundStillCurrent = await terminalHold/);
+  assert.match(coordinator, /await this\.forms\.show\(this\.smallSettlementForm, payload\)/);
+  assert.doesNotMatch(coordinator, /terminalBoundary/);
+});

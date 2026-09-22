@@ -90,7 +90,7 @@ test('same-size manual swipe chooses a straight before triple-with-two', () => {
   assert.deepEqual(ranked[1], [107, 106, 206, 306, 104]);
 });
 
-test('one swipe adds its largest legal subset without clearing earlier selected cards', () => {
+test('one swipe replaces prior selection with its largest legal subset by card count', () => {
   const { largestLegalPdkSubsets } = loadHelper();
   const touched = [110, 210, 310, 106, 206, 109];
   const ranked = largestLegalPdkSubsets(touched, (subsets) => subsets.filter((cards) => {
@@ -107,14 +107,28 @@ test('one swipe adds its largest legal subset without clearing earlier selected 
   const commit = controller.slice(controller.indexOf('private commitSmartDragSelection'),
     controller.indexOf('private largestLegalDragCandidates'));
   assert.match(commit, /largestLegalDragCandidates\(touched\)/);
-  assert.match(commit, /GetSelectCard/);
-  assert.match(commit, /const replacementMode = this\.selectionFromSuggestion[\s\S]*const base = replacementMode && !keepSuggestion \? \[\] : previous[\s\S]*new Set\(\[\.\.\.base, \.\.\.selected\]\)/);
-  assert.match(commit, /ChangeSelectCard\(combined\)/);
-  assert.match(commit, /selectionFromSuggestion[\s\S]*canExtendSelectionAsBomb/);
+  assert.match(commit, /ChangeSelectCard\(selected\)/);
+  assert.doesNotMatch(commit, /GetSelectCard|combined|selectionFromSuggestion|canExtendSelectionAsBomb/);
   const manual = controller.slice(controller.indexOf('private largestLegalDragCandidates'),
     controller.indexOf('private cancelDragSelection'));
-  assert.match(manual, /legalManualDragCandidates\(candidates\)/);
-  assert.doesNotMatch(manual, /sortedLegalTipCandidates|rankCleanPdkHints|protectedBombGroups/);
+  assert.match(manual, /largestLegalPdkSubsets\(touched/);
+  assert.match(manual, /sortedLegalTipCandidates\(candidates, leading, leading\)/);
+  assert.doesNotMatch(controller, /private legalManualDragCandidates/);
+});
+
+test('5-to-A sweep keeps direction and selects six-card four-with-two before the four-card bomb', () => {
+  const { largestLegalPdkSubsets } = loadHelper();
+  const rightToLeft = [105, 106, 107, 207, 307, 407, 108, 208, 109, 209, 110, 112, 212, 113, 213, 114];
+  const ranked = largestLegalPdkSubsets(rightToLeft, (subsets) => subsets.filter((cards) => {
+    const counts = new Map();
+    for (const card of cards) counts.set(card % 100, (counts.get(card % 100) ?? 0) + 1);
+    const fourWithTwo = cards.length === 6 && [...counts.values()].includes(4);
+    const bomb = cards.length === 4 && [...counts.values()].includes(4);
+    return fourWithTwo || bomb;
+  }));
+
+  assert.deepEqual(ranked[0], [105, 106, 107, 207, 307, 407]);
+  assert.equal(ranked[0].length, 6);
 });
 
 test('only responding clicks replace an automatic hint while leading clicks preserve prior selections', () => {
@@ -137,14 +151,13 @@ test('only responding clicks replace an automatic hint while leading clicks pres
   assert.match(drag, /this\.selectionFromSuggestion = replacementMode/);
 });
 
-test('swiping exactly three cards keeps all three selected before attachments are added', () => {
+test('swiping exactly three cards still uses the largest legal subset', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const select = controller.slice(controller.indexOf('private largestLegalDragCandidates'),
     controller.indexOf('private cancelDragSelection'));
-  assert.match(select, /if \(touched\.length === 3/);
-  assert.match(select, /return \[\[\.\.\.touched\]\]/);
-  assert.ok(select.indexOf('touched.length === 3') < select.indexOf('largestLegalPdkSubsets'));
+  assert.match(select, /largestLegalPdkSubsets\(touched/);
+  assert.doesNotMatch(select, /touched\.length === 3|return \[\[\.\.\.touched\]\]/);
 });
 
 test('a required opening card missing from the swipe shows its exact card name', () => {
@@ -206,15 +219,11 @@ test('a pointer inside the visible card union can never clear the complete selec
   assert.doesNotMatch(coverage, /gestureSurface/);
 });
 
-test('a moving swipe preserves exact card ownership before projecting outside the cards', () => {
+test('a moving swipe uses exact card ownership and never projects to a nearby card', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
-  const dragHit = controller.slice(controller.indexOf('private dragIndexAtUi'),
-    controller.indexOf('private commitSmartDragSelection'));
-  assert.match(dragHit, /gestureSurface\?\.getComponent\(UITransform\)/);
-  assert.match(dragHit, /const exactIndex = this\.cardIndexAtUi\(uiX, uiY\)[\s\S]*if \(exactIndex >= 0\) return exactIndex/);
-  assert.match(dragHit, /Math\.abs\(card\.worldPosition\.x - uiX\)/);
-  assert.match(controller, /const index = this\.dragIndexAtUi\(sample\.ui\.x, sample\.ui\.y\)/);
+  assert.doesNotMatch(controller, /private dragIndexAtUi|nearestDistance|worldPosition\.x - uiX/);
+  assert.match(controller, /this\.updateDragSelection\(sample\.index\)/);
   assert.match(controller, /this\.bindDomPointerBridge\(\)/);
   assert.match(controller, /document\.addEventListener\('pointerdown', this\.onDomPointerDown, true\)/);
   assert.match(controller, /this\.capturedPointerId = event\.pointerId;[\s\S]*this\.beginDragSelection\(sample\)/);
@@ -230,8 +239,11 @@ test('pointer jitter over one card remains a tap instead of an empty one-card sw
   ]) {
     const move = controller.slice(controller.indexOf(start), controller.indexOf(end));
     assert.doesNotMatch(move, /DRAG_THRESHOLD_PX/);
-    assert.match(move, /if \(this\.dragIndices\.size > 1 \|\| this\.dragStartIndex < 0\) this\.dragMoved = true/);
+    assert.match(move, /this\.updateDragSelection\(sample\.index\)/);
   }
+  const update = controller.slice(controller.indexOf('private updateDragSelection'),
+    controller.indexOf('private previewDragSelection'));
+  assert.match(update, /if \(index !== this\.dragStartIndex\) this\.dragMoved = true/);
 });
 
 test('PDK taps stay mask-free while a confirmed multi-card drag previews its range', () => {
@@ -1781,6 +1793,9 @@ test('play transport failures are not reported as invalid card shapes', () => {
   );
   assert.match(reporter, /CONNECTION_NOT_READY/);
   assert.match(reporter, /网络未连接，请稍后重试/);
+  assert.match(reporter, /必须带\$\{this\.cardDisplayName\(required\)\}牌/);
+  assert.match(reporter, /this\.isAuthoritativeLeadingTurn\(\)/);
+  assert.match(reporter, /GetSelectCard\(\)/);
   assert.match(reporter, /this\.showMessage\('牌型错误'\)/);
   assert.doesNotMatch(reporter, /这手牌不能出/);
   assert.ok(
@@ -1920,15 +1935,15 @@ test('remote authority cards land without waiting for decorative flight', () => 
   assert.doesNotMatch(restore, /await this\.flyRemoteCards/);
 });
 
-test('drag selection may start and end outside the visible cards', () => {
+test('drag selection starts on a real card and commits the last exact endpoint', () => {
   const source = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const start = source.slice(source.indexOf('private readonly onDomPointerDown'), source.indexOf('private readonly onDomPointerMove'));
   const move = source.slice(source.indexOf('private readonly onDomPointerMove'), source.indexOf('private readonly onDomPointerUp'));
   const end = source.slice(source.indexOf('private readonly onDomPointerUp'), source.indexOf('private readonly onDomPointerCancel'));
   assert.match(source, /private beginDragSelection\(sample: HandPointerSample\)/);
-  assert.match(start, /if \(this\.isHandInteractionEnabled\(\)\) \{[\s\S]*this\.beginDragSelection\(sample\)/);
-  assert.match(move, /this\.dragIndices\.size > 1 \|\| this\.dragStartIndex < 0/);
-  assert.doesNotMatch(end, /sample\.index < 0[\s\S]*cancelDragSelection/);
+  assert.match(start, /this\.isHandInteractionEnabled\(\) && sample\.index >= 0[\s\S]*this\.beginDragSelection\(sample\)/);
+  assert.match(move, /this\.updateDragSelection\(sample\.index\)/);
+  assert.match(end, /this\.updateDragSelection\(sample\.index\)[\s\S]*if \(this\.dragMoved\)/);
   assert.match(end, /if \(this\.dragMoved\)[\s\S]*commitSmartDragSelection/);
 });

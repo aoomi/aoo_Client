@@ -287,13 +287,19 @@ test('a new authoritative round clears the previous retained archive before proj
   assert.match(controller, /private clearRoundPresentationNodes\(\): Promise<void> \{[\s\S]*this\.authorityActionsInitialized = false/);
 });
 
-test('the new-round boundary packet cannot replay the completed round ledger', () => {
+test('the new-round boundary suppresses only retained history and keeps ordinary current-play projection', () => {
   const authority = controller.slice(controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
     controller.indexOf("} else if (event === 'CommonPdkSetStart')"));
   const accept = controller.slice(controller.indexOf('private acceptPresentationRound'),
     controller.indexOf('private clearTableCards'));
   assert.match(authority, /const roundPresentationChanged = roundAcceptance\.changed/);
-  assert.match(authority, /!projectRoundCards \|\| roundPresentationChanged\s*\? Promise\.resolve\(\)/);
+  assert.match(authority,
+    /const skipStaleRetainedLedger = roundPresentationChanged\s*&& this\.runtime\.arrangementEnabled\(\)/);
+  assert.match(authority, /!projectRoundCards \|\| skipStaleRetainedLedger\s*\? Promise\.resolve\(\)/);
+  assert.match(authority, /: this\.reconcileAuthorityPublicCards\(setInfo\)/,
+    'ordinary PDK must still project comparisonState when this observer first accepts the deal');
+  assert.doesNotMatch(authority,
+    /!projectRoundCards \|\| roundPresentationChanged\s*\? Promise\.resolve\(\)/);
   assert.match(accept, /if \(!acceptance\.changed && acceptance\.previousKey\) return acceptance/);
   assert.match(accept, /this\.clearRoundPresentationNodes\(\)/);
 });
