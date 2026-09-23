@@ -1,6 +1,6 @@
 import { _decorator, Button, Component, instantiate, Label, Node, UITransform, Vec3 } from 'cc';
 import { CD299Actions, CD299RoomView } from './CD299RoomPresenter';
-import { CD299Phase } from './CD299RoomState';
+import { CD299Phase, CD299Snapshot } from './CD299RoomState';
 import type { CD299RuntimeController } from './CD299RuntimeController';
 
 const { ccclass, property } = _decorator;
@@ -71,7 +71,7 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
 
     protected override onDestroy(): void { this.unbindController(); }
 
-    public showPhase(phase: CD299Phase, round: number): void {
+    public showPhase(phase: CD299Phase, round: number, _roundLimit: number): void {
         if (!this.phaseLabel) return;
         this.phaseLabel.string = `第${round}局 · ${PHASE_TEXT[phase]}`;
     }
@@ -88,7 +88,8 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
             () => { void this.controller?.sit(authoritativeSeat, 0); }, this, false);
     }
 
-    public showHand(seat: number, cards: readonly number[], revealed: boolean): void {
+    public showHand(seat: number, cards: readonly number[], revealed: boolean,
+        _earthNineKing: boolean, _dealOrder: number, _dealCycleSize: number): void {
         const label = this.handLabels[seat];
         if (!label) return;
         // 未公开的牌只显示牌背数量，避免旁观席位从客户端状态中泄露牌值。
@@ -96,6 +97,10 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
     }
 
     public showReady(_seat: number, _ready: boolean): void {}
+
+    public showOpeningCommit(_seat: number, _base: number, _mango: number, _round: number): void {}
+
+    public showBanker(_seat: number, _banker: boolean): void {}
 
     public showCommitted(seat: number, value: number): void {
         const label = this.committedLabels[seat];
@@ -112,8 +117,11 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
     public showBetAction(_seat: number, _action: import('./CD299Protocol').CD299BetAction | null): void {}
 
     public showOperationDeadline(_seat: number, _deadlineEpochMillis: number): void {}
+    public showSeatRetention(_seat: number, _deadlineEpochMillis: number, _local: boolean): void {}
 
     public showTotals(_mangoTotal: number, _betTotal: number): void {}
+
+    public showFinalSettlement(_snapshot: CD299Snapshot): void {}
 
     public showSplitDeadline(_seat: number, _deadlineEpochMillis: number): void {}
 
@@ -125,7 +133,7 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
         this.setMark(this.threeFlowerMarks, seat, enabled);
     }
 
-    public showSplit(seat: number, enabled: boolean): void {
+    public showSplit(seat: number, enabled: boolean, _cards: readonly number[], _earthNineKing: boolean): void {
         this.setMark(this.splitMarks, seat, enabled);
     }
 

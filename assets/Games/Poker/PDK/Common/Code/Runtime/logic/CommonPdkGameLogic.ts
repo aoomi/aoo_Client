@@ -641,8 +641,12 @@ export class CommonPdkGameLogic {
                     }
                 }
                 isDui = pairRanks.length == 2;
-                if((pokers.length == 8 && isDui==true) || ( this.handCardList.length==pokers.length && pokers.length<8 && pokers.length>=4)){
-                    //最后一手。三不带或者三带一都能出
+                const shortenedFinalPairWings = this.handCardList.length == pokers.length
+                    && pokers.length == 6 && pairRanks.length == 1;
+                if((pokers.length == 8 && isDui==true) || shortenedFinalPairWings){
+                    // A shortened final four-with-pairs still needs a whole pair.
+                    // Accepting every 4–7-card final hand mislabels four-with-three
+                    // as four-with-two-pairs when that room rule is disabled.
                     return true;
                 }
             }

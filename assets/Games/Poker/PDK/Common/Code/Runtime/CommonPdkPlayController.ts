@@ -14,7 +14,7 @@ import type { CommonPdkSocialController } from './CommonPdkSocialController';
 import type { GameCapabilities } from '../../../../../Common/Code/Catalog/FamilyRuntimeRegistry';
 import { resolvePdkHintPolicyId } from '../Regional/PdkHintPolicyRegistry';
 import { CommonPdkGameLogic } from './logic/CommonPdkGameLogic';
-import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isAtomicPdkWholeHandCandidate, isAuthorityCompatiblePdkAircraft, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints } from './logic/PdkCleanHintRanker';
+import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isAtomicPdkWholeHandCandidate, isAuthorityCompatiblePdkAircraft, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints, rankPdkDragCandidates } from './logic/PdkCleanHintRanker';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import { canLeaveRoom } from '../../../../../Common/Code/Room/RoomController';
 import { CommonRoomNodePath, PdkRoomNodePath } from './Room/PdkRoomNodePaths';
@@ -1907,8 +1907,8 @@ export class CommonPdkPlayController {
     private commitSmartDragSelection(sample: HandPointerSample): void {
         const hand = (this.logic.GetHandCard() ?? []).map(Number);
         // The gesture contributes only its physically crossed candidate pool.
-        // Card count is evaluated before the shared Hint strategy; equal-size
-        // candidates must therefore resolve exactly as the Hint button does.
+        // Hint strategy never decides a manual swipe: size and remaining loose
+        // singles are its only strategic priorities.
         const touched = this.orderedDragIndices().map((index) => hand[index]);
         const required = this.missingRequiredFirstCard(touched);
         if (required > 0) {
@@ -1938,11 +1938,9 @@ export class CommonPdkPlayController {
         const required = leading ? this.activeRequiredFirstCard() : 0;
         return largestLegalPdkSubsets(touched, (subsets) => {
             const candidates = required > 0 ? subsets.filter((cards) => cards.includes(required)) : [...subsets];
-            // Reuse the single authoritative Hint pipeline for legality and all
-            // regional/whole-hand tie-breakers. largestLegalPdkSubsets remains
-            // outside it so a smaller strategically cleaner play can never beat
-            // a larger legal play during a swipe.
-            return this.sortedLegalTipCandidates(candidates, leading, leading);
+            // Share authoritative legality, but not the Hint strategy. A legal
+            // bomb split must remain eligible for the largest-card swipe result.
+            return this.sortedLegalTipCandidates(candidates, leading, leading, false, 'DRAG');
         });
     }
 
@@ -3230,8 +3228,6 @@ export class CommonPdkPlayController {
             gameCode,
             policyId: resolvePdkHintPolicyId(gameCode),
             minimumStraightLength: Number(rules.minimumStraightLength),
-            prioritizeLargestLeadUnlessMaximumStraight:
-                Boolean(rules.prioritizeLargestLeadUnlessMaximumStraight),
             leading,
             targetType: Number(this.logic.GetLastCardType()),
             targetCards: [...(this.logic.lastCardList ?? [])].map(Number),
@@ -4035,8 +4031,10 @@ export class CommonPdkPlayController {
         preferLargest = false,
         preferFewestLooseSinglesOnEqualSize = false,
         constrainToHighestReportedSingle = true,
+        strategy: 'HINT' | 'DRAG' = 'HINT',
     ): number[][] {
         const previous = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+        const hand = this.logic.GetHandCard() ?? [];
         const targetType = Number(this.logic.GetLastCardType());
         const targetCount = Array.isArray(this.logic.lastCardList) ? this.logic.lastCardList.length : 0;
         const keyed = new Map<string, {
@@ -4055,7 +4053,7 @@ export class CommonPdkPlayController {
                 this.logic.ChangeSelectCard(cards);
                 const cardType = Number(this.logic.GetCardType());
                 if (cardType <= 0) continue;
-                if (!isAuthorityCompatiblePdkAircraft(cards, cardType)) continue;
+                if (!isAuthorityCompatiblePdkAircraft(cards, cardType, cards.length === hand.length)) continue;
                 if (!isPdkResponseShape(cardType, cards.length, targetType, targetCount)) continue;
                 if (targetType === 2 && targetCount === 1 && cardType === 2
                     && !isStrictlyHigherPdkSingle(cards[0], this.logic.lastCardList[0])) continue;
@@ -4082,6 +4080,15 @@ export class CommonPdkPlayController {
         const constrained = constrainToHighestReportedSingle && this.nextPlayerReportedSingle()
             ? candidates.filter((candidate) => candidate.cards.length !== 1 || this.cardRank(candidate.cards[0]) === this.highestHandRank())
             : candidates;
+        if (strategy === 'DRAG') {
+            return rankPdkDragCandidates(this.logic.GetHandCard() ?? [], constrained, {
+                minimumStraightLength,
+                minimumPairRunLength,
+                allowTwoInRuns: Boolean(rules.allowTwoInRuns),
+                tripleAttachmentMode: String(rules.tripleAttachmentMode ?? '') as
+                    'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER',
+            });
+        }
         const deckCards = Array.isArray(rules.deckCards)
             ? rules.deckCards.map(Number).filter(Number.isFinite) : [];
         if (deckCards.length === 0) {
@@ -4100,23 +4107,12 @@ export class CommonPdkPlayController {
             }
         }
         const rankCandidates = (values: typeof constrained): number[][] => rankCleanPdkHints(this.logic.GetHandCard() ?? [], values, {
-            policyId: resolvePdkHintPolicyId(this.runtime.getGameCode()),
             minimumStraightLength,
             minimumPairRunLength,
             allowTwoInRuns: Boolean(rules.allowTwoInRuns),
             protectedBombs: this.protectedBombGroups(),
             tripleAttachmentMode: String(rules.tripleAttachmentMode ?? '') as
                 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER',
-            prioritizeMaximumWithOneOrdinaryPlay:
-                Boolean(rules.prioritizeMaximumWithOneOrdinaryPlay),
-            prioritizeLargestLeadWithoutMaximum:
-                Boolean(rules.prioritizeLargestLeadWithoutMaximum),
-            prioritizeMaximumLeadUnlessConnectedRun:
-                Boolean(rules.prioritizeMaximumLeadUnlessConnectedRun),
-            prioritizeMaximumResponseWithinThreePlays:
-                Boolean(rules.prioritizeMaximumResponseWithinThreePlays),
-            prioritizeLargestLeadUnlessMaximumStraight:
-                Boolean(rules.prioritizeLargestLeadUnlessMaximumStraight),
             optimizeWholeHand: Boolean(rules.optimizeWholeHand),
             compareTripleAttachments:
                 Boolean(rules.compareTripleAttachments),
@@ -4129,6 +4125,7 @@ export class CommonPdkPlayController {
             maximumSingleRanks: effectiveMaximumRanks.length > 0
                 ? effectiveMaximumRanks : [maximumSingleRank],
             deckCards: Array.isArray(rules.deckCards) ? deckCards : [],
+            playedCards: authoritativePlayedCards,
             // Every response, including a single-card response, first keeps the
             // fewest effective loose singles. Candidate point value is only a
             // later tie-breaker, so equal cleanup starts from the lowest card
@@ -4441,7 +4438,8 @@ export class CommonPdkPlayController {
         try {
             this.logic.ChangeSelectCard([...cards]);
             const cardType = Number(this.logic.GetCardType());
-            return isAuthorityCompatiblePdkAircraft(cards, cardType) ? cardType : 0;
+            return isAuthorityCompatiblePdkAircraft(cards, cardType,
+                cards.length === (this.logic.GetHandCard() ?? []).length) ? cardType : 0;
         } finally {
             this.logic.ChangeSelectCard(previous);
         }
@@ -4456,7 +4454,8 @@ export class CommonPdkPlayController {
             this.logic.lastCardList = [];
             this.logic.ChangeSelectCard([...cards]);
             const cardType = Number(this.logic.GetCardType());
-            return isAuthorityCompatiblePdkAircraft(cards, cardType) ? cardType : 0;
+            return isAuthorityCompatiblePdkAircraft(cards, cardType,
+                cards.length === (this.logic.GetHandCard() ?? []).length) ? cardType : 0;
         } finally {
             this.logic.lastCardType = previousType;
             this.logic.lastCardList = previousCards;

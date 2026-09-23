@@ -28,3 +28,14 @@ test('production API preserves auth, idempotency and trace across bounded retrie
   assert.doesNotMatch(source, /legacy-cocos-client|legacy-lobby/);
   assert.doesNotMatch(source, /serviceHttpUrl|luckDrawHttpUrl/);
 });
+
+test('successful HTTP 204 mutations are valid no-content responses', () => {
+  const source = read('Common/Code/Runtime/Activity/ProductionApiClient.ts');
+  const noContent = source.indexOf('response.ok && response.status === 204');
+  const bodyRead = source.indexOf('const raw = await response.text()');
+  const emptyFailure = source.indexOf("if (!raw) throw new ProductionApiError('EMPTY_RESPONSE'");
+  assert.ok(noContent >= 0, 'HTTP 204 must be recognized explicitly');
+  assert.ok(noContent < bodyRead, 'successful 204 must return before attempting to read a missing body');
+  assert.ok(bodyRead < emptyFailure, 'non-204 responses still pass through the empty-response guard');
+  assert.match(source, /response\.ok && response\.status === 204\) return undefined as T/);
+});

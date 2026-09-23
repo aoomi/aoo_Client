@@ -24,6 +24,7 @@ test('worker serves only current immutable snapshot with layered health', () => 
   assert.match(worker, /max-age=31536000, immutable/);
   assert.match(worker, /STATIC_SNAPSHOT_UNAVAILABLE/);
   for (const field of ['staticResources', 'api', 'hallWs', 'gameWs', 'lastSuccess']) assert.match(worker, new RegExp(field));
+  assert.match(worker, /Object\.defineProperty\(window, '__aoo_CREATOR_LAN_PREVIEW__', \{ value: true \}\)/);
 });
 
 test('publisher validates generation then atomically renames slot symlinks', () => {
@@ -34,6 +35,11 @@ test('publisher validates generation then atomically renames slot symlinks', () 
   assert.match(manager, /snapshotValidationRevision/);
   assert.match(manager, /await rename\(temporary, join\(slotDir, 'current'\)\)/);
   assert.match(manager, /retainedPreviousSnapshot: true/);
+});
+
+test('publisher closes every Creator import-map chunk despite its JavaScript MIME type', () => {
+  assert.match(manager, /type\.includes\('json'\) \|\| pathname\.includes\('import-map'\)/);
+  assert.match(manager, /Import maps are authoritative JSON regardless/);
 });
 
 test('publisher closes scene asset UUIDs and proves the real guest route reaches the lobby', () => {
@@ -48,8 +54,45 @@ test('publisher closes scene asset UUIDs and proves the real guest route reaches
   assert.match(manager, /pinCaptureHtml[\s\S]*__aoo_RUNTIME_CONFIG__[\s\S]*environment:"test"/);
   assert.doesNotMatch(worker, /__aoo_RUNTIME_CONFIG__/);
   assert.match(manager, /Input\.dispatchMouseEvent/);
+  assert.match(manager, /guestLoginNodeName = 'Btn_GuestLogin'/);
+  assert.match(manager, /document\.readyState !== 'complete'/);
+  assert.match(manager, /reason: 'document-loading'/);
+  assert.match(manager, /System\.import\('cc'\)/);
+  assert.match(manager, /node\.worldPosition/);
+  assert.match(manager, /view\.getViewportRect\(\)/);
+  assert.match(manager, /view\.getScaleX\(\)/);
+  assert.match(manager, /view\.getScaleY\(\)/);
+  assert.match(manager, /canvas\.getBoundingClientRect\(\)/);
+  assert.match(manager, /awaitPromise: true/);
+  assert.match(manager, /request\.method/);
+  assert.match(manager, /for \(let attempt = 0; attempt < 80 && !loginPoint/);
+  assert.match(manager, /node-readiness-timeout/);
+  assert.match(manager, /node\.hasEventListener\(Node\.EventType\.MOUSE_UP\)/);
+  assert.match(manager, /node\.hasEventListener\(Node\.EventType\.TOUCH_END\)/);
+  assert.match(manager, /login-event-binding-unavailable/);
+  assert.match(manager, /point-outside-viewport/);
+  assert.match(manager, /never became clickable/);
+  assert.match(manager, /guest-login-target/);
+  assert.match(manager, /x: loginPoint\.x, y: loginPoint\.y/);
+  assert.doesNotMatch(manager, /x: 224, y: 244/);
+  assert.doesNotMatch(manager, /guestLoginCanvasPoint/);
   assert.match(manager, /LOBBY_MOUNT_START/);
   assert.match(manager, /guest login did not mount lobby UI/);
+});
+
+test('supervisor automatically retries failed generations and publishes only successful signatures', () => {
+  assert.match(supervisor, /setInterval\(watch, 5000\)/);
+  assert.match(supervisor, /next !== current && !captureRunning/);
+  assert.match(supervisor, /if \(succeeded && existsSync/);
+  assert.match(supervisor, /source-signature\.json/);
+  assert.doesNotMatch(supervisor, /if \(!succeeded\)[\s\S]*source-signature\.json/);
+});
+
+test('supervisor fingerprints compiled chunk contents instead of stable import-map URLs alone', () => {
+  assert.match(supervisor, /targets\/preview\/chunks/);
+  assert.match(supervisor, /entry\.name\.endsWith\('\.js'\)/);
+  assert.match(supervisor, /createHash\('sha256'\)\.update\(await readFile\(path\)\)/);
+  assert.match(supervisor, /compiledDigests\.join\('\\n'\)/);
 });
 
 test('supervisor protects occupied ports and caps crash restarts', () => {

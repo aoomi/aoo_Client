@@ -4,7 +4,7 @@ import process from 'node:process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const DEFAULT_HOST = '127.0.0.1';
+const DEFAULT_HOST = '0.0.0.0';
 const DEFAULT_PORT = 7460;
 const DEFAULT_PREVIEW_PORT = 7456;
 const DEFAULT_CLIENT_COUNT = 2;
@@ -63,12 +63,12 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function renderPage(clientPorts) {
+function renderPage(clientPorts, hostname) {
   const clientCount = clientPorts.length;
   const clients = Array.from({ length: clientCount }, (_, index) => ({
     name: `客户端 ${String.fromCharCode(65 + index)}`,
-    // 不同端口属于不同浏览器来源，可隔离登录存储，同时保留项目认可的 127.0.0.1 本地环境。
-    url: `http://127.0.0.1:${clientPorts[index]}/`,
+    // 使用当前浏览器访问面板的主机；每个端口仍是独立来源，隔离登录存储。
+    url: `http://${hostname}:${clientPorts[index]}/`,
   }));
   const panes = clients.map((client, index) => `
     <section class="client-pane">
@@ -126,6 +126,12 @@ function renderPage(clientPorts) {
   </main>
   <script>
     const frames = [...document.querySelectorAll('iframe[data-src]')];
+    const publishedBuilds = new Map();
+    const reloadFrame = (frame, buildId = '') => {
+      if (!frame?.dataset.src) return;
+      const build = buildId ? '&build=' + encodeURIComponent(buildId) : '';
+      frame.src = frame.dataset.src + build + '&reload=' + Date.now();
+    };
     // Four Cocos engines booting in the same Chrome tab can saturate that tab's
     // module loader and turn otherwise healthy 200 responses into SystemJS
     // load failures. Keep all panes visible, but stagger only their cold start.
@@ -136,8 +142,28 @@ function renderPage(clientPorts) {
       const button = event.target.closest('button[data-frame]');
       if (!button) return;
       const frame = document.getElementById(button.dataset.frame);
-      if (frame?.dataset.src) frame.src = frame.dataset.src + '&reload=' + Date.now();
+      reloadFrame(frame);
     });
+    const pollPublishedBuilds = async () => {
+      try {
+        const response = await fetch('/snapshot-health', { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = await response.json();
+        for (const client of payload.clients ?? []) {
+          if (!client.ok || !client.buildId) continue;
+          const previous = publishedBuilds.get(client.port);
+          publishedBuilds.set(client.port, client.buildId);
+          if (!previous || previous === client.buildId) continue;
+          const frame = frames[client.index];
+          if (frame) reloadFrame(frame, client.buildId);
+        }
+      } catch {
+        // A transient health failure must not disrupt a running game. The next
+        // poll compares against the last successfully observed build.
+      }
+    };
+    void pollPublishedBuilds();
+    window.setInterval(pollPublishedBuilds, 2000);
   </script>
 </body>
 </html>`;
@@ -206,15 +232,39 @@ function createPreviewProxy(listenPort) {
   return proxy;
 }
 
+function readSnapshotHealth(port, index) {
+  return new Promise((done) => {
+    const request = http.get({ hostname: '127.0.0.1', port, path: '/__aoo/health' }, (response) => {
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => {
+        try {
+          const health = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          done({ index, port, ok: response.statusCode === 200 && health.ok === true, buildId: health.buildId ?? null });
+        } catch {
+          done({ index, port, ok: false, buildId: null });
+        }
+      });
+    });
+    request.setTimeout(1500, () => request.destroy());
+    request.on('error', () => done({ index, port, ok: false, buildId: null }));
+  });
+}
+
 // Default Aoo proxy ports are persistent LaunchAgents. Custom preview ports
 // remain self-contained and are owned by this process.
 const proxyServers = usesManagedAooPorts ? [] : clientPorts.slice(1).map(createPreviewProxy);
-const page = renderPage(clientPorts);
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   if (url.pathname === '/healthz') {
     response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
     response.end(JSON.stringify({ ok: true, previewPort: options.previewPort, clientCount: options.clientCount, clientPorts }));
+    return;
+  }
+  if (url.pathname === '/snapshot-health') {
+    const clients = await Promise.all(clientPorts.map(readSnapshotHealth));
+    response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+    response.end(JSON.stringify({ ok: clients.every((client) => client.ok), clients }));
     return;
   }
   if (url.pathname !== '/') {
@@ -227,7 +277,7 @@ const server = http.createServer((request, response) => {
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
   });
-  response.end(page);
+  response.end(renderPage(clientPorts, url.hostname));
 });
 
 server.listen(options.port, options.host, () => {

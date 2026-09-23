@@ -116,6 +116,7 @@ export class ProductionApiClient {
         try {
             const response = await ProtocolHttpClient.fetch(endpoint, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal });
             responseReceived = true;
+            if (response.ok && response.status === 204) return undefined as T;
             const raw = await response.text();
             if (!raw) throw new ProductionApiError('EMPTY_RESPONSE', '服务返回了空响应', response.status, false, traceId);
             let packet: unknown;

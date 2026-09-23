@@ -43,7 +43,6 @@ export class CD299RuntimeController {
     private snapshot: CD299Snapshot | null = null;
     private pending = false;
     private timeoutTimer: ReturnType<typeof setTimeout> | null = null;
-    private nextRoundTimer: ReturnType<typeof setTimeout> | null = null;
 
     public constructor(client: ProtocolClient, view: CD299RoomView, private readonly roomId: number,
         requestPrefix: string) {
@@ -84,13 +83,19 @@ export class CD299RuntimeController {
     public continueRound(): Promise<boolean> {
         return this.run('continue', () => this.protocol.continueRound());
     }
+    public restart(carryScore: number): Promise<boolean> {
+        return this.run('restart', () => this.protocol.restart(carryScore));
+    }
+    public rebuy(carryScore: number): Promise<boolean> {
+        return this.run('rebuy', () => this.protocol.rebuy(carryScore));
+    }
+    public stand(): Promise<boolean> { return this.run('stand', () => this.protocol.stand()); }
     public timeout(): Promise<boolean> { return this.run('timeout', () => this.protocol.timeout()); }
+    public isSeated(): boolean { return this.snapshot?.viewerRole === 'SEATED'; }
 
     public destroy(): void {
         if (this.timeoutTimer !== null) clearTimeout(this.timeoutTimer);
-        if (this.nextRoundTimer !== null) clearTimeout(this.nextRoundTimer);
         this.timeoutTimer = null;
-        this.nextRoundTimer = null;
     }
 
     private async run(action: string, request: () => Promise<CD299Snapshot>): Promise<boolean> {
@@ -119,7 +124,6 @@ export class CD299RuntimeController {
         if (!accepted) return false;
         this.snapshot = incoming;
         this.scheduleAuthoritativeTimeout(incoming);
-        this.scheduleNextRound(incoming);
         console.info('[CD299] authoritative snapshot applied', { source, roomId: this.roomId,
             stateVersion: incoming.stateVersion, phase: incoming.phase,
             viewerSeat: incoming.viewerSeat, viewerRole: incoming.viewerRole });
@@ -142,7 +146,13 @@ export class CD299RuntimeController {
             ? Number(snapshot.operationDeadline.deadlineEpochMillis) : 0;
         const splitDeadline = snapshot.phase === 'SPLITTING'
             ? Number(snapshot.splitDeadlineEpochMillis?.[seat] ?? 0) : 0;
-        const deadline = bettingDeadline || splitDeadline;
+        const nextRoundDeadline = snapshot.phase === 'ROUND_SETTLEMENT'
+            && snapshot.roundSettlementTriggerSeat === seat
+            ? Number(snapshot.roundSettlementDeadlineEpochMillis) : 0;
+        const seatRetentionDeadline = Number(snapshot.seatRetentionDeadlineEpochMillis?.[seat] ?? 0);
+        const candidates = [bettingDeadline, splitDeadline, nextRoundDeadline, seatRetentionDeadline]
+            .filter(value => Number.isSafeInteger(value) && value > 0);
+        const deadline = candidates.length > 0 ? Math.min(...candidates) : 0;
         if (!Number.isSafeInteger(deadline) || deadline <= 0) return;
         const stateVersion = snapshot.stateVersion;
         const operationId = String(snapshot.operationDeadline?.operationId ?? '');
@@ -165,31 +175,4 @@ export class CD299RuntimeController {
         }, delay);
     }
 
-    /**
-     * XQP enters the next hand one second after round settlement. Every seated
-     * client is eligible to submit the authority command so a spectator or
-     * disconnected room owner cannot stall the table. The seat stagger avoids
-     * a request burst; the server accepts only the first matching state version.
-     */
-    private scheduleNextRound(snapshot: CD299Snapshot): void {
-        if (this.nextRoundTimer !== null) clearTimeout(this.nextRoundTimer);
-        this.nextRoundTimer = null;
-        const seat = snapshot.viewerRole === 'SEATED' ? snapshot.viewerSeat : -1;
-        if (snapshot.phase !== 'ROUND_SETTLEMENT' || seat < 0) return;
-        const stateVersion = snapshot.stateVersion;
-        const round = snapshot.round;
-        this.nextRoundTimer = setTimeout(() => {
-            this.nextRoundTimer = null;
-            const current = this.snapshot;
-            if (!current || current.stateVersion !== stateVersion || current.round !== round
-                || current.phase !== 'ROUND_SETTLEMENT') return;
-            console.info('[CD299] next round deadline reached', {
-                roomId: this.roomId, seatId: seat, stateVersion, round,
-            });
-            void this.continueRound().catch((error: unknown) => console.error('[CD299] next round dispatch failed', {
-                roomId: this.roomId, seatId: seat, stateVersion, round,
-                reason: error instanceof Error ? error.message : String(error),
-            }));
-        }, CD299_TIMING_MS.nextRound + seat * 80);
-    }
 }

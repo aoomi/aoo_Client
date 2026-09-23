@@ -64,14 +64,16 @@ test('three regional clients derive straight length from the authoritative snaps
   }
 });
 
-test('hint policy uses explicit business identity and freezes every non-LS201 game to COMMON', () => {
+test('regional hint identity remains diagnostic while every region shares ranking', () => {
   const registry = readFileSync(policyRegistryPath, 'utf8');
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const ranker = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/logic/PdkCleanHintRanker.ts'), 'utf8');
   assert.match(registry, /\[PDK_BUSINESS_CODES\.LIANGSHAN\]: 'LS201'/);
   assert.match(registry, /DEFAULT_PDK_HINT_POLICY: PdkHintPolicyId = 'COMMON'/);
-  assert.match(controller,
-    /policyId: resolvePdkHintPolicyId\(this\.runtime\.getGameCode\(\)\)/);
+  assert.match(controller, /policyId: resolvePdkHintPolicyId\(gameCode\)/);
+  assert.doesNotMatch(ranker, /rules\.policyId|liangshanPolicy/);
   assert.doesNotMatch(registry, /deckMaximumRank|compareTripleAttachments/);
 });
 

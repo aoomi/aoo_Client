@@ -144,6 +144,22 @@ test('the one resolver owns default selection and PDK preloading order', () => {
   assert.doesNotMatch(coordinator, /Lobby\/Prefab\/uiGame|resources\.load/);
 });
 
+test('CD299 resolves both settlement kinds through the canonical public templates', () => {
+  const resolver = readFileSync(join(assets, 'Games/Common/Code/Settlement/SettlementTemplateResolver.ts'), 'utf8');
+  assert.match(resolver, /const pokerPublicSettlementFamilies = new Set\(\['cd299'\]\)/);
+  assert.match(resolver, /const usesPublicSettlement = pokerPublicSettlementFamilies\.has\(key\)/);
+  assert.match(resolver, /if \(!alias && !isPdk && !usesPublicSettlement\)/);
+  assert.match(resolver, /if \(isPdk \|\| usesPublicSettlement\)/);
+  assert.match(resolver, /CD299 固定使用扑克公共小结算/);
+  assert.match(resolver, /CD299 固定使用扑克公共大结算/);
+  assert.match(resolver, /bundleName: 'paodekuai-common'[\s\S]*assetPath: 'Prefab\/SmallSettlement'/);
+  assert.match(resolver, /bundleName,[\s\S]*assetPath: 'Prefab\/BigSettlement_0'/);
+  assert.match(resolver, /SettlementType = 'BIG' \| 'SMALL' \| 'LOOP_BIG'/);
+  assert.match(resolver, /request\.settlementType === 'LOOP_BIG'/);
+  assert.match(resolver, /family !== 'poker:cd299'/);
+  assert.match(resolver, /循环大结算仅允许 CD299/);
+});
+
 test('PDK final settlement uses the active poker-common bundle root', () => {
   const pokerRoot = join(assets, 'Games/Poker/Common');
   const pokerMeta = JSON.parse(readFileSync(`${pokerRoot}.meta`, 'utf8'));

@@ -1,11 +1,20 @@
-import { _decorator, assetManager, Animation, AssetManager, Color, Component, Label, Node, Sprite, SpriteFrame, sp, UITransform, view } from 'cc';
+import { _decorator, assetManager, Animation, AssetManager, Color, Component, Graphics, Label, Mask, Node, Sprite, SpriteFrame, sp, UITransform, view } from 'cc';
 import { PlayerAvatarService } from './PlayerAvatarService';
 
 const { ccclass } = _decorator;
 
 type HeadDirection = 'left' | 'right';
 export type CommonHeadVariant = 'Game' | 'List' | 'Stat';
+export type CommonHeadSkin = 'DEFAULT' | 'XQP_CIRCULAR';
 let emojiSkeletonPromise: Promise<sp.SkeletonData> | null = null;
+
+interface NodeLayout {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+    readonly width: number;
+    readonly height: number;
+}
 
 @ccclass('CommonHeadController')
 export class CommonHeadController extends Component {
@@ -21,6 +30,10 @@ export class CommonHeadController extends Component {
     private emojiGeneration = 0;
     private avatarGeneration = 0;
     private readonly authoredAvatarFrames = new Map<Sprite, SpriteFrame | null>();
+    private readonly defaultGameLayouts = new Map<Node, NodeLayout>();
+    private skin: CommonHeadSkin = 'DEFAULT';
+    private defaultRoundMaskType: Mask.Type | null = null;
+    private defaultPlayerInfoSpriteEnabled: boolean | null = null;
     private readyOffsetX = 0;
     private voiceTimer: number | undefined;
 
@@ -39,6 +52,16 @@ export class CommonHeadController extends Component {
         }
         if (!selected) throw new Error(`CommonHead 类型无效: ${variant}`);
         return selected;
+    }
+
+    /** Optional visual skin; occupancy and avatar data remain owned by CommonHead. */
+    public useSkin(skin: CommonHeadSkin): void {
+        this.cacheNodes();
+        this.captureDefaultGameLayouts();
+        this.skin = skin;
+        if (skin === 'XQP_CIRCULAR') this.applyXqpCircularSkin();
+        else this.restoreDefaultGameSkin();
+        this.syncXqpOccupancyVisuals(this.required('Game/Head/PlayerInfo').active);
     }
 
     public showQuickText(value: string): void {
@@ -126,6 +149,7 @@ export class CommonHeadController extends Component {
         const game = this.useVariant('Game');
         const playerInfo = this.required('Game/Head/PlayerInfo');
         playerInfo.active = occupied;
+        this.syncXqpOccupancyVisuals(occupied);
         if (!occupied) {
             this.avatarGeneration += 1;
             this.captureAuthoredAvatars();
@@ -145,6 +169,146 @@ export class CommonHeadController extends Component {
     private captureAuthoredAvatars(): void {
         if (this.authoredAvatarFrames.size > 0) return;
         for (const sprite of this.avatarSprites()) this.authoredAvatarFrames.set(sprite, sprite.spriteFrame);
+    }
+
+    private captureDefaultGameLayouts(): void {
+        if (this.defaultGameLayouts.size > 0) return;
+        const roundMask = this.required('Game/Head/RoundAvatar/Mask').getComponent(Mask);
+        this.defaultRoundMaskType = roundMask?.type ?? null;
+        const playerInfoSprite = this.required('Game/Head/PlayerInfo').getComponent(Sprite);
+        this.defaultPlayerInfoSpriteEnabled = playerInfoSprite?.enabled ?? null;
+        for (const node of this.gameSkinNodes()) {
+            const transform = node.getComponent(UITransform) ?? node.addComponent(UITransform);
+            this.defaultGameLayouts.set(node, {
+                x: node.position.x, y: node.position.y, z: node.position.z,
+                width: transform.contentSize.width, height: transform.contentSize.height,
+            });
+        }
+    }
+
+    private applyXqpCircularSkin(): void {
+        const head = this.required('Game/Head');
+        const square = this.required('Game/Head/SquareAvatar');
+        const round = this.required('Game/Head/RoundAvatar');
+        const frame = this.required('Game/Head/RoundAvatar/Img_Frame');
+        const mask = this.required('Game/Head/RoundAvatar/Mask');
+        const avatar = this.required('Game/Head/RoundAvatar/Mask/Img_Avatar');
+        const playerInfo = this.required('Game/Head/PlayerInfo');
+        const name = this.required('Game/Head/PlayerInfo/Lb_PlayerName');
+        const score = this.required('Game/Head/PlayerInfo/Lb_PlayerScore');
+        square.active = false;
+        round.active = true;
+        frame.active = true;
+        mask.active = true;
+        const roundMask = mask.getComponent(Mask);
+        if (!roundMask) throw new Error('CommonHead XQP 圆形皮肤缺少 Mask 组件');
+        roundMask.type = Mask.Type.ELLIPSE;
+        const playerInfoSprite = playerInfo.getComponent(Sprite);
+        if (playerInfoSprite) playerInfoSprite.enabled = false;
+        this.layout(head, 0, 0, 90, 90);
+        this.layout(round, 0, 0, 90, 90);
+        this.layout(frame, 0, 0, 90, 90);
+        this.layout(mask, 0, 0, 85, 85);
+        this.layout(avatar, 0, 0, 90, 90);
+        this.layout(playerInfo, 0, 0, 120, 100);
+        this.layout(name, 0, -32.5, 88, 25);
+        this.layout(score, 0, -60, 90, 25);
+        this.ensureXqpPlate(playerInfo, 'NcBg', 0, -32.969, 120, 24);
+        this.ensureXqpPlate(playerInfo, 'CentBg', 0, -60.469, 90, 25);
+        this.ensureXqpVacancy(head);
+    }
+
+    private restoreDefaultGameSkin(): void {
+        this.required('Game/Head/SquareAvatar').active = true;
+        this.required('Game/Head/RoundAvatar').active = true;
+        this.required('Game/Head/RoundAvatar/Mask').active = false;
+        this.required('Game/Head/RoundAvatar/Img_Frame').active = false;
+        const roundMask = this.required('Game/Head/RoundAvatar/Mask').getComponent(Mask);
+        if (roundMask && this.defaultRoundMaskType !== null) roundMask.type = this.defaultRoundMaskType;
+        const playerInfoSprite = this.required('Game/Head/PlayerInfo').getComponent(Sprite);
+        if (playerInfoSprite && this.defaultPlayerInfoSpriteEnabled !== null) playerInfoSprite.enabled = this.defaultPlayerInfoSpriteEnabled;
+        for (const [node, value] of this.defaultGameLayouts) {
+            node.setPosition(value.x, value.y, value.z);
+            node.getComponent(UITransform)?.setContentSize(value.width, value.height);
+        }
+    }
+
+    private gameSkinNodes(): Node[] {
+        return [
+            this.required('Game/Head'),
+            this.required('Game/Head/RoundAvatar'),
+            this.required('Game/Head/RoundAvatar/Img_Frame'),
+            this.required('Game/Head/RoundAvatar/Mask'),
+            this.required('Game/Head/RoundAvatar/Mask/Img_Avatar'),
+            this.required('Game/Head/PlayerInfo'),
+            this.required('Game/Head/PlayerInfo/Lb_PlayerName'),
+            this.required('Game/Head/PlayerInfo/Lb_PlayerScore'),
+        ];
+    }
+
+    private layout(node: Node, x: number, y: number, width: number, height: number): void {
+        node.setPosition(x, y, node.position.z);
+        (node.getComponent(UITransform) ?? node.addComponent(UITransform)).setContentSize(width, height);
+    }
+
+    private ensureXqpPlate(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
+        let plate = parent.getChildByName(name);
+        if (!plate) {
+            plate = new Node(name);
+            plate.layer = parent.layer;
+            parent.addChild(plate);
+            plate.setSiblingIndex(0);
+            const graphics = plate.addComponent(Graphics);
+            graphics.fillColor = new Color(0, 0, 0, 140);
+            graphics.roundRect(-width / 2, -height / 2, width, height, 4);
+            graphics.fill();
+        }
+        this.layout(plate, x, y, width, height);
+        return plate;
+    }
+
+    /** XQP empty positions use an explicit outline instead of rendering an empty avatar mask. */
+    private ensureXqpVacancy(parent: Node): Node {
+        let empty = parent.getChildByName('XqpVacancy');
+        if (empty) return empty;
+        empty = new Node('XqpVacancy');
+        empty.layer = parent.layer;
+        parent.addChild(empty);
+        this.layout(empty, 0, 0, 90, 90);
+        const outline = empty.addComponent(Graphics);
+        outline.lineWidth = 3;
+        outline.strokeColor = new Color(255, 255, 255, 230);
+        outline.circle(0, 0, 42.5);
+        outline.stroke();
+        const text = new Node('EmptyText');
+        text.layer = parent.layer;
+        empty.addChild(text);
+        this.layout(text, 0, 0, 90, 25);
+        const label = text.addComponent(Label);
+        label.string = '空位';
+        label.fontSize = 22;
+        label.lineHeight = 25;
+        label.color = new Color(255, 255, 255, 255);
+        label.horizontalAlign = Label.HorizontalAlign.CENTER;
+        label.verticalAlign = Label.VerticalAlign.CENTER;
+        return empty;
+    }
+
+    private syncXqpOccupancyVisuals(occupied: boolean): void {
+        const visible = this.skin === 'XQP_CIRCULAR' && occupied;
+        const head = this.required('Game/Head');
+        const round = this.required('Game/Head/RoundAvatar');
+        const mask = this.required('Game/Head/RoundAvatar/Mask');
+        const frame = this.required('Game/Head/RoundAvatar/Img_Frame');
+        round.active = this.skin === 'XQP_CIRCULAR' ? occupied : round.active;
+        mask.active = visible;
+        frame.active = visible;
+        const empty = head.getChildByName('XqpVacancy');
+        if (empty) empty.active = this.skin === 'XQP_CIRCULAR' && !occupied;
+        for (const name of ['NcBg', 'CentBg']) {
+            const plate = this.required('Game/Head/PlayerInfo').getChildByName(name);
+            if (plate) plate.active = visible;
+        }
     }
 
     private cacheNodes(): void {

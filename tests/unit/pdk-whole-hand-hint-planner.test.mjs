@@ -10,15 +10,62 @@ const helperPath = join(clientRoot,
 const controllerPath = join(clientRoot,
   'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
 
-function loadRanker() {
+function loadRankerModule() {
   const source = readFileSync(helperPath, 'utf8');
   const js = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const module = { exports: {} };
   Function('module', 'exports', js)(module, module.exports);
-  return module.exports.rankCleanPdkHints;
+  return module.exports;
 }
+
+function loadRanker() {
+  return loadRankerModule().rankCleanPdkHints;
+}
+
+test('swipe tie breaks by minimum remaining singles even when it splits a bomb', () => {
+  const { rankPdkDragCandidates } = loadRankerModule();
+  const eights = group(8, 4);
+  const hand = [...eights, card(5), card(6), card(7)];
+  const straight = [card(5), card(6), card(7), eights[0]];
+  const result = rankPdkDragCandidates(hand, [
+    candidate(eights, 0), candidate(straight, 1),
+  ], { ...rules, minimumStraightLength: 4, protectedBombs: [eights], preserveScoringBombs: true });
+  assert.deepEqual(result[0], straight);
+});
+
+test('swipe card count outranks cleanup and exact ties retain input order', () => {
+  const { rankPdkDragCandidates } = loadRankerModule();
+  const eights = group(8, 4);
+  const hand = [...eights, ...group(5, 2), ...group(6, 2), card(7), card(9), card(10)];
+  const tripleWithPair = [...eights.slice(0, 3), ...group(5, 2)];
+  const first = rankPdkDragCandidates(hand, [
+    candidate(eights, 0), candidate(tripleWithPair, 1),
+  ], rules);
+  assert.deepEqual(first[0], tripleWithPair);
+  const tied = rankPdkDragCandidates(hand, [
+    candidate([...group(5, 2)], 0), candidate([...group(6, 2)], 1),
+  ], rules);
+  assert.deepEqual(tied[0], group(5, 2));
+});
+
+test('swipe chooses the lower attachments in either drag direction', () => {
+  const { rankPdkDragCandidates } = loadRankerModule();
+  const kings = group(13, 4);
+  const ten = card(10);
+  const ace = card(14);
+  const two = card(15);
+  const hand = [...kings, ten, ace, two];
+  const lower = [...kings, ten, ace];
+  const higher = [...kings, ace, two];
+  for (const choices of [
+    [candidate(lower, 0), candidate(higher, 1)],
+    [candidate(higher, 0), candidate(lower, 1)],
+  ]) {
+    assert.deepEqual(rankPdkDragCandidates(hand, choices, rules)[0], lower);
+  }
+});
 
 const card = (rank, suit = 1) => suit * 100 + rank;
 const group = (rank, count) => Array.from({ length: count }, (_value, index) => card(rank, index + 1));
@@ -44,14 +91,9 @@ const liangshanLeadRules = {
   tripleAttachmentMode: 'SINGLE_OR_PAIR',
   maximumSingleRanks: [14],
   deckCards: liangshanDeck,
-  prioritizeMaximumWithOneOrdinaryPlay: true,
-  prioritizeLargestLeadWithoutMaximum: true,
-  prioritizeMaximumLeadUnlessConnectedRun: true,
-  prioritizeMaximumResponseWithinThreePlays: true,
-  prioritizeLargestLeadUnlessMaximumStraight: true,
 };
 
-test('COMMON policy ignores every LS201-only priority even with an ace-high deck', () => {
+test('COMMON and LS201 use one ordering even when an old room still carries removed hint switches', () => {
   const rank = loadRanker();
   const ace = card(14);
   const straight = [card(7), card(8), card(9), card(10), card(11)];
@@ -78,6 +120,50 @@ test('COMMON policy ignores every LS201-only priority even with an ace-high deck
 
   assert.deepEqual(rank(hand, candidates, contaminated, true, true),
     rank(hand, candidates, common, true, true));
+  assert.deepEqual(rank(hand, candidates, { ...contaminated, policyId: 'LS201' }, true, true),
+    rank(hand, candidates, common, true, true));
+});
+
+test('LS201 only varies authoritative deck and legal shapes, never the shared hint ordering', () => {
+  const rank = loadRanker();
+  const oldSwitches = {
+    prioritizeMaximumWithOneOrdinaryPlay: true,
+    prioritizeLargestLeadWithoutMaximum: true,
+    prioritizeMaximumLeadUnlessConnectedRun: true,
+    prioritizeMaximumResponseWithinThreePlays: true,
+    prioritizeLargestLeadUnlessMaximumStraight: true,
+    didCompeteDealer: true,
+  };
+  const regionalRules = { ...liangshanLeadRules, ...oldSwitches };
+  const sharedRules = { ...regionalRules, policyId: 'COMMON' };
+  const cases = [
+    { hand: [card(14), card(13), card(12)], plays: [[card(14)], [card(13)], [card(12)]], lead: false },
+    { hand: [card(14), ...group(9, 3), ...group(7, 2)],
+      plays: [[card(14)], [...group(9, 3), ...group(7, 2)], group(7, 2)], lead: true },
+    { hand: [card(14), ...group(10, 2), ...group(11, 2), card(7)],
+      plays: [[card(14)], [...group(10, 2), ...group(11, 2)], [card(7)]], lead: true },
+    { hand: [...group(14, 2), card(10)],
+      plays: [[card(14)], [card(10)]], lead: false },
+    { hand: [card(9), card(10), card(11), ...group(12, 3), ...group(8, 2)],
+      plays: [[card(9), card(10), card(11)], [...group(12, 3), ...group(8, 2)]], lead: true },
+    { hand: [...group(7, 3), ...group(8, 3), card(9), card(10), card(11), card(12), card(13)],
+      plays: [[...group(7, 3), ...group(8, 3), card(9), card(10), card(11), card(12)],
+        [...group(7, 3), card(9)], [card(13)]], lead: true },
+    { hand: [...group(9, 4), card(7), card(8), card(10)],
+      plays: [group(9, 4), [card(7)], [card(8)], [card(10)]], lead: true },
+    { hand: [...group(8, 4), card(7), card(9)],
+      plays: [[...group(8, 4), card(7), card(9)], group(8, 4)], lead: true },
+    { hand: [...group(12, 2), ...group(13, 2), ...group(9, 2)],
+      plays: [[...group(12, 2), ...group(13, 2)], group(9, 2), group(12, 2)], lead: false },
+  ];
+  for (const { hand, plays, lead } of cases) {
+    const candidates = plays.map((cards, order) => candidate(cards, order));
+    assert.deepEqual(rank(hand, candidates, regionalRules, lead, true),
+      rank(hand, candidates, sharedRules, lead, true));
+  }
+  assert.deepEqual(rank(cases[0].hand,
+    cases[0].plays.map((cards, order) => candidate(cards, order)),
+    regionalRules, false, true)[0], [card(12)]);
 });
 
 test('Liangshan lead keeps the maximum triple as recapture control and sheds the lowest pair', () => {
@@ -112,20 +198,6 @@ test('maximum-triple recapture priority does not depend on an optional UI optimi
     optimizeWholeHand: false,
   }, true, true);
   assert.deepEqual(ranked[0], sevens);
-});
-
-test('an ordinary non-maximum triple does not activate maximum-triple pair priority', () => {
-  const rank = loadRanker();
-  const queens = group(12, 3);
-  const sevens = group(7, 2);
-  const hand = flatten([card(14)], queens, [card(13), card(8)], sevens);
-  const tripleFamily = [...queens, ...sevens];
-  const ranked = rank(hand, [
-    candidate(tripleFamily, 0),
-    candidate(sevens, 1),
-  ], liangshanLeadRules, true, true);
-
-  assert.deepEqual(ranked[0], tripleFamily);
 });
 
 test('attachment comparison carries the highest available cards instead of the smallest pair', () => {
@@ -380,35 +452,6 @@ test('equal-turn straight plan sheds the longer 6-to-K straight first', () => {
   const long = [card(6), card(7), card(8), card(9), card(10), card(11), card(12), card(13)];
   const ranked = rank(hand, [candidate(short, 0), candidate(long, 1)], rules, true, true);
   assert.deepEqual(ranked[0], long);
-});
-
-test('Liangshan equal-turn plan keeps the complete 7-to-Q straight intact', () => {
-  const rank = loadRanker();
-  const hand = [card(14), card(12), card(11), card(10),
-    card(9), card(9, 2), card(8), card(7)];
-  const short = [9, 10, 11, 12].map((value) => card(value));
-  const long = [7, 8, 9, 10, 11, 12].map((value) => card(value));
-  const ranked = rank(hand, [candidate(short, 0), candidate(long, 1)],
-    liangshanLeadRules, true, true);
-
-  assert.deepEqual(ranked[0], long);
-});
-
-test('Liangshan keeps 1010JJ pair run instead of building the longer 78910J straight', () => {
-  const rank = loadRanker();
-  const lowStraight = [card(7), card(8), card(9)];
-  const pairRun = [...group(10, 2), ...group(11, 2)];
-  const longStraight = [card(7), card(8), card(9), card(10), card(11)];
-  const hand = [...lowStraight, ...pairRun, card(13)];
-  const ranked = rank(hand, [
-    candidate(longStraight, 0),
-    candidate(lowStraight, 1),
-    candidate(pairRun, 2),
-    candidate([card(13)], 3),
-  ], liangshanLeadRules, true, true);
-
-  assert.deepEqual(ranked[0], pairRun);
-  assert.deepEqual(ranked[1], lowStraight);
 });
 
 test('whole-hand isolation keeps the shorter straight when it leaves fewer singles', () => {
@@ -667,65 +710,6 @@ test('public two-hand maximum lead ignores card-count gap', () => {
   assert.deepEqual(ranked[0], ace);
 });
 
-test('Liangshan hand without ace leads its largest legal shape', () => {
-  const rank = loadRanker();
-  const straight = [card(9), card(10), card(11), card(12), card(13)];
-  const hand = [...straight, card(12, 2), card(9, 2), card(7)];
-  const ranked = rank(hand, [
-    { ...candidate([card(7)], 0), containsRuleMaximum: false },
-    { ...candidate([card(9), card(9, 2)], 1), containsRuleMaximum: false },
-    { ...candidate(straight, 2), containsRuleMaximum: false },
-  ], {
-    ...rules,
-    policyId: 'LS201',
-    minimumStraightLength: 3,
-    maximumSingleRanks: [14],
-    prioritizeLargestLeadWithoutMaximum: true,
-  }, true, true);
-
-  assert.deepEqual(ranked[0], straight);
-});
-
-test('Liangshan no-ace hand leads triple with intact pair', () => {
-  const rank = loadRanker();
-  const tripleWithPair = [...group(12, 3), ...group(13, 2)];
-  const hand = [...tripleWithPair, card(10), card(9), card(7)];
-  const ranked = rank(hand, [
-    { ...candidate([card(7)], 0), containsRuleMaximum: false },
-    { ...candidate([...group(12, 3), card(10)], 1), containsRuleMaximum: false },
-    { ...candidate(tripleWithPair, 2), containsRuleMaximum: false },
-  ], {
-    ...rules,
-    policyId: 'LS201',
-    minimumStraightLength: 3,
-    tripleAttachmentMode: 'SINGLE_OR_PAIR',
-    maximumSingleRanks: [14],
-    prioritizeLargestLeadWithoutMaximum: true,
-  }, true, true);
-
-  assert.deepEqual(ranked[0], tripleWithPair);
-});
-
-test('Liangshan lead uses A before a disconnected triple family', () => {
-  const rank = loadRanker();
-  const ace = [card(14)];
-  const tripleWithPair = [...group(9, 3), ...group(7, 2)];
-  const hand = [...ace, card(13), card(12), ...tripleWithPair];
-  const ranked = rank(hand, [
-    { ...candidate(tripleWithPair, 0), containsRuleMaximum: false },
-    { ...candidate(ace, 1), containsRuleMaximum: true },
-  ], {
-    ...rules,
-    policyId: 'LS201',
-    minimumStraightLength: 3,
-    tripleAttachmentMode: 'SINGLE_OR_PAIR',
-    maximumSingleRanks: [14],
-    prioritizeMaximumLeadUnlessConnectedRun: true,
-  }, true, true);
-
-  assert.deepEqual(ranked[0], ace);
-});
-
 test('Liangshan connected KKQQ lead stays ahead of A', () => {
   const rank = loadRanker();
   const ace = [card(14)];
@@ -744,25 +728,6 @@ test('Liangshan connected KKQQ lead stays ahead of A', () => {
   assert.deepEqual(ranked[0], pairRun);
 });
 
-test('Liangshan response within three plays uses A first', () => {
-  const rank = loadRanker();
-  const ace = [card(14)];
-  const queen = [card(12)];
-  const hand = [...ace, card(13), ...queen];
-  const ranked = rank(hand, [
-    { ...candidate(queen, 0), containsRuleMaximum: false },
-    { ...candidate(ace, 1), containsRuleMaximum: true },
-  ], {
-    ...rules,
-    policyId: 'LS201',
-    minimumStraightLength: 3,
-    maximumSingleRanks: [14],
-    prioritizeMaximumResponseWithinThreePlays: true,
-  }, false, true);
-
-  assert.deepEqual(ranked[0], ace);
-});
-
 test('Liangshan response without A keeps fewest singles then uses lowest point', () => {
   const rank = loadRanker();
   const queen = [card(12)];
@@ -776,19 +741,6 @@ test('Liangshan response without A keeps fewest singles then uses lowest point',
   }, false, true);
 
   assert.deepEqual(ranked[0], queen);
-});
-
-test('Liangshan equal-plan single response spends A and keeps the 789 straight', () => {
-  const rank = loadRanker();
-  const ace = card(14);
-  const king = card(13);
-  const hand = [card(7), card(8), card(9), card(9, 2), king, ace];
-  const ranked = rank(hand, [
-    candidate([king], 0),
-    { ...candidate([ace], 1), containsRuleMaximum: true },
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, false, true);
-
-  assert.deepEqual(ranked[0], [ace]);
 });
 
 test('Liangshan largest-shape lead chooses QQQ with pair sevens', () => {
@@ -825,27 +777,6 @@ test('Liangshan newest largest-shape rule overrides the older standalone-A fallb
   }, true, true);
 
   assert.deepEqual(ranked[0], tripleWithPair);
-});
-
-test('Liangshan equal-size two-play lead chooses triple carrying A', () => {
-  const rank = loadRanker();
-  const tripleWithAce = [...group(7, 3), card(14)];
-  const remainingStraight = [card(8), card(9), card(10), card(11)];
-  const hand = [...tripleWithAce, ...remainingStraight];
-  const ranked = rank(hand, [
-    { ...candidate(remainingStraight, 0), finishesInTwo: true },
-    { ...candidate(tripleWithAce, 1), finishesInTwo: true,
-      containsRuleMaximum: true },
-  ], {
-    ...rules,
-    policyId: 'LS201',
-    minimumStraightLength: 3,
-    tripleAttachmentMode: 'SINGLE_OR_PAIR',
-    maximumSingleRanks: [14],
-    prioritizeLargestLeadUnlessMaximumStraight: true,
-  }, true, true);
-
-  assert.deepEqual(ranked[0], tripleWithAce);
 });
 
 test('Liangshan largest-shape lead chooses six-card pair run', () => {
@@ -895,20 +826,6 @@ test('Liangshan equal pair and single cards still lead the longest straight', ()
   assert.deepEqual(ranked[0], longestStraight);
 });
 
-test('Liangshan QQQ carries the lowest loose seven', () => {
-  const rank = loadRanker();
-  const queens = group(12, 3);
-  const seven = card(7);
-  const hand = [...group(14, 2), card(13), ...queens, card(10), seven];
-  const expected = [...queens, seven];
-  const ranked = rank(hand, [
-    candidate([card(14)], 0),
-    candidate([...queens, card(10)], 1),
-    candidate(expected, 2),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true, true);
-  assert.deepEqual(ranked[0], expected);
-});
-
 test('Liangshan three-play A ten seven leads the second-highest ten', () => {
   const rank = loadRanker();
   const ace = card(14);
@@ -933,19 +850,6 @@ test('Liangshan three single cards A ten eight lead the second-highest ten', () 
     candidate([eight], 2),
   ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true, true);
   assert.deepEqual(ranked[0], [ten]);
-});
-
-test('Liangshan QKA is first and 7778 is second when both are complete leads', () => {
-  const rank = loadRanker();
-  const maximumStraight = [card(12), card(13), card(14)];
-  const tripleWithEight = [...group(7, 3), card(8)];
-  const hand = [...maximumStraight, card(10), card(8), ...group(7, 3)];
-  const ranked = rank(hand, [
-    candidate([card(10)], 0),
-    candidate(tripleWithEight, 1),
-    { ...candidate(maximumStraight, 2), containsRuleMaximum: true },
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true, true);
-  assert.deepEqual(ranked.slice(0, 2), [maximumStraight, tripleWithEight]);
 });
 
 test('Liangshan leads the longer maximum straight when no independent control remains', () => {
@@ -975,35 +879,6 @@ test('Liangshan pair-dominant hand leads its lowest intact pair before a split s
     candidate(aces, 1), candidate(jacks, 2), candidate(nines, 3),
   ], { ...liangshanLeadRules, optimizeWholeHand: false }, true, true);
   assert.deepEqual(ranked[0], nines);
-});
-
-test('Liangshan low pairs alone do not activate pair-recovery priority', () => {
-  const rank = loadRanker();
-  const tens = group(10, 2);
-  const nines = group(9, 2);
-  const sevens = group(7, 2);
-  const straight = [nines[0], tens[0], card(11), card(12)];
-  const hand = flatten(tens, nines, sevens, group(11, 1), group(12, 1));
-  const ranked = rank(hand, [
-    candidate(sevens, 0), candidate(nines, 1), candidate(tens, 2),
-    candidate(straight, 3),
-  ], { ...liangshanLeadRules, optimizeWholeHand: false }, true, true);
-  assert.deepEqual(ranked[0], straight);
-});
-
-test('Liangshan two pairs do not override a complete triple-with-pair lead', () => {
-  const rank = loadRanker();
-  const eights = group(8, 3);
-  const queens = group(12, 2);
-  const aces = group(14, 2);
-  const tripleWithPair = [...eights, ...queens];
-  const hand = flatten(aces, queens, group(9, 1), eights);
-  const ranked = rank(hand, [
-    candidate(queens, 0), candidate(aces, 1),
-    candidate([...eights, card(9)], 2),
-    candidate(tripleWithPair, 3),
-  ], { ...liangshanLeadRules, optimizeWholeHand: false }, true, true);
-  assert.deepEqual(ranked[0], tripleWithPair);
 });
 
 test('Liangshan exact two-hand finish outranks maximum-triple low-card probing', () => {
@@ -1082,35 +957,6 @@ test('Liangshan leads 789 and retains QKA behind pair jacks', () => {
   assert.deepEqual(ranked.slice(0, 2), [lowStraight, recoveryStraight]);
 });
 
-test('Liangshan three-play AA nine seven leads the second-highest nine', () => {
-  const rank = loadRanker();
-  const aces = group(14, 2);
-  const nine = card(9);
-  const seven = card(7);
-  const ranked = rank([...aces, nine, seven], [
-    { ...candidate([aces[0]], 0), containsRuleMaximum: true },
-    candidate([nine], 1),
-    candidate([seven], 2),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true, true);
-  assert.deepEqual(ranked[0], [nine]);
-});
-
-test('Liangshan three-play hand leads the six-card 9-to-A straight instead of single king', () => {
-  const rank = loadRanker();
-  const straight = [9, 10, 11, 12, 13, 14].map((value) => card(value));
-  const hand = flatten(group(14, 1), group(13, 1), group(12, 2), group(11, 1),
-    group(10, 1), group(9, 2));
-  const ranked = rank(hand, [
-    { ...candidate(straight, 0), containsRuleMaximum: true },
-    candidate([card(13)], 1),
-    candidate(group(12, 2), 2),
-    candidate(group(9, 2), 3),
-    candidate([card(9)], 4),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true, true);
-
-  assert.deepEqual(ranked[0], straight);
-});
-
 test('Liangshan A J pair sevens leads J and retains A as recovery', () => {
   const rank = loadRanker();
   const ace = card(14);
@@ -1124,7 +970,7 @@ test('Liangshan A J pair sevens leads J and retains A as recovery', () => {
   assert.deepEqual(ranked[0], [jack]);
 });
 
-test('Liangshan K nine pair eights leads the intact pair when K is only an effective maximum', () => {
+test('Liangshan K nine pair eights leads nine while retaining the effective maximum K', () => {
   const rank = loadRanker();
   const eights = group(8, 2);
   const king = card(13);
@@ -1140,59 +986,7 @@ test('Liangshan K nine pair eights leads the intact pair when K is only an effec
     maximumSingleRanks: [13],
   }, true, true);
 
-  assert.deepEqual(ranked[0], eights);
-});
-
-test('Liangshan leads JJQQKK before its loose seven and ten', () => {
-  const rank = loadRanker();
-  const pairRun = flatten(group(11, 2), group(12, 2), group(13, 2));
-  const ten = card(10);
-  const seven = card(7);
-  const hand = flatten(pairRun, [ten, seven]);
-  const ranked = rank(hand, [
-    candidate(group(13, 2), 0), candidate(group(12, 2), 1), candidate(group(11, 2), 2),
-    candidate([...group(11, 2), ...group(12, 2)], 3),
-    candidate([...group(12, 2), ...group(13, 2)], 4), candidate(pairRun, 5),
-    candidate([ten], 6), candidate([seven], 7),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked.slice(0, 3), [pairRun, [seven], [ten]]);
-});
-
-test('Liangshan leads QQKK pair run then A when no probing seven exists', () => {
-  const rank = loadRanker();
-  const hand = flatten(group(14, 1), group(13, 2), group(12, 2), group(9, 1));
-  const pairRun = [...group(12, 2), ...group(13, 2)];
-  const ranked = rank(hand, [
-    candidate(pairRun, 0), candidate([card(14)], 1), candidate([card(9)], 2),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], pairRun);
-  assert.deepEqual(ranked[1], [card(14)]);
-});
-
-test('Liangshan leads KKAA pair run before 10JQ straight', () => {
-  const rank = loadRanker();
-  const hand = flatten(group(14, 2), group(13, 2), group(12, 1), group(11, 1), group(10, 1), group(7, 1));
-  const pairRun = [...group(13, 2), ...group(14, 2)];
-  const straight = [card(10), card(11), card(12)];
-  const ranked = rank(hand, [candidate(pairRun, 0), candidate(straight, 1), candidate([card(7)], 2)],
-    { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], pairRun);
-  assert.deepEqual(ranked[1], straight);
-});
-
-test('Liangshan double-triple lead depends on whether local player competed for dealer', () => {
-  const rank = loadRanker();
-  const kings = group(13, 3);
-  const eights = group(8, 3);
-  const hand = flatten(kings, group(11, 1), group(10, 1), eights);
-  const high = [...kings, card(11)];
-  const low = [...eights, card(10)];
-  assert.deepEqual(rank(hand, [candidate(low, 0), candidate(high, 1)], {
-    ...liangshanLeadRules, liangshanLeadStrategy: true, didCompeteDealer: true,
-  }, true)[0], high);
-  assert.deepEqual(rank(hand, [candidate(low, 0), candidate(high, 1)], {
-    ...liangshanLeadRules, liangshanLeadStrategy: true, didCompeteDealer: false,
-  }, true)[0], low);
+  assert.deepEqual(ranked[0], [nine]);
 });
 
 test('Liangshan triple comparison leads tens with king and preserves 789 plus A', () => {
@@ -1228,26 +1022,6 @@ test('Liangshan leads QKA then triple tens with eight without splitting the trip
   assert.deepEqual(remaining.map((value) => value % 100), [10, 10, 10, 9, 8]);
 });
 
-test('Liangshan maximum AAA with more loose singles leads the lowest single', () => {
-  const rank = loadRanker();
-  const hand = flatten(group(14, 3), group(12, 1), group(11, 2), group(9, 1), group(7, 1));
-  const ranked = rank(hand, [
-    candidate([...group(14, 3), card(7)], 0), candidate(group(11, 2), 1),
-    candidate([card(12)], 2), candidate([card(9)], 3), candidate([card(7)], 4),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], [card(7)]);
-});
-
-test('Liangshan maximum AAA with more pair cards leads the lowest pair', () => {
-  const rank = loadRanker();
-  const hand = flatten(group(14, 3), group(12, 2), group(11, 2), group(9, 1));
-  const ranked = rank(hand, [
-    candidate([...group(14, 3), card(9)], 0), candidate(group(12, 2), 1),
-    candidate(group(11, 2), 2), candidate([card(9)], 3),
-  ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], group(11, 2));
-});
-
 test('Liangshan high QQQ is retained for response while loose seven leads', () => {
   const rank = loadRanker();
   const queens = group(12, 3);
@@ -1259,41 +1033,6 @@ test('Liangshan high QQQ is retained for response while loose seven leads', () =
     candidate([card(8)], 4), candidate([card(7)], 5),
   ], { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
   assert.deepEqual(ranked[0], [card(7)]);
-});
-
-test('Liangshan low 999 leads as triple family despite many loose singles', () => {
-  const rank = loadRanker();
-  const nines = group(9, 3);
-  const triple = [...nines, card(7)];
-  const hand = flatten(group(14, 1), group(13, 1), group(12, 1),
-    group(10, 1), nines, group(8, 1), group(7, 1));
-  const ranked = rank(hand, [candidate(triple, 0), candidate([card(7)], 1)],
-    { ...liangshanLeadRules, liangshanLeadStrategy: true }, true);
-  assert.deepEqual(ranked[0], triple);
-});
-
-test('Liangshan relative triple policy also supports a five-to-ace deck', () => {
-  const rank = loadRanker();
-  const fiveToAceDeck = Array.from({ length: 4 }, (_value, suit) =>
-    Array.from({ length: 10 }, (_rank, index) => card(index + 5, suit + 1))).flat();
-  const regionalRules = {
-    ...liangshanLeadRules,
-    deckCards: fiveToAceDeck,
-    liangshanLeadStrategy: true,
-  };
-  const queens = group(12, 3);
-  const highHand = flatten(group(14, 1), group(13, 1), queens,
-    group(10, 1), group(8, 1), group(5, 1));
-  assert.deepEqual(rank(highHand, [
-    candidate([...queens, card(5)], 0), candidate([card(5)], 1),
-  ], regionalRules, true)[0], [card(5)]);
-
-  const nines = group(9, 3);
-  const lowTriple = [...nines, card(5)];
-  const lowHand = flatten(group(14, 1), group(13, 1), group(12, 1),
-    group(10, 1), nines, group(8, 1), group(5, 1));
-  assert.deepEqual(rank(lowHand, [candidate(lowTriple, 0), candidate([card(5)], 1)],
-    regionalRules, true)[0], lowTriple);
 });
 
 test('Liangshan two-play finish overrides retaining high JJJ for response', () => {
@@ -1694,6 +1433,106 @@ test('6677 leads before QQKKAA because the retained high run can recapture', () 
     'regional largest-shape refinements must not overwrite a proven recovery lead');
 });
 
+test('minimum whole-hand turns and loose singles outrank a recoverable low pair lead', () => {
+  const rank = loadRanker();
+  const hand = flatten(group(14, 2), group(13, 2), group(12, 2), group(11, 2),
+    [card(10)], group(9, 2), [card(8)], group(7, 2), [card(6), card(5)]);
+  const lowPair = group(7, 2);
+  const cleanStraight = [5, 6, 7, 8, 9, 10].map((value) => card(value));
+  const longestStraight = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    .map((value) => card(value));
+  const highPairRun = flatten(group(11, 2), group(12, 2), group(13, 2), group(14, 2));
+  const ranked = rank(hand, [
+    candidate(lowPair, 0),
+    candidate(cleanStraight, 1),
+    candidate(longestStraight, 2),
+    candidate(highPairRun, 3),
+  ], { ...rules, policyId: 'CD201' }, true, true);
+
+  assert.deepEqual(ranked[0].map((value) => value % 100), [5, 6, 7, 8, 9, 10],
+    '5-10 leaves a three-turn, two-single remainder; 77 leaves six turns and four singles');
+});
+
+test('full legal lead pool keeps the clean straight before the destructive longest straight', () => {
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRankerModule();
+  const hand = flatten(group(14, 2), group(13, 2), group(12, 2), group(11, 2),
+    [card(10)], group(9, 2), [card(8)], group(7, 2), [card(6), card(5)]);
+  const legal = enumeratePdkRankMultisetCandidates(hand).filter((cards) => {
+    const ranks = cards.map((value) => value % 100).sort((a, b) => a - b);
+    const unique = [...new Set(ranks)];
+    if (cards.length <= 2) return unique.length === 1;
+    if (cards.length >= 5 && unique.length === cards.length
+      && ranks.every((value, index) => index === 0 || value === ranks[index - 1] + 1)) return true;
+    return cards.length >= 4 && cards.length % 2 === 0 && unique.length * 2 === cards.length
+      && unique.every((value, index) => index === 0 || value === unique[index - 1] + 1);
+  });
+  for (const optimizeWholeHand of [true, false]) {
+    const ranked = rankCleanPdkHints(hand, legal.map((cards, order) => ({ cards, order })),
+      { ...rules, policyId: 'COMMON', optimizeWholeHand }, true, true);
+    assert.deepEqual(ranked[0].map((value) => value % 100).sort((a, b) => a - b),
+      [5, 6, 7, 8, 9, 10], `optimizeWholeHand=${optimizeWholeHand}`);
+  }
+});
+
+test('a non-maximum pair cannot displace an equally clean triple-with-two lead', () => {
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadRankerModule();
+  const hand = flatten(group(13, 2), [card(12)], group(11, 2), group(10, 2),
+    group(9, 3), [card(8), card(7)], group(6, 3), [card(5)]);
+  const legal = enumeratePdkRankMultisetCandidates(hand).filter((cards) => {
+    const counts = new Map();
+    for (const value of cards) counts.set(value % 100, (counts.get(value % 100) ?? 0) + 1);
+    const ranks = [...counts.keys()].sort((a, b) => a - b);
+    if (cards.length <= 2) return ranks.length === 1;
+    if (cards.length === 4 && [...counts.values()].sort().join(',') === '1,3') return true;
+    if (cards.length === 5 && ['1,1,3', '2,3'].includes(
+      [...counts.values()].sort().join(','))) return true;
+    if (cards.length >= 5 && ranks.length === cards.length
+      && ranks.every((value, index) => index === 0 || value === ranks[index - 1] + 1)) return true;
+    return cards.length >= 4 && cards.length % 2 === 0 && ranks.length * 2 === cards.length
+      && ranks.every((value, index) => counts.get(value) === 2
+        && (index === 0 || value === ranks[index - 1] + 1));
+  });
+  for (const optimizeWholeHand of [true, false]) {
+    const ranked = rankCleanPdkHints(hand, legal.map((cards, order) => ({ cards, order })),
+      { ...rules, policyId: 'COMMON', optimizeWholeHand }, true, true);
+    assert.equal(ranked[0].length, 5, `optimizeWholeHand=${optimizeWholeHand}`);
+    assert.ok(ranked[0].filter((value) => value % 100 === 6 || value % 100 === 9).length >= 3);
+  }
+});
+
+test('public whole-hand lead safely returns no hint when authority supplies no legal candidate', () => {
+  const rank = loadRanker();
+  const hand = flatten(group(13, 2), [card(7)]);
+  assert.deepEqual(rank(hand, [], { ...rules, policyId: 'COMMON', optimizeWholeHand: false },
+    true, true), []);
+});
+
+test('991010 keeps QQKKAA for recapture even when independent triple and pair structures remain', () => {
+  const rank = loadRanker();
+  const lowRun = flatten(group(9, 2), group(10, 2));
+  const highRun = flatten(group(12, 2), group(13, 2), group(14, 2));
+  const sevens = group(7, 3);
+  const fives = group(5, 2);
+  const jack = group(11, 1);
+  const hand = flatten(highRun, jack, lowRun, sevens, fives);
+  const candidates = [
+    candidate(highRun, 0),
+    candidate(lowRun, 1),
+    candidate([...sevens, ...fives], 2),
+    candidate([...sevens, ...jack], 3),
+    candidate(fives, 4),
+    candidate(group(9, 2), 5),
+    candidate(group(10, 2), 6),
+    candidate(group(12, 2), 7),
+    candidate(group(13, 2), 8),
+    candidate(group(14, 2), 9),
+    candidate(jack, 10),
+  ];
+
+  assert.deepEqual(rank(hand, candidates, rules, true, true)[0], lowRun,
+    'unrelated 777 and 55 structures must not disable the pair-run recapture chain');
+});
+
 test('independent pair five leads while the higher KKAA pair run remains to recapture', () => {
   const rank = loadRanker();
   const pairFives = group(5, 2);
@@ -2014,7 +1853,7 @@ test('an ordinary same-shape response is prompted before a scoring bomb fallback
   assert.deepEqual(ordinary[0], sixes);
 });
 
-test('a simple 2,44,3 equal-turn lead sheds the larger pair first', () => {
+test('a simple 2,44,3 equal-turn lead keeps the maximum and sheds the loose three', () => {
   const rank = loadRanker();
   const two = card(15);
   const fours = group(4, 2);
@@ -2025,7 +1864,7 @@ test('a simple 2,44,3 equal-turn lead sheds the larger pair first', () => {
     candidate(fours, 1),
     candidate([three], 2),
   ], rules, true, true);
-  assert.deepEqual(ranked[0], fours);
+  assert.deepEqual(ranked[0], [three]);
 });
 
 test('multiple pairs lead the smallest pair when loose A is not the regional maximum', () => {
@@ -2129,6 +1968,49 @@ test('self lead AAK4 preserves the regional-maximum pair and starts from 4', () 
   assert.deepEqual(ranked[0], four);
   assert.deepEqual(ranked[1], king);
   assert.deepEqual(ranked[2], aces);
+});
+
+test('three loose singles keep the effective maximum and lead the second highest', () => {
+  const rank = loadRanker();
+  const hand = [card(15), card(10), card(7)];
+  const ranked = rank(hand, [
+    { ...candidate([card(15)], 0), containsRuleMaximum: true },
+    candidate([card(7)], 1),
+    candidate([card(10)], 2),
+  ], { ...rules, policyId: 'CD201' }, true, true);
+  assert.deepEqual(ranked[0], [card(10)]);
+});
+
+test('effective maximum plus a loose single and a pair leads the loose single', () => {
+  const rank = loadRanker();
+  const eights = group(8, 2);
+  const hand = [card(15), card(7), ...eights];
+  const ranked = rank(hand, [
+    candidate(eights, 0),
+    { ...candidate([card(15)], 1), containsRuleMaximum: true },
+    candidate([card(7)], 2),
+  ], { ...rules, policyId: 'CD201' }, true, true);
+  assert.deepEqual(ranked[0], [card(7)]);
+});
+
+test('played twos make A effective maximum and keep AA after leading 88', () => {
+  const { effectivePdkMaximumSingleRanks } = loadRankerModule();
+  const rank = loadRanker();
+  const eights = group(8, 2);
+  const aces = group(14, 2);
+  const twos = group(15, 4);
+  const deck = flatten(group(7, 4), eights, group(14, 4), twos);
+  const hand = flatten(eights, aces, [card(7)]);
+  assert.ok(!effectivePdkMaximumSingleRanks(deck, hand, twos.slice(0, 2)).includes(14),
+    'unseen higher cards must prevent promoting A to an effective maximum');
+  const effectiveMaximum = effectivePdkMaximumSingleRanks(deck, hand, twos);
+  assert.ok(effectiveMaximum.includes(14));
+  const ranked = rank(hand, [
+    candidate([card(7)], 0),
+    { ...candidate(aces, 1), containsRuleMaximum: true },
+    candidate(eights, 2),
+  ], { ...rules, policyId: 'CD201', maximumSingleRanks: effectiveMaximum }, true, true);
+  assert.deepEqual(ranked[0], eights);
 });
 
 test('self lead 4,5,7,J plus KK or AA starts from the lowest single', () => {

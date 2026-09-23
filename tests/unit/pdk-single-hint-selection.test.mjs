@@ -520,6 +520,55 @@ test('a non-maximum pair K cannot outrank the six-card lead hint', () => {
   assert.deepEqual(ranked[0], pairRun);
 });
 
+test('COMMON keeps an intact pair run visible when a longer run would split a triple', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const tripleTen = [110, 210, 310];
+  const pairJack = [111, 211];
+  const pairQueen = [112, 212];
+  const pairSix = [106, 206];
+  const pairFour = [104, 204];
+  const hand = [...pairQueen, ...pairJack, ...tripleTen, ...pairSix, ...pairFour];
+  const completePairRun = [...pairJack, ...pairQueen];
+  const tripleSplittingRun = [110, 210, ...completePairRun];
+  const tripleWithLowPair = [...tripleTen, ...pairFour];
+  const ranked = rankCleanPdkHints(hand, [
+    { cards: pairFour, order: 0, containsRuleMaximum: false },
+    { cards: completePairRun, order: 1, containsRuleMaximum: false },
+    { cards: tripleSplittingRun, order: 2, containsRuleMaximum: false },
+    { cards: tripleWithLowPair, order: 3, containsRuleMaximum: false },
+  ], {
+    policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+    allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
+  }, true, true);
+
+  assert.ok(ranked.some((cards) => cards.join(',') === completePairRun.join(',')),
+    'a theoretical 10-J-Q run must not hide the intact J-Q run');
+  assert.deepEqual(ranked[0], tripleWithLowPair,
+    'the complete triple family preserves the same high pair run as leading 44');
+});
+
+test('COMMON response spends an unbeatable single before an equal-turn low probe', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const hand = [115, 106, 206, 306, 104, 204];
+  const candidates = [
+    { cards: [104], order: 0, finishesInTwo: true, containsRuleMaximum: false },
+    { cards: [115], order: 1, finishesInTwo: true, containsRuleMaximum: true },
+    { cards: [106], order: 2, finishesInTwo: false, containsRuleMaximum: false },
+  ];
+  const rules = {
+    policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+    allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
+    maximumSingleRanks: [15],
+  };
+  assert.deepEqual(rankCleanPdkHints(hand, candidates, rules, false)[0], [115],
+    '2 takes the trick, leaving 666+44 as one legal hand');
+
+  const notFinishing = candidates.map((candidate) => ({ ...candidate,
+    finishesInTwo: candidate.cards[0] === 115 ? false : candidate.finishesInTwo }));
+  assert.deepEqual(rankCleanPdkHints(hand, notFinishing, rules, false)[0], [104],
+    'maximum alone must not outrank the lower response without a complete finishing plan');
+});
+
 test('a regional maximum combination ranks first when exactly two legal plays remain', () => {
   const { rankCleanPdkHints } = loadHelper();
   const hand = [115, 114, 214, 109];
@@ -1223,6 +1272,27 @@ test('single response to seven uses loose ten before splitting pair kings', () =
   assert.match(controller, /Number\(nextPlayer\?\.cardCount\)/);
   assert.doesNotMatch(controller,
     /const nextSeat = \(this\.clientSeat\(\) \+ 1\) % playerCount/);
+});
+
+test('single response treats raw K as loose even when QQQ can absorb it as an attachment', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const hand = [114, 113, 112, 212, 312, 109, 209, 108, 208, 105, 205];
+  const ranked = rankCleanPdkHints(hand, [
+    { cards: [109], order: 0 },
+    { cards: [112], order: 1 },
+    { cards: [113], order: 2 },
+    { cards: [114], order: 3 },
+  ], {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    tripleAttachmentMode: 'EITHER',
+    prioritizeLooseSingles: true,
+    optimizeWholeHand: false,
+  });
+
+  assert.equal(ranked[0][0], 113,
+    'A,K,QQQ,99,88,55 responding to 8 must use loose K before opening pair 99');
 });
 
 test('seven-card response hand keeps A and 2 after using the lowest winning Q', () => {
@@ -1946,4 +2016,456 @@ test('drag selection starts on a real card and commits the last exact endpoint',
   assert.match(move, /this\.updateDragSelection\(sample\.index\)/);
   assert.match(end, /this\.updateDragSelection\(sample\.index\)[\s\S]*if \(this\.dragMoved\)/);
   assert.match(end, /if \(this\.dragMoved\)[\s\S]*commitSmartDragSelection/);
+});
+
+test('COMMON control ordering uses physical deck and public plays across lead and response', () => {
+  const { rankCleanPdkHints, effectivePdkMaximumSingleRanks,
+    isRegionalMaximumPdkCombination } = loadHelper();
+  const deck = Array.from({ length: 11 }, (_, index) => index + 3)
+    .flatMap((value) => [100, 200, 300, 400].map((suit) => suit + value))
+    .concat([114, 214, 314, 115]);
+  const ranks = (cards) => cards.map((card) => card % 100).sort((a, b) => a - b);
+  const ranked = (hand, plays, played = [], leading = true) => {
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, played);
+    const candidates = plays.map(([cards, finishesInTwo], order) => ({
+      cards, order, finishesInTwo,
+      containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck)
+        || (cards.every((card) => card % 100 === cards[0] % 100)
+          && maximumSingleRanks.includes(cards[0] % 100)),
+    }));
+    const protectedBombs = [...new Set(hand.map((card) => card % 100))]
+      .map((value) => hand.filter((card) => card % 100 === value))
+      .filter((cards) => cards.length === 4);
+    return rankCleanPdkHints(hand, candidates, {
+      policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+      allowTwoInRuns: false, tripleAttachmentMode: 'EITHER',
+      optimizeWholeHand: true, prioritizeLooseSingles: !leading,
+      preserveScoringBombs: true, protectedBombs, deckCards: deck, playedCards: played,
+      maximumSingleRanks,
+    }, leading, leading).map(ranks);
+  };
+
+  const bomb = [113, 213, 313, 413];
+  const pair9 = [109, 209];
+  const ace = [114];
+  const two = [115];
+  assert.deepEqual(ranked([...pair9, ...bomb, ...ace, ...two], [
+    [pair9, false], [bomb, false], [two, false], [ace, false],
+  ]).slice(0, 2), [[14], [15]]);
+  assert.deepEqual(ranked([...pair9, ...bomb, ...two], [
+    [pair9, false], [bomb, false], [two, false],
+  ])[0], [15], 'after A, the held 2 is the next control single');
+
+  const pairA = [114, 214];
+  assert.deepEqual(ranked([...pairA, 115, 113], [
+    [[113], false], [[115], false], [pairA, false], [[114], false],
+  ])[0], [14, 14], 'the intact maximum pair precedes 2 and the ordinary K');
+  const pairK = [113, 213];
+  assert.deepEqual(ranked([...pair9, ...pairK, ...pairA], [
+    [pair9, true], [[...pairK, ...pairA], true],
+  ])[0], [13, 13, 14, 14], 'a two-hand maximum pair run leads before the low pair');
+  assert.deepEqual(ranked([...pairA, 107], [
+    [[107], true], [[114], false],
+  ], [115, 105], false)[0], [14],
+  'two held A singles become independent controls once 2 is publicly spent');
+  assert.deepEqual(ranked([114, 109], [
+    [[109], true], [[114], true],
+  ], [115])[0], [14], 'public 2 makes a held A the maximum single');
+
+  const straightHand = [114, 113, 213, 313, 112, 111, 110, 109, 108, 106, 206];
+  assert.deepEqual(ranked(straightHand, [
+    [[108], false], [[114], false],
+  ], [], false)[0], [14],
+  'response chooses the two-turn remainder while retaining the five-card straight');
+  assert.deepEqual(ranked(straightHand, [
+    [[108, 109, 110, 111, 112], false],
+    [[109, 110, 111, 112, 113], false],
+  ], [], false)[0], [8, 9, 10, 11, 12],
+  'equal-length straight responses keep the intact triple instead of borrowing K');
+
+  const aircraftHand = [114, 113, 112, 111, 110, 210, 310,
+    109, 209, 309, 108, 106, 105, 205, 305, 405];
+  const oneTriple = [109, 209, 309, 108, 106];
+  const doubleAircraft = [109, 209, 309, 110, 210, 310, 114, 113, 112, 111];
+  assert.deepEqual(ranked(aircraftHand, [
+    [doubleAircraft, false], [oneTriple, false],
+  ])[0], [6, 8, 9, 9, 9],
+  'equal three-turn plans retain the confirmed fewest-residual-singles rule');
+
+  const afterHighSingles = [113, 213, 112, 110,
+    108, 208, 308, 107, 207, 307, 106, 206, 105, 205];
+  const airplaneBody = [107, 207, 307, 108, 208, 308];
+  const requestedWings = [...airplaneBody, 110, 112, 113, 213];
+  const wasteLowPair = [...airplaneBody, 110, 112, 105, 205];
+  assert.deepEqual(ranked([...afterHighSingles, 114, 115], [
+    [[...airplaneBody, 114, 115, 110, 112], false],
+    [[114], false], [[115], false],
+    [requestedWings, false], [wasteLowPair, false],
+  ])[0], [7, 7, 7, 8, 8, 8, 10, 12, 13, 13],
+  'a complete large lead keeps A and 2 as a control chain despite one extra planned turn');
+  assert.deepEqual(ranked(afterHighSingles, [
+    [wasteLowPair, false], [requestedWings, true],
+  ], [114, 115])[0], [7, 7, 7, 8, 8, 8, 10, 12, 13, 13],
+  'after A and 2 are spent, airplane 777888 takes 10QKK and leaves 5566 as one run');
+});
+
+test('COMMON whole-hand control paths rank distinct endgames without eager maximum or bomb splits', () => {
+  const { rankCleanPdkHints, enumeratePdkRankMultisetCandidates,
+    effectivePdkMaximumSingleRanks, isRegionalMaximumPdkCombination,
+    isAuthorityCompatiblePdkAircraft } = loadHelper();
+  const logicSource = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/logic/CommonPdkGameLogic.ts'), 'utf8');
+  const logicJs = ts.transpileModule(logicSource, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const logicModule = { exports: {} };
+  Function('module', 'exports', logicJs)(logicModule, logicModule.exports);
+  const { CommonPdkGameLogic } = logicModule.exports;
+  const deck = Array.from({ length: 11 }, (_, index) => index + 3)
+    .flatMap((value) => [100, 200, 300, 400].map((suit) => suit + value))
+    .concat([114, 214, 314, 115]);
+  const rank = (card) => card % 100;
+  const signature = (cards) => cards.map(rank).sort((a, b) => a - b).join(',');
+  const ranked = (hand, played = [], target = []) => {
+    const ruleOptions = { minimumStraightLength: 5, minimumPairRunLength: 2,
+      tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'EITHER',
+      airplaneAttachmentMode: 'EITHER', allowAirplaneWithTwo: true };
+    const logic = new CommonPdkGameLogic({ room: {
+      GetRoomConfig: () => ({ ruleOptions }), GetRoomPaiXing: () => false,
+    } });
+    logic.OutPokerCard([...hand]);
+    logic.ClearCardData();
+    let targetType = 0;
+    if (target.length > 0) {
+      logic.ChangeSelectCard(target);
+      targetType = logic.GetCardType();
+      logic.lastCardType = targetType;
+      logic.lastCardList = [...target];
+    }
+    const candidates = enumeratePdkRankMultisetCandidates(hand)
+      .flatMap((cards, order) => {
+        logic.ChangeSelectCard(cards);
+        const type = logic.GetCardType();
+        if (type <= 0 || !isAuthorityCompatiblePdkAircraft(cards, type)
+          || (targetType > 0 && (type !== targetType
+            || cards.length !== target.length
+            || rank(cards[0]) <= rank(target[0])))) return [];
+        const remaining = [...hand];
+        for (const card of cards) remaining.splice(remaining.indexOf(card), 1);
+        const previousType = logic.lastCardType;
+        const previousCards = [...logic.lastCardList];
+        logic.ClearCardData();
+        logic.ChangeSelectCard(remaining);
+        const finishesInTwo = remaining.length > 0 && logic.GetCardType() > 0;
+        logic.lastCardType = previousType;
+        logic.lastCardList = previousCards;
+        return [{ cards, order, finishesInTwo,
+          usesFourCardBody: [8, 9, 10, 20].includes(type),
+          containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck) }];
+      });
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, played);
+    for (const candidate of candidates) {
+      const ranks = candidate.cards.map(rank);
+      if (ranks.every((value) => value === ranks[0])
+        && maximumSingleRanks.includes(ranks[0])) candidate.containsRuleMaximum = true;
+    }
+    const protectedBombs = [...new Set(hand.map(rank))]
+      .map((value) => hand.filter((card) => rank(card) === value))
+      .filter((cards) => cards.length === 4);
+    return rankCleanPdkHints(hand, candidates, {
+      policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+      allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
+      deckCards: deck, playedCards: played, maximumSingleRanks, protectedBombs, preserveScoringBombs: true,
+    }, targetType === 0, targetType === 0).map(signature);
+  };
+  const cases = [
+    ['two-hand pair run uses 2 first', [115, 110, 210, 111, 211, 112, 212], [], [], '15'],
+    ['three-hand pair run keeps 2 for the low tail',
+      [115, 110, 210, 111, 211, 112, 212, 105, 205, 106, 206], [], [], '10,10,11,11,12,12'],
+    ['2 precedes intact bomb and terminal straight',
+      [115, 112, 212, 312, 412, 105, 106, 107, 108, 109], [], [], '15'],
+    ['loose 3 probes before 2 while four-card bomb stays intact',
+      [115, 109, 209, 309, 409, 103, 104, 110, 111, 112, 113, 114], [], [], '3'],
+    ['public 2 makes A a recovery after the higher loose probe',
+      [114, 109, 108], [115], [], '9'],
+    ['held 2 makes A a recovery after the higher loose probe',
+      [114, 115, 109, 108], [], [], '9'],
+    ['A and 2 do not by themselves solve six other loose cards',
+      [115, 114, 112, 110, 109, 209, 108, 106, 105, 205, 104, 204], [], [], '4,4,5,5'],
+    ['two-control bomb and pair ending still starts at A',
+      [114, 115, 109, 209, 113, 213, 313, 413], [], [], '14'],
+    ['response 2 is followed by an atomic triple-with-pair',
+      [115, 106, 206, 306, 104, 204], [], [103], '15'],
+  ];
+  assert.deepEqual(cases.map(([name, hand, played, target]) =>
+    [name, ranked(hand, played, target)[0]]),
+  cases.map(([name, , , , expected]) => [name, expected]));
+});
+
+test('COMMON ninety-example audit covers each distinct ordinary hint scenario once', () => {
+  const { rankCleanPdkHints, enumeratePdkRankMultisetCandidates,
+    effectivePdkMaximumSingleRanks, isRegionalMaximumPdkCombination,
+    isAuthorityCompatiblePdkAircraft } = loadHelper();
+  const source = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/logic/CommonPdkGameLogic.ts'), 'utf8');
+  const module = { exports: {} };
+  Function('module', 'exports', ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText)(module, module.exports);
+  const { CommonPdkGameLogic } = module.exports;
+  const deck = Array.from({ length: 11 }, (_, index) => index + 3)
+    .flatMap((value) => [100, 200, 300, 400].map((suit) => suit + value))
+    .concat([114, 214, 314, 115]);
+  const rank = (card) => card % 100;
+  const ranksOf = (notation) => [...notation.matchAll(/10|[2-9AJQK]/g)].map(([part]) =>
+    ({ A: 14, K: 13, Q: 12, J: 11, 2: 15 }[part] ?? Number(part)));
+  const cardsOf = (notation, excluded = []) => {
+    const used = new Set(excluded);
+    return ranksOf(notation).map((value) => {
+      const card = deck.find((entry) => rank(entry) === value && !used.has(entry));
+      assert.ok(card, `physical card unavailable: ${notation} rank ${value}`);
+      used.add(card);
+      return card;
+    });
+  };
+  const signature = (cards) => cards.map(rank).sort((a, b) => a - b).join(',');
+  const actualFirst = ({ hand: notation, played = '', target = '' }) => {
+    const hand = cardsOf(notation);
+    const known = cardsOf(played + target, hand);
+    const targetCards = target ? known.slice(known.length - ranksOf(target).length) : [];
+    const options = { minimumStraightLength: 5, minimumPairRunLength: 2,
+      tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'EITHER',
+      airplaneAttachmentMode: 'EITHER', allowAirplaneWithTwo: true };
+    const logic = new CommonPdkGameLogic({ room: {
+      GetRoomConfig: () => ({ ruleOptions: options }), GetRoomPaiXing: () => false,
+    } });
+    logic.OutPokerCard([...hand]);
+    logic.ClearCardData();
+    let targetType = 0;
+    if (targetCards.length > 0) {
+      logic.ChangeSelectCard(targetCards);
+      targetType = logic.GetCardType();
+      logic.lastCardType = targetType;
+      logic.lastCardList = [...targetCards];
+    }
+    const candidates = enumeratePdkRankMultisetCandidates(hand)
+      .flatMap((cards, order) => {
+        logic.ChangeSelectCard(cards);
+        const type = logic.GetCardType();
+        if (type <= 0 || !isAuthorityCompatiblePdkAircraft(cards, type)
+          || (targetType > 0 && (type !== targetType
+            || cards.length !== targetCards.length
+            || rank(cards[0]) <= rank(targetCards[0])))) return [];
+        const remaining = [...hand];
+        for (const card of cards) remaining.splice(remaining.indexOf(card), 1);
+        const previousType = logic.lastCardType;
+        const previousCards = [...logic.lastCardList];
+        logic.ClearCardData();
+        logic.ChangeSelectCard(remaining);
+        const finishesInTwo = remaining.length > 0 && logic.GetCardType() > 0;
+        logic.lastCardType = previousType;
+        logic.lastCardList = previousCards;
+        return [{ cards, order, finishesInTwo,
+          usesFourCardBody: [8, 9, 10, 20].includes(type),
+          containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck) }];
+      });
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, known);
+    for (const candidate of candidates) {
+      const values = candidate.cards.map(rank);
+      if (values.every((value) => value === values[0])
+        && maximumSingleRanks.includes(values[0])) candidate.containsRuleMaximum = true;
+    }
+    const protectedBombs = [...new Set(hand.map(rank))]
+      .map((value) => hand.filter((card) => rank(card) === value))
+      .filter((cards) => cards.length === 4);
+    return rankCleanPdkHints(hand, candidates, {
+      policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+      allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
+      deckCards: deck, playedCards: known, maximumSingleRanks,
+      protectedBombs, preserveScoringBombs: true,
+    }, targetType === 0, targetType === 0).map(signature)[0];
+  };
+  // Three historical 30-row lists collapse to the distinct ordinary scenes
+  // below. Superseded expectations (high pair-run before 2 in a two-hand end,
+  // four-with-two splitting a scoring bomb, 8 before the recovered A) are not
+  // counted as confirmations; the corrected examples have their own tests.
+  const cases = [
+    ['one maximum single and terminal single', '29', '', '', '15'],
+    ['two ascending maximum singles and terminal K', 'A2K', '', '', '14'],
+    ['maximum pair before two control singles', 'AA2K', '', '', '14,14'],
+    ['triple with one attachment', '26664', '', '', '15'],
+    ['triple with two loose attachments', '266645', '', '', '15'],
+    ['triple with pair attachment', '266644', '', '', '15'],
+    ['terminal pair-run', '24455', '', '', '15'],
+    ['terminal five-card straight', '256789', '', '', '15'],
+    ['two-hand high three-pair run', '21010JJQQ', '', '', '15'],
+    ['three-hand high three-pair run', '21010JJQQ5566', '', '', '10,10,11,11,12,12'],
+    ['maximum single then bomb and straight', '256789QQQQ', '', '', '15'],
+    ['A then two with pair and bomb tail', 'A299KKKK', '', '', '14'],
+    ['two intact bombs with terminal straight', '278910J44446666', '', '', '15'],
+    ['A and two with two intact bombs', 'A2997777KKKK', '', '', '14'],
+    ['four-pair run remains intact', '26677889944', '', '', '6,6,7,7,8,8,9,9'],
+    ['three-pair run keeps the complete other straight', '244556678910J', '', '', '4,4,5,5,6,6'],
+    ['three-pair run ahead of low straight', '21010JJQQ34567', '', '', '10,10,11,11,12,12'],
+    ['public cards establish maximum two-body airplane', '2QQQKKK345678910J', 'AAA', '',
+      '3,4,5,6,12,12,12,13,13,13'],
+    ['public cards establish maximum K triple-with-pair', '2KKK4456789', 'AA', '',
+      '4,4,13,13,13'],
+    ['highest five-card straight retains two', '210JQKA4455', '', '', '10,11,12,13,14'],
+    ['highest three-pair run retains two', '2QQKKAA4455', '', '', '12,12,13,13,14,14'],
+    ['maximum pair retains two', '2AA34567', '', '', '14,14'],
+    ['uncontrolled loose tail keeps a complete pair-run', '2AQ1099865544', '', '', '4,4,5,5'],
+    ['weak single probe with two and another weak single', '296', '', '', '9'],
+    ['weak single probe before pair tail', '2788', '', '', '7'],
+    ['public two makes A a single recovery', 'A98', '2', '', '9'],
+    ['held two makes A a single recovery', 'A298', '', '', '9'],
+    ['public two makes A terminal-pair opener', 'A77', '2', '', '14'],
+    ['public A and two make K a single control', 'K56789', '2AAA', '', '13'],
+    ['two public A and two make KK a pair control', 'KK56789', '2AA', '', '13,13'],
+    ['single response uses two then triple-pair', '266644', '', 'Q', '15'],
+    ['pair response uses AA then singles', 'AA2K', '', 'QQ', '14,14'],
+    ['straight response uses higher five-card straight', '10JQKA24455', '', '56789', '10,11,12,13,14'],
+    ['long straight is not shortened without benefit', '23456789', '', '', '15'],
+    ['terminal seven-card straight stays complete', '3456789', '', '', '3,4,5,6,7,8,9'],
+    ['two-body airplane preserves A and two as later controls',
+      '77788810QKK5566A2', '', '', '7,7,7,8,8,8,10,12,13,13'],
+    ['low single probe preserves scoring bomb', '299993410JQKA', '', '', '3'],
+  ];
+  const results = cases.map(([name, hand, played, target, expected]) =>
+    [name, actualFirst({ hand, played, target }), expected]);
+  assert.deepEqual(results.map(([name, actual]) => [name, actual]),
+    results.map(([name, , expected]) => [name, expected]));
+});
+
+test('COMMON ninety-example audit distinguishes conditional authority card families', () => {
+  const { rankCleanPdkHints, enumeratePdkRankMultisetCandidates,
+    isAuthorityCompatiblePdkAircraft } = loadHelper();
+  const source = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/logic/CommonPdkGameLogic.ts'), 'utf8');
+  const module = { exports: {} };
+  Function('module', 'exports', ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText)(module, module.exports);
+  const { CommonPdkGameLogic } = module.exports;
+  const deck = Array.from({ length: 11 }, (_, index) => index + 3)
+    .flatMap((value) => [100, 200, 300, 400].map((suit) => suit + value))
+    .concat([114, 214, 314, 115]);
+  const ranksOf = (notation) => [...notation.matchAll(/10|[2-9AJQK]/g)].map(([part]) =>
+    ({ A: 14, K: 13, Q: 12, J: 11, 2: 15 }[part] ?? Number(part)));
+  const cardType = (selected, extraHand = '', changes = {}, flags = {}) => {
+    const used = new Set();
+    const cards = [...ranksOf(selected + extraHand)].map((value) => {
+      const card = deck.find((entry) => entry % 100 === value && !used.has(entry));
+      assert.ok(card, `physical card unavailable: ${selected + extraHand} rank ${value}`);
+      used.add(card);
+      return card;
+    });
+    const ruleOptions = { minimumStraightLength: 5, minimumPairRunLength: 2,
+      tripleAttachmentMode: 'EITHER', fourAttachmentMode: 'EITHER',
+      airplaneAttachmentMode: 'EITHER', allowAirplaneWithTwo: true, ...changes };
+    const logic = new CommonPdkGameLogic({ room: {
+      GetRoomConfig: () => ({ ruleOptions }),
+      GetRoomPaiXing: (key) => Boolean(flags[key]),
+    } });
+    logic.OutPokerCard(cards);
+    logic.ClearCardData();
+    logic.ChangeSelectCard(cards.slice(0, ranksOf(selected).length));
+    return logic.GetCardType();
+  };
+  const cases = [
+    ['three without wings enabled as final hand', '666', '', {}, { SanBuDai: true }, 5],
+    ['three without wings disabled outside final hand', '666', '9', {}, {}, 0],
+    ['bare airplane enabled as final hand', '666777', '', {}, { SanBuDai: true }, 16],
+    ['bare airplane disabled outside final hand', '666777', '9', {}, {}, 0],
+    ['double airplane one single each', '66677745', '', {}, {}, 16],
+    ['double airplane one pair each', '6667774455', '', {}, {}, 17],
+    ['double airplane two singles each', '6667773458', '', {}, {}, 18],
+    ['three-body airplane one single each', '666777888345', '', {}, {}, 16],
+    ['four with two singles enabled', '444478', '', { fourAttachmentMode: 'SINGLES' }, {}, 9],
+    ['four with two singles disabled', '444478', '', { fourAttachmentMode: 'DISABLED' }, {}, 0],
+    ['four with two pairs enabled', '55557788', '', { fourAttachmentMode: 'PAIRS' }, {}, 20],
+    ['four with one complete pair as final hand', '555577', '', {
+      fourAttachmentMode: 'PAIRS',
+    }, {}, 20],
+    ['four with three enabled', '6666345', '', { allowFourWithThree: true }, {}, 10],
+    ['four with three disabled', '6666345', '', { allowFourWithThree: false }, {}, 0],
+    ['four with three accepts one pair and one single', '6666334', '', {
+      allowFourWithThree: true,
+    }, {}, 10],
+    ['four with three rejects one pair and one single when disabled', '6666334', '', {
+      allowFourWithThree: false,
+    }, {}, 0],
+    ['four with three accepts a triple wing', '6666333', '', {
+      allowFourWithThree: true,
+    }, {}, 10],
+    ['four with three rejects a triple wing when disabled', '6666333', '', {
+      allowFourWithThree: false,
+    }, {}, 0],
+    ['special three-ace bomb', 'AAA', '', { specialTripleBombRanks: [14] }, {}, 11],
+    ['special three-ace plus one bomb', 'AAAK', '', {
+      specialTripleBombRanks: [14], allowSpecialTripleBombWithOne: true,
+    }, {}, 11],
+    ['four plus one bomb enabled', '99993', '', { allowFourBombWithOne: true }, {}, 11],
+    ['consecutive four-card bomb enabled', '44445555', '', { allowConsecutiveBomb: true }, {}, 11],
+  ];
+  assert.deepEqual(cases.map(([name, selected, extra, changes, flags]) =>
+    [name, cardType(selected, extra, changes, flags)]),
+  cases.map(([name, , , , , expected]) => [name, expected]));
+  assert.equal(isAuthorityCompatiblePdkAircraft(
+    [106, 206, 306, 107, 207, 307], 16), false,
+  'a non-final bare airplane cannot bypass the ordinary wing rule');
+  assert.equal(isAuthorityCompatiblePdkAircraft(
+    [106, 206, 306, 107, 207, 307], 16, true), true,
+  'only an authority-accepted final bare airplane can enter Hint');
+  assert.equal(isAuthorityCompatiblePdkAircraft(
+    [106, 206, 306, 108, 208, 308], 16, true), false,
+  'the final-hand exception cannot invent a disconnected airplane body');
+  for (const [name, selected, extra, changes, flags, expected] of cases) {
+    if (expected <= 0) continue;
+    const used = new Set();
+    const hand = ranksOf(selected + extra).map((value) => {
+      const card = deck.find((entry) => entry % 100 === value && !used.has(entry));
+      assert.ok(card);
+      used.add(card);
+      return card;
+    });
+    const selectedRanks = ranksOf(selected).sort((a, b) => a - b).join(',');
+    const exists = enumeratePdkRankMultisetCandidates(hand).some((cards) =>
+      cards.map((card) => card % 100).sort((a, b) => a - b).join(',') === selectedRanks
+      && cardType(selected, extra, changes, flags) === expected
+      && isAuthorityCompatiblePdkAircraft(cards, expected, cards.length === hand.length));
+    assert.ok(exists, `${name} must enter the authoritative Hint candidate set`);
+  }
+  const asNotation = (cards) => cards.map((card) => ({
+    15: '2', 14: 'A', 13: 'K', 12: 'Q', 11: 'J',
+  })[card % 100] ?? String(card % 100)).join('');
+  for (const notation of ['6666345', '6666334', '6666333']) {
+    const used = new Set();
+    const hand = ranksOf(notation).map((value) => {
+      const card = deck.find((entry) => entry % 100 === value && !used.has(entry));
+      assert.ok(card);
+      used.add(card);
+      return card;
+    });
+    const candidates = enumeratePdkRankMultisetCandidates(hand)
+      .flatMap((cards, order) => {
+        const remaining = [...hand];
+        for (const card of cards) remaining.splice(remaining.indexOf(card), 1);
+        const type = cardType(asNotation(cards), asNotation(remaining), {
+          allowFourWithThree: true,
+        });
+        return type > 0 ? [{ cards, order, finishesInTwo: false,
+          usesFourCardBody: [8, 9, 10, 20].includes(type),
+          containsRuleMaximum: false }] : [];
+      });
+    assert.ok(candidates.some(({ cards }) => cards.length === hand.length),
+      `authority must enumerate complete four-with-three: ${notation}`);
+    const ranked = rankCleanPdkHints(hand, candidates, {
+      policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
+      allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
+      deckCards: deck, maximumSingleRanks: [15], preserveScoringBombs: false,
+    }, true, true);
+    assert.ok(ranked.some((cards) => cards.length === hand.length),
+      `enabled four-with-three must remain in the Hint cycle: ${notation}`);
+  }
 });

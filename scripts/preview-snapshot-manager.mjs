@@ -21,6 +21,11 @@ const projectBundleNames = new Set();
 let captureServer;
 const captureBuildId = '00000000000000000000';
 const snapshotValidationRevision = 'fw008-v2';
+// LoginScene is protected and authored in the Creator scene graph. Resolve the
+// real node at runtime instead of duplicating its position here: the preview
+// canvas contains horizontal background extension outside the 1280 UI design
+// area, so a DOM/canvas ratio is not a stable button coordinate.
+const guestLoginNodeName = 'Btn_GuestLogin';
 const assetUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:@[0-9a-f]+)?$/i;
 
 function pinCaptureHtml(html) {
@@ -81,10 +86,16 @@ async function crawlKey(key, required = true) {
   const type = String(result.headers['content-type'] ?? '');
   const text = result.body.toString('utf8');
   const discovered = new Set();
+  const pathname = new URL(key, upstream).pathname;
   if (type.includes('html')) {
     for (const match of text.matchAll(/(?:src|href)=["']([^"']+)["']/g)) discovered.add(match[1]);
   }
-  if (type.includes('json')) {
+  // Creator serves its JSON import map with a JavaScript content type. Parsing
+  // only application/json leaves engine chunks outside the sealed dependency
+  // graph; the warm discovery browser can reuse an already registered `cc`
+  // module, then the fresh validation browser fails on that missing chunk.
+  // Import maps are authoritative JSON regardless of the response MIME type.
+  if (type.includes('json') || pathname.includes('import-map')) {
     try {
       const parsed = JSON.parse(text);
       const visit = (value) => {
@@ -93,7 +104,7 @@ async function crawlKey(key, required = true) {
         else if (value && typeof value === 'object') Object.values(value).forEach(visit);
       };
       visit(parsed);
-      const assetMatch = new URL(key, upstream).pathname.match(/^\/assets\/([^/]+)\/import\/[^/]+\/([^/]+)\.json$/);
+      const assetMatch = pathname.match(/^\/assets\/([^/]+)\/import\/[^/]+\/([^/]+)\.json$/);
       if (assetMatch) {
         const dependencies = new Set();
         const findDependencies = (value) => {
@@ -111,7 +122,7 @@ async function crawlKey(key, required = true) {
       }
     } catch { /* JavaScript-shaped JSON is captured by the browser pass. */ }
   }
-  if (type.includes('javascript') || new URL(key, upstream).pathname.endsWith('.js')) {
+  if (type.includes('javascript') || pathname.endsWith('.js')) {
     for (const match of text.matchAll(/System\.register\((\[[^\]]*\])/g)) {
       try {
         for (const dependency of JSON.parse(match[1])) {
@@ -301,7 +312,7 @@ async function browserCapture(port, exerciseGuestLobby = false) {
       if (message.id && pending.has(message.id)) {
         const request = pending.get(message.id);
         pending.delete(message.id);
-        if (message.error) request.reject(new Error(message.error.message));
+        if (message.error) request.reject(new Error(`${request.method}: ${message.error.message}`));
         else request.done(message.result);
         return;
       }
@@ -332,7 +343,7 @@ async function browserCapture(port, exerciseGuestLobby = false) {
     };
     const send = (method, params = {}) => new Promise((done, reject) => {
       const id = ++sequence;
-      pending.set(id, { done, reject });
+      pending.set(id, { done, reject, method });
       socket.send(JSON.stringify({ id, method, params }));
     });
     await Promise.all([send('Runtime.enable'), send('Network.enable'), send('Page.enable')]);
@@ -341,14 +352,82 @@ async function browserCapture(port, exerciseGuestLobby = false) {
     }
     await send('Page.navigate', { url: `http://127.0.0.1:${port}/` });
     if (exerciseGuestLobby) {
-      await new Promise((done) => setTimeout(done, 8000));
       // LoginScene authors consent as selected. Exercise the real Cocos button
       // through CDP so every lazy scene/bundle dependency needed to reach the
       // hall becomes part of the candidate snapshot before it can be sealed.
-      for (const type of ['mousePressed', 'mouseReleased']) {
-        await send('Input.dispatchMouseEvent', { type, x: 224, y: 244, button: 'left', clickCount: 1 });
+      // Scene loading and component mounting are asynchronous. Poll the
+      // authoritative node state instead of assuming an elapsed duration means
+      // the button is ready; this also gives failed publications a useful
+      // reason while retaining the previous immutable snapshot.
+      let loginPoint = null;
+      let loginState = { reason: 'node-readiness-timeout' };
+      for (let attempt = 0; attempt < 80 && !loginPoint; attempt += 1) {
+        const loginPointResult = await send('Runtime.evaluate', {
+          // The 19 MB bundled engine script synchronously registers every
+          // q-bundled module. Importing `cc` while the document is still
+          // loading permanently caches a false SystemJS failure for those
+          // modules, so readiness must begin at the document boundary.
+          expression: `document.readyState !== 'complete'
+            ? Promise.resolve({ ready: false, reason: 'document-loading' })
+            : globalThis.System?.import
+            ? System.import('cc').then(({ Button, director, Node, UITransform, view }) => {
+                const visit = (node) => node.name === ${JSON.stringify(guestLoginNodeName)}
+                  ? node
+                  : node.children.map(visit).find(Boolean);
+                const scene = director.getScene();
+                const node = scene ? visit(scene) : null;
+                const transform = node?.getComponent(UITransform);
+                const button = node?.getComponent(Button);
+                const canvas = document.querySelector('canvas');
+                if (!scene) return { ready: false, reason: 'scene-unavailable' };
+                if (!node) return { ready: false, reason: 'node-unavailable', scene: scene.name };
+                if (!node.activeInHierarchy) return { ready: false, reason: 'node-inactive', scene: scene.name };
+                if (!button?.interactable) return { ready: false, reason: 'button-not-interactable', scene: scene.name };
+                if (!node.hasEventListener(Node.EventType.MOUSE_UP)
+                  || !node.hasEventListener(Node.EventType.TOUCH_END)) {
+                  return { ready: false, reason: 'login-event-binding-unavailable', scene: scene.name };
+                }
+                if (!transform || !canvas) return { ready: false, reason: 'transform-or-canvas-unavailable', scene: scene.name };
+                const rect = canvas.getBoundingClientRect();
+                const viewport = view.getViewportRect();
+                const world = node.worldPosition;
+                const x = rect.left + viewport.x + world.x * view.getScaleX();
+                const y = rect.top + rect.height - viewport.y - world.y * view.getScaleY();
+                if (rect.width <= 0 || rect.height <= 0) return { ready: false, reason: 'canvas-empty', scene: scene.name };
+                if (!Number.isFinite(x) || !Number.isFinite(y)) return { ready: false, reason: 'point-non-finite', scene: scene.name };
+                if (x < 0 || x >= innerWidth || y < 0 || y >= innerHeight) {
+                  return { ready: false, reason: 'point-outside-viewport', scene: scene.name, x, y };
+                }
+                return {
+                  ready: true, x, y, node: node.name, scene: scene.name,
+                  world: { x: world.x, y: world.y },
+                  canvas: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+                };
+              }).catch((error) => ({ ready: false, reason: 'cc-import-failed', error: String(error?.message ?? error) }))
+            : Promise.resolve({ ready: false, reason: 'system-import-unavailable' })`,
+          returnByValue: true,
+          awaitPromise: true,
+        });
+        loginState = loginPointResult.result.value ?? { reason: 'evaluation-returned-no-value' };
+        if (loginState.ready) loginPoint = loginState;
+        else await new Promise((done) => setTimeout(done, 250));
       }
-      await new Promise((done) => setTimeout(done, Math.max(12000, captureMs - 8000)));
+      if (!loginPoint) {
+        throw new Error(`active ${guestLoginNodeName} never became clickable: ${JSON.stringify(loginState)}; browserFailures=${[...new Set(failures)].join(' | ') || 'none'}`);
+      }
+      log('guest-login-target', {
+        node: loginPoint.node,
+        x: loginPoint.x,
+        y: loginPoint.y,
+        world: loginPoint.world,
+        canvas: loginPoint.canvas,
+      });
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await send('Input.dispatchMouseEvent', {
+          type, x: loginPoint.x, y: loginPoint.y, button: 'left', clickCount: 1,
+        });
+      }
+      await new Promise((done) => setTimeout(done, Math.max(12000, captureMs - 20000)));
     } else {
       await new Promise((done) => setTimeout(done, captureMs));
     }

@@ -15,21 +15,26 @@ export interface CD299Actions {
 }
 
 export interface CD299RoomView {
-    showPhase(phase: CD299Phase, round: number): void;
+    showPhase(phase: CD299Phase, round: number, roundLimit: number): void;
     showSeat(visualSeat: number, authoritativeSeat: number, playerId: number | null,
         canSit: boolean, seatLimit: number): void;
     showReady(seat: number, ready: boolean): void;
-    showHand(seat: number, cards: readonly number[], revealed: boolean): void;
+    showOpeningCommit(seat: number, base: number, mango: number, round: number): void;
+    showHand(seat: number, cards: readonly number[], revealed: boolean, earthNineKing: boolean,
+        dealOrder: number, dealCycleSize: number): void;
+    showBanker(seat: number, banker: boolean): void;
     showCommitted(seat: number, value: number): void;
     showScore(seat: number, value: number): void;
     showRoundDelta(seat: number, value: number): void;
     showBetAction(seat: number, action: CD299BetAction | null): void;
     showDropped(seat: number, dropped: boolean): void;
     showThreeFlower(seat: number, enabled: boolean): void;
-    showSplit(seat: number, enabled: boolean): void;
+    showSplit(seat: number, enabled: boolean, cards: readonly number[], earthNineKing: boolean): void;
     showSplitDeadline(seat: number, deadlineEpochMillis: number): void;
     showOperationDeadline(seat: number, deadlineEpochMillis: number): void;
+    showSeatRetention(seat: number, deadlineEpochMillis: number, local: boolean): void;
     showTotals(mangoTotal: number, betTotal: number): void;
+    showFinalSettlement(snapshot: CD299Snapshot): void;
     setActions(actions: Readonly<CD299Actions>): void;
 }
 
@@ -49,11 +54,17 @@ export class CD299RoomPresenter {
     }
 
     private render(snapshot: CD299Snapshot): void {
-        this.view.showPhase(snapshot.phase, snapshot.round);
+        this.view.showPhase(snapshot.phase, snapshot.round,
+            Number((snapshot.rules as { roundLimit?: number }).roundLimit ?? 10));
+        // During a live hand the current mango is still committed by players; after
+        // settlement the authority has already moved it into mangoPool.
+        const unsettledMango = snapshot.phase === 'ROUND_SETTLEMENT' || snapshot.phase === 'FINISHED'
+            ? 0 : Object.values(snapshot.mangos).reduce((sum, value) => sum + value, 0);
         this.view.showTotals(
-            snapshot.mangoPool + Object.values(snapshot.mangos).reduce((sum, value) => sum + value, 0),
+            snapshot.mangoPool + unsettledMango,
             Object.values(snapshot.bets).reduce((sum, value) => sum + value, 0),
         );
+        this.view.showFinalSettlement(snapshot);
         const localSeat = snapshot.viewerRole === 'SEATED' ? snapshot.viewerSeat : -1;
         if (this.projectedLocalSeat !== localSeat) {
             this.projectedLocalSeat = localSeat;
@@ -72,18 +83,36 @@ export class CD299RoomPresenter {
                     && (snapshot.phase === 'WAITING' || snapshot.phase === 'ROUND_SETTLEMENT'),
                 snapshot.rules.maxPlayers);
             const cards = snapshot.hands[seat] ?? [];
-            this.view.showReady(visualSeat, snapshot.readySeats.includes(seat));
-            this.view.showHand(visualSeat, cards, cards.some(card => card !== 0));
+            // readySeats is the authoritative admission record and remains populated
+            // after a round starts. CommonHead's ready badge is only a waiting-room
+            // affordance; projecting the retained value during play obscures XQP's
+            // operation feedback beside the avatar.
+            this.view.showReady(visualSeat, false);
+            // XQP walks clockwise from the seat after the banker and advances
+            // its 80 ms cadence only for valid, occupied roles. Empty chair
+            // indices must not create visible pauses in a sparse room.
+            const occupiedDealOrder = Array.from({ length: snapshot.rules.maxPlayers }, (_, offset) =>
+                (Math.max(-1, snapshot.bankerSeat) + 1 + offset) % snapshot.rules.maxPlayers)
+                .filter(candidate => snapshot.players[candidate] !== undefined);
+            const dealOrder = Math.max(0, occupiedDealOrder.indexOf(seat));
+            this.view.showHand(visualSeat, cards, cards.some(card => card !== 0),
+                snapshot.rules.earthNineKing, dealOrder, Math.max(1, occupiedDealOrder.length));
+            this.view.showBanker(visualSeat, seat === snapshot.bankerSeat);
+            this.view.showOpeningCommit(visualSeat, snapshot.bases[seat] ?? 0,
+                snapshot.mangos[seat] ?? 0, snapshot.round);
             this.view.showCommitted(visualSeat, snapshot.committed[seat] ?? 0);
             this.view.showScore(visualSeat, snapshot.scores[seat] ?? 0);
             this.view.showRoundDelta(visualSeat, this.deltaForPlayer(snapshot, playerId));
             this.view.showBetAction(visualSeat, snapshot.lastBetActions[seat] ?? null);
             this.view.showDropped(visualSeat, snapshot.droppedSeats.includes(seat));
             this.view.showThreeFlower(visualSeat, snapshot.threeFlowerSeats.includes(seat));
-            this.view.showSplit(visualSeat, snapshot.splitSeats.includes(seat));
+            this.view.showSplit(visualSeat, snapshot.splitSeats.includes(seat), cards,
+                snapshot.rules.earthNineKing);
             this.view.showSplitDeadline(visualSeat, snapshot.splitDeadlineEpochMillis[seat] ?? 0);
             this.view.showOperationDeadline(visualSeat,
                 snapshot.operationDeadline.seatId === seat ? snapshot.operationDeadline.deadlineEpochMillis : 0);
+            this.view.showSeatRetention(visualSeat,
+                snapshot.seatRetentionDeadlineEpochMillis[seat] ?? 0, seat === localSeat);
         }
 
         // XQP only exposes the live operation panel to the seat named by the
@@ -101,8 +130,10 @@ export class CD299RoomPresenter {
             canSplit: snapshot.viewerRole === 'SEATED' && snapshot.phase === 'SPLITTING'
                 && !snapshot.splitSeats.includes(localSeat)
                 && !snapshot.threeFlowerSeats.includes(localSeat),
-            canContinue: snapshot.viewerRole === 'SEATED' && snapshot.phase === 'ROUND_SETTLEMENT'
-                && snapshot.players[localSeat] === snapshot.ownerId,
+            // The authority accepts a next-round request from any authenticated
+            // seated player. Keeping this owner-only would deadlock a room whose
+            // creator remains a spectator.
+            canContinue: false,
             betActions: Object.freeze([...snapshot.allowedBetActions]),
             followAmount: snapshot.followAmount,
             quickRaiseTargets: Object.freeze([...snapshot.quickRaiseTargets]),
@@ -130,6 +161,5 @@ export const CD299_TIMING_MS = Object.freeze({
     revealAfterAllSplit: 500,
     settlementEnter: 200,
     settlementExit: 200,
-    nextRound: 1000,
     finalCountdownSecond: 2,
 });

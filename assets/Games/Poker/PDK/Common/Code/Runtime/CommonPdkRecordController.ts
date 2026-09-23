@@ -3,6 +3,7 @@ import { AssetLoader } from '../../../../../../Common/Code/UI/Infrastructure';
 import { CommonHeadController } from '../../../../../../Common/Code/UI/CommonHeadController';
 import type { LegacyForm } from '../../../../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { COMMON_ASSET_BUNDLE, COMMON_HEAD_ASSET } from '../../../../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
+import { GameRequestIdentity } from '../../../../../../Common/Code/Runtime/network/GameRequestIdentity';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import type { CommonPdkShareController } from './CommonPdkShareController';
 
@@ -169,7 +170,7 @@ export class CommonPdkRecordController {
         if (button) button.interactable = false;
         try {
             const roomId = Number(this.runtime.getRoomManager().GetEnterRoomID());
-            if (!this.rematchOperationId) this.rematchOperationId = crypto.randomUUID();
+            if (!this.rematchOperationId) this.rematchOperationId = new GameRequestIdentity('pdk-rematch', roomId).next();
             console.info('[PDK BigSettlement rematch]', {
                 roomId,
                 playerId: this.runtime.getPlayerId(),

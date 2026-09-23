@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync } from 'node:fs';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import http from 'node:http';
 import net from 'node:net';
 import { join, resolve } from 'node:path';
@@ -19,6 +19,8 @@ let stopping = false;
 let captureRunning = false;
 let observedSignature;
 let stableObservations = 0;
+const previewChunksRoot = join(process.cwd(), 'temp/programming/packer-driver/targets/preview/chunks');
+const compiledFileCache = new Map();
 
 await mkdir(join(root, 'logs'), { recursive: true });
 
@@ -78,10 +80,36 @@ function fetchText(path) {
 }
 
 async function signature() {
+  const compiledFiles = [];
+  async function collectCompiledFiles(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) await collectCompiledFiles(path);
+      else if (entry.isFile() && entry.name.endsWith('.js')) compiledFiles.push(path);
+    }
+  }
+  await collectCompiledFiles(previewChunksRoot);
+  compiledFiles.sort();
+  const compiledDigests = [];
+  const presentFiles = new Set(compiledFiles);
+  for (const path of compiledFiles) {
+    const details = await stat(path);
+    const cached = compiledFileCache.get(path);
+    let digest = cached?.digest;
+    if (!cached || cached.size !== details.size || cached.mtimeMs !== details.mtimeMs) {
+      digest = createHash('sha256').update(await readFile(path)).digest('hex');
+      compiledFileCache.set(path, { size: details.size, mtimeMs: details.mtimeMs, digest });
+    }
+    compiledDigests.push(`${path.slice(previewChunksRoot.length)}:${digest}`);
+  }
+  for (const path of compiledFileCache.keys()) {
+    if (!presentFiles.has(path)) compiledFileCache.delete(path);
+  }
   const values = await Promise.all([
     fetchText('/scripting/x/import-map.json'),
     fetchText('/scripting/import-map-global'),
     fetchText('/settings.js?scene=current_scene'),
+    Promise.resolve(compiledDigests.join('\n')),
   ]);
   return createHash('sha256').update(values.join('\n---aoo-generation---\n')).digest('hex');
 }

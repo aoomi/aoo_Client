@@ -74,16 +74,20 @@ test('backtracking replaces the active swipe interval instead of accumulating vi
   }
 });
 
-test('manual swipe maximizes card count before reusing the complete hint strategy', () => {
+test('manual swipe maximizes card count before its separate loose-single strategy', () => {
   const largest = method('largestLegalDragCandidates', 'cancelDragSelection');
   assert.match(largest, /largestLegalPdkSubsets\(touched/);
-  assert.match(largest, /sortedLegalTipCandidates\(candidates, leading, leading\)/);
+  assert.match(largest, /sortedLegalTipCandidates\(candidates, leading, leading, false, 'DRAG'\)/);
   assert.doesNotMatch(source, /private legalManualDragCandidates/,
-    'swipe must not retain a parallel legality-only ranking path');
+    'swipe must still reuse the authority legality path');
 
   const hint = method('prepareHintCache', 'consumeQueuedHintAfterPlay');
   assert.match(hint, /sortedLegalTipCandidates\(local, leading, leading\)/,
-    'manual Hint and swipe must enter the same sorter with identical lead flags');
+    'manual Hint must continue using its original strategy');
+  const sorted = method('sortedLegalTipCandidates', 'protectedBombGroups');
+  assert.match(sorted, /if \(strategy === 'DRAG'\) \{[\s\S]*rankPdkDragCandidates/);
+  assert.ok(sorted.indexOf("strategy === 'DRAG'") < sorted.indexOf('const rankCandidates ='),
+    'drag ranking must exit before Hint bomb, control and whole-hand priorities');
 });
 
 test('commit preserves the physical touched pool before strategic tie-breaking', () => {

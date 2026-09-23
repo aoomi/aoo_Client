@@ -19,8 +19,18 @@ test('four-client dashboard scales the complete Creator iPhone landscape viewpor
   assert.match(dashboard, /scrolling="no"/);
   assert.match(dashboard, /data-src=/);
   assert.match(dashboard, /index \* 2000/);
-  assert.match(dashboard, /frame\.dataset\.src \+ '&reload=' \+ Date\.now\(\)/);
+  assert.match(dashboard, /reloadFrame\(frame\)/);
   assert.match(dashboard, /iframe \{[^}]*border: 0/);
+});
+
+test('dashboard automatically reloads every open client after an atomic snapshot build change', () => {
+  assert.match(dashboard, /url\.pathname === '\/snapshot-health'/);
+  assert.match(dashboard, /clientPorts\.map\(readSnapshotHealth\)/);
+  assert.match(dashboard, /fetch\('\/snapshot-health', \{ cache: 'no-store' \}\)/);
+  assert.match(dashboard, /publishedBuilds\.get\(client\.port\)/);
+  assert.match(dashboard, /previous === client\.buildId/);
+  assert.match(dashboard, /reloadFrame\(frame, client\.buildId\)/);
+  assert.match(dashboard, /window\.setInterval\(pollPublishedBuilds, 2000\)/);
 });
 
 test('dashboard scrolls on smaller windows instead of stretching previews', () => {

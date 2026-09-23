@@ -38,13 +38,13 @@ test('CD299 protocol keeps one canonical identity and the complete command surfa
 test('CD299 create payload carries every workbook rule and exact defaults', async () => {
     const protocol = await source('CD299Protocol.ts');
     const rules = await source('CD299Rules.ts');
-    for (const field of ['roomDurationMinutes','startPlayers','operationSeconds','standPolicy','mangoFlipMode','mangoRaise','mangoScore','openingBet','restMango','beatMango','everyHandMango','firstRoundCanRest','eachPlayerMustFollow','earthNineKing','fireproofCard','bigHeadKeepsBase']) {
+    for (const field of ['roomDurationMinutes','roundLimit','startPlayers','operationSeconds','standPolicy','mangoFlipMode','mangoRaise','mangoScore','openingBet','restMango','beatMango','everyHandMango','firstRoundCanRest','eachPlayerMustFollow','earthNineKing','fireproofCard','bigHeadKeepsBase']) {
         assert.ok(rules.includes(field), field);
     }
-    for (const enabled of ['restMango','beatMango','everyHandMango','firstRoundCanRest','earthNineKing','fireproofCard']) assert.match(rules, new RegExp(`${enabled}:true`));
-    for (const disabled of ['eachPlayerMustFollow','bigHeadKeepsBase']) assert.match(rules, new RegExp(`${disabled}:false`));
-    assert.match(rules, /roomDurationMinutes:30,maxPlayers:8,startPlayers:2,operationSeconds:10/);
-    assert.match(rules, /standPolicy:'LOSER_ONLY',mangoFlipMode:'LADDER',mangoRaise:3,mangoScore:3,openingBet:3/);
+    for (const enabled of ['restMango','beatMango','everyHandMango','firstRoundCanRest','earthNineKing','fireproofCard']) assert.match(rules, new RegExp(`${enabled}:\\s*true`));
+    for (const disabled of ['eachPlayerMustFollow','bigHeadKeepsBase']) assert.match(rules, new RegExp(`${disabled}:\\s*false`));
+    assert.match(rules, /roomDurationMinutes: 30, roundLimit: 10, maxPlayers: 8, startPlayers: 2/);
+    assert.match(rules, /standPolicy: 'LOSER_ONLY', mangoFlipMode: 'LADDER'/);
     assert.match(protocol, /\.\.\.validateCD299Rules\(rules\)/);
 });
 
@@ -55,6 +55,8 @@ test('CD299 accepts only newer authoritative snapshots from the same room', asyn
     assert.match(state, /incoming\.stateVersion<current\.stateVersion/);
     assert.match(state, /incoming\.stateVersion===current\.stateVersion&&incoming\.viewerRole===current\.viewerRole/);
     assert.match(state, /Object\.freeze\(Object\.fromEntries/);
+    assert.match(state, /terminalBankerMayHaveStood=incoming\.phase==='FINISHED'/);
+    assert.match(state, /incoming\.players\[incoming\.bankerSeat\]===undefined&&!terminalBankerMayHaveStood/);
 });
 
 test('CD299 presenter derives turn actions and protects three-flower split state', async () => {
@@ -69,6 +71,7 @@ test('CD299 presenter derives turn actions and protects three-flower split state
     assert.match(presenter, /snapshot\.viewerRole === 'SEATED' \? snapshot\.viewerSeat : -1/);
     assert.match(presenter, /\(authoritativeSeat - localSeat \+ seatLimit\) % seatLimit/);
     assert.match(presenter, /this\.view\.showSeat\(visualSeat, seat, playerId/);
+    assert.match(presenter, /showReady\(visualSeat, false\)/);
     assert.match(presenter, /!snapshot\.splitSeats\.includes\(localSeat\)/);
     assert.match(presenter, /!snapshot\.threeFlowerSeats\.includes\(localSeat\)/);
     assert.match(presenter, /betActions: Object\.freeze\(\[\.\.\.snapshot\.allowedBetActions\]\)/);
@@ -81,12 +84,38 @@ test('CD299 landscape projects authoritative totals, action feedback and deadlin
     const view = await source('CD299LandscapeRoomViewComponent.ts');
     assert.match(view, /CD299\/Art\/XqpRoomBackground\/spriteFrame/);
     assert.match(view, /background\.setSiblingIndex\(0\)/);
+    assert.match(view, /commonPosition\('Btn\/Btn_Back', -550, 280\)/);
+    assert.match(view, /commonPosition\('Btn\/Btn_Chat', 552, -236\)/);
+    assert.match(view, /commonVisible\('Btn\/Btn_Voice', false\)/);
+    assert.match(view, /widget\.enabled = false/);
     assert.match(view, /Middle\/TotalCent\/MangoNum/);
     assert.match(view, /Middle\/TotalCent\/BetNum/);
     assert.match(view, /DROP: 'Drop', FOLLOW: 'Follow', REST: 'Check', RAISE: 'Add', ALL_IN: 'Allin'/);
     assert.match(view, /\.to\(0\.15, \{ scale: target \}\)/);
     assert.match(view, /this\.path\('Clock'\)/);
     assert.match(view, /Math\.ceil\(\(deadline - Date\.now\(\)\) \/ 1000\)/);
+    assert.match(view, /settlementTemplateResolver\.load/);
+    assert.match(view, /playFamily: 'poker:cd299'/);
+    assert.match(view, /settlementType: 'LOOP_BIG'/);
+    assert.match(view, /站起离桌/);
+    assert.match(view, /继续游戏/);
+    assert.match(view, /controller\?\.restart\(carryScore\)/);
+    assert.match(view, /controller\?\.stand\(\)/);
+    assert.doesNotMatch(view, /controller\?\.stand\(\)\.then[\s\S]{0,180}Btn\/Btn_Back/);
+    assert.match(view, /CD299FinalSettlement/);
+    assert.match(view, /remaining <= 0\) this\.handleTerminalExpiry\(snapshot\)/);
+    assert.match(view, /terminal retention expired; returning through room exit/);
+    assert.match(view, /continueGame\.interactable = false/);
+    assert.match(view, /Btn\/Btn_Back.*emit\(Button\.EventType\.CLICK\)/s);
+    assert.ok(view.indexOf('this.terminalCountdownTimer = setInterval(renderCountdown, 1000)')
+        < view.indexOf('renderCountdown();'));
+});
+
+test('CD299 keeps the local two, three and four-card hand centred on one authored origin', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    assert.match(view, /const centeredX = \(index - \(cards\.length - 1\) \/ 2\) \* 96/);
+    assert.match(view, /card\.setPosition\(centeredX, 0, index\)/);
+    assert.doesNotMatch(view, /card\.setPosition\(index \* 96, 0, index\)/);
 });
 
 test('CD299 production controller uses shared dispatch authority frames', async () => {
@@ -118,19 +147,32 @@ test('CD299 schedules only the local authoritative deadline and cancels stale ti
     assert.match(entry, /this\.controller\?\.destroy\(\)/);
 });
 
-test('CD299 seated clients advance settlement with the XQP one-second cadence', async () => {
+test('CD299 hides manual start and schedules the authority-elected next round', async () => {
     const [controller, presenter] = await Promise.all([
         source('CD299RuntimeController.ts'),
         source('CD299RoomPresenter.ts'),
     ]);
-    assert.match(presenter, /nextRound: 1000/);
-    assert.match(controller, /snapshot\.phase !== 'ROUND_SETTLEMENT'/);
-    assert.match(controller, /snapshot\.phase !== 'ROUND_SETTLEMENT' \|\| seat < 0/);
-    assert.match(controller, /CD299_TIMING_MS\.nextRound \+ seat \* 80/);
-    assert.match(controller, /current\.stateVersion !== stateVersion/);
-    assert.match(controller, /current\.phase !== 'ROUND_SETTLEMENT'/);
-    assert.match(controller, /void this\.continueRound\(\)\.catch/);
-    assert.match(controller, /clearTimeout\(this\.nextRoundTimer\)/);
+    assert.match(presenter, /snapshot\.phase === 'ROUND_SETTLEMENT' \|\| snapshot\.phase === 'FINISHED'/);
+    assert.match(presenter, /canContinue: false/);
+    assert.match(controller, /snapshot\.roundSettlementTriggerSeat === seat/);
+    assert.match(controller, /snapshot\.roundSettlementDeadlineEpochMillis/);
+    assert.match(controller, /Math\.min\(\.\.\.candidates\)/);
+});
+
+test('CD299 projects authoritative clock, depleted-seat retention and back-to-stand semantics', async () => {
+    const [view, presenter, controller, protocol, entry] = await Promise.all([
+        source('CD299LandscapeRoomViewComponent.ts'),
+        source('CD299RoomPresenter.ts'),
+        source('CD299RuntimeController.ts'),
+        source('CD299Protocol.ts'),
+        source('CD299GameRuntimeEntry.ts'),
+    ]);
+    assert.match(view, /pointer\.angle = Math\.atan2\(target\.y - origin\.y, target\.x - origin\.x\)/);
+    assert.match(presenter, /showSeatRetention\(visualSeat/);
+    assert.match(view, /openRebuyCarryWindow\(seat\)/);
+    assert.match(controller, /seatRetentionDeadlineEpochMillis/);
+    assert.match(protocol, /rebuy:'poker\.cd299\.rebuy_req'/);
+    assert.match(entry, /controller\.isSeated\(\)[\s\S]*controller\.stand\(\)/);
 });
 
 test('CD299 exports a feature-owned GameRuntimeEntry without replay', async () => {
@@ -196,23 +238,44 @@ test('CD299 landscape uses the same dynamic CommonHead framework as PDK', async 
     const view = await source('CD299LandscapeRoomViewComponent.ts');
     assert.match(view, /CommonHeadController/);
     assert.match(view, /bundle\.load\('Prefab\/CommonHead'/);
-    assert.match(view, /controller\.showGamePlayer\(playerId !== null\)/);
-    assert.match(view, /controller\.showPlayerAvatar\(playerId\)/);
-    assert.match(view, /controller\.showReady/);
+    assert.match(view, /controller\.showGamePlayer\(occupied\)/);
+    assert.match(view, /controller\.showPlayerAvatar\(playerId!\)/);
+    assert.match(view, /controller\.showReady\(false\)/);
+    assert.match(view, /TOUCH_MOVE/);
+    assert.match(view, /convertToNodeSpaceAR/);
     assert.match(view, /Players\/\$\{index\}/);
 });
 
 test('CD299 deal and add-card animation keeps the XQP cadence and flight geometry', async () => {
     const view = await source('CD299LandscapeRoomViewComponent.ts');
+    const presenter = await source('CD299RoomPresenter.ts');
     assert.match(view, /index >= previousCount/);
     assert.match(view, /this\.path\('Deal'\) \?\? this\.path\('DealPos'\)/);
-    assert.match(view, /\(newCardIndex \* 8 \+ seat\) \* 0\.08/);
+    assert.match(view, /\(newCardIndex \* dealCycleSize \+ dealOrder\) \* 0\.08/);
+    assert.match(presenter, /filter\(candidate => snapshot\.players\[candidate\] !== undefined\)/);
+    assert.match(presenter, /Math\.max\(1, occupiedDealOrder\.length\)/);
     assert.match(view, /\.to\(0\.2, \{ worldPosition: targetWorld, scale: targetScale \}\)/);
     assert.match(view, /targetScale\.x \* 0\.2, targetScale\.y \* 0\.2/);
     assert.match(view, /authoredLayout\.enabled = false/);
-    assert.match(view, /card\.setPosition\(index \* 100, 0, index\)/);
-    assert.match(view, /XQP_HEAD_SIZE \/ AOO_COMMON_HEAD_SIZE/);
+    assert.match(view, /card\.setPosition\(centeredX, 0, index\)/);
+    assert.match(view, /controller\.useSkin\('XQP_CIRCULAR'\)/);
+    assert.match(view, /playerId !== null && playerId > 0/);
     assert.match(view, /const overlap = seat >= 5 \? 5 : -5/);
+});
+
+test('CD299 projects the authoritative counterclockwise banker and deal origin', async () => {
+    const state = await source('CD299RoomState.ts');
+    const presenter = await source('CD299RoomPresenter.ts');
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    assert.match(state, /bankerSeat:number/);
+    assert.match(presenter, /Math\.max\(-1, snapshot\.bankerSeat\) \+ 1 \+ offset/);
+    assert.match(presenter, /occupiedDealOrder\.indexOf\(seat\)/);
+    assert.match(presenter, /showBanker\(visualSeat, seat === snapshot\.bankerSeat\)/);
+    assert.match(view, /node\.name === 'Icon_Banker'/);
+    assert.match(view, /CD299\/Art\/CxCommonStatic/);
+    assert.match(view, /icon_zhuang/);
+    assert.match(view, /node\.setPosition\(-43, -27/);
+    assert.match(view, /setContentSize\(30, 30\)/);
 });
 
 test('CD299 XQP operation slots never expose overlapping actions', async () => {
@@ -222,4 +285,82 @@ test('CD299 XQP operation slots never expose overlapping actions', async () => {
     assert.match(view, /const canRaise = actions\.canBet && actions\.betActions\.includes\('RAISE'\)/);
     assert.match(view, /actions\.betActions\.includes\('ALL_IN'\) && !canRaise/);
     assert.match(view, /target - actions\.currentBet > actions\.availableScore \? 'ALL_IN' : 'RAISE'/);
+});
+
+test('CD299 split cards and quick raises bind the physical hit targets', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    for (const index of [1, 2, 3]) {
+        assert.ok(view.includes(`OperateBtn/Bet/Add/Add/Fast/${index}/Mask`));
+    }
+    assert.match(view, /node\.active = !this\.selectedSplitCards\.includes\(cardValue\)/);
+    assert.match(view, /card\.on\(Node\.EventType\.MOUSE_UP, returnCard, this\)/);
+    assert.match(view, /card\.on\(Node\.EventType\.TOUCH_END, returnCard, this\)/);
+    assert.match(view, /generation !== this\.splitRenderGeneration/);
+});
+
+test('CD299 split labels use the authoritative pair catalog and room rule', async () => {
+    const { cd299PairTypeLabel } = await import(asset('Code/CD299PairTypeLabels.ts'));
+    assert.equal(cd299PairTypeLabel([203, 506], true), '丁二皇');
+    assert.equal(cd299PairTypeLabel([212, 412], true), '天牌');
+    assert.equal(cd299PairTypeLabel([202, 309], true), '地九王');
+    assert.equal(cd299PairTypeLabel([202, 309], false), '1点');
+    assert.equal(cd299PairTypeLabel([404, 408], true), '2点');
+    assert.throws(() => cd299PairTypeLabel([404, 404], true));
+
+    const [presenter, view, state] = await Promise.all([
+        source('CD299RoomPresenter.ts'),
+        source('CD299LandscapeRoomViewComponent.ts'),
+        source('CD299RoomState.ts'),
+    ]);
+    assert.match(state, /earthNineKing:boolean/);
+    assert.match(presenter, /snapshot\.rules\.earthNineKing/);
+    assert.match(view, /this\.visible\('OperateBtn\/SplitPoker\/TopType', complete\)/);
+    assert.match(view, /this\.visible\('OperateBtn\/SplitPoker\/DownType', complete\)/);
+    assert.match(view, /cd299PairTypeLabel\(this\.selectedSplitCards, this\.earthNineKing\)/);
+    assert.match(view, /cd299PairTypeLabel\(tail, this\.earthNineKing\)/);
+});
+
+test('CD299 card faces cover every authoritative deck value without the common poker codec', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    const atlas = await readFile(asset('Art/PokerFront_0Trends.plist'), 'utf8');
+    const deck = [202, 402, 203, 104, 204, 304, 404, 105, 305, 106, 206, 306, 406,
+        107, 207, 307, 407, 108, 208, 308, 408, 109, 309, 110, 210, 310, 410,
+        111, 311, 212, 412, 506];
+    for (const card of deck) assert.ok(atlas.includes(`<key>${card}.png</key>`), `missing ${card}`);
+    assert.match(view, /atlas\.getSpriteFrame\(String\(rawCard\)\)/);
+    assert.match(view, /if \(!revealed\) return this\.cardFactory\.create/);
+    assert.doesNotMatch(view, /cardFactory\.create\(parent, rawCard, Poker_Card_Face\.Front\)/);
+});
+
+test('CD299 loop settlement projects the XQP single-player geometry', async () => {
+    const view = await source('CD299LandscapeRoomViewComponent.ts');
+    assert.match(view, /topBar\?\.setPosition\(-50, 200\)/);
+    assert.match(view, /winner\?\.setPosition\(-50, 30\)/);
+    assert.match(view, /winnerHead\?\.setPosition\(0, 50\)/);
+    assert.match(view, /winnerScore\?\.setPosition\(0, -30\)/);
+    assert.match(view, /bottomBar\?\.setPosition\(-50, -190\)/);
+    assert.match(view, /countdown\.setPosition\(0, -100\)/);
+    assert.match(view, /WinnerLogo/);
+    assert.match(view, /RoundAvatar\/Mask\/Img_Avatar/);
+});
+
+test('CD299 plays migrated XQP room audio through shared sound settings', async () => {
+    const [audio, view] = await Promise.all([
+        source('CD299RoomAudioPresenter.ts'),
+        source('CD299LandscapeRoomViewComponent.ts'),
+    ]);
+    for (const [event, clip] of Object.entries({
+        DROP: 'diu', FOLLOW: 'gen', REST: 'xiu', RAISE: 'da', ALL_IN: 'qiao',
+        deal: 'fapai', select: 'xuanpai',
+    })) {
+        assert.ok(audio.includes(`${event}: 'CD299/Audio/${clip}'`), `missing ${event} sound`);
+    }
+    assert.match(audio, /legacyAudioService\.onSettingsChanged/);
+    assert.match(audio, /legacyLocalDataStore\.get\('SysSetting', 'BackMusic'/);
+    assert.match(audio, /legacyLocalDataStore\.get\('SysSetting', 'SpSound'/);
+    assert.match(view, /this\.currentRound !== this\.lastDealSoundRound/);
+    assert.match(view, /this\.audio\?\.play\('deal'\)/);
+    assert.match(view, /this\.audio\?\.play\(action\)/);
+    assert.match(view, /this\.audio\?\.play\('select'\)/);
+    assert.match(view, /this\.audio\?\.destroy\(\)/);
 });

@@ -14,8 +14,12 @@ export class StuckRoomCleanupService {
             const active = await api.get<ActiveRoomState>('/api/v2/hall/rooms/active');
             const roomId = Number(active?.roomId ?? 0);
             if (!active?.active || !Number.isSafeInteger(roomId) || roomId <= 0) return;
-            await api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {},
-                ProductionApiClient.operationKey(`clear-local-room:${roomId}:${accountId}`));
+            const operationId = ProductionApiClient.operationKey(`clear-local-room:${roomId}:${accountId}`);
+            console.info('[RoomMembershipBoundary] leave-request', {
+                owner: 'StuckRoomCleanupService.cleanup', stage: 'initial', callId: operationId,
+                gatewayInstanceId: '', operationId, roomId, playerId: accountId,
+            });
+            await api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {}, operationId);
             const confirmed = await api.get<ActiveRoomState>('/api/v2/hall/rooms/active');
             if (confirmed?.active) throw new Error(`房间 ${Number(confirmed.roomId ?? roomId)} 数据仍未清理`);
         } finally { api.destroy(); }

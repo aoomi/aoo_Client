@@ -83,8 +83,10 @@ export interface HallCurrentReplayCode { code: string; roomId: number; setId: nu
 /** Canonical HTTPS boundary for room lifecycle before the realtime room connection exists. */
 export class HallRoomGateway {
     private static readonly joins = new Map<string, Promise<HallRoomHandoff>>();
+    private static readonly leaves = new Map<string, Promise<unknown>>();
     private static readonly metadataCacheMs = 60_000;
     private readonly api: ProductionApiClient;
+    private readonly gatewayInstanceId = ProductionApiClient.operationKey('hall-room-gateway');
     private readonly catalogCache = new Map<string, { expiresAt: number; value: Promise<HallCatalogGame[]> }>();
     private readonly configurationCache = new Map<string, { expiresAt: number; value: Promise<HallRoomConfiguration> }>();
     private readonly roomPreparationCache = new Map<number, { expiresAt: number; value: Promise<HallRoomPreparation> }>();
@@ -105,6 +107,9 @@ export class HallRoomGateway {
             return Promise.reject(new Error('请输入6位纯数字房间号'));
         }
         const joinKey = `${this.playerId}:${roomId}`;
+        // An explicit admission starts a new membership lifecycle for this room.
+        // Only this boundary may release a previously completed leave result.
+        HallRoomGateway.leaves.delete(joinKey);
         const shared = HallRoomGateway.joins.get(joinKey);
         if (shared) return shared;
         if (this.pending) return this.pending;
@@ -140,15 +145,43 @@ export class HallRoomGateway {
         this.roomPreparationCache.set(roomId, { expiresAt: Date.now() + HallRoomGateway.metadataCacheMs, value });
         return value;
     }
-    public async leave(roomId: number): Promise<unknown> {
+    public leave(roomId: number): Promise<unknown> {
         if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) {
             return Promise.reject(new Error('房间号无效'));
         }
+        const leaveKey = `${this.playerId}:${roomId}`;
+        const callId = ProductionApiClient.operationKey(`hall-room-leave-call:${roomId}`);
+        const shared = HallRoomGateway.leaves.get(leaveKey);
+        if (shared) {
+            console.info('[HallRoomLifecycle] leave-request', {
+                owner: 'HallRoomGateway.leave', stage: 'shared', callId,
+                gatewayInstanceId: this.gatewayInstanceId, operationId: '', roomId, playerId: this.playerId,
+            });
+            return shared;
+        }
+        const leave = this.leaveOnce(roomId, callId);
+        HallRoomGateway.leaves.set(leaveKey, leave);
+        void leave.catch(() => {
+            // A genuine failure is retryable. A successful leave remains the
+            // page-wide authoritative result until an explicit join starts a new
+            // membership lifecycle, covering delayed terminal recovery callbacks.
+            if (HallRoomGateway.leaves.get(leaveKey) === leave) HallRoomGateway.leaves.delete(leaveKey);
+        });
+        return leave;
+    }
+
+    private async leaveOnce(roomId: number, callId: string): Promise<unknown> {
         let result: unknown;
         let leaveError: unknown = null;
+        const leaveOperationId = ProductionApiClient.operationKey(`hall-room-leave:${roomId}`);
+        console.info('[HallRoomLifecycle] leave-request', {
+            owner: 'HallRoomGateway.leave', stage: 'initial', callId,
+            gatewayInstanceId: this.gatewayInstanceId, operationId: leaveOperationId,
+            roomId, playerId: this.playerId,
+        });
         try {
             result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {},
-                ProductionApiClient.operationKey(`hall-room-leave:${roomId}`));
+                leaveOperationId);
         } catch (error: unknown) {
             leaveError = error;
         }
@@ -158,10 +191,50 @@ export class HallRoomGateway {
         // 不能只因 Hall 显示 inactive 就让客户端离场，否则其他玩家刷新仍会看见幽灵座位。
         // 使用新的幂等键重放一次；服务端会把“权威座位本就不存在”按已离房处理。
         if (leaveError && result === undefined) {
-            result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {},
-                ProductionApiClient.operationKey(`hall-room-leave-reconcile:${roomId}`));
+            const reconcileOperationId = ProductionApiClient.operationKey(`hall-room-leave-reconcile:${roomId}`);
+            console.info('[HallRoomLifecycle] leave-request', {
+                owner: 'HallRoomGateway.leave', stage: 'reconcile', callId,
+                gatewayInstanceId: this.gatewayInstanceId, operationId: reconcileOperationId,
+                roomId, playerId: this.playerId,
+            });
+            try {
+                result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {}, reconcileOperationId);
+            } catch (reconcileError: unknown) {
+                // Recheck membership after the authority replay. This is stronger than
+                // the first inactive read: it proves the rejected replay did not restore
+                // or retain a recoverable Hall membership. The local runtime may only
+                // exit on a known terminal room or the authority's explicit leave
+                // rejection while Hall independently confirms no active membership.
+                const reconciledActive = await this.api.get<HallActiveRoom>('/api/v2/hall/rooms/active');
+                if (reconciledActive.active) throw reconcileError;
+                const terminalRoom = await this.isAuthoritativelyTerminal(roomId);
+                if (!terminalRoom && !this.isAuthorityLeaveRejection(reconcileError)) throw reconcileError;
+                const production = reconcileError instanceof ProductionApiError ? reconcileError : null;
+                console.info('[HallRoomLifecycle] terminal-leave-idempotent', {
+                    roomId, playerId: this.playerId, operationId: reconcileOperationId,
+                    stateVersion: 0, code: production?.code ?? '', status: production?.status ?? 0,
+                    authorityEvidence: terminalRoom ? 'ROOM_TERMINAL' : 'INACTIVE_AFTER_AUTHORITY_REJECTION',
+                    firstError: leaveError instanceof Error ? leaveError.message : String(leaveError),
+                });
+                return { left: true, alreadyTerminal: true };
+            }
         }
         return result;
+    }
+
+    private async isAuthoritativelyTerminal(roomId: number): Promise<boolean> {
+        try {
+            const room = await this.api.get<{ state?: unknown }>(`/api/v2/hall/rooms/${roomId}`);
+            return /^(?:DISSOLVED|EXPIRED|CLOSED|FINISHED)$/.test(String(room.state ?? '').trim().toUpperCase());
+        } catch (error: unknown) {
+            if (!(error instanceof ProductionApiError)) throw error;
+            return error.code === '3001' || error.code === 'ROOM_NOT_FOUND';
+        }
+    }
+
+    private isAuthorityLeaveRejection(error: unknown): boolean {
+        if (!(error instanceof ProductionApiError) || error.status !== 409) return false;
+        return error.code === 'HALL_AUTHORITY_REJECTED' || error.code === 'ROOM_LEAVE_REJECTED';
     }
     public history(beforeRoomId = 0, limit = 20): Promise<HallHistoryPage> { return this.api.get('/api/v2/hall/history', { beforeRoomId, limit }); }
     public historyDetail(roomId: number): Promise<HallHistoryDetail> { return this.api.get(`/api/v2/hall/history/${roomId}`); }
@@ -342,14 +415,19 @@ export class HallRoomGateway {
     }
     /** Reserve a real seat while the player remains in the club lobby. */
     public async joinWaiting(roomId: number, location?: HallAdmissionLocation): Promise<void> {
+        HallRoomGateway.leaves.delete(`${this.playerId}:${roomId}`);
         await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/join`, this.locationBody(location),
             ProductionApiClient.operationKey(`room-waiting-join:${roomId}:${this.playerId}`));
     }
 
     /** Leave a waiting seat before returning to Hall or choosing another club desk. */
     public async leaveWaiting(roomId: number): Promise<void> {
-        await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {},
-            ProductionApiClient.operationKey(`room-waiting-leave:${roomId}:${this.playerId}:${Date.now()}`));
+        const operationId = ProductionApiClient.operationKey(`room-waiting-leave:${roomId}:${this.playerId}:${Date.now()}`);
+        console.info('[HallRoomLifecycle] leave-request', {
+            owner: 'HallRoomGateway.leaveWaiting', stage: 'initial', callId: operationId,
+            gatewayInstanceId: this.gatewayInstanceId, operationId, roomId, playerId: this.playerId,
+        });
+        await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {}, operationId);
     }
     private async handoffFromRoom(
         room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number},

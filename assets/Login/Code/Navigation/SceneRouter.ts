@@ -528,6 +528,8 @@ export class SceneRouter {
             // by Hall (the public display ID in the legacy protocol). accountId is
             // an authentication-domain key and must never replace it here.
             playerId: role.playerId,
+            onCD299ExitRequested: roomId => this.exitRecoveredCD299Spectator(
+                account, role, handoff, gateway, roomId),
         });
         this.startupGameRuntimeEntries = registry;
         const runtime = registry.resolveRequired(handoff);
@@ -542,6 +544,41 @@ export class SceneRouter {
             runtimeEntry: runtime.id,
         });
         await runtime.enter(handoff);
+    }
+
+    private async exitRecoveredCD299Spectator(
+        account: AuthenticatedAccount,
+        role: RoleSession,
+        handoff: LegacySubgameTicket,
+        gateway: HallRoomGateway,
+        roomId: number,
+    ): Promise<void> {
+        const operationId = this.navigationGeneration;
+        console.info('[StartupRoomRecovery] spectator-exit', {
+            roomId, playerId: role.playerId, accountId: account.accountId,
+            operationId, stage: 'LEAVE_START',
+        });
+        try {
+            await gateway.leave(roomId);
+            console.info('[StartupRoomRecovery] spectator-exit', {
+                roomId, playerId: role.playerId, accountId: account.accountId,
+                operationId, stage: 'LEAVE_COMMITTED',
+            });
+        } catch (error: unknown) {
+            console.error('[StartupRoomRecovery] spectator-exit', {
+                roomId, playerId: role.playerId, accountId: account.accountId,
+                operationId, stage: 'LEAVE_FAILED',
+                error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+        }
+        this.roomRecovery.clear(String(account.accountId));
+        this.destroyStartupGameRuntime();
+        await this.returnFromRoom(account, role, handoff);
+        console.info('[StartupRoomRecovery] spectator-exit', {
+            roomId, playerId: role.playerId, accountId: account.accountId,
+            operationId, stage: 'LOBBY_PRESENTED',
+        });
     }
 
     private createHallRoomGateway(account: AuthenticatedAccount, role: RoleSession): HallRoomGateway {

@@ -579,6 +579,9 @@ test('clear-local-data claims one authenticated authoritative room cleanup after
     assert.match(policySource, /claimRoomCleanup\(\)/);
     assert.match(policySource, /releaseRoomCleanupClaim\(\)/);
     assert.match(clientBootstrap, /claimRoomCleanup\(\)[\s\S]*StuckRoomCleanupService\(\)\.cleanup\(account\)/);
+    assert.match(clientBootstrap, /const recovery = roomRecovery\.load\(String\(account\.accountId\)\)/);
+    assert.match(clientBootstrap, /startup-cleanup-skipped-for-recovery/);
+    assert.match(clientBootstrap, /if \(recovery\)[\s\S]*return;[\s\S]*StuckRoomCleanupService\(\)\.cleanup\(account\)/);
     assert.match(clientBootstrap, /catch \(error: unknown\)[\s\S]*releaseRoomCleanupClaim\(\)[\s\S]*throw error/);
     assert.match(authSource, /await this\.afterExplicitLogin\(authenticated\)/);
     assert.match(authSource, /await this\.afterExplicitLogin\(account\)/);

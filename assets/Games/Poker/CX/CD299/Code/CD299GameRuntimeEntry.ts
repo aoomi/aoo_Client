@@ -89,17 +89,37 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
             if (!portrait && view instanceof CD299LandscapeRoomViewComponent) {
                 view.attachCommonRoom(commonRoom, roomId);
             }
+            const prefix = `${this.options.requestPrefix ?? 'cd299'}-${roomId}-${this.options.playerId}`;
+            const controller = new CD299RuntimeController(client, view, roomId, prefix);
+            this.controller = controller;
             const back = commonRoom.getChildByPath('Btn/Btn_Back');
             const backButton = back?.getComponent(Button);
-            if (back && backButton && this.options.onExitRequested) {
+            if (back && backButton) {
                 let exitStarted = false;
                 const exit = (): void => {
                     if (exitStarted) return;
                     if (!backButton.interactable) return;
+                    const seated = controller.isSeated();
+                    const exitRequested = this.options.onExitRequested;
+                    if (!seated && !exitRequested) {
+                        console.error('[CD299] spectator exit unavailable', {
+                            roomId,
+                            playerId: this.options.playerId,
+                        });
+                        return;
+                    }
                     exitStarted = true;
                     backButton.interactable = false;
-                    console.info('[CD299] room exit requested', { roomId, playerId: this.options.playerId });
-                    void this.options.onExitRequested!(roomId).catch((error: unknown) => {
+                    const action = seated
+                        ? controller.stand()
+                        : exitRequested!(roomId).then(() => true);
+                    console.info('[CD299] room back requested', { roomId, playerId: this.options.playerId,
+                        action: seated ? 'stand' : 'spectator-exit' });
+                    void action.then(ok => {
+                        exitStarted = false;
+                        if (back.isValid) backButton.interactable = true;
+                        return ok;
+                    }).catch((error: unknown) => {
                         exitStarted = false;
                         if (back.isValid) backButton.interactable = true;
                         console.error('[CD299] room exit failed', { roomId, playerId: this.options.playerId,
@@ -116,9 +136,6 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
                 };
             }
             this.host = host;
-            const prefix = `${this.options.requestPrefix ?? 'cd299'}-${roomId}-${this.options.playerId}`;
-            const controller = new CD299RuntimeController(client, view, roomId, prefix);
-            this.controller = controller;
             const diagnostics = globalThis as typeof globalThis & {
                 __PDK_E2E_LOGS__?: unknown[];
                 __CD299_RUNTIME__?: { root: Node; controller: CD299RuntimeController };

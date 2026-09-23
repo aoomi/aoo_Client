@@ -32,6 +32,7 @@ export function startClientServices(): ClientServices {
     const registry = globalThis as RuntimeRegistry;
     if (registry[runtimeKey]) return registry[runtimeKey];
     const storage = new BrowserKeyValueStorage();
+    const roomRecovery = new RoomRecoveryStore(storage);
     const auth = new AuthSession(
         new AccountAuthGateway({ endpoint: resolveRuntimeEndpoints().apiBaseUrl }),
         new LastAccountStore(storage),
@@ -40,6 +41,18 @@ export function startClientServices(): ClientServices {
         async (account) => {
             const bootState = currentAooLoadingBootState();
             if (!bootState.claimRoomCleanup()) return;
+            const recovery = roomRecovery.load(String(account.accountId));
+            if (recovery) {
+                // SceneRouter owns authoritative membership reconciliation when a
+                // recoverable room intent exists. The generic clean-login service
+                // must not leave that room first and then restore a host from stale
+                // local intent, which creates two competing leave owners.
+                console.info('[RoomMembershipBoundary] startup-cleanup-skipped-for-recovery', {
+                    roomId: recovery.roomId,
+                    playerId: String(account.accountId),
+                });
+                return;
+            }
             try {
                 await new StuckRoomCleanupService().cleanup(account);
             } catch (error: unknown) {
@@ -49,7 +62,6 @@ export function startClientServices(): ClientServices {
         },
     );
     const network = new NetworkRuntime();
-    const roomRecovery = new RoomRecoveryStore(storage);
     const scenes = new SceneRouter(auth, network, roomRecovery);
     try {
         auth.start();

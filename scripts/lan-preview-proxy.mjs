@@ -55,6 +55,9 @@ function requestBuildId(request) {
 function pinHtml(html, buildId) {
   const pin = (raw) => `/__aoo/build/${buildId}/${transformRevision}${raw}`;
   return html
+    // Snapshot ports are Creator preview origins. The client transport checks
+    // this marker before allowing their same-host HTTP test gateway.
+    .replace(/<head(\s[^>]*)?>/i, (tag) => `${tag}<script>Object.defineProperty(window, '__aoo_CREATOR_LAN_PREVIEW__', { value: true });</script>`)
     .replace(/\b(src|href)=(['"])(\/(?!\/)[^'"]+)\2/g, (_match, attribute, quote, value) => `${attribute}=${quote}${pin(value)}${quote}`)
     .replace("'/scripting/x/resolution-detail-map.json'", `'${pin('/scripting/x/resolution-detail-map.json')}'`)
     .replace('"/scripting/x/resolution-detail-map.json"', `"${pin('/scripting/x/resolution-detail-map.json')}"`)
