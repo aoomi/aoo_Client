@@ -69,6 +69,10 @@ test('swipe chooses the lower attachments in either drag direction', () => {
 
 const card = (rank, suit = 1) => suit * 100 + rank;
 const group = (rank, count) => Array.from({ length: count }, (_value, index) => card(rank, index + 1));
+const rankCounts = (cards) => cards.reduce((counts, value) => {
+  counts[value % 100] += 1;
+  return counts;
+}, Array(16).fill(0));
 const flatten = (...groups) => groups.flat();
 const candidate = (cards, order) => ({ cards, order });
 const rules = {
@@ -542,6 +546,80 @@ test('pair response consumes independent 99 before opening 445566', () => {
   assert.deepEqual(ranked[0], independent);
 });
 
+test('pair response does not protect a pair run that requires splitting a triple', () => {
+  const { rankCleanPdkHints, scorePdkRemainingHand } = loadRankerModule();
+  const bomb = [312, 412, 112, 212];
+  const aces = [314, 114];
+  const eights = [308, 108];
+  const tripleBodies = [[309, 409, 109], [310, 410, 110]];
+  const regionalDeck = [
+    ...Array.from({ length: 11 }, (_value, index) => card(index + 5, 1)),
+    ...Array.from({ length: 10 }, (_value, index) => card(index + 5, 2)),
+    ...Array.from({ length: 10 }, (_value, index) => card(index + 5, 3)),
+    ...Array.from({ length: 9 }, (_value, index) => card(index + 5, 4)),
+  ];
+  const responseRules = {
+    ...rules,
+    tripleAttachmentMode: 'EITHER',
+    optimizeWholeHand: false,
+    compareTripleAttachments: false,
+    preserveScoringBombs: true,
+    protectedBombs: [bomb],
+    deckCards: regionalDeck,
+    playedRankCounts: rankCounts(group(6, 2)),
+  };
+  for (const triple of tripleBodies) {
+    const hand = [...aces, ...eights, ...triple, ...group(5, 3),
+      card(6, 2), card(13), ...bomb];
+    const remaining = (played) => {
+      const cards = [...hand];
+      for (const card of played) cards.splice(cards.indexOf(card), 1);
+      return scorePdkRemainingHand(cards, responseRules);
+    };
+    assert.equal(remaining(aces).turns, 3);
+    assert.equal(remaining(eights).turns, 3);
+    assert.equal(remaining(aces).isolated, 0);
+    assert.equal(remaining(eights).isolated, 0);
+    for (const choices of [
+      [candidate(aces, 0), candidate(eights, 1)],
+      [candidate(eights, 0), candidate(aces, 1)],
+    ]) {
+      assert.deepEqual(rankCleanPdkHints(hand, choices, responseRules)[0], eights,
+        'a triple must not become a protected pair run when both real plans tie');
+    }
+  }
+  const originalHand = [...aces, ...eights, ...tripleBodies[0],
+    ...group(5, 3), card(6, 2), card(13), ...bomb];
+  const actualResponsePool = [
+    candidate(eights, 0),
+    candidate([309, 109], 1),
+    { ...candidate(aces, 2), containsRuleMaximum: true },
+    candidate(bomb, 3),
+  ];
+  assert.deepEqual(rankCleanPdkHints(originalHand, actualResponsePool,
+    responseRules)[0], eights,
+  'the full authority-legal response pool must not restore the false run penalty');
+});
+
+test('pair response still preserves an actual all-pair run when whole-hand plans tie', () => {
+  const { rankCleanPdkHints, scorePdkRemainingHand } = loadRankerModule();
+  const aces = group(14, 2);
+  const eights = group(8, 2);
+  const nines = group(9, 2);
+  const bomb = group(12, 4);
+  const hand = flatten(aces, eights, nines, group(5, 3), bomb);
+  const responseRules = { ...rules, tripleAttachmentMode: 'EITHER',
+    preserveScoringBombs: true, protectedBombs: [bomb] };
+  assert.equal(scorePdkRemainingHand(hand.filter((card) => !aces.includes(card)),
+    responseRules).turns, 3);
+  assert.equal(scorePdkRemainingHand(hand.filter((card) => !eights.includes(card)),
+    responseRules).turns, 3);
+  const ranked = rankCleanPdkHints(hand,
+    [candidate(eights, 0), candidate(aces, 1)], responseRules, false, true);
+  assert.deepEqual(ranked[0], aces,
+    'genuine 88+99 is retained when opening either pair costs the same number of hands');
+});
+
 test('pair response without an independent pair opens QQ from the higher QQKK run', () => {
   const rank = loadRanker();
   const lowRun = flatten(group(5, 2), group(6, 2));
@@ -646,7 +724,7 @@ test('pair-three response uses 88 and preserves the 34567 straight', () => {
   assert.deepEqual(ranked[0], pairEights);
 });
 
-test('self lead 77 plus QQKK probes with sevens and retains the higher run to recapture', () => {
+test('two-play 77 plus QQKK leads the intact four-card pair run', () => {
   const rank = loadRanker();
   const sevens = group(7, 2);
   const highRun = flatten(group(12, 2), group(13, 2));
@@ -655,8 +733,39 @@ test('self lead 77 plus QQKK probes with sevens and retains the higher run to re
     { ...candidate(sevens, 0), finishesInTwo: true, containsRuleMaximum: false },
     { ...candidate(highRun, 1), finishesInTwo: true, containsRuleMaximum: false },
   ], rules, true, true);
-  assert.deepEqual(ranked[0], sevens);
-  assert.deepEqual(ranked[1], highRun);
+  assert.deepEqual(ranked[0], highRun);
+  assert.deepEqual(ranked[1], sevens);
+});
+
+test('all regional lead strategies preserve the two-play QQKK plus 55 finish', () => {
+  const rank = loadRanker();
+  const lowPair = group(5, 2);
+  const highRun = flatten(group(12, 2), group(13, 2));
+  const hand = flatten(lowPair, highRun);
+  const candidates = [
+    { ...candidate(lowPair, 0), finishesInTwo: true },
+    { ...candidate(highRun, 1), finishesInTwo: true },
+    candidate(group(12, 2), 2),
+    candidate(group(13, 2), 3),
+  ];
+  for (const regionalRules of [rules, liangshanLeadRules]) {
+    const ranked = rank(hand, candidates, regionalRules, true, true);
+    assert.deepEqual(ranked[0], highRun);
+    assert.deepEqual(ranked[1], lowPair);
+    assert.equal(ranked.length, 2, 'constituent pairs stay hidden behind the intact legal pair run');
+  }
+});
+
+test('a proven two-play maximum control card still precedes a larger pair run', () => {
+  const rank = loadRanker();
+  const two = card(15);
+  const run = flatten(group(10, 2), group(11, 2), group(12, 2));
+  const hand = [two, ...run];
+  const ranked = rank(hand, [
+    { ...candidate(run, 0), finishesInTwo: true },
+    { ...candidate([two], 1), finishesInTwo: true, containsRuleMaximum: true },
+  ], rules, true, true);
+  assert.deepEqual(ranked[0], [two]);
 });
 
 test('two-hand endgame leads maximum pair run KKAA before the larger JJJ33 family', () => {
@@ -1590,6 +1699,102 @@ test('lowest complete triple family precedes pair runs when a higher triple can 
   assert.deepEqual(ranked[0], expected);
 });
 
+test('a longer intact three-pair run outranks a low triple with loose wings on the same whole-hand plan', () => {
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints,
+    scorePdkRemainingHand } = loadRankerModule();
+  for (const [lowTripleRank, pairRunStart, highTripleRank] of [
+    [5, 7, 12],
+    [4, 6, 13],
+  ]) {
+    const lowTriple = group(lowTripleRank, 3);
+    const pairRun = flatten(group(pairRunStart, 2), group(pairRunStart + 1, 2),
+      group(pairRunStart + 2, 2));
+    const highTriple = group(highTripleRank, 3);
+    const acePair = group(14, 2);
+    const wings = [card(10), card(11)];
+    const hand = flatten(acePair, highTriple, wings, pairRun, lowTriple);
+    const lowTripleWithWings = [...lowTriple, ...wings];
+    const remainder = (play) => {
+      const remaining = [...hand];
+      for (const value of play) remaining.splice(remaining.indexOf(value), 1);
+      return remaining;
+    };
+    const roomRules = { ...rules, compareTripleAttachments: false,
+      tripleAttachmentMode: 'EITHER' };
+    const tripleQuality = scorePdkRemainingHand(remainder(lowTripleWithWings), roomRules);
+    const pairRunQuality = scorePdkRemainingHand(remainder(pairRun), roomRules);
+    assert.equal(tripleQuality.turns, 2);
+    assert.equal(pairRunQuality.turns, 2);
+    assert.equal(tripleQuality.isolated, 0);
+    assert.equal(pairRunQuality.isolated, 0);
+    for (const plays of [
+      [candidate(lowTripleWithWings, 0), candidate(pairRun, 1)],
+      [candidate(pairRun, 0), candidate(lowTripleWithWings, 1)],
+    ]) {
+      const ranked = rankCleanPdkHints(hand, plays, roomRules, true, true);
+      assert.deepEqual(ranked.slice(0, 2), [pairRun, lowTripleWithWings]);
+    }
+    const legalLeads = enumeratePdkRankMultisetCandidates(hand).filter((cards) => {
+      const ranks = cards.map((value) => value % 100).sort((left, right) => left - right);
+      const unique = [...new Set(ranks)];
+      const counts = unique.map((value) => ranks.filter((rank) => rank === value).length);
+      const pattern = [...counts].sort((left, right) => left - right).join(',');
+      const consecutive = unique.every((value, index) => index === 0
+        || value === unique[index - 1] + 1);
+      return cards.length === 1
+        || (cards.length === 2 && unique.length === 1)
+        || (cards.length === 4 && pattern === '1,3')
+        || (cards.length === 5 && ['1,1,3', '2,3'].includes(pattern))
+        || (cards.length >= 5 && unique.length === cards.length && consecutive)
+        || (cards.length >= 4 && cards.length % 2 === 0
+          && unique.length * 2 === cards.length && consecutive
+          && counts.every((count) => count === 2));
+    });
+    const fullPool = legalLeads.map((cards, order) => candidate(cards, order));
+    const fullRanked = rankCleanPdkHints(hand, fullPool, roomRules, true, true);
+    assert.deepEqual(fullRanked[0], pairRun,
+      'unrelated legal leads must not cycle the low triple back above the longer intact run');
+  }
+});
+
+test('the lower complete triple still leads when no longer intact run wins the same cleanup', () => {
+  const rank = loadRanker();
+  const lowTriple = group(5, 3);
+  const highTriple = group(12, 3);
+  const pairRun = flatten(group(7, 2), group(8, 2));
+  const wings = [card(10), card(11)];
+  const hand = flatten(group(14, 2), highTriple, wings, pairRun, lowTriple);
+  const tripleWithWings = [...lowTriple, ...wings];
+  const ranked = rank(hand, [candidate(pairRun, 0), candidate(tripleWithWings, 1)],
+    { ...rules, compareTripleAttachments: false, tripleAttachmentMode: 'EITHER' }, true, true);
+  assert.deepEqual(ranked[0], tripleWithWings);
+});
+
+test('a broken three-pair sequence cannot veto the low triple recovery lead', () => {
+  const rank = loadRanker();
+  const lowTriple = group(5, 3);
+  const wings = [card(10), card(11)];
+  const hand = flatten(group(14, 2), group(12, 3), wings, group(9, 2),
+    [card(8)], group(7, 2), lowTriple);
+  const tripleWithWings = [...lowTriple, ...wings];
+  const ranked = rank(hand, [candidate(group(7, 2), 0),
+    candidate(tripleWithWings, 1)],
+  { ...rules, compareTripleAttachments: false, tripleAttachmentMode: 'EITHER' }, true, true);
+  assert.deepEqual(ranked[0], tripleWithWings);
+});
+
+test('a complete low triple leads a two-play finish before a shorter independent pair', () => {
+  const rank = loadRanker();
+  const lowTriple = group(5, 3);
+  const wings = [card(10), card(11)];
+  const pair = group(12, 2);
+  const hand = flatten(lowTriple, wings, pair);
+  const tripleWithWings = [...lowTriple, ...wings];
+  const ranked = rank(hand, [candidate(pair, 0), candidate(tripleWithWings, 1)],
+    { ...rules, compareTripleAttachments: false, tripleAttachmentMode: 'EITHER' }, true, true);
+  assert.deepEqual(ranked[0], tripleWithWings);
+});
+
 test('a minimum five-card straight never breaks a bomb before the lower pair run', () => {
   const rank = loadRanker();
   const fives = group(5, 4);
@@ -2001,9 +2206,9 @@ test('played twos make A effective maximum and keep AA after leading 88', () => 
   const twos = group(15, 4);
   const deck = flatten(group(7, 4), eights, group(14, 4), twos);
   const hand = flatten(eights, aces, [card(7)]);
-  assert.ok(!effectivePdkMaximumSingleRanks(deck, hand, twos.slice(0, 2)).includes(14),
+  assert.ok(!effectivePdkMaximumSingleRanks(deck, hand, rankCounts(twos.slice(0, 2))).includes(14),
     'unseen higher cards must prevent promoting A to an effective maximum');
-  const effectiveMaximum = effectivePdkMaximumSingleRanks(deck, hand, twos);
+  const effectiveMaximum = effectivePdkMaximumSingleRanks(deck, hand, rankCounts(twos));
   assert.ok(effectiveMaximum.includes(14));
   const ranked = rank(hand, [
     candidate([card(7)], 0),
@@ -2011,6 +2216,52 @@ test('played twos make A effective maximum and keep AA after leading 88', () => 
     candidate(eights, 2),
   ], { ...rules, policyId: 'CD201', maximumSingleRanks: effectiveMaximum }, true, true);
   assert.deepEqual(ranked[0], eights);
+});
+
+test('public unique two makes A the recovery single, so an intact 99 follows the loose 6', () => {
+  const { effectivePdkMaximumSingleRanks, rankCleanPdkHints } = loadRankerModule();
+  const ace = card(14);
+  const nines = group(9, 2);
+  const six = card(6);
+  const two = card(15);
+  const deck = flatten(group(6, 4), group(9, 4), group(14, 4), [two]);
+  const hand = flatten([ace], nines, [six]);
+  assert.ok(!effectivePdkMaximumSingleRanks(deck, hand, rankCounts([])).includes(14),
+    'an unplayed higher card must keep A out of the maximum chain');
+  const maximum = effectivePdkMaximumSingleRanks(deck, hand, rankCounts([two]));
+  assert.ok(maximum.includes(14));
+  const ranked = rankCleanPdkHints(hand, [
+    candidate([nines[0]], 0),
+    candidate([six], 1),
+    candidate(nines, 2),
+    { ...candidate([ace], 3), containsRuleMaximum: true },
+  ], { ...rules, maximumSingleRanks: maximum, deckCards: deck,
+    playedRankCounts: rankCounts([two]) }, true, true);
+  assert.deepEqual(ranked[0], [six]);
+});
+
+test('lead hint reads cumulative rank counts while table history remains LAST_ONLY', () => {
+  const source = readFileSync(controllerPath, 'utf8');
+  const syntax = ts.createSourceFile(controllerPath, source, ts.ScriptTarget.ES2022, true);
+  const owner = syntax.statements.find((node) => ts.isClassDeclaration(node)
+    && node.members.some((member) => member.name?.getText(syntax) === 'authoritativePlayedRankCounts'));
+  const method = owner?.members.find((member) => member.name?.getText(syntax) === 'authoritativePlayedRankCounts');
+  assert.ok(method, 'expected the production ledger reader');
+  const js = ts.transpileModule(`class LedgerReader { ${method.getText(syntax)} }
+    module.exports = LedgerReader;`, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const module = { exports: {} };
+  Function('module', 'exports', js)(module, module.exports);
+  const reader = Object.create(module.exports.prototype);
+  let setInfo = { playedCardList: [[], []], publicPlayedRankCounts: rankCounts([card(15), card(8)]) };
+  reader.runtime = { getRoomSet: () => ({ GetRoomSetInfo: () => setInfo }) };
+  assert.deepEqual(reader.authoritativePlayedRankCounts(), rankCounts([card(15), card(8)]));
+  setInfo = { playedCardList: [[card(15)]], publicPlayedRankCounts: rankCounts([]) };
+  assert.deepEqual(reader.authoritativePlayedRankCounts(), rankCounts([]),
+    'a new round must not reuse an old table presentation');
+  setInfo = { publicPlayedRankCounts: Array(16).fill(5) };
+  assert.throws(() => reader.authoritativePlayedRankCounts(), /已出牌点数计数无效/);
 });
 
 test('self lead 4,5,7,J plus KK or AA starts from the lowest single', () => {
@@ -2056,6 +2307,48 @@ test('complete 44433 leads before the independent 56789 and retains 101010QQ', (
     === straight.map((value) => value % 100).join(',')));
   assert.ok(ranked.some((cards) => cards.map((value) => value % 100).sort((a, b) => a - b).join(',')
     === highTripleFamily.map((value) => value % 100).sort((a, b) => a - b).join(',')));
+});
+
+test('an intact lower triple family leads before a longer straight that spends its body when a higher matching family can recapture', () => {
+  const rank = loadRanker();
+  for (const [lowRank, wingRank, highRank, highWingRank, spareRank] of [
+    [4, 3, 13, 11, 12],
+    [5, 4, 12, 11, 13],
+  ]) {
+    const lowBody = group(lowRank, 3);
+    const lowWings = group(wingRank, 2);
+    const highBody = group(highRank, 3);
+    const highWings = group(highWingRank, 2);
+    const straight = Array.from({ length: 5 }, (_value, index) => card(lowRank + index + 1));
+    const lowFamily = [...lowBody, ...lowWings];
+    const highFamily = [...highBody, ...highWings];
+    const splitStraight = [lowBody[0], ...straight];
+    const hand = flatten(highBody, [card(spareRank)], highWings, straight, lowBody, lowWings);
+    const ranked = rank(hand, [
+      candidate(splitStraight, 0),
+      candidate(straight, 1),
+      candidate(highFamily, 2),
+      candidate(lowFamily, 3),
+      candidate(lowBody, 4),
+      candidate(highBody, 5),
+    ], rules, true, true);
+    assert.deepEqual(ranked[0], lowFamily, `lower body ${lowRank}`);
+    assert.ok(ranked.some((cards) => cards.length === splitStraight.length
+      && cards.every((value) => splitStraight.includes(value))));
+  }
+});
+
+test('without an intact higher matching response the equally clean longer straight may lead', () => {
+  const rank = loadRanker();
+  const lowBody = group(4, 3);
+  const lowFamily = [...lowBody, ...group(3, 2)];
+  const straight = [5, 6, 7, 8, 9].map((value) => card(value));
+  const longer = [lowBody[0], ...straight];
+  const hand = [...lowFamily, ...straight];
+  const ranked = rank(hand, [
+    candidate(longer, 0), candidate(straight, 1), candidate(lowFamily, 2),
+  ], rules, true, true);
+  assert.deepEqual(ranked[0], longer);
 });
 
 test('self lead without the regional maximum prefers 8899 and defers the bomb', () => {
@@ -2113,6 +2406,71 @@ test('response uses KKK with clean wings when it preserves the most structured c
   assert.ok(first.length === 5 && kings.every((value) => first.includes(value)));
   assert.ok(first.includes(card(5)));
   assert.ok(first.includes(card(8)) || first.includes(card(12)));
+});
+
+test('same-body response keeps an intact straight before comparing triple wings', () => {
+  const rank = loadRanker();
+  const kings = group(13, 3);
+  const jacks = group(11, 2);
+  const straight = [5, 6, 7, 8, 9].map((value) => card(value));
+  const hand = flatten(kings, [card(12)], jacks, straight);
+  const breaksStraight = [...kings, card(5), card(6)];
+  const preservesStraight = [...kings, ...jacks];
+  const opensPair = [...kings, card(12), jacks[0]];
+  for (const compareTripleAttachments of [false, true]) {
+    for (const options of [
+      [candidate(breaksStraight, 0), candidate(opensPair, 1), candidate(preservesStraight, 2)],
+      [candidate(preservesStraight, 0), candidate(opensPair, 1), candidate(breaksStraight, 2)],
+    ]) {
+      const ranked = rank(hand, options,
+        { ...rules, tripleAttachmentMode: 'EITHER', compareTripleAttachments }, false, true);
+      assert.deepEqual(ranked[0], preservesStraight);
+      assert.deepEqual(ranked[1], opensPair);
+      assert.deepEqual(ranked[2], breaksStraight);
+    }
+  }
+});
+
+test('same-body response still sheds real loose wings when no run exists', () => {
+  const rank = loadRanker();
+  const kings = group(13, 3);
+  const jacks = group(11, 2);
+  const hand = flatten(kings, [card(12)], jacks, [card(9), card(8), card(6), card(5)]);
+  const looseWings = [...kings, card(5), card(6)];
+  const pairWings = [...kings, ...jacks];
+  for (const compareTripleAttachments of [false, true]) {
+    const ranked = rank(hand, [candidate(pairWings, 0), candidate(looseWings, 1)],
+      { ...rules, tripleAttachmentMode: 'EITHER', compareTripleAttachments }, false, true);
+    assert.deepEqual(ranked[0], looseWings);
+  }
+});
+
+test('shifted same-body response preserves a different complete straight', () => {
+  const rank = loadRanker();
+  const queens = group(12, 3);
+  const tens = group(10, 2);
+  const straight = [4, 5, 6, 7, 8].map((value) => card(value));
+  const hand = flatten(queens, [card(11)], tens, straight);
+  const preservesStraight = [...queens, ...tens];
+  const breaksStraight = [...queens, card(4), card(5)];
+  for (const compareTripleAttachments of [false, true]) {
+    const ranked = rank(hand, [candidate(breaksStraight, 0), candidate(preservesStraight, 1)],
+      { ...rules, tripleAttachmentMode: 'EITHER', compareTripleAttachments }, false, true);
+    assert.deepEqual(ranked[0], preservesStraight);
+  }
+});
+
+test('single-only triple attachments preserve a straight without inventing a pair wing', () => {
+  const rank = loadRanker();
+  const kings = group(13, 3);
+  const jacks = group(11, 2);
+  const straight = [5, 6, 7, 8, 9].map((value) => card(value));
+  const hand = flatten(kings, [card(12)], jacks, straight);
+  const preservesStraight = [...kings, card(12), jacks[0]];
+  const breaksStraight = [...kings, card(5), card(6)];
+  const ranked = rank(hand, [candidate(breaksStraight, 0), candidate(preservesStraight, 1)],
+    { ...rules, tripleAttachmentMode: 'SINGLES', compareTripleAttachments: false }, false, true);
+  assert.deepEqual(ranked[0], preservesStraight);
 });
 
 test('triple-chain wing allocation never carries A when lower real singles exist', () => {
@@ -2349,6 +2707,44 @@ test('feedback figure 2 uses 444 with loose 3 and 6 to minimize singles', () => 
     candidate([9, 10, 11, 12, 13].map((value) => card(value)), 3),
   ], rules, true, true);
   assert.deepEqual(ranked[0], expected);
+});
+
+test('a control singleton is not counted as an ordinary loose wing in the whole-hand comparison', () => {
+  const rank = loadRanker();
+  const fours = group(4, 3);
+  const hand = flatten([card(15), card(14), card(13), card(12), card(11), card(10),
+    card(9)], group(8, 2), group(5, 2), fours, [card(3)]);
+  const spendControl = [...fours, card(3), card(15)];
+  const retainControl = [...fours, card(3), card(8)];
+  const straight = [8, 9, 10, 11, 12, 13, 14].map((value) => card(value));
+  const deck = [
+    ...Array.from({ length: 13 }, (_value, index) => card(index + 3, 1)),
+    ...Array.from({ length: 12 }, (_value, index) => card(index + 3, 2)),
+    ...Array.from({ length: 12 }, (_value, index) => card(index + 3, 3)),
+    ...Array.from({ length: 11 }, (_value, index) => card(index + 3, 4)),
+  ];
+  const ranked = rank(hand, [
+    candidate(spendControl, 0),
+    candidate(retainControl, 1),
+    candidate(straight, 2),
+  ], { ...rules, deckCards: deck }, true, true);
+  assert.notDeepEqual(ranked[0], spendControl,
+    'spending the only 2 must not win just because the remaining 8 was counted as one less loose single');
+  assert.ok(ranked.some((cards) => cards.join(',') === straight.join(',')),
+    'the legal 8-to-A straight must remain in the same ranked candidate pool');
+});
+
+test('a maximum card may still be a wing when that immediately shortens the finish', () => {
+  const rank = loadRanker();
+  const fours = group(4, 3);
+  const hand = flatten(fours, [card(3), card(15)], group(5, 2));
+  const finishInTwo = [...fours, card(3), card(15)];
+  const keepMaximumButTakeThree = [...fours, ...group(5, 2)];
+  const ranked = rank(hand, [
+    candidate(keepMaximumButTakeThree, 0),
+    candidate(finishInTwo, 1),
+  ], rules, true, true);
+  assert.deepEqual(ranked[0], finishInTwo);
 });
 
 test('feedback figure 3 uses QQQ with pair fours', () => {

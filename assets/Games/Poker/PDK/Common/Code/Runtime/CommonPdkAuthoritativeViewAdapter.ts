@@ -304,6 +304,9 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
         runWaitSec,
         posInfo: posList,
         playedCardList,
+        // Rank counts are public information from this round's authority ledger,
+        // including rooms whose table presentation exposes only the last play.
+        publicPlayedRankCounts: source.publicPlayedRankCounts,
         playHistory: Array.isArray(source.playHistory) ? source.playHistory : [],
         winnerSeat: integer(source.winnerSeat) ? source.winnerSeat : -1,
         finished: Boolean(source.finished),

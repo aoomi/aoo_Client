@@ -1,7 +1,12 @@
 import { Button, Director, EventMouse, EventTouch, Label, Layout, Node, UITransform, Vec2, director, game, instantiate, view } from 'cc';
 import type { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import type { LobbyTopBarController } from '../../../Lobby/Code/LobbyTopBarController';
-import { HallCatalogGame, HallRoomGateway } from '../../../Lobby/Code/HallRoomGateway';
+import {
+    HallCatalogGame,
+    HallRoomGateway,
+    createRoomRuleFields,
+    normalizeCreateRoomRules,
+} from '../../../Lobby/Code/HallRoomGateway';
 import { CreateRoomRulePresenter } from './CreateRoomRulePresenter';
 import {
     BrowserKeyValueStorage,
@@ -156,13 +161,14 @@ export class PlaySelectorController {
             // the cache while the create-room panel is open.
             const configuration = await this.gateway.configuration(game, { refresh: true });
             if (this.disposed || selectionGeneration !== this.selectionGeneration) return;
-            const fields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
+            const publishedFields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
             console.info('[CreateRoomSelector]', {
                 action: 'CONFIG_RESPONSE', gameCode: game.gameCode, gameId: Number(game.gameId),
-                playVersion: game.playVersion, selectionGeneration, fieldCount: fields.length,
+                playVersion: game.playVersion, selectionGeneration, fieldCount: publishedFields.length,
                 schemaHash: String(configuration.ui?.roomRuleSourceHash ?? ''),
             });
-            if (!fields.length) throw new Error('该玩法尚未发布创建房间规则');
+            if (!publishedFields.length) throw new Error('该玩法尚未发布创建房间规则');
+            const fields = createRoomRuleFields(game.gameCode, publishedFields);
             const schemaHash = String(configuration.ui?.roomRuleSourceHash ?? '');
             this.activeSchemaHash = schemaHash;
             this.preferenceIdentity = { accountId: this.accountId, gameId: Number(game.gameId),
@@ -204,7 +210,8 @@ export class PlaySelectorController {
             const configuration = await this.gateway.configuration(game, { refresh: true });
             if (this.disposed || selectionGeneration !== this.selectionGeneration
                 || Number(this.selectedGame?.gameId) !== Number(game.gameId)) return;
-            const fields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
+            const publishedFields = Array.isArray(configuration.ui?.fields) ? configuration.ui.fields : [];
+            const fields = publishedFields.length ? createRoomRuleFields(game.gameCode, publishedFields) : [];
             const schemaHash = String(configuration.ui?.roomRuleSourceHash ?? '');
             if (fields.length && schemaHash && schemaHash !== this.activeSchemaHash) {
                 this.activeSchemaHash = schemaHash;
@@ -245,7 +252,14 @@ export class PlaySelectorController {
             this.showCreateFeedback('房间底分必须是正数，最多保留两位小数');
             return;
         }
-        const submittedRules = { ...this.presenter.snapshot(), baseScore: this.baseScore };
+        const draftRules = { ...this.presenter.snapshot(), baseScore: this.baseScore };
+        let submittedRules: Record<string, unknown>;
+        try {
+            submittedRules = normalizeCreateRoomRules(selectedGame.gameCode, draftRules);
+        } catch (error: unknown) {
+            this.showCreateFeedback(error instanceof Error ? error.message : '房间结束条件无效');
+            return;
+        }
         if (!Object.keys(submittedRules).length) {
             this.rulesReady = false; this.setCreateButtonBusy(false);
             this.message('房间规则尚未准备完成，请重新打开创建房间');
@@ -300,7 +314,7 @@ export class PlaySelectorController {
             });
             // 服务端确认建房成功后立即保存；场景交接可能销毁大厅控制器，不能等进入
             // 房间后再写入。校验失败或 gateway.create 抛错时不会执行到这里。
-            if (preferenceIdentity) this.preferences.save(preferenceIdentity, submittedRules);
+            if (preferenceIdentity) this.preferences.save(preferenceIdentity, draftRules);
             this.saveRecentGameCode(selectedGame.gameCode);
             if (this.disposed || generation !== this.generation) {
                 transition.cancel();
@@ -458,7 +472,14 @@ export class PlaySelectorController {
         }
         const validation = this.presenter.validate();
         if (!validation.ok) { this.message(validation.message); return; }
-        const rules = { ...this.presenter.snapshot(), baseScore: this.baseScore };
+        let rules: Record<string, unknown>;
+        try {
+            rules = normalizeCreateRoomRules(this.selectedGame.gameCode,
+                { ...this.presenter.snapshot(), baseScore: this.baseScore });
+        } catch (error: unknown) {
+            this.message(error instanceof Error ? error.message : '房间结束条件无效');
+            return;
+        }
         await this.forms.show('ui/club/UIClubRoomFee', this.club, this.selectedGame.gameId, {
             ...rules,
             gameId: this.selectedGame.gameId,

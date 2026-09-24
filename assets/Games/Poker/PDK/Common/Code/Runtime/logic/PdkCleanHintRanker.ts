@@ -22,8 +22,8 @@ export interface PdkHintRules {
     maximumSingleRanks?: readonly number[];
     /** Immutable regional deck used to derive maximum hands for each multiplicity. */
     deckCards?: readonly number[];
-    /** Authoritative cards already played in the current round, excluding the local hand. */
-    playedCards?: readonly number[];
+    /** Authoritative current-round public counts indexed by card rank. */
+    playedRankCounts?: readonly number[];
 }
 
 export interface PdkHintCandidate {
@@ -279,6 +279,8 @@ interface HandQuality {
     runCards: number;
     pairRunCards: number;
     isolated: number;
+    /** Loose singleton moves excluding authority-proven maximum control cards. */
+    ordinaryIsolated: number;
     /** Cards still participating in a complete structure after the candidate is played. */
     structuredCards: number;
 }
@@ -333,7 +335,7 @@ export function isRegionalMaximumPdkCombination(
  * rank joins the control chain only when every physical higher card is known.
  */
 export function effectivePdkMaximumSingleRanks(
-    deck: readonly number[], hand: readonly number[], playedCards: readonly number[],
+    deck: readonly number[], hand: readonly number[], playedRankCounts: readonly number[],
 ): number[] {
     const deckCounts = new Map<number, number>();
     const knownCounts = new Map<number, number>();
@@ -341,11 +343,16 @@ export function effectivePdkMaximumSingleRanks(
         const cardRank = rank(Number(card));
         deckCounts.set(cardRank, (deckCounts.get(cardRank) ?? 0) + 1);
     }
-    for (const card of [...hand, ...playedCards]) {
+    for (const card of hand) {
         const cardRank = rank(Number(card));
         if (!deckCounts.has(cardRank)) continue;
         knownCounts.set(cardRank, Math.min(deckCounts.get(cardRank) ?? 0,
             (knownCounts.get(cardRank) ?? 0) + 1));
+    }
+    for (const [cardRank, count] of playedRankCounts.entries()) {
+        if (!deckCounts.has(cardRank)) continue;
+        knownCounts.set(cardRank, Math.min(deckCounts.get(cardRank) ?? 0,
+            (knownCounts.get(cardRank) ?? 0) + count));
     }
     const ranks = [...deckCounts.keys()].sort((left, right) => left - right);
     return ranks.filter((candidate) => ranks
@@ -527,38 +534,6 @@ function isStraightCandidate(cards: readonly number[], rules: PdkHintRules): boo
         && ranks.every((value, index) => index === 0 || value === ranks[index - 1] + 1);
 }
 
-/**
- * Rank-multiset enumeration deliberately keeps one physical representative per
- * shape. Hint cycling still has to visit equivalent straight selections when a
- * rank has more than one physical card, otherwise the second Hint click skips
- * directly to a different shape and appears to dismantle the straight.
- */
-function straightPhysicalVariants(
-    hand: readonly number[],
-    cards: readonly number[],
-    rules: PdkHintRules,
-): number[][] {
-    if (!isStraightCandidate(cards, rules)) return [[...cards]];
-    const cardsByRank = new Map<number, number[]>();
-    for (const raw of hand) {
-        const card = Number(raw);
-        const values = cardsByRank.get(rank(card)) ?? [];
-        values.push(card);
-        cardsByRank.set(rank(card), values);
-    }
-    let variants: number[][] = [[]];
-    for (const card of cards) {
-        const physical = cardsByRank.get(rank(card)) ?? [Number(card)];
-        variants = variants.flatMap((prefix) => physical.map((value) => [...prefix, value]));
-    }
-    const originalKey = [...cards].sort((left, right) => left - right).join(',');
-    return variants.sort((left, right) => {
-        const leftKey = [...left].sort((a, b) => a - b).join(',');
-        const rightKey = [...right].sort((a, b) => a - b).join(',');
-        return Number(rightKey === originalKey) - Number(leftKey === originalKey);
-    });
-}
-
 function pairRunBounds(
     cards: readonly number[],
     rules: PdkHintRules,
@@ -574,13 +549,19 @@ function pairRunBounds(
 
 function pairRunSegmentForRank(
     counts: readonly number[], value: number, rules: PdkHintRules,
+    membership: 'AVAILABLE' | 'INTACT' = 'AVAILABLE',
 ): { start: number; end: number; length: number } | null {
-    if (counts[value] < 2) return null;
+    // A triple can legally supply two cards to a pair run, but it is not an
+    // intact pair to preserve in a response tie-break. Whole-hand planning
+    // already accounts for the legal run when it actually saves a turn.
+    const belongs = (cardRank: number): boolean => membership === 'INTACT'
+        ? counts[cardRank] === 2 : counts[cardRank] >= 2;
+    if (!belongs(value)) return null;
     const maximum = rules.allowTwoInRuns ? 15 : 14;
     let start = value;
     let end = value;
-    while (start > 3 && counts[start - 1] >= 2) start -= 1;
-    while (end < maximum && counts[end + 1] >= 2) end += 1;
+    while (start > 3 && belongs(start - 1)) start -= 1;
+    while (end < maximum && belongs(end + 1)) end += 1;
     const length = end - start + 1;
     return length >= rules.minimumPairRunLength ? { start, end, length } : null;
 }
@@ -741,6 +722,7 @@ function pairAttachmentVariants(
 
 interface MinimumPlanQuality {
     singles: number;
+    ordinarySingles: number;
     turns: number;
 }
 
@@ -755,7 +737,7 @@ function minimumPlanQuality(
         const cached = memo.get(key);
         if (cached !== undefined) return cached;
         const first = counts.findIndex((count, value) => value >= 3 && count > 0);
-        if (first < 0) return { singles: 0, turns: 0 };
+        if (first < 0) return { singles: 0, ordinarySingles: 0, turns: 0 };
         const removals = new Map<string, number[]>();
         const addRemoval = (removal: number[]): void => {
             if (removal[first] <= 0) return;
@@ -822,23 +804,35 @@ function minimumPlanQuality(
         }
         let best: MinimumPlanQuality = {
             singles: Number.POSITIVE_INFINITY,
+            ordinarySingles: Number.POSITIVE_INFINITY,
             turns: Number.POSITIVE_INFINITY,
         };
         for (const removal of removals.values()) {
             const next = counts.map((count, value) => count - removal[value]);
             if (next.some((count) => count < 0)) continue;
             const tail = visit(next);
+            const isSingle = removal.reduce((total, count) => total + count, 0) === 1;
+            const isControlSingle = isSingle && (rules.maximumSingleRanks ?? [15]).includes(first);
             const candidate = {
-                singles: tail.singles
-                    + (removal.reduce((total, count) => total + count, 0) === 1 ? 1 : 0),
+                singles: tail.singles + Number(isSingle),
+                ordinarySingles: tail.ordinarySingles + Number(isSingle && !isControlSingle),
                 turns: tail.turns + 1,
             };
             if (objective === 'SINGLES_ONLY'
                 ? candidate.singles < best.singles
                     || (candidate.singles === best.singles && candidate.turns < best.turns)
-                : candidate.turns < best.turns
-                    || (candidate.turns === best.turns && candidate.singles < best.singles)) {
+                : candidate.turns < best.turns) {
                 best = candidate;
+            } else if (objective !== 'SINGLES_ONLY' && candidate.turns === best.turns) {
+                // The best raw-single decomposition and the best ordinary-single
+                // decomposition may be different legal plans. Track both Pareto
+                // projections at the same minimum turn count instead of letting
+                // the first one erase a retained control-card alternative.
+                best = {
+                    turns: best.turns,
+                    singles: Math.min(best.singles, candidate.singles),
+                    ordinarySingles: Math.min(best.ordinarySingles, candidate.ordinarySingles),
+                };
             }
         }
         memo.set(key, best);
@@ -881,6 +875,7 @@ function quality(
         runCards: straightCards,
         pairRunCards,
         isolated,
+        ordinaryIsolated: plan.ordinarySingles,
         structuredCards: cards.length - isolated,
     };
 }
@@ -1026,10 +1021,9 @@ function attachmentPairPolicyCost(
         .filter(Boolean);
     const pairs = handCounts.map((count, value) => count === 2 ? value : 0).filter(Boolean);
     if (singles.length === 0 || pairs.length === 0) return 0;
-    // Two genuine loose cards already satisfy triple-with-two without damaging
-    // any structure. They must both be consumed before the older one-single
-    // fallback is allowed to open a pair. Example: 777,44,3,5 carries 3+5;
-    // choosing 3+4 would manufacture two avoidable loose cards in the remainder.
+    // Raw singleton ranks are only a local tie-break after the complete
+    // remainder is planned: a singleton may still belong to a straight.
+    // For genuinely loose 3 and 5 in 777,44,3,5, both precede opening 44.
     if (singles.length >= 2) {
         const twoSmallestSingles = [...singles].sort((left, right) => left - right).slice(0, 2);
         const matchesLooseSingles = twoSmallestSingles.every((value) => attachmentCounts[value] >= 1);
@@ -1152,7 +1146,7 @@ export function rankCleanPdkHints(
         preserveScoringBombs: Boolean(rules.preserveScoringBombs),
         maximumSingleRanks: [...(rules.maximumSingleRanks ?? [15])],
         deckCards: [...(rules.deckCards ?? [])],
-        playedCards: [...(rules.playedCards ?? [])],
+        playedRankCounts: [...(rules.playedRankCounts ?? [])],
     };
     // Bomb recognition is shared by every regional game. Whether that bomb is
     // protected is decided separately by the authoritative scoring switch:
@@ -1223,6 +1217,10 @@ export function rankCleanPdkHints(
                 quality: remainingQuality,
                 planLooseSingles: remainingQuality.isolated
                     + (candidate.cards.length === 1 ? 1 : 0),
+                planOrdinaryLooseSingles: remainingQuality.ordinaryIsolated
+                    + (candidate.cards.length === 1
+                        && !(normalizedRules.maximumSingleRanks ?? [15])
+                            .includes(rank(candidate.cards[0])) ? 1 : 0),
                 attachmentDamage: attachmentStructureDamage(
                     hand, candidate.cards, normalizedRules, planMemo,
                 ),
@@ -1250,7 +1248,43 @@ export function rankCleanPdkHints(
                         && value > rank(candidate.cards[0])),
             };
         })
-        .filter((value): value is PdkHintCandidate & { splitBombs: number; splitTriples: number; splitPairs: number; completeBombs: number; consumesFourCardBody: boolean; wholeHandBombFinish: boolean; earlyAceBomb: boolean; remainingCount: number; remainingHighestRank: number; quality: HandQuality; planLooseSingles: number; attachmentDamage: number; attachmentSourceCost: number; attachmentPairPolicyCost: number; attachmentControlCost: number; usesTwoAttachment: boolean; usesMaximumAttachment: boolean; tripleBodyRank: number; tripleBodyCount: number; straightBody: boolean; leavesStraightBody: boolean; retainsHigherStraight: boolean; retainsHigherPairRun: boolean; retainsHigherLooseSingle: boolean } => value !== null);
+        .filter((value): value is PdkHintCandidate & { splitBombs: number; splitTriples: number; splitPairs: number; completeBombs: number; consumesFourCardBody: boolean; wholeHandBombFinish: boolean; earlyAceBomb: boolean; remainingCount: number; remainingHighestRank: number; quality: HandQuality; planLooseSingles: number; planOrdinaryLooseSingles: number; attachmentDamage: number; attachmentSourceCost: number; attachmentPairPolicyCost: number; attachmentControlCost: number; usesTwoAttachment: boolean; usesMaximumAttachment: boolean; tripleBodyRank: number; tripleBodyCount: number; straightBody: boolean; leavesStraightBody: boolean; retainsHigherStraight: boolean; retainsHigherPairRun: boolean; retainsHigherLooseSingle: boolean } => value !== null);
+    type ScoredCandidate = (typeof scored)[number];
+    // Both the initial response sort and the regional variant selection must
+    // use the same complete-hand ordering. A raw singleton can be a member of
+    // a straight, so local wing point/source policies are only tie-breakers.
+    const compareResponseTripleAttachments = (
+        left: ScoredCandidate,
+        right: ScoredCandidate,
+        compareAttachmentPoints: boolean,
+    ): number => {
+        if (Boolean(left.finishesInTwo) !== Boolean(right.finishesInTwo)) {
+            return left.finishesInTwo ? -1 : 1;
+        }
+        const leftPreferredPair = usesPreferredLowPairAttachment(hand, left.cards, normalizedRules);
+        const rightPreferredPair = usesPreferredLowPairAttachment(hand, right.cards, normalizedRules);
+        if (leftPreferredPair !== rightPreferredPair) return leftPreferredPair ? -1 : 1;
+        if (Boolean(left.containsRuleMaximum) !== Boolean(right.containsRuleMaximum)) {
+            return left.containsRuleMaximum ? 1 : -1;
+        }
+        if (left.usesMaximumAttachment !== right.usesMaximumAttachment) {
+            return left.usesMaximumAttachment ? 1 : -1;
+        }
+        return left.quality.turns - right.quality.turns
+            || left.attachmentDamage - right.attachmentDamage
+            || left.planLooseSingles - right.planLooseSingles
+            || left.attachmentSourceCost - right.attachmentSourceCost
+            || left.attachmentPairPolicyCost - right.attachmentPairPolicyCost
+            // When the rule compares wings, equally clean plans prefer the
+            // higher wing. The low-card control cost belongs only to the
+            // no-comparison policy; using both inverted the regional tie-break.
+            || (compareAttachmentPoints ? 0
+                : left.attachmentControlCost - right.attachmentControlCost)
+            || (compareAttachmentPoints ? -1 : 1) * compareTripleAttachmentRanks(
+                hand, left.cards, right.cards,
+            )
+            || left.order - right.order;
+    };
     // An intact pair is a complete legal wing source. If the same triple body
     // can carry the same number of cards without touching another complete
     // triple, never keep the variant that peels cards from that triple. Generic
@@ -1276,6 +1310,22 @@ export function rankCleanPdkHints(
             && !(candidate.remainingCount === 1 && alternative.remainingCount === 1
                 && candidate.remainingHighestRank > alternative.remainingHighestRank));
     });
+    // A recovery chain exists only when an equally sized, authority-legal
+    // higher triple family remains physically intact after the opening play.
+    // Merely counting two triple ranks in the original hand also credits a
+    // straight that splits the lower triple and loses that response shape.
+    const intactTripleFamilies = attachmentSafeScored.filter((candidate) =>
+        candidate.tripleBodyCount > 0 && candidate.splitTriples === 0
+        && candidate.cards.length > candidate.tripleBodyCount * 3);
+    const recapturingTripleLeads = new Set(intactTripleFamilies.filter((candidate) => {
+        const remaining = subtract(hand, candidate.cards);
+        return remaining !== null && intactTripleFamilies.some((higher) =>
+            higher !== candidate
+            && higher.cards.length === candidate.cards.length
+            && higher.tripleBodyCount === candidate.tripleBodyCount
+            && higher.tripleBodyRank > candidate.tripleBodyRank
+            && containsCards(remaining, higher.cards));
+    }));
     const minimumPlanTurns = Math.min(...attachmentSafeScored
         .map((candidate) => candidate.quality.turns));
     const minimumPlanLooseSingles = Math.min(...attachmentSafeScored
@@ -1372,7 +1422,8 @@ export function rankCleanPdkHints(
             && originalCounts[rank(candidate.cards[0])] === 2)
         : [];
     const hasIndependentResponsePair = responsePairCandidates.some((candidate) =>
-        pairRunSegmentForRank(originalCounts, rank(candidate.cards[0]), normalizedRules) === null);
+        pairRunSegmentForRank(originalCounts, rank(candidate.cards[0]),
+            normalizedRules, 'INTACT') === null);
     // When pairs contain more cards than all loose singles, the hand is pair-
     // dominant and must start from the lowest pair even if one loose card is the
     // regional maximum. Example: 2,J,9,6 + QQ,77,55,33 starts from 33; letting
@@ -1469,6 +1520,23 @@ export function rankCleanPdkHints(
         && leadPool.some((candidate) => candidate.splitBombs === 0)
         ? leadPool.filter((candidate) => candidate.splitBombs === 0)
         : leadPool;
+    // A rank with one physical card is not necessarily a loose single: it may
+    // be part of an intact straight. Keep that distinction at the response
+    // comparator so equal-quality single replies do not break a complete pair
+    // merely because the pair's rank is lower.
+    const cleanStraightRanks = new Set<number>();
+    if (!preferLargest) {
+        for (const [start, end] of runs(originalCounts, 1,
+            normalizedRules.minimumStraightLength, normalizedRules.allowTwoInRuns)) {
+            if (Array.from({ length: end - start + 1 }, (_, index) => originalCounts[start + index])
+                .some((count) => count !== 1)) continue;
+            for (let value = start; value <= end; value += 1) cleanStraightRanks.add(value);
+        }
+    }
+    const isGenuineLooseSingle = (candidate: ScoredCandidate): boolean =>
+        candidate.cards.length === 1
+        && originalCounts[rank(candidate.cards[0])] === 1
+        && !cleanStraightRanks.has(rank(candidate.cards[0]));
     rankedPool.sort((left, right) => {
             // A hand containing a bomb is never auto-finished through a
             // four-card-body combination. Keep that legal manual choice as the
@@ -1491,6 +1559,31 @@ export function rankCleanPdkHints(
             const guaranteedFinishDifference = Number(guaranteedResponseFinish(right))
                 - Number(guaranteedResponseFinish(left));
             if (guaranteedFinishDifference !== 0) return guaranteedFinishDifference;
+            if (!preferLargest && left.cards.length === 1 && right.cards.length === 1
+                && left.quality.turns === right.quality.turns
+                && left.planLooseSingles === right.planLooseSingles) {
+                // A regional maximum is retained as recovery unless the
+                // guaranteed-finish comparison above proves it ends the hand.
+                const leftLooseBeforePair = isGenuineLooseSingle(left)
+                    && !left.containsRuleMaximum && right.splitPairs > 0;
+                const rightLooseBeforePair = isGenuineLooseSingle(right)
+                    && !right.containsRuleMaximum && left.splitPairs > 0;
+                if (leftLooseBeforePair !== rightLooseBeforePair) {
+                    return leftLooseBeforePair ? -1 : 1;
+                }
+            }
+            // Compare a real same-shape recovery chain at the shared planning
+            // boundary, before local shape preferences can make sorting
+            // non-transitive. Exact two-play finishes retain their own stronger
+            // endgame policy below.
+            if (preferLargest && normalizedRules.optimizeWholeHand
+                && left.quality.turns > 1
+                && left.quality.turns === right.quality.turns
+                && left.planLooseSingles === right.planLooseSingles) {
+                const leftRecaptures = recapturingTripleLeads.has(left);
+                const rightRecaptures = recapturingTripleLeads.has(right);
+                if (leftRecaptures !== rightRecaptures) return leftRecaptures ? -1 : 1;
+            }
             // Consecutive-pair responses must compare the complete remainder,
             // just like ordinary pair responses below. Point order is only a
             // final tie-breaker. Otherwise 991010 is selected merely because 9
@@ -1528,7 +1621,8 @@ export function rankCleanPdkHints(
                     || rank(candidate.cards[0]) !== rank(candidate.cards[1])
                     || originalCounts[rank(candidate.cards[0])] !== 2) return null;
                 const value = rank(candidate.cards[0]);
-                const segment = pairRunSegmentForRank(originalCounts, value, normalizedRules);
+                const segment = pairRunSegmentForRank(originalCounts, value,
+                    normalizedRules, 'INTACT');
                 // Whole-hand completion remains authoritative for a response.
                 // A nominally independent pair may still be essential to a
                 // straight: removing 44 from AA,QQ,JJJ,10,88,7,6,5,44,3
@@ -1582,28 +1676,20 @@ export function rankCleanPdkHints(
                 && left.cards.length === right.cards.length
                 && left.cards.length > left.tripleBodyCount * 3;
             if (sameTripleAttachmentShape) {
-                // Finishing in exactly two plays is a whole-hand invariant and
-                // must precede local attachment rank. In 101010,JJ,K,A the
-                // complete 101010+K+A lead leaves JJ as the final legal hand;
-                // comparing attachment points first incorrectly chose
-                // 101010+JJ and manufactured two later single plays.
+                if (!preferLargest) {
+                    return compareResponseTripleAttachments(left, right, false);
+                }
+                // Self-lead retains its existing control and attachment policy.
+                // Response-only full-hand ordering must not rewrite that path.
                 if (Boolean(left.finishesInTwo) !== Boolean(right.finishesInTwo)) {
                     return left.finishesInTwo ? -1 : 1;
                 }
-                const attachmentRankDifference = compareTripleAttachmentRanks(
-                    hand, left.cards, right.cards,
-                );
-                // "No attachment comparison" removes only the regional point
-                // contest; it does not allow a lower card to destroy an atomic
-                // pair. Base grouping has already classified pairs, so two true
-                // non-maximum loose singles are consumed before any pair is
-                // opened, regardless of whether those singles are below or above
-                // rank 10. The explicit low-pair/high-single exception above is
-                // intentionally stronger. Example: 33,555,1010,J,K,A,2 carries
-                // J+K, retaining both pairs plus A/2 as recovery controls.
                 const pairPolicyDifference = left.attachmentPairPolicyCost
                     - right.attachmentPairPolicyCost;
                 if (pairPolicyDifference !== 0) return pairPolicyDifference;
+                const attachmentRankDifference = compareTripleAttachmentRanks(
+                    hand, left.cards, right.cards,
+                );
                 if (attachmentRankDifference !== 0) return attachmentRankDifference;
             }
             const leftScoringBomb = left.completeBombs > 0 || left.consumesFourCardBody;
@@ -1818,10 +1904,14 @@ export function rankCleanPdkHints(
             const rightPairAttachment = completePairAttachmentRank(hand, right.cards);
             const leftHasPairAttachment = leftPairAttachment < Number.MAX_SAFE_INTEGER;
             const rightHasPairAttachment = rightPairAttachment < Number.MAX_SAFE_INTEGER;
-            const leftTripleRecoveryLead = hasTripleRecoveryChain
-                && left.tripleBodyCount === 1 && left.splitTriples === 0 && left.cards.length > 3;
-            const rightTripleRecoveryLead = hasTripleRecoveryChain
-                && right.tripleBodyCount === 1 && right.splitTriples === 0 && right.cards.length > 3;
+            const leftTripleRecoveryLead = preferLargest
+                ? recapturingTripleLeads.has(left)
+                : hasTripleRecoveryChain && left.tripleBodyCount === 1
+                    && left.splitTriples === 0 && left.cards.length > 3;
+            const rightTripleRecoveryLead = preferLargest
+                ? recapturingTripleLeads.has(right)
+                : hasTripleRecoveryChain && right.tripleBodyCount === 1
+                    && right.splitTriples === 0 && right.cards.length > 3;
             const leftIntactPairLead = left.cards.length === 2
                 && rank(left.cards[0]) === rank(left.cards[1])
                 && originalCounts[rank(left.cards[0])] === 2;
@@ -2070,13 +2160,9 @@ export function rankCleanPdkHints(
         .map((count, value) => count === 3 ? value : 0)
         .filter(Boolean)
         .sort((left, right) => left - right)[0] ?? Number.MAX_SAFE_INTEGER;
-    // Phase two assigns wings only after atomic bodies have been identified.
-    // Fill the authoritative attachment capacity from genuine loose singles,
-    // ordered from low to high. Rank 10 is not a semantic boundary here: when
-    // 555 may carry two cards and the loose singles are 6,K,A,2, the complete
-    // 555+6+K play must precede the shortened 555+6 variant. Intact pairs,
-    // triples and bombs remain ineligible as "loose" wings; the separate
-    // low-pair policy still owns its explicitly configured special case.
+    // A lower triple with genuine loose wings may be the first body of a
+    // recovery chain. Identify that complete play here, but let the final
+    // whole-hand order decide whether a larger intact body must lead instead.
     const completeLooseSingleTripleLead = hasTripleRecoveryChain ? plannedPool
         .filter((candidate) => candidate.tripleBodyCount === 1
             && candidate.tripleBodyRank === lowestTripleBodyRank
@@ -2263,15 +2349,7 @@ export function rankCleanPdkHints(
     const strategicPrimary = cyclePool[0];
     const longestCleanStraight = cyclePool[longestCleanStraightIndex];
     const strategicTripleRecoveryLead = Boolean(strategicPrimary
-        && hasTripleRecoveryChain
-        && strategicPrimary.tripleBodyCount === 1
-        && strategicPrimary.splitTriples === 0
-        && strategicPrimary.cards.length > strategicPrimary.tripleBodyCount * 3
-        && cyclePool.some((candidate) => candidate !== strategicPrimary
-            && candidate.tripleBodyCount === 1
-            && candidate.splitTriples === 0
-            && candidate.cards.length === strategicPrimary.cards.length
-            && candidate.tripleBodyRank > strategicPrimary.tripleBodyRank));
+        && recapturingTripleLeads.has(strategicPrimary));
     // Card count is a tie-breaker only after the remainder is at least as clean.
     // This retains the existing long-straight preference when it costs no hand
     // structure, but prevents 4-10 from breaking both 99 and 1010 when 4-8 keeps
@@ -2341,16 +2419,35 @@ export function rankCleanPdkHints(
         const hasExactTwoHandMaximum = cyclePool.some((candidate) =>
             isExactTwoHandMaximum(candidate));
         const hasTwoHandScoringBomb = twoHandScoringBombs.length > 0;
-        const completeLooseSingleTripleIndex = completeLooseSingleTripleLead
-            ? cyclePool.indexOf(completeLooseSingleTripleLead) : -1;
-        if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb
-            && completeLooseSingleTripleLead && completeLooseSingleTripleIndex !== 0
-            && !hasPreferredLowPairAttachment) {
-            if (completeLooseSingleTripleIndex > 0) {
-                cyclePool.splice(completeLooseSingleTripleIndex, 1);
+        // The recovery-chain promotion is only a tie refinement among clean
+        // complete bodies. It must not replace a larger intact play that leaves
+        // no more turns or loose singles; that body is already the public
+        // whole-hand priority. A short standalone pair cannot veto the lower
+        // triple recovery chain merely by reporting a locally cleaner tail.
+        const dominantCleanLead = completeLooseSingleTripleLead ? cyclePool
+            .filter((candidate) => candidate !== completeLooseSingleTripleLead
+                && candidate.cards.length > completeLooseSingleTripleLead.cards.length
+                && candidate.quality.turns <= completeLooseSingleTripleLead.quality.turns
+                && candidate.planLooseSingles <= completeLooseSingleTripleLead.planLooseSingles
+                && candidate.splitBombs === 0 && candidate.splitTriples === 0
+                && candidate.splitPairs === 0
+                && candidate.completeBombs === 0 && !candidate.consumesFourCardBody)
+            .sort((left, right) => left.quality.turns - right.quality.turns
+                || left.planLooseSingles - right.planLooseSingles
+                || right.cards.length - left.cards.length
+                || left.order - right.order)[0] : undefined;
+        if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb) {
+            const preferredCompleteLead = dominantCleanLead
+                ?? (!hasPreferredLowPairAttachment ? completeLooseSingleTripleLead : undefined);
+            const preferredIndex = preferredCompleteLead
+                ? cyclePool.indexOf(preferredCompleteLead) : -1;
+            if (preferredIndex > 0) {
+                cyclePool.splice(preferredIndex, 1);
+                cyclePool.unshift(preferredCompleteLead!);
             }
-            cyclePool.unshift(completeLooseSingleTripleLead);
         }
+        const completeLooseSingleTripleIsPrimary = Boolean(completeLooseSingleTripleLead
+            && cyclePool[0] === completeLooseSingleTripleLead);
         const finalLowStraightIndex = lowDuplicateStraight
             ? cyclePool.findIndex((candidate) => candidate.straightBody
                 && candidate.cards.length === lowDuplicateStraight.cards.length
@@ -2371,6 +2468,7 @@ export function rankCleanPdkHints(
         if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb
             && minimumSingleDecompositionStraight
             && !(cyclePool[0]?.retainsHigherPairRun)
+            && !recapturingTripleLeads.has(cyclePool[0])
             && minimumSingleDecompositionStraight.cards.length > (cyclePool[0]?.cards.length ?? 0)) {
             const sameStraightIndex = cyclePool.findIndex((candidate) => candidate.straightBody
                 && candidate.cards.length === minimumSingleDecompositionStraight.cards.length
@@ -2388,7 +2486,7 @@ export function rankCleanPdkHints(
         if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb
             && minimumSingleDecompositionLead
             && !singleDominantHand
-            && !lowDuplicateStraight && !completeLooseSingleTripleLead
+            && !lowDuplicateStraight && !completeLooseSingleTripleIsPrimary
             && !(cyclePool[0]?.retainsHigherPairRun)
             && minimumSingleDecompositionLead.cards.length > (cyclePool[0]?.cards.length ?? 0)) {
             const exactIndex = cyclePool.indexOf(minimumSingleDecompositionLead);
@@ -2409,7 +2507,7 @@ export function rankCleanPdkHints(
             && atomicPairRunLead.planLooseSingles === currentLead.planLooseSingles
             && atomicPairRunLead.cards.length > currentLead.cards.length);
         if (!hasExactTwoHandMaximum && !hasTwoHandScoringBomb
-            && atomicPairRunLead && !lowDuplicateStraight && !completeLooseSingleTripleLead
+            && atomicPairRunLead && !lowDuplicateStraight && !completeLooseSingleTripleIsPrimary
             && !(cyclePool[0]?.retainsHigherPairRun)
             // A later straight or triple-family refinement cannot reverse the
             // authoritative decomposition order. This applies even when the
@@ -2694,6 +2792,9 @@ export function rankCleanPdkHints(
             const preferredLowPairExists = variants.some((candidate) =>
                 usesPreferredLowPairAttachment(hand, candidate.cards, normalizedRules));
             const selected = [...variants].sort((left, right) => {
+                if (!preferLargest) {
+                    return compareResponseTripleAttachments(left, right, true);
+                }
                 if (preferredLowPairExists) {
                     const leftPreferred = usesPreferredLowPairAttachment(
                         hand, left.cards, normalizedRules,
@@ -2707,8 +2808,8 @@ export function rankCleanPdkHints(
                     return left.containsRuleMaximum ? 1 : -1;
                 }
                 if (attachmentCount === 1) {
-                    const turnDifference = left.quality.turns - right.quality.turns;
-                    if (turnDifference !== 0) return turnDifference;
+                const turnDifference = left.quality.turns - right.quality.turns;
+                if (turnDifference !== 0) return turnDifference;
                     const looseDifference = left.planLooseSingles - right.planLooseSingles;
                     if (looseDifference !== 0) return looseDifference;
                     if (preserveMaximumForStraight
@@ -2742,10 +2843,11 @@ export function rankCleanPdkHints(
         }
     }
     const hasExactTwoHandLead = cyclePool.some((candidate) => candidate.finishesInTwo);
-    if (preferLargest) {
+    if (preferLargest && !hasExactTwoHandLead) {
         // A proven recovery chain owns the final lead decision across every
-        // regional refinement and across unrelated intact hand structures:
-        // lead the lower complete pair body when the
+        // regional refinement in longer hands. An authority-proven two-play
+        // finish is stronger than a low-pair probe that opens its final run.
+        // Lead the lower complete pair body when the
         // untouched higher run contains an equal-length segment that can take
         // the same trick back. First preserve the minimum whole-hand plan,
         // then shed the most cards among equally clean low probes. This keeps
@@ -2860,7 +2962,8 @@ export function rankCleanPdkHints(
         type ControlPlan = { moves: ControlMove[]; probes: number; controls: number };
         const deckCounts = countsOf(normalizedRules.deckCards ?? []);
         const hasPhysicalDeck = deckCounts.some((count) => count > 0);
-        const knownCounts = countsOf([...hand, ...(normalizedRules.playedCards ?? [])]);
+        const knownCounts = countsOf(hand).map((count, cardRank) =>
+            count + (normalizedRules.playedRankCounts?.[cardRank] ?? 0));
         const unknownCounts = deckCounts.map((count, value) =>
             Math.max(0, count - knownCounts[value]));
         const hasHigherUnknownRun = (top: number, length: number, copies: number): boolean => {
@@ -3014,6 +3117,20 @@ export function rankCleanPdkHints(
             const responseControlDifference = Number(responseFinishingControl(right))
                 - Number(responseFinishingControl(left));
             if (responseControlDifference !== 0) return responseControlDifference;
+            // An authority-legal two-play finish is already proved for both
+            // leads. If only one lead is a proven maximum, keep that control
+            // first; otherwise shed the larger intact play now. A speculative
+            // low-pair probe must not add a third turn by dismantling the
+            // complete pair run that would finish the hand in two plays.
+            if (preferLargest && left.finishesInTwo && right.finishesInTwo) {
+                const maximumDifference = Number(isExactTwoHandMaximum(right))
+                    - Number(isExactTwoHandMaximum(left));
+                if (maximumDifference !== 0) return maximumDifference;
+                if (!isExactTwoHandMaximum(left) && !isExactTwoHandMaximum(right)
+                    && left.cards.length !== right.cards.length) {
+                    return right.cards.length - left.cards.length;
+                }
+            }
             const leftPlan = controlPlans.get(left);
             const rightPlan = controlPlans.get(right);
             if (Boolean(leftPlan) !== Boolean(rightPlan)) return leftPlan ? -1 : 1;
@@ -3059,7 +3176,29 @@ export function rankCleanPdkHints(
             if (retainedControlDifference !== 0) return retainedControlDifference;
             const turnDifference = left.quality.turns - right.quality.turns;
             if (turnDifference !== 0) return turnDifference;
-            const looseDifference = left.planLooseSingles - right.planLooseSingles;
+            // Wing variants of the same triple body were already ordered by
+            // the authoritative attachment mode and whole-hand decomposition.
+            // The final cross-shape comparison must not silently reverse that
+            // decision using a second, incompatible singleton score.
+            const sameTripleBody = preferLargest
+                && left.tripleBodyCount > 0
+                && left.tripleBodyCount === right.tripleBodyCount
+                && left.tripleBodyRank === right.tripleBodyRank
+                && left.cards.length === right.cards.length;
+            if (sameTripleBody) {
+                const attachmentOrder = (establishedOrder.get(left) ?? 0)
+                    - (establishedOrder.get(right) ?? 0);
+                if (attachmentOrder !== 0) return attachmentOrder;
+            }
+            // Spending an effective maximum as a wing removes an independent
+            // recovery resource. Compare the complete remainders by ordinary
+            // loose singles, not by a raw count that treats that control as
+            // stranded; outside this trade-off keep the established score.
+            const compareControlWing = preferLargest
+                && left.usesMaximumAttachment !== right.usesMaximumAttachment;
+            const looseDifference = compareControlWing
+                ? left.planOrdinaryLooseSingles - right.planOrdinaryLooseSingles
+                : left.planLooseSingles - right.planLooseSingles;
             if (looseDifference !== 0) return looseDifference;
             const preservedRecoveryDifference = Number(fullLeadsPreservingRecovery.has(right))
                 - Number(fullLeadsPreservingRecovery.has(left));
@@ -3067,18 +3206,15 @@ export function rankCleanPdkHints(
             return (establishedOrder.get(left) ?? 0) - (establishedOrder.get(right) ?? 0);
         });
     }
-    const expanded: number[][] = [];
-    const deferredPhysicalVariants: number[][] = [];
+    const uniquePatterns: number[][] = [];
     const seen = new Set<string>();
     for (const candidate of cyclePool) {
-        const variants = straightPhysicalVariants(hand, candidate.cards, normalizedRules);
-        for (const [variantIndex, cards] of variants.entries()) {
-            const key = [...cards].sort((left, right) => left - right).join(',');
-            if (seen.has(key)) continue;
-            seen.add(key);
-            if (variantIndex === 0 || !cycleToDifferentStructure) expanded.push(cards);
-            else deferredPhysicalVariants.push(cards);
-        }
+        // The UI cycles legal rank patterns, not physical suit permutations.
+        // Keep the highest-ranked representative without changing its priority.
+        const key = candidate.cards.map(rank).sort((left, right) => left - right).join(',');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniquePatterns.push(candidate.cards);
     }
-    return [...expanded, ...deferredPhysicalVariants];
+    return uniquePatterns;
 }

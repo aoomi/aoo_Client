@@ -38,7 +38,6 @@ export interface HallRoomRuleField {
     helpText?: string;
     visible?: boolean;
     defaultCandidateIndexes?: number[];
-    trusteeCount?: number;
     key: string; label: string; control?: string; required?: boolean; defaultValue?: unknown;
     options?: HallRoomRuleOption[]; disabled?: boolean; min?: number; max?: number; step?: number;
 }
@@ -80,6 +79,80 @@ export interface HallReplayCodeResolution {
 }
 export interface HallCurrentReplayCode { code: string; roomId: number; setId: number; status: 'ACTIVE' | 'EXPIRED'; }
 
+export const CD299_ROOM_END_SELECTION_KEY = 'roomEndSelection';
+const CD299_ROUND_COUNTS = new Set([10, 20, 30]);
+const CD299_DURATION_MINUTES = new Set([30, 45, 60]);
+
+/**
+ * CD299 的结束条件是一个选择，而不是两个可同时存在的规则字段。发布仍保持
+ * fail-closed 时，由共享建房页把旧的固定维度字段投影成同一个六选一控件。
+ */
+export function createRoomRuleFields(gameCode: string, fields: readonly HallRoomRuleField[]): HallRoomRuleField[] {
+    if (gameCode.trim().toUpperCase() !== 'CD299') return fields.map(field => ({ ...field }));
+    const endKeys = new Set([CD299_ROOM_END_SELECTION_KEY, 'roundCount', 'roomDurationMinutes']);
+    const retained = fields.filter(field => !endKeys.has(field.key)).map(field => ({ ...field }));
+    const replacedOrders = fields.filter(field => endKeys.has(field.key))
+        .map(field => Number(field.order)).filter(Number.isFinite);
+    retained.push({
+        key: CD299_ROOM_END_SELECTION_KEY,
+        label: '房间结束',
+        control: 'radio',
+        required: true,
+        visible: true,
+        disabled: false,
+        order: replacedOrders.length ? Math.min(...replacedOrders) : 1,
+        defaultValue: 'ROUND_COUNT:10',
+        defaultCandidateIndexes: [4],
+        options: [
+            { value: 'DURATION_MINUTES:30', label: '30分钟' },
+            { value: 'DURATION_MINUTES:45', label: '45分钟' },
+            { value: 'DURATION_MINUTES:60', label: '60分钟' },
+            { value: 'ROUND_COUNT:10', label: '10局' },
+            { value: 'ROUND_COUNT:20', label: '20局' },
+            { value: 'ROUND_COUNT:30', label: '30局' },
+        ],
+    });
+    return retained.sort((left, right) => Number(left.order ?? 0) - Number(right.order ?? 0));
+}
+
+/** Convert the one CD299 selection into exactly one canonical request dimension. */
+export function normalizeCreateRoomRules(gameCode: string, rules: Record<string, unknown>): Record<string, unknown> {
+    const normalized = { ...rules };
+    if (gameCode.trim().toUpperCase() !== 'CD299') return normalized;
+
+    const selected = normalized[CD299_ROOM_END_SELECTION_KEY];
+    const hasRoundCount = Object.prototype.hasOwnProperty.call(normalized, 'roundCount');
+    const hasDuration = Object.prototype.hasOwnProperty.call(normalized, 'roomDurationMinutes');
+    if (selected !== undefined && (hasRoundCount || hasDuration)) {
+        throw new Error('扯旋房间结束条件只能选择一项');
+    }
+    delete normalized[CD299_ROOM_END_SELECTION_KEY];
+
+    if (selected !== undefined) {
+        if (typeof selected !== 'string') throw new Error('扯旋房间结束条件无效');
+        const match = /^(ROUND_COUNT|DURATION_MINUTES):(\d+)$/.exec(selected);
+        if (!match) throw new Error('扯旋房间结束条件无效');
+        const value = Number(match[2]);
+        if (match[1] === 'ROUND_COUNT') normalized.roundCount = value;
+        else normalized.roomDurationMinutes = value;
+    }
+
+    const roundCount = normalized.roundCount;
+    const duration = normalized.roomDurationMinutes;
+    const hasCanonicalRound = Object.prototype.hasOwnProperty.call(normalized, 'roundCount');
+    const hasCanonicalDuration = Object.prototype.hasOwnProperty.call(normalized, 'roomDurationMinutes');
+    if (hasCanonicalRound === hasCanonicalDuration) throw new Error('扯旋房间结束条件必须且只能选择一项');
+    if (hasCanonicalRound && (typeof roundCount !== 'number' || !Number.isInteger(roundCount)
+        || !CD299_ROUND_COUNTS.has(roundCount))) {
+        throw new Error('扯旋局数只能选择10局、20局或30局');
+    }
+    if (hasCanonicalDuration && (typeof duration !== 'number' || !Number.isInteger(duration)
+        || !CD299_DURATION_MINUTES.has(duration))) {
+        throw new Error('扯旋时长只能选择30分钟、45分钟或60分钟');
+    }
+    return normalized;
+}
+
 /** Canonical HTTPS boundary for room lifecycle before the realtime room connection exists. */
 export class HallRoomGateway {
     private static readonly joins = new Map<string, Promise<HallRoomHandoff>>();
@@ -97,7 +170,13 @@ export class HallRoomGateway {
     }
     public create(gameCode: string, rules: Record<string, unknown>, scope: HallRoomScope = { type: 'PERSONAL' }, location?: HallAdmissionLocation): Promise<HallRoomHandoff> {
         if (this.pending) return this.pending;
-        this.pending = this.createOnce(gameCode, rules, scope, location).finally(() => { this.pending = null; });
+        let normalizedRules: Record<string, unknown>;
+        try {
+            normalizedRules = normalizeCreateRoomRules(gameCode, rules);
+        } catch (error: unknown) {
+            return Promise.reject(error);
+        }
+        this.pending = this.createOnce(gameCode, normalizedRules, scope, location).finally(() => { this.pending = null; });
         return this.pending;
     }
     public join(roomId: number): Promise<HallRoomHandoff>;

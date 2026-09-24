@@ -114,6 +114,13 @@ export class CD299RoomViewComponent extends Component implements CD299RoomView {
 
     public showRoundDelta(_seat: number, _value: number): void {}
 
+    public showSettlementChips(_stateVersion: number, entries: readonly import('./CD299RoomPresenter').CD299SettlementChip[]): void {
+        for (const entry of entries) {
+            this.showScore(entry.visualSeat, entry.finalScore);
+            this.showRoundDelta(entry.visualSeat, entry.delta);
+        }
+    }
+
     public showBetAction(_seat: number, _action: import('./CD299Protocol').CD299BetAction | null): void {}
 
     public showOperationDeadline(_seat: number, _deadlineEpochMillis: number): void {}

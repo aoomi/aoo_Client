@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import ts from '../../../Admin/node_modules/typescript/lib/typescript.js';
 
 const controllerPath = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url);
 const source = readFileSync(controllerPath, 'utf8');
@@ -12,6 +13,76 @@ function method(name, nextName) {
   assert.notEqual(end, -1, `${nextName} must exist after ${name}`);
   return source.slice(start, end);
 }
+
+function dragCommitProbe(hand, leading, chooseLegal) {
+  const body = method('commitSmartDragSelection', 'largestLegalDragCandidates');
+  const js = ts.transpileModule(`class DragCommitProbe { ${body} }`, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const Probe = Function(`${js}\nreturn DragCommitProbe;`)();
+  const probe = new Probe();
+  let selected = [];
+  let covered = [];
+  probe.logic = {
+    GetHandCard: () => hand,
+    GetSelectCard: () => selected,
+    ChangeSelectCard: (cards) => { selected = [...cards]; },
+  };
+  probe.cardNodes = hand.map(() => ({}));
+  probe.cards = { previewDrag: () => {} };
+  probe.orderedDragIndices = () => covered;
+  probe.isAuthoritativeLeadingTurn = () => leading;
+  probe.missingRequiredFirstCard = () => 0;
+  probe.largestLegalDragCandidates = (cards) => chooseLegal(cards);
+  probe.cardsInHandOrder = (cards) => hand.filter((card) => cards.includes(card));
+  probe.traceGesture = () => {};
+  probe.traceOutCards = () => {};
+  probe.runtime = { getPlayerId: () => 1, getRoomSet: () => ({ GetRoomSetInfo: () => ({}) }) };
+  probe.record = () => null;
+  probe.clearDragSelection = () => {};
+  probe.resetPromptCycle = () => {};
+  probe.updateSelection = () => {};
+  probe.refresh = () => {};
+  return {
+    swipe(indices) {
+      covered = indices;
+      probe.commitSmartDragSelection({});
+      return [...selected];
+    },
+    setSelection(cards) { selected = [...cards]; },
+  };
+}
+
+test('lead swipe retains all three equal-rank cards instead of reducing an unfinished triple to a pair', () => {
+  const probe = dragCommitProbe([107, 207, 307, 108], true, () => [[107, 207]]);
+  assert.deepEqual(probe.swipe([0, 1, 2]), [107, 207, 307]);
+});
+
+test('lead swipes and taps accumulate physical cards across gestures', () => {
+  const hand = [107, 207, 108, 208, 109];
+  const probe = dragCommitProbe(hand, true, (cards) => [cards]);
+  assert.deepEqual(probe.swipe([0, 1]), [107, 207]);
+  assert.deepEqual(probe.swipe([2, 3]), [107, 207, 108, 208]);
+  probe.setSelection([107, 109]); // A preceding swipe followed by a manual tap.
+  assert.deepEqual(probe.swipe([2, 3]), [107, 108, 208, 109]);
+  const tap = method('async toggleCardAt', 'canExtendSelectionAsBomb');
+  assert.match(tap, /else if \(this\.logic\.CheckSelected\(clicked\)\) this\.logic\.DeleteCardSelected/);
+  assert.match(tap, /else this\.logic\.SetCardSelected\(index \+ 1\)/);
+});
+
+test('lead swipe keeps an unfinished straight range when only a singleton is playable', () => {
+  const probe = dragCommitProbe([105, 106, 107, 108, 109], true, () => [[105]]);
+  assert.deepEqual(probe.swipe([0, 1, 2, 3]), [105, 106, 107, 108]);
+});
+
+test('response swipe still replaces earlier selection, while a complete lead shape keeps drag ranking', () => {
+  const hand = [107, 207, 108, 208, 109];
+  const response = dragCommitProbe(hand, false, (cards) => [cards]);
+  response.swipe([0, 1]);
+  assert.deepEqual(response.swipe([2, 3]), [108, 208]);
+  const lead = dragCommitProbe(hand, true, () => [[107, 207, 108, 208]]);
+  assert.deepEqual(lead.swipe([0, 1, 2, 3, 4]), [107, 207, 108, 208]);
+});
 
 test('bottom-band blank space may start a drag without fabricating a card hit', () => {
   const domDown = method('readonly onDomPointerDown', 'readonly onDomPointerMove');

@@ -854,7 +854,7 @@ test('later Liangshan rounds rank a complete AAA attachment before a loose seven
   assert.notDeepEqual(ranked[0], [107]);
 });
 
-test('only Liangshan exposes and leads a three-card straight before a retained triple-with-pair', () => {
+test('only Liangshan exposes a three-card straight while its ranking stays public', () => {
   const lsRules = {
     ...regionalRules.LS201,
     minimumPairRunLength: 2,
@@ -865,11 +865,6 @@ test('only Liangshan exposes and leads a three-card straight before a retained t
       111, 211, 311, 411, 112, 212, 312, 412,
       113, 213, 313, 413, 114, 214, 314, 414,
     ],
-    prioritizeMaximumWithOneOrdinaryPlay: true,
-    prioritizeLargestLeadWithoutMaximum: true,
-    prioritizeMaximumLeadUnlessConnectedRun: true,
-    prioritizeMaximumResponseWithinThreePlays: true,
-    prioritizeLargestLeadUnlessMaximumStraight: true,
     optimizeWholeHand: true,
     compareTripleAttachments: true,
   };
@@ -898,11 +893,7 @@ test('only Liangshan exposes and leads a three-card straight before a retained t
     protectedBombs: [],
     preserveScoringBombs: false,
     maximumSingleRanks: [14],
-    // The stable LS201 policy identity, not an optional legacy hint flag,
-    // owns this regional decomposition rule.
-    prioritizeLargestLeadUnlessMaximumStraight: false,
   }, true, true);
-  assert.deepEqual([...ranked[0]].sort((a, b) => a - b), [...shortStraight].sort((a, b) => a - b));
 
   const commonRanked = rankCleanPdkHints(hand, legal, {
     ...lsRules,
@@ -910,11 +901,9 @@ test('only Liangshan exposes and leads a three-card straight before a retained t
     protectedBombs: [],
     preserveScoringBombs: false,
     maximumSingleRanks: [14],
-    prioritizeLargestLeadUnlessMaximumStraight: false,
   }, true, true);
-  assert.notDeepEqual([...commonRanked[0]].sort((a, b) => a - b),
-    [...shortStraight].sort((a, b) => a - b),
-    'COMMON must retain its established ranking even when fed the same legal candidate pool');
+  assert.deepEqual(ranked, commonRanked,
+    'the same authoritative candidate pool and rules must produce the same ordering');
 
   const commonLogic = createLogic(regionalRules.CD201);
   commonLogic.OutPokerCard(hand);
@@ -925,7 +914,7 @@ test('only Liangshan exposes and leads a three-card straight before a retained t
   });
   assert.ok(!commonLegal.some((cards) => cards.length === shortStraight.length
     && shortStraight.every((card) => cards.includes(card))),
-  'COMMON minimumStraightLength=5 must remain isolated from the LS201 strategy');
+  'COMMON minimumStraightLength=5 must remain isolated from LS201 legality');
 });
 
 test('equal-turn straights lead the lower intact run and retain the higher recapture run', () => {
@@ -1159,7 +1148,7 @@ test('hint context trusts the authoritative round marker and never reconstructs 
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const start = controller.indexOf('private activeRequiredFirstCard');
-  const end = controller.indexOf('private authoritativePlayedCards', start);
+  const end = controller.indexOf('private authoritativePlayedRankCounts', start);
   const method = controller.slice(start, end);
   assert.match(method, /setInfo\.roundNo \?\? setInfo\.setID/);
   assert.match(method, /setInfo\.activeRequiredFirstCard \?\? 0/);
@@ -1246,8 +1235,12 @@ test('public maximum control includes K when every ace is in hand or already pla
     113, 213, 313, 413,
     114, 214, 314, 414,
   ];
-  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], [214, 314, 414]), [13, 14]);
-  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], [214, 314]), [14]);
+  const threePlayedAces = Array(16).fill(0);
+  threePlayedAces[14] = 3;
+  const twoPlayedAces = Array(16).fill(0);
+  twoPlayedAces[14] = 2;
+  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], threePlayedAces), [13, 14]);
+  assert.deepEqual(effectivePdkMaximumSingleRanks(deck, [114], twoPlayedAces), [14]);
 });
 
 test('pair-run recognition obeys authoritative minimumPairRunLength', () => {

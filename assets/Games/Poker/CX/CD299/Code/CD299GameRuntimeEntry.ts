@@ -11,7 +11,7 @@ import { CD299_PLAY_VERSION } from './CD299Rules';
 const BUNDLE = 'poker-cx';
 const COMMON_ROOM_BUNDLE = 'games-common';
 const COMMON_ROOM_PREFAB = 'Prefab/CommonRoom';
-const LANDSCAPE_PREFAB = 'CD299/Prefab/Landscape/CD299RoomLandscape';
+const LANDSCAPE_PREFAB = 'CD299/Prefab/CX_CommonRoom';
 const PORTRAIT_PREFAB = 'CD299/Prefab/Portrait/CD299RoomPortrait';
 
 export interface CD299GameRuntimeEntryOptions {
@@ -200,7 +200,7 @@ export class CD299GameRuntimeEntry implements GameRuntimeEntry {
         players.setScale(1, 1, 1);
 
         for (let seat = 0; seat < 8; seat += 1) {
-            const seatNode = players.getChildByName(String(seat));
+            const seatNode = players.getChildByName(`Seat_${seat}`);
             if (!seatNode) throw new Error(`[CD299] landscape prefab missing seat=${seat}`);
             const widget = seatNode.getComponent(Widget);
             if (widget) widget.enabled = false;

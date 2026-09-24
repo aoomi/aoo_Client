@@ -89,7 +89,20 @@ export class CD299RuntimeController {
     public rebuy(carryScore: number): Promise<boolean> {
         return this.run('rebuy', () => this.protocol.rebuy(carryScore));
     }
-    public stand(): Promise<boolean> { return this.run('stand', () => this.protocol.stand()); }
+    public stand(): Promise<boolean> {
+        // A successful terminal stand immediately projects this viewer as a spectator.
+        // The settlement panel can be rebound before the browser's synthesized follow-up
+        // click arrives, so gate the command by the latest authority identity as well as
+        // the generic in-flight guard.
+        if (this.snapshot?.viewerRole !== 'SEATED' || this.snapshot.viewerSeat < 0) {
+            console.info('[CD299] stand ignored for non-seated viewer', {
+                roomId: this.roomId, stateVersion: this.snapshot?.stateVersion ?? 0,
+                viewerRole: this.snapshot?.viewerRole ?? 'UNKNOWN',
+            });
+            return Promise.resolve(false);
+        }
+        return this.run('stand', () => this.protocol.stand());
+    }
     public timeout(): Promise<boolean> { return this.run('timeout', () => this.protocol.timeout()); }
     public isSeated(): boolean { return this.snapshot?.viewerRole === 'SEATED'; }
 

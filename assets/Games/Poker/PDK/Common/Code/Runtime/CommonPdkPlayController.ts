@@ -1208,49 +1208,43 @@ export class CommonPdkPlayController {
         if (!capturedPointer && Date.now() < this.suppressClickUntil) return;
         if (index < 0 || index >= this.cardNodes.length) return;
         const before = [...(this.logic.GetSelectCard() ?? [])].map(Number).sort((a, b) => a - b).join(',');
-        // Selecting cards is presentation only. Authority validates the chosen
-        // play after the user presses Play, so no rank/type filter belongs here.
-        if (this.logic.CheckSelected(this.logic.GetHandCard()[index])) this.logic.DeleteCardSelected(index + 1);
+        const clicked = this.logic.GetHandCard()[index];
+        const responding = !this.isAuthoritativeLeadingTurn();
+        const selected = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+        this.selectionIntentRevision += 1;
+        // On a response turn every ordinary tap replaces the previous choice,
+        // including choices already changed by earlier taps. Only physical cards
+        // belonging to one authority-recognised bomb may accumulate across taps.
+        if (responding) {
+            let next: number[];
+            if (this.logic.CheckSelected(clicked)) {
+                next = this.validPartialBomb(selected, this.protectedBombGroups())
+                    ? selected.filter((card) => card !== clicked) : [];
+            } else if (this.canExtendSelectionAsBomb(selected, clicked)) {
+                next = [...selected, clicked];
+            } else {
+                next = [clicked];
+            }
+            this.logic.ChangeSelectCard(this.cardsInHandOrder(next));
+        } else if (this.logic.CheckSelected(clicked)) this.logic.DeleteCardSelected(index + 1);
         else this.logic.SetCardSelected(index + 1);
         this.resetPromptCycle();
         this.updateSelection();
         this.refresh();
         const after = [...(this.logic.GetSelectCard() ?? [])].map(Number).sort((a, b) => a - b).join(',');
+        this.traceOutCards('selection-tap', {
+            playerId: this.runtime.getPlayerId(),
+            operationId: String(this.record(
+                this.runtime.getRoomSet().GetRoomSetInfo()?.operationDeadline,
+            )?.operationId ?? ''),
+            responding, clicked, before, after,
+        });
         if (before !== after) void this.roomAudio?.play('xuanpai');
     }
 
-    private async toggleSingleResponseCard(index: number): Promise<void> {
-        const hand = (this.logic.GetHandCard() ?? []).map(Number);
-        const clicked = hand[index];
-        const selected = [...(this.logic.GetSelectCard() ?? [])].map(Number);
-        // A plain higher single is locally deterministic. Raise it in the click frame while
-        // the authoritative candidates are fetched for regional bomb handling.
-        const lastSingle = Number(this.logic.lastCardList?.[0] ?? 0);
-        const locallyLegalSingle = this.cardRank(clicked) > this.cardRank(lastSingle)
-            && (!this.nextPlayerReportedSingle() || this.cardRank(clicked) === this.highestHandRank());
-        if (!selected.includes(clicked) && locallyLegalSingle) {
-            this.logic.ChangeSelectCard([clicked]);
-            this.updateSelection();
-        }
-        const candidates = this.sortedLegalTipCandidates(this.logic.GetTipCard(), false);
-        const singleCards = new Set(candidates.filter((cards) => cards.length === 1).map((cards) => cards[0]));
-        const bombs = candidates.filter((cards) => cards.length > 1);
-        const containingBombs = bombs.filter((bomb) => bomb.includes(clicked));
-        let next: number[] = [];
-        if (selected.includes(clicked)) {
-            const removed = selected.filter((card) => card !== clicked);
-            next = this.validPartialBomb(removed, bombs) || (removed.length === 1 && singleCards.has(removed[0])) ? removed : [];
-        } else {
-            const combined = [...selected, clicked];
-            if (selected.length > 0 && this.validPartialBomb(combined, containingBombs)) next = combined;
-            else if (singleCards.has(clicked)) next = [clicked];
-            else if (containingBombs.length > 0) next = [clicked];
-            else return;
-        }
-        this.logic.ChangeSelectCard(this.cardsInHandOrder(next));
-        this.resetPromptCycle();
-        this.updateSelection();
-        this.refresh();
+    private canExtendSelectionAsBomb(selected: readonly number[], clicked: number): boolean {
+        return selected.length > 0
+            && this.validPartialBomb([...selected, clicked], this.protectedBombGroups());
     }
 
     private validPartialBomb(cards: readonly number[], bombs: readonly number[][]): boolean {
@@ -1324,6 +1318,7 @@ export class CommonPdkPlayController {
         if (this.cardIndexAtUi(uiX, uiY) >= 0
             || this.cardIndexAtScreen(screenX, screenY, windowId) >= 0) return;
         this.logic.ChangeSelectCard([]);
+        this.selectionIntentRevision += 1;
         this.resetPromptCycle();
         this.cards.stopAll(false);
         this.updateSelection();
@@ -1906,27 +1901,31 @@ export class CommonPdkPlayController {
 
     private commitSmartDragSelection(sample: HandPointerSample): void {
         const hand = (this.logic.GetHandCard() ?? []).map(Number);
-        // The gesture contributes only its physically crossed candidate pool.
-        // Hint strategy never decides a manual swipe: size and remaining loose
-        // singles are its only strategic priorities.
         const touched = this.orderedDragIndices().map((index) => hand[index]);
-        const required = this.missingRequiredFirstCard(touched);
-        if (required > 0) {
-            this.traceGesture('required-card-missing', this.dragLastIndex, [], sample);
-            this.cardNodes.forEach((node) => this.cards.previewDrag(node, false));
-            this.clearDragSelection();
-            this.showMessage(`必须带${this.cardDisplayName(required)}牌`);
-            return;
-        }
-        // A swipe is a complete selection action. Its candidate pool is exactly
-        // the physical cards crossed by this gesture: do not retain cards from a
-        // previous tap and do not inject a required lead card from outside the
-        // swipe. Search by descending subset size and select the largest legal
-        // regional shape contained wholly inside that pool.
-        const selected = this.largestLegalDragCandidates(touched)[0] ?? [];
+        const leading = this.isAuthoritativeLeadingTurn();
+        const legal = this.largestLegalDragCandidates(touched)[0] ?? [];
+        // A lead swipe composes a hand across gestures. A single-rank group is
+        // intentional even if only its pair subset is playable right now; a
+        // range without a multi-card shape is likewise an unfinished selection.
+        // Complete multi-card shapes still use the drag-only ranking above.
+        const oneRankGroup = touched.length > 1
+            && touched.every((card) => card % 100 === touched[0] % 100);
+        const contribution = leading && (oneRankGroup || legal.length < 2) ? touched : legal;
+        const previous = (this.logic.GetSelectCard() ?? []).map(Number);
+        const selected = leading
+            ? this.cardsInHandOrder([...new Set([...previous, ...contribution])])
+            : contribution;
         this.traceGesture('commit', this.dragLastIndex, selected, sample);
+        this.traceOutCards('selection-drag', {
+            playerId: this.runtime.getPlayerId(),
+            operationId: String(this.record(
+                this.runtime.getRoomSet().GetRoomSetInfo()?.operationDeadline,
+            )?.operationId ?? ''),
+            leading, touched, contribution, previous, selected,
+        });
         this.cardNodes.forEach((node) => this.cards.previewDrag(node, false));
         this.logic.ChangeSelectCard(selected);
+        this.selectionIntentRevision += 1;
         this.clearDragSelection();
         this.resetPromptCycle();
         this.updateSelection();
@@ -1954,6 +1953,7 @@ export class CommonPdkPlayController {
     private clearCardSelection(): void {
         if ((this.logic.GetSelectCard() ?? []).length === 0) return;
         this.logic.ChangeSelectCard([]);
+        this.selectionIntentRevision += 1;
         this.resetPromptCycle();
         this.cards.stopAll(false);
         this.updateSelection();
@@ -2811,9 +2811,20 @@ export class CommonPdkPlayController {
                 }
                 this.clearLatestPublicCards();
             } else {
+                // An answered play remains on its author's seat while another
+                // player decides whether to respond. Once the turn returns to
+                // that author, their older play no longer belongs in the live
+                // Out_Card slot; the current comparison still belongs to the
+                // other seat. A completed, unbeatable trick uses the separate
+                // two-second hold above.
+                const turnSeat = Number(packet.opPos ?? -1);
+                if (turnSeat >= 0 && turnSeat !== dataSeat
+                    && this.publicSeatOperationIds.has(turnSeat)) {
+                    this.clearPublicCardsForSeat(turnSeat, 'ANSWERED_PLAY_TURN_RETURNED');
+                }
                 // Each seat owns one live Out_Card slot for the current trick.
                 // A response replaces only that same seat's previous slot; plays
-                // from the other seats remain until the trick-level clear.
+                // from the other seats remain until their turn or trick clear.
                 return this.rememberLatestPublicCardLanding(this.renderPublicOperation({
                     pos: dataSeat,
                     cardList,
@@ -3295,10 +3306,6 @@ export class CommonPdkPlayController {
         // Visual feedback belongs to the click frame, not to the network reply.
         // The authority projection reuses operationId and therefore cannot replay it.
         this.playOperationAnimationOnce(operationId, opType, 0);
-        // A locally valid selection can still be rejected by Authority (for
-        // example because the regional attachment rule differs). Remember the
-        // currently visible hands, but never clear them before play_req commits.
-        const rapidPreviousPlay = this.captureRapidPreviousPlay();
         // Liangshan normally holds a completed hand in Out_Card for two seconds.
         // A new valid Play click is the sole override: release the preceding hold
         // so those same nodes start moving into Table_Cards immediately. The new
@@ -3429,10 +3436,6 @@ export class CommonPdkPlayController {
                 localSeat: this.clientSeat(),
                 controlsKeptVisible: resultTurnSeat === this.clientSeat(),
             });
-            // Liangshan has already released the preceding physical Out_Card
-            // nodes into its archive. Common clear would claim the same seat and
-            // cancel this newly committed hand before it reaches Out_Card.
-            if (!this.runtime.arrangementEnabled()) this.clearRapidPreviousPlayAfterCommit(rapidPreviousPlay);
             if (this.playRequestScope === scope) {
                 this.playInFlight = false;
                 this.playRequestScope = null;
@@ -3656,52 +3659,6 @@ export class CommonPdkPlayController {
         }
     }
 
-    /**
-     * A second manual play may begin before the preceding two-second presentation
-     * expires. Clear the live trick slots before its flight so two hands never
-     * overlap. Liangshan's accumulated Table_Cards archive is intentionally not
-     * touched by this live-slot operation.
-     */
-    private captureRapidPreviousPlay(): Map<number, { operationId: string; shownAt: number }> {
-        const snapshot = new Map<number, { operationId: string; shownAt: number }>();
-        const latestShownAt = Math.max(0, ...this.publicCardShownAt.values());
-        if (latestShownAt <= 0) return snapshot;
-        const elapsedMs = Date.now() - latestShownAt;
-        if (elapsedMs < 0 || elapsedMs >= COMPLETED_TRICK_HOLD_MS) return snapshot;
-        for (const [seat, shownAt] of this.publicCardShownAt) {
-            snapshot.set(seat, {
-                operationId: this.publicSeatOperationIds.get(seat) ?? '',
-                shownAt,
-            });
-        }
-        return snapshot;
-    }
-
-    /** Clear only the pre-click cards that still exist after Authority accepts the play. */
-    private clearRapidPreviousPlayAfterCommit(
-        snapshot: ReadonlyMap<number, { operationId: string; shownAt: number }>,
-    ): void {
-        if (snapshot.size === 0) return;
-        const clearedSeats: number[] = [];
-        for (const [seat, previous] of snapshot) {
-            // A fast authority push may already have replaced this seat's slot
-            // with the newly committed play. Timestamp/id equality prevents the
-            // delayed request result from deleting that newer presentation.
-            if (this.publicCardShownAt.get(seat) !== previous.shownAt
-                || (this.publicSeatOperationIds.get(seat) ?? '') !== previous.operationId) continue;
-            this.clearPublicCardsForSeat(seat, 'RAPID_PREVIOUS_COMMITTED');
-            clearedSeats.push(seat);
-        }
-        console.info('[PdkRapidPlayClear]', {
-            roomId: this.roomId(),
-            playerId: this.runtime.getPlayerId(),
-            operationId: String(this.record(this.runtime.getRoomSet().GetRoomSetInfo()?.operationDeadline)?.operationId ?? ''),
-            stateVersion: Number(this.runtime.getRoom().GetRoomProperty('stateVersion') ?? -1),
-            clearedSeats,
-            action: 'CLEAR_COMMITTED_PREVIOUS_OUT_CARDS',
-        });
-    }
-
     private cancelPublicCardClearTimers(): void {
         for (const timer of this.publicCardClearTimers.values()) globalThis.clearTimeout(timer);
         this.publicCardClearTimers.clear();
@@ -3918,23 +3875,23 @@ export class CommonPdkPlayController {
         return (this.logic.GetHandCard() as number[]).includes(value) ? value : 0;
     }
 
-    private authoritativePlayedCards(): number[] {
+    private authoritativePlayedRankCounts(): number[] {
         const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
-        const room = this.runtime.getRoom();
-        const direct = setInfo.playedCards ?? room.GetRoomProperty('playedCards');
-        const bySeat = setInfo.playedCardsBySeat ?? room.GetRoomProperty('playedCardsBySeat');
-        const flattenCards = (value: unknown): number[] => {
-            if (Array.isArray(value)) return value.flatMap(flattenCards);
-            if (value && typeof value === 'object') {
-                return Object.values(value as Record<string, unknown>).flatMap(flattenCards);
+        // The visible playedCardList is intentionally empty under LAST_ONLY.
+        // Authority publishes cumulative public rank counts independently of
+        // table presentation, so hints remain correct after reconnect too.
+        const counts = setInfo.publicPlayedRankCounts;
+        if (!Array.isArray(counts) || counts.length !== 16) {
+            throw new Error('CommonPdk 权威 publicPlayedRankCounts 缺失或长度无效');
+        }
+        return counts.map((value: unknown, cardRank: number) => {
+            const count = Number(value);
+            if (!Number.isSafeInteger(count) || count < 0 || count > 4
+                || (cardRank < 3 && count !== 0)) {
+                throw new Error(`CommonPdk 权威已出牌点数计数无效: rank=${cardRank}`);
             }
-            const card = Number(value);
-            return Number.isFinite(card) && card > 0 ? [card] : [];
-        };
-        const cards = flattenCards(direct ?? bySeat);
-        // A projection may expose both aggregate and per-seat history. Reading
-        // only one source avoids double-counting the same physical card.
-        return cards;
+            return count;
+        });
     }
 
     private pushTipCandidates(target: number[][], source: unknown): void {
@@ -4094,9 +4051,9 @@ export class CommonPdkPlayController {
         if (deckCards.length === 0) {
             throw new Error('CommonPdk 权威 deckCards 缺失');
         }
-        const authoritativePlayedCards = this.authoritativePlayedCards();
+        const authoritativePlayedRankCounts = this.authoritativePlayedRankCounts();
         const effectiveMaximumRanks = effectivePdkMaximumSingleRanks(
-            deckCards, this.logic.GetHandCard() ?? [], authoritativePlayedCards,
+            deckCards, this.logic.GetHandCard() ?? [], authoritativePlayedRankCounts,
         );
         const maximumSingleRank = Math.max(...deckCards.map((card) => this.cardRank(card)));
         for (const candidate of constrained) {
@@ -4125,7 +4082,7 @@ export class CommonPdkPlayController {
             maximumSingleRanks: effectiveMaximumRanks.length > 0
                 ? effectiveMaximumRanks : [maximumSingleRank],
             deckCards: Array.isArray(rules.deckCards) ? deckCards : [],
-            playedCards: authoritativePlayedCards,
+            playedRankCounts: authoritativePlayedRankCounts,
             // Every response, including a single-card response, first keeps the
             // fewest effective loose singles. Candidate point value is only a
             // later tie-breaker, so equal cleanup starts from the lowest card

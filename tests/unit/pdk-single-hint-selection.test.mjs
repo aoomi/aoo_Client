@@ -17,6 +17,13 @@ function loadHelper() {
   return module.exports;
 }
 
+function playedRankCounts(cards) {
+  return cards.reduce((counts, card) => {
+    counts[card % 100] += 1;
+    return counts;
+  }, Array(16).fill(0));
+}
+
 test('a single-card hint raises one physical slot even when hand values repeat', () => {
   const { pdkSelectionMask } = loadHelper();
   const responseRank = 12;
@@ -35,6 +42,147 @@ test('same-rank cards of different suits keep exact physical selection', () => {
 
   assert.deepEqual(pdkSelectionMask(suitedPair, [suitedPair[0]]), [true, false]);
   assert.deepEqual(pdkSelectionMask(suitedPair, [suitedPair[1]]), [false, true]);
+});
+
+test('Hint visits distinct straight rank patterns instead of cycling their suits', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const hand = [106, 107, 108, 109, 209, 110, 111];
+  const ranked = rankCleanPdkHints(hand, [
+    { cards: [106, 107, 108, 109, 110], order: 0 },
+    { cards: [107, 108, 109, 110, 111], order: 1 },
+  ], {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+  }, true, true);
+  const patterns = ranked.map((cards) => cards.map((card) => card % 100)
+    .sort((left, right) => left - right).join(','));
+  assert.equal(ranked.length, 2, 'each legal straight pattern occupies exactly one Hint click');
+  assert.equal(new Set(patterns).size, 2);
+  assert.deepEqual(new Set(patterns), new Set(['6,7,8,9,10', '7,8,9,10,11']));
+  assert.deepEqual(ranked[0], [106, 107, 108, 109, 110],
+    'removing suit duplicates must preserve the original highest-priority selection');
+});
+
+test('response Hint cycles distinct ranks and keeps one physical representative per rank', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const ranked = rankCleanPdkHints([107, 207, 108], [
+    { cards: [107], order: 0 },
+    { cards: [207], order: 1 },
+    { cards: [108], order: 2 },
+  ], {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    prioritizeLooseSingles: true,
+  });
+  assert.equal(ranked.length, 2);
+  assert.deepEqual(new Set(ranked.map((cards) => cards[0] % 100)), new Set([7, 8]));
+});
+
+test('rank-pattern Hint keeps the exact required opening suit', () => {
+  const { enumeratePdkRankMultisetCandidates, rankCleanPdkHints } = loadHelper();
+  const hand = [106, 107, 108, 109, 209, 110];
+  const required = 209;
+  const straight = enumeratePdkRankMultisetCandidates(hand, required)
+    .find((cards) => cards.length === 5
+      && cards.map((card) => card % 100).sort((a, b) => a - b).join(',') === '6,7,8,9,10');
+  assert.ok(straight?.includes(required));
+  const ranked = rankCleanPdkHints(hand, [{ cards: straight, order: 0 }], {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+  }, true, true);
+  assert.equal(ranked.length, 1);
+  assert.ok(ranked[0].includes(required));
+});
+
+function manualTapProbe(hand, initialSelection, leading = false, bombs = []) {
+  const source = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+  const start = source.indexOf('private async toggleCardAt(');
+  const end = source.indexOf('private updateSelection(', start);
+  assert.ok(start >= 0 && end > start);
+  const js = ts.transpileModule(`class TapProbe { ${source.slice(start, end)} }`, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const Probe = Function(`${js}\nreturn TapProbe;`)();
+  const probe = new Probe();
+  let selected = [...initialSelection];
+  probe.cardNodes = hand.map(() => ({}));
+  probe.logic = {
+    GetHandCard: () => hand,
+    GetSelectCard: () => [...selected],
+    CheckSelected: (card) => selected.includes(card),
+    ChangeSelectCard: (cards) => { selected = [...cards]; },
+    DeleteCardSelected: (oneBased) => {
+      const at = selected.indexOf(hand[oneBased - 1]);
+      if (at >= 0) selected.splice(at, 1);
+    },
+    SetCardSelected: (oneBased) => { selected.push(hand[oneBased - 1]); },
+  };
+  probe.isAuthoritativeLeadingTurn = () => leading;
+  probe.protectedBombGroups = () => bombs;
+  probe.cardsInHandOrder = (cards) => hand.filter((card) => cards.includes(card));
+  probe.runtime = { getPlayerId: () => 'test-player', getRoomSet: () => ({
+    GetRoomSetInfo: () => ({ operationDeadline: { operationId: 'test-operation' } }),
+  }) };
+  probe.record = (value) => value;
+  probe.traceOutCards = () => undefined;
+  probe.selectionIntentRevision = 0;
+  probe.suppressClickUntil = 0;
+  probe.resetPromptCycle = () => undefined;
+  probe.updateSelection = () => undefined;
+  probe.refresh = () => undefined;
+  return { probe, selected: () => [...selected] };
+}
+
+test('every response tap replaces the previous ordinary selection, not just the first tap', async () => {
+  const hand = [107, 110, 111];
+  const { probe, selected } = manualTapProbe(hand, [107]);
+  await probe.toggleCardAt(1, true);
+  assert.deepEqual(selected(), [110]);
+  await probe.toggleCardAt(2, true);
+  assert.deepEqual(selected(), [111]);
+  await probe.toggleCardAt(0, true);
+  assert.deepEqual(selected(), [107]);
+  assert.equal(probe.selectionIntentRevision, 3);
+});
+
+test('pair and triple response hints also yield to every successive manual tap', async () => {
+  const pair = manualTapProbe([107, 207, 109, 209], [107, 207]);
+  await pair.probe.toggleCardAt(2, true);
+  assert.deepEqual(pair.selected(), [109]);
+  await pair.probe.toggleCardAt(3, true);
+  assert.deepEqual(pair.selected(), [209]);
+
+  const triple = manualTapProbe(
+    [107, 207, 307, 104, 105, 109, 209, 309], [107, 207, 307, 104, 105]);
+  await triple.probe.toggleCardAt(5, true);
+  assert.deepEqual(triple.selected(), [109]);
+  for (const index of [6, 7, 3, 4]) await triple.probe.toggleCardAt(index, true);
+  assert.deepEqual(triple.selected(), [105]);
+});
+
+test('a recognised bomb alone may accumulate across response taps', async () => {
+  const hand = [107, 207, 307, 407, 110];
+  const { probe, selected } = manualTapProbe(hand, [107], false, [[107, 207, 307, 407]]);
+  for (const index of [1, 2, 3]) await probe.toggleCardAt(index, true);
+  assert.deepEqual(selected(), [107, 207, 307, 407]);
+  await probe.toggleCardAt(4, true);
+  assert.deepEqual(selected(), [110]);
+  await probe.toggleCardAt(1, true);
+  assert.deepEqual(selected(), [207]);
+});
+
+test('manual leading composition and tapping an already hinted card keep their existing meaning', async () => {
+  const leading = manualTapProbe([107, 110], [107], true);
+  await leading.probe.toggleCardAt(1, true);
+  assert.deepEqual(leading.selected(), [107, 110]);
+
+  const same = manualTapProbe([107, 110], [107]);
+  await same.probe.toggleCardAt(0, true);
+  assert.deepEqual(same.selected(), []);
 });
 
 test('last-hand autoplay never carries an extra card with AAA or a four-card bomb', () => {
@@ -131,24 +279,15 @@ test('5-to-A sweep keeps direction and selects six-card four-with-two before the
   assert.equal(ranked[0].length, 6);
 });
 
-test('only responding clicks replace an automatic hint while leading clicks preserve prior selections', () => {
+test('response taps always replace except for a recognised bomb, while leading taps preserve composition', () => {
   const controller = readFileSync(join(clientRoot,
     'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
   const toggle = controller.slice(controller.indexOf('private async toggleCardAt'),
-    controller.indexOf('private groupedResponseSelection'));
+    controller.indexOf('private updateSelection'));
   assert.match(toggle, /const responding = !this\.isAuthoritativeLeadingTurn\(\)/);
-  assert.match(toggle, /selectionFromSuggestion/);
-  assert.match(toggle, /if \(responding && this\.selectionFromSuggestion/);
-  assert.match(toggle, /!this\.canExtendSelectionAsBomb\(current, \[clicked\]\)/);
-  assert.match(toggle, /this\.logic\.ChangeSelectCard\(\[\]\)/);
-  assert.doesNotMatch(toggle, /this\.selectionFromSuggestion = false/);
-  const autoHint = controller.slice(controller.indexOf('private async autoHintForAuthoritativeTurn'),
-    controller.indexOf('private maybeAutoPlay'));
-  assert.match(autoHint, /ChangeSelectCard\(automatic\)[\s\S]*selectionFromSuggestion = true/);
-  const drag = controller.slice(controller.indexOf('private commitSmartDragSelection'),
-    controller.indexOf('private largestLegalDragCandidates'));
-  assert.match(drag, /const replacementMode = this\.selectionFromSuggestion/);
-  assert.match(drag, /this\.selectionFromSuggestion = replacementMode/);
+  assert.match(toggle, /this\.canExtendSelectionAsBomb\(selected, clicked\)/);
+  assert.match(toggle, /this\.logic\.ChangeSelectCard\(this\.cardsInHandOrder\(next\)\)/);
+  assert.doesNotMatch(controller, /selectionFromSuggestion/);
 });
 
 test('swiping exactly three cards still uses the largest legal subset', () => {
@@ -1274,6 +1413,32 @@ test('single response to seven uses loose ten before splitting pair kings', () =
     /const nextSeat = \(this\.clientSeat\(\) \+ 1\) % playerCount/);
 });
 
+test('single response keeps an intact pair when a genuine loose winner is available', () => {
+  const { rankCleanPdkHints } = loadHelper();
+  const rules = {
+    minimumStraightLength: 5,
+    minimumPairRunLength: 2,
+    allowTwoInRuns: false,
+    tripleAttachmentMode: 'EITHER',
+    prioritizeLooseSingles: true,
+    optimizeWholeHand: true,
+  };
+  const hand = [113, 111, 211, 109, 209, 309, 108, 208];
+  const responses = [111, 113, 108, 109].map((card, order) => ({ cards: [card], order }));
+  assert.deepEqual(rankCleanPdkHints(hand, responses, rules)[0], [113],
+    'respond to 5 with loose K; splitting JJ leaves the same turn count but destroys the intact pair');
+
+  const onlyPairs = [111, 211, 108, 208];
+  const pairResponses = [111, 108].map((card, order) => ({ cards: [card], order }));
+  assert.equal(rankCleanPdkHints(onlyPairs, pairResponses, rules).length, 2,
+    'when no genuine loose single exists, legal pair openings remain in the Hint cycle');
+
+  const straightAndPair = [107, 108, 109, 110, 111, 112, 212];
+  const straightResponses = [108, 112].map((card, order) => ({ cards: [card], order }));
+  assert.deepEqual(rankCleanPdkHints(straightAndPair, straightResponses, rules)[0], [112],
+    'a singleton covered by a complete straight is not a genuine loose winner');
+});
+
 test('single response treats raw K as loose even when QQQ can absorb it as an attachment', () => {
   const { rankCleanPdkHints } = loadHelper();
   const hand = [114, 113, 112, 212, 312, 109, 209, 108, 208, 105, 205];
@@ -2026,7 +2191,7 @@ test('COMMON control ordering uses physical deck and public plays across lead an
     .concat([114, 214, 314, 115]);
   const ranks = (cards) => cards.map((card) => card % 100).sort((a, b) => a - b);
   const ranked = (hand, plays, played = [], leading = true) => {
-    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, played);
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, playedRankCounts(played));
     const candidates = plays.map(([cards, finishesInTwo], order) => ({
       cards, order, finishesInTwo,
       containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck)
@@ -2040,7 +2205,8 @@ test('COMMON control ordering uses physical deck and public plays across lead an
       policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
       allowTwoInRuns: false, tripleAttachmentMode: 'EITHER',
       optimizeWholeHand: true, prioritizeLooseSingles: !leading,
-      preserveScoringBombs: true, protectedBombs, deckCards: deck, playedCards: played,
+      preserveScoringBombs: true, protectedBombs, deckCards: deck,
+      playedRankCounts: playedRankCounts(played),
       maximumSingleRanks,
     }, leading, leading).map(ranks);
   };
@@ -2163,7 +2329,7 @@ test('COMMON whole-hand control paths rank distinct endgames without eager maxim
           usesFourCardBody: [8, 9, 10, 20].includes(type),
           containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck) }];
       });
-    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, played);
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, playedRankCounts(played));
     for (const candidate of candidates) {
       const ranks = candidate.cards.map(rank);
       if (ranks.every((value) => value === ranks[0])
@@ -2175,7 +2341,8 @@ test('COMMON whole-hand control paths rank distinct endgames without eager maxim
     return rankCleanPdkHints(hand, candidates, {
       policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
       allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
-      deckCards: deck, playedCards: played, maximumSingleRanks, protectedBombs, preserveScoringBombs: true,
+      deckCards: deck, playedRankCounts: playedRankCounts(played), maximumSingleRanks,
+      protectedBombs, preserveScoringBombs: true,
     }, targetType === 0, targetType === 0).map(signature);
   };
   const cases = [
@@ -2269,7 +2436,7 @@ test('COMMON ninety-example audit covers each distinct ordinary hint scenario on
           usesFourCardBody: [8, 9, 10, 20].includes(type),
           containsRuleMaximum: isRegionalMaximumPdkCombination(cards, deck) }];
       });
-    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, known);
+    const maximumSingleRanks = effectivePdkMaximumSingleRanks(deck, hand, playedRankCounts(known));
     for (const candidate of candidates) {
       const values = candidate.cards.map(rank);
       if (values.every((value) => value === values[0])
@@ -2281,7 +2448,7 @@ test('COMMON ninety-example audit covers each distinct ordinary hint scenario on
     return rankCleanPdkHints(hand, candidates, {
       policyId: 'COMMON', minimumStraightLength: 5, minimumPairRunLength: 2,
       allowTwoInRuns: false, tripleAttachmentMode: 'EITHER', optimizeWholeHand: true,
-      deckCards: deck, playedCards: known, maximumSingleRanks,
+      deckCards: deck, playedRankCounts: playedRankCounts(known), maximumSingleRanks,
       protectedBombs, preserveScoringBombs: true,
     }, targetType === 0, targetType === 0).map(signature)[0];
   };
