@@ -57,16 +57,8 @@ export class CN298RuntimeController {
         return { roomId: this.roomId, viewerSeat: this.snapshot?.viewerSeat ?? -1,
             viewerStatus: this.snapshot?.viewerStatus ?? 'UNKNOWN' };
     }
-    public sit(seatId: number): Promise<boolean> {
-        return this.run(`sit:${seatId}`, () => this.protocol.sit(seatId)).catch(async error => {
-            // A concurrent winner may have occupied this seat; refresh before surfacing the stable rejection.
-            try { await this.state(); } catch (refreshError: unknown) {
-                console.error('[CN298] seat refresh failed', { roomId: this.roomId,
-                    stateVersion: this.snapshot?.stateVersion ?? 0,
-                    reason: refreshError instanceof Error ? refreshError.message : String(refreshError) });
-            }
-            throw error;
-        });
+    public sit(): Promise<boolean> {
+        return this.run('sit', () => this.protocol.sit());
     }
     public rob(multiplier: number): Promise<boolean> {
         return this.run(`rob:${multiplier}`, () => this.protocol.rob(multiplier));

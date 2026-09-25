@@ -37,7 +37,7 @@ export class CN298ProtocolAdapter {
             playVersion: CN298_PLAY_VERSION, ...checked });
     }
     state(): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.state, {}); }
-    sit(seatId: number): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.sit, { seatId }); }
+    sit(): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.sit, {}); }
     start(): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.start, {}); }
     rob(multiplier: number): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.rob, { multiplier }); }
     bet(multiplier: number): Promise<CN298Snapshot> { return this.send(CN298_MESSAGES.bet, { multiplier }); }

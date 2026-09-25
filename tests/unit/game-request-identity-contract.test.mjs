@@ -9,7 +9,7 @@ test('all canonical poker runtimes share refresh-safe request identity',()=>{
   const identity=read('assets/Common/Code/Runtime/network/GameRequestIdentity.ts');
   assert.match(identity,/randomUUID/); assert.match(identity,/\+\+this\.sequence/);
   for(const file of [
-    'assets/Games/Poker/CX/CD299/Code/CD299Protocol.ts',
+    'assets/Games/Poker/CX/Code/CD299Protocol.ts',
     'assets/Games/Poker/NN/Common/Code/CN298Protocol.ts',
     'assets/Games/Poker/ZJH/Common/Code/CN297Protocol.ts']){
     const source=read(file); assert.match(source,/GameRequestIdentity/); assert.match(source,/this\.requests\.next\(\)/);

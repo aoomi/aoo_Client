@@ -35,7 +35,7 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
     }
 
     public bindActions(actions: Readonly<{
-        sit(seatId: number): Promise<boolean>; rob(multiplier: number): Promise<boolean>;
+        sit(): Promise<boolean>; rob(multiplier: number): Promise<boolean>;
         bet(multiplier: number): Promise<boolean>; split(): Promise<boolean>;
         toggleSplitCard(seat: number, cardIndex: number): void;
         start(): Promise<boolean>; continueRound(): Promise<boolean>;
@@ -57,7 +57,7 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
                     path: this.nodePath(inputNode), active: inputNode.activeInHierarchy,
                     worldRect: this.worldRect(inputNode) });
                 if (!this.sitEnabled.has(seat)) return;
-                void actions.sit(seat).catch(error => this.logActionFailure(seatNode, error));
+                void actions.sit().catch(error => this.logActionFailure(seatNode, error));
             };
             inputNode.on(eventType, listener);
             this.actionDisposers.push(() => this.removeNodeListener(inputNode, eventType, listener));

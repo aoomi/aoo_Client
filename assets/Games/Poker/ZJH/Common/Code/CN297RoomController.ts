@@ -31,15 +31,14 @@ export class CN297RoomController implements CN297RoomActionSink {
         }).finally(() => { this.pending = false; });
     }
 
-    public sit(seatId: number): void {
+    public sit(): void {
         const snapshot = this.snapshot;
         if (this.pending || !snapshot || snapshot.state !== 'WAITING' || snapshot.viewerRole !== 'SPECTATOR'
-            || !Number.isSafeInteger(seatId) || seatId < 0 || seatId >= snapshot.seatLimit
-            || snapshot.seats[seatId]) return;
+            || Object.keys(snapshot.seats).length >= snapshot.seatLimit) return;
         this.pending = true;
-        void this.protocol.sit(seatId).then(value => this.accept(value)).catch((error: unknown) => {
+        void this.protocol.sit().then(value => this.accept(value)).catch((error: unknown) => {
             console.error('[CN297] sit failed', { action: 'sit', roomId: snapshot.roomId,
-                playerId: this.localPlayerId, stateVersion: snapshot.stateVersion, seatId, error });
+                playerId: this.localPlayerId, stateVersion: snapshot.stateVersion, error });
             return this.protocol.state().then(value => this.accept(value));
         }).finally(() => { this.pending = false; });
     }

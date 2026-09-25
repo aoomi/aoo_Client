@@ -69,7 +69,7 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
             const controller = new CN298RuntimeController(client, roomView, roomId,
                 this.options.playerId, this.options.requestPrefix);
             roomView.bindActions({
-                sit: seatId => controller.sit(seatId), rob: value => controller.rob(value),
+                sit: () => controller.sit(), rob: value => controller.rob(value),
                 bet: value => controller.bet(value),
                 start: () => controller.start(),
                 toggleSplitCard: (seat, cardIndex) => controller.toggleSplitCard(seat, cardIndex),

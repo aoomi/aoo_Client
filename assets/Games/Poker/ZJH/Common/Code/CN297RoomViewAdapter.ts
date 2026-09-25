@@ -5,7 +5,7 @@ import type { CN297SettlementResult } from './CN297Protocol';
 
 export type CN297RoomAction = 'start' | 'look' | 'bet' | 'preBet' | 'fold' | 'compare' | 'continue';
 export interface CN297RoomActionSink {
-    invoke(action: CN297RoomAction): void; sit(seatId: number): void;
+    invoke(action: CN297RoomAction): void; sit(): void;
     bet(amount: number, queued: boolean): void; compare(targetSeatId: number): void;
 }
 
@@ -186,7 +186,7 @@ export class CN297RoomViewAdapter implements CN297RoomView {
     }
     private invokeSeat(seat: number): void {
         if (this.compareTargets.has(seat)) { this.clearSelection(); this.actionSink.compare(seat); }
-        else if (this.sittableSeats.has(seat)) this.actionSink.sit(seat);
+        else if (this.sittableSeats.has(seat)) this.actionSink.sit();
     }
     private bind(node: Node, action: () => void): void {
         let lastInvokeAt = 0;

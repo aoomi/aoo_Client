@@ -1,5 +1,5 @@
 import { assetManager, Camera, instantiate, Node, Prefab, view } from 'cc';
-import { createCD299GameRuntimeEntry } from '../../../Poker/CX/CD299/Code/CD299GameRuntimeEntry';
+import { createCD299GameRuntimeEntry } from '../../../Poker/CX/Code/CD299GameRuntimeEntry';
 import { createCN298GameRuntimeEntry } from '../../../Poker/NN/Common/Code/CN298RuntimeEntry';
 import {
     createCN297GameRuntimeEntry,

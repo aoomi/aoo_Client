@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const asset = relative => fileURLToPath(new URL(`../../../assets/Games/Poker/CX/CD299/${relative}`, import.meta.url));
+const asset = relative => fileURLToPath(new URL(`../../../assets/Games/Poker/CX/${relative}`, import.meta.url));
 const source = relative => readFile(asset(`Code/${relative}`), 'utf8');
 const prefab = async relative => JSON.parse(await readFile(asset(`Prefab/${relative}`), 'utf8'));
 const clientAsset = relative => fileURLToPath(new URL(`../../../assets/${relative}`, import.meta.url));
@@ -84,7 +84,7 @@ test('CD299 presenter derives turn actions and protects three-flower split state
 
 test('CD299 landscape projects authoritative totals, action feedback and deadlines', async () => {
     const view = await source('CD299LandscapeRoomViewComponent.ts');
-    assert.match(view, /CD299\/Art\/XqpRoomBackground\/spriteFrame/);
+    assert.match(view, /Atlas\/XqpRoomBackground\/spriteFrame/);
     assert.match(view, /background\.setSiblingIndex\(0\)/);
     assert.match(view, /commonPosition\('Btn\/Btn_Back', -550, 280\)/);
     assert.match(view, /commonPosition\('Btn\/Btn_Chat', 552, -236\)/);
@@ -206,13 +206,13 @@ test('CD299 exports a feature-owned GameRuntimeEntry without replay', async () =
     assert.match(entry, /createOwnedGameClient\(\)/);
     assert.match(entry, /bindRoomAuthority\(roomId, CD299_PLAY_VERSION\)/);
     assert.match(entry, /await client\.connect\(authorityRoute\)/);
-    assert.match(entry, /CD299\/Prefab\/CX_CommonRoom/);
+    assert.match(entry, /LANDSCAPE_PREFAB = 'Prefab\/CX_CommonRoom'/);
     assert.match(entry, /COMMON_ROOM_BUNDLE = 'games-common'/);
     assert.match(entry, /COMMON_ROOM_PREFAB = 'Prefab\/CommonRoom'/);
     assert.match(entry, /view\.attachCommonRoom\(commonRoom, roomId\)/);
     assert.match(entry, /this\.configureCommonRoomLayout\(commonRoom, node\.layer\)/);
     assert.match(entry, /this\.setLayerRecursively\(commonRoom, gameLayer\)/);
-    assert.match(entry, /CD299\/Prefab\/Portrait\/CD299RoomPortrait/);
+    assert.doesNotMatch(entry, /CD299\/Prefab\/Portrait/);
     assert.match(entry, /new CD299RuntimeController/);
     assert.match(entry, /view\.bindController\(controller\)/);
     assert.match(entry, /await controller\.state\(\)/);
@@ -239,7 +239,7 @@ test('CD299 gameplay code excludes out-of-scope social, robot and legacy aliases
 test('CD299 landscape composes the shared room shell and the XQP-derived eight-seat desk', async () => {
     const [common, game] = await Promise.all([
         clientPrefab('Games/Common/Prefab/CommonRoom.prefab'),
-        clientPrefab('Games/Poker/CX/CD299/Prefab/CX_CommonRoom.prefab'),
+        clientPrefab('Games/Poker/CX/Prefab/CX_CommonRoom.prefab'),
     ]);
     const commonNames = common.filter(item => item.__type__ === 'cc.Node').map(item => item._name);
     const gameNames = game.filter(item => item.__type__ === 'cc.Node').map(item => item._name);
@@ -273,9 +273,9 @@ test('CD299 reproduces XQP operation-marker persistence and authored motion', as
     assert.match(view, /onUpdate: \(_target, ratio = 0\)/);
     assert.match(view, /midpointLogged \|\| ratio < 0\.5/);
     assert.match(view, /discard flight midpoint/);
-    assert.match(view, /CD299\/Spine\/Add\/add/);
+    assert.match(view, /Spine\/Add\/add/);
     assert.match(view, /ren_wu_jiangli_tishi_loop/);
-    assert.match(view, /CD299\/Spine\/Allin\/allin/);
+    assert.match(view, /Spine\/Allin\/allin/);
     assert.match(view, /dz_mptx_huo/);
 });
 
@@ -332,7 +332,7 @@ test('CD299 projects the authoritative counterclockwise banker and deal origin',
     assert.match(presenter, /occupiedDealOrder\.indexOf\(seat\)/);
     assert.match(presenter, /showBanker\(visualSeat, seat === snapshot\.bankerSeat\)/);
     assert.match(view, /node\.name === 'Icon_Banker'/);
-    assert.match(view, /CD299\/Art\/CxCommonStatic/);
+    assert.match(view, /Atlas\/CxCommonStatic/);
     assert.match(view, /icon_zhuang/);
     assert.match(view, /node\.setPosition\(-43, -27/);
     assert.match(view, /setContentSize\(30, 30\)/);
@@ -388,7 +388,7 @@ test('CD299 split labels use the authoritative pair catalog and room rule', asyn
 
 test('CD299 card faces cover every authoritative deck value without the common poker codec', async () => {
     const view = await source('CD299LandscapeRoomViewComponent.ts');
-    const atlas = await readFile(asset('Art/PokerFront_0Trends.plist'), 'utf8');
+    const atlas = await readFile(asset('Atlas/PokerFront_0Trends.plist'), 'utf8');
     const deck = [202, 402, 203, 104, 204, 304, 404, 105, 305, 106, 206, 306, 406,
         107, 207, 307, 407, 108, 208, 308, 408, 109, 309, 110, 210, 310, 410,
         111, 311, 212, 412, 506];
@@ -432,7 +432,7 @@ test('CD299 plays migrated XQP room audio through shared sound settings', async 
         DROP: 'diu', FOLLOW: 'gen', REST: 'xiu', RAISE: 'da', ALL_IN: 'qiao',
         deal: 'fapai', select: 'xuanpai',
     })) {
-        assert.ok(audio.includes(`${event}: 'CD299/Audio/${clip}'`), `missing ${event} sound`);
+        assert.ok(audio.includes(`${event}: 'Audio/${clip}'`), `missing ${event} sound`);
     }
     assert.match(audio, /legacyAudioService\.onSettingsChanged/);
     assert.match(audio, /legacyLocalDataStore\.get\('SysSetting', 'BackMusic'/);

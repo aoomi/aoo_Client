@@ -54,7 +54,7 @@ export class CN297ProtocolAdapter {
         return createCN297RoomBody(rules);
     }
     state() { return this.send<CN297Snapshot>(CN297_MESSAGES.state, {}); }
-    sit(seatId: number) { return this.send<CN297Snapshot>(CN297_MESSAGES.sit, { seatId }); }
+    sit() { return this.send<CN297Snapshot>(CN297_MESSAGES.sit, {}); }
     start() { return this.send<CN297Snapshot>(CN297_MESSAGES.start, {}); }
     continueRound() { return this.send<CN297Snapshot>(CN297_MESSAGES.continueRound, {}); }
     look() { return this.send<CN297Snapshot>(CN297_MESSAGES.look, {}); }
