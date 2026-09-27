@@ -1,5 +1,97 @@
 export type PdkHintPolicyId = 'COMMON' | 'LS201';
 
+export type PdkHintPriority =
+    | 'REQUIRED_FIRST_CARD'
+    | 'REPORTED_MAXIMUM'
+    | 'BOMB_PROTECTION'
+    | 'SAME_SHAPE_BEFORE_BOMB'
+    | 'LIANGSHAN_TRIPLE_ATTACHMENTS'
+    | 'MINIMUM_REMAINING_TURNS'
+    | 'MAXIMUM_PLAYED_CARDS'
+    | 'MINIMUM_LOOSE_SINGLES'
+    | 'STRUCTURE_PROTECTION'
+    | 'ASCENDING_RANK'
+    | 'STABLE_SOURCE_ORDER';
+
+export interface PdkHintRuleContext {
+    leading: boolean;
+    previousType: number;
+    previousCardCount: number;
+    nextPlayerReportedSingle: boolean;
+    nextPlayerReportedPair: boolean;
+    finalHand: boolean;
+}
+
+export interface PdkHintRulePlan {
+    policyId: PdkHintPolicyId;
+    rules: PdkHintRules;
+    priorities: readonly PdkHintPriority[];
+    ruleSources: Readonly<Record<string, { source: string; value: unknown }>>;
+    notes: readonly string[];
+}
+
+export interface PdkHintRuleIdentity {
+    policyId: PdkHintPolicyId;
+    workbookIdentity: string;
+}
+
+/** Stage one only: resolve authoritative rules before any hand is inspected. */
+export function resolvePdkHintRulePlan(
+    snapshot: Readonly<Record<string, unknown>>,
+    identity: PdkHintRuleIdentity,
+    context: PdkHintRuleContext,
+): PdkHintRulePlan {
+    const minimumStraightLength = Number(snapshot.minimumStraightLength);
+    const minimumPairRunLength = Number(snapshot.minimumPairRunLength);
+    if (!Number.isSafeInteger(minimumStraightLength) || minimumStraightLength < 3
+        || !Number.isSafeInteger(minimumPairRunLength) || minimumPairRunLength < 2) {
+        throw new Error('CommonPdk authoritative run rules are invalid');
+    }
+    const rules: PdkHintRules = {
+        minimumStraightLength,
+        minimumPairRunLength,
+        allowTwoInRuns: Boolean(snapshot.allowTwoInRuns),
+        tripleAttachmentMode: String(snapshot.tripleAttachmentMode ?? 'DISABLED') as PdkHintRules['tripleAttachmentMode'],
+        compareTripleAttachments: Boolean(snapshot.compareTripleAttachments),
+        preserveScoringBombs: String(snapshot.bombScoreMode ?? 'DISABLED') !== 'DISABLED',
+        maximumSingleRanks: Array.isArray(snapshot.maximumSingleRanks)
+            ? snapshot.maximumSingleRanks.map(Number).filter(Number.isFinite) : [],
+        deckCards: Array.isArray(snapshot.deckCards)
+            ? snapshot.deckCards.map(Number).filter(Number.isFinite) : [],
+        playedRankCounts: Array.isArray(snapshot.playedRankCounts)
+            ? snapshot.playedRankCounts.map(Number).filter(Number.isFinite) : [],
+        prioritizeLooseSingles: context.previousCardCount > 0,
+    };
+    const common: PdkHintPriority[] = [
+        'REQUIRED_FIRST_CARD', 'REPORTED_MAXIMUM', 'BOMB_PROTECTION',
+        'SAME_SHAPE_BEFORE_BOMB', 'MINIMUM_REMAINING_TURNS',
+        'MAXIMUM_PLAYED_CARDS', 'MINIMUM_LOOSE_SINGLES',
+        'STRUCTURE_PROTECTION', 'ASCENDING_RANK', 'STABLE_SOURCE_ORDER',
+    ];
+    const priorities = identity.policyId === 'LS201'
+        ? [...common.slice(0, 4), 'LIANGSHAN_TRIPLE_ATTACHMENTS' as const, ...common.slice(4)]
+        : common;
+    return {
+        policyId: identity.policyId,
+        rules,
+        priorities,
+        ruleSources: {
+            firstCard: { source: 'round.activeRequiredFirstCard', value: context.leading },
+            reportedSingle: { source: 'public.nextPlayer.cardCount', value: context.nextPlayerReportedSingle },
+            reportedPair: { source: 'ruleOptions.forceHighestPairAgainstReportedPair + public.nextPlayer.cardCount', value: context.nextPlayerReportedPair },
+            compareTripleAttachments: { source: 'ruleOptions.compareTripleAttachments', value: rules.compareTripleAttachments },
+            directWinFourThrees: { source: 'ruleOptions.directWinPatterns/server initial-hand evaluator', value: snapshot.directWinPatterns ?? 'server-only' },
+            directWinTripleAceTwo: { source: 'ruleOptions.directWinPatterns/server initial-hand evaluator', value: snapshot.directWinPatterns ?? 'server-only' },
+            bombScoreMode: { source: 'ruleOptions.bombScoreMode', value: snapshot.bombScoreMode ?? 'DISABLED' },
+            workbookIdentity: { source: 'regional profile roomRuleWorkbook', value: identity.workbookIdentity },
+        },
+        notes: [
+            'Direct-win patterns finish on the server before a client hint turn exists.',
+            'Bomb scoring follows the published snapshot; workbook conflicts are not guessed here.',
+        ],
+    };
+}
+
 export interface PdkHintRules {
     minimumStraightLength: number;
     minimumPairRunLength: number;
@@ -12,8 +104,6 @@ export interface PdkHintRules {
     tripleAttachmentMode?: 'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER';
     /** Multi-card responses rank the resulting loose-single count before structures. */
     prioritizeLooseSingles?: boolean;
-    /** Hint ranking plans the whole hand instead of maximizing the current play. */
-    optimizeWholeHand?: boolean;
     /** Regional rule compares triple-family attachments instead of body ranks only. */
     compareTripleAttachments?: boolean;
     /** A complete bomb earns an independent score and must be played as a bomb. */
@@ -1117,10 +1207,11 @@ function compareNumberLists(left: readonly number[], right: readonly number[]): 
 export function rankCleanPdkHints(
     hand: readonly number[],
     candidates: readonly PdkHintCandidate[],
-    rules: PdkHintRules,
+    plan: PdkHintRulePlan,
     preferLargest = false,
     preferFewestLooseSinglesOnEqualSize = false,
 ): number[][] {
+    const rules = plan.rules;
     const protectedBombs = [...(rules.protectedBombs ?? []).map((group) => [...group])];
     for (const group of ordinaryBombGroups(hand)) {
         const key = [...group].sort((left, right) => left - right).join(',');
@@ -1141,7 +1232,6 @@ export function rankCleanPdkHints(
         prioritizeLooseSingles: Boolean(rules.prioritizeLooseSingles),
         // Ranking is shared; regional rules still determine the legal shapes
         // and the effective maximum from the authoritative deck.
-        optimizeWholeHand: Boolean(rules.optimizeWholeHand) || preferLargest,
         compareTripleAttachments: Boolean(rules.compareTripleAttachments),
         preserveScoringBombs: Boolean(rules.preserveScoringBombs),
         maximumSingleRanks: [...(rules.maximumSingleRanks ?? [15])],
@@ -1516,7 +1606,7 @@ export function rankCleanPdkHints(
                 && usesProtectedBombAsTripleBody(candidate.cards,
                     normalizedRules.protectedBombs ?? [])))
         : structurallyEligible;
-    const rankedPool = !normalizedRules.optimizeWholeHand && !preferLargest
+    const rankedPool = !preferLargest
         && leadPool.some((candidate) => candidate.splitBombs === 0)
         ? leadPool.filter((candidate) => candidate.splitBombs === 0)
         : leadPool;
@@ -1576,7 +1666,7 @@ export function rankCleanPdkHints(
             // boundary, before local shape preferences can make sorting
             // non-transitive. Exact two-play finishes retain their own stronger
             // endgame policy below.
-            if (preferLargest && normalizedRules.optimizeWholeHand
+            if (preferLargest
                 && left.quality.turns > 1
                 && left.quality.turns === right.quality.turns
                 && left.planLooseSingles === right.planLooseSingles) {
@@ -1716,7 +1806,7 @@ export function rankCleanPdkHints(
                 || (normalizedRules.preserveScoringBombs && left.consumesFourCardBody);
             const rightBombBody = right.completeBombs > 0
                 || (normalizedRules.preserveScoringBombs && right.consumesFourCardBody);
-            if ((normalizedRules.optimizeWholeHand || !preferLargest) && leftBombBody !== rightBombBody) {
+            if (leftBombBody !== rightBombBody) {
                 // A scoring rule makes the bomb atomic; it does not make a
                 // self-led bomb strategically preferable. While leading, keep
                 // every bomb intact but exhaust ordinary structures first.
@@ -1731,7 +1821,7 @@ export function rankCleanPdkHints(
             // a decomposition requiring the fewest legal plays. When that count
             // is tied, shed the most cards now; only then compare loose singles,
             // point value and recovery details.
-            if (preferLargest && normalizedRules.optimizeWholeHand
+            if (preferLargest
                 && !leftBombBody && !rightBombBody) {
                 const sameTripleCandidate = left.tripleBodyRank < Number.MAX_SAFE_INTEGER
                     && left.tripleBodyRank === right.tripleBodyRank
@@ -1869,18 +1959,18 @@ export function rankCleanPdkHints(
             // precedes remaining-hand structure scoring: 78910QQAA responding
             // to 7 opens AA, even though playing 10 would leave more cards in
             // generic structures.
-            const leftOpensMaximumPair = !normalizedRules.optimizeWholeHand
+            const leftOpensMaximumPair = !preferLargest
                 && !preferLargest && handHasNoLooseSingle
                 && left.splitPairs > 0 && Boolean(left.containsRuleMaximum);
-            const rightOpensMaximumPair = !normalizedRules.optimizeWholeHand
+            const rightOpensMaximumPair = !preferLargest
                 && !preferLargest && handHasNoLooseSingle
                 && right.splitPairs > 0 && Boolean(right.containsRuleMaximum);
             if (leftOpensMaximumPair !== rightOpensMaximumPair) {
                 return leftOpensMaximumPair ? -1 : 1;
             }
-            const leftOpensPair = !normalizedRules.optimizeWholeHand
+            const leftOpensPair = !preferLargest
                 && !preferLargest && handHasNoLooseSingle && left.splitPairs > 0;
-            const rightOpensPair = !normalizedRules.optimizeWholeHand
+            const rightOpensPair = !preferLargest
                 && !preferLargest && handHasNoLooseSingle && right.splitPairs > 0;
             if (leftOpensPair !== rightOpensPair) return leftOpensPair ? -1 : 1;
             const a = left.quality;
@@ -1918,7 +2008,7 @@ export function rankCleanPdkHints(
             const rightIntactPairLead = right.cards.length === 2
                 && rank(right.cards[0]) === rank(right.cards[1])
                 && originalCounts[rank(right.cards[0])] === 2;
-            if (preferLargest && !normalizedRules.optimizeWholeHand) return right.cards.length - left.cards.length
+            if (preferLargest) return right.cards.length - left.cards.length
                 || (preferFewestLooseSinglesOnEqualSize ? a.isolated - b.isolated : 0)
                 || left.order - right.order;
             // Turning four equal cards into an ordinary triple is never an
@@ -1996,7 +2086,7 @@ export function rankCleanPdkHints(
                 // decomposition containing the most cards in complete remaining
                 // structures. This may use KKK rather than 888 when KKK+clean
                 // wings preserves the long straight/pair plan left in hand.
-                || (!preferLargest && normalizedRules.optimizeWholeHand
+                || (!preferLargest
                     && comparableSingleTripleFamilies
                     ? b.structuredCards - a.structuredCards : 0)
                 // With several intact triple bodies, lead the smallest one and
@@ -2035,13 +2125,13 @@ export function rankCleanPdkHints(
                 || (simpleSinglesAndPairs
                     && left.retainsHigherLooseSingle !== right.retainsHigherLooseSingle
                     ? left.retainsHigherLooseSingle ? -1 : 1 : 0)
-                || (preferLargest && normalizedRules.optimizeWholeHand
+                || (preferLargest
                     && !leftBombBody && !rightBombBody
                     ? a.turns - b.turns : 0)
-                || (preferLargest && normalizedRules.optimizeWholeHand
+                || (preferLargest
                     && !leftBombBody && !rightBombBody
                     ? right.cards.length - left.cards.length : 0)
-                || (preferLargest && normalizedRules.optimizeWholeHand
+                || (preferLargest
                     && !leftBombBody && !rightBombBody
                     ? left.planLooseSingles - right.planLooseSingles : 0)
                 // If two decompositions finish in the same number of plays,
@@ -2052,7 +2142,7 @@ export function rankCleanPdkHints(
                 // Once the future plan is equally clean, play the combination
                 // containing the most cards now: long straight, pair run,
                 // aircraft and complete attachment forms naturally rise first.
-                || (normalizedRules.optimizeWholeHand ? right.cards.length - left.cards.length : 0)
+                || (preferLargest ? right.cards.length - left.cards.length : 0)
                 // When the plan deliberately leaves one final single, retain the
                 // highest recovery card. Example: 888999 carries 66QQ and leaves Q,
                 // rather than carrying QQQ6 and leaving the low 6.
@@ -2705,7 +2795,7 @@ export function rankCleanPdkHints(
         const [candidate] = cyclePool.splice(exactTwoPlayPairRun.index, 1);
         cyclePool.unshift(candidate);
     }
-    if (preferLargest && normalizedRules.optimizeWholeHand) {
+    if (preferLargest) {
         const promote = (candidate: typeof cyclePool[number] | undefined): void => {
             if (!candidate) return;
             const index = cyclePool.indexOf(candidate);
@@ -2893,7 +2983,7 @@ export function rankCleanPdkHints(
             cyclePool.unshift(lowerStraight!);
         }
     }
-    if (normalizedRules.optimizeWholeHand) {
+    if (preferLargest) {
         // Every region shares one final strategic order for leads and responses. Earlier
         // shape/attachment ordering is only a tie-breaker within this order;
         // it may not move a lower-quality remainder or ordinary probe ahead of
@@ -3206,6 +3296,71 @@ export function rankCleanPdkHints(
             return (establishedOrder.get(left) ?? 0) - (establishedOrder.get(right) ?? 0);
         });
     }
+    // Stage three: the plan owns cross-candidate precedence. The large body
+    // above computes facts only; changing policy order changes this stable sort
+    // without copying a regional sorter.
+    const establishedPriorityOrder = new Map(cyclePool.map((candidate, index) => [candidate, index]));
+    const attachmentRanks = (candidate: typeof cyclePool[number]): number[] => {
+        if (candidate.tripleBodyCount <= 0) return [];
+        const counts = countsOf(candidate.cards);
+        const values: number[] = [];
+        for (let value = 3; value <= 15; value += 1) {
+            const bodyCards = value >= candidate.tripleBodyRank
+                && value < candidate.tripleBodyRank + candidate.tripleBodyCount ? 3 : 0;
+            for (let count = bodyCards; count < counts[value]; count += 1) values.push(value);
+        }
+        return values;
+    };
+    const liangshanAttachmentClass = (candidate: typeof cyclePool[number]): number => {
+        const attachments = attachmentRanks(candidate);
+        if (attachments.length === 2 && attachments[0] !== attachments[1]) return 0;
+        if (attachments.length === 2) return 1;
+        if (attachments.length === 1) return 2;
+        return 3;
+    };
+    const priorityDifference = (
+        priority: PdkHintPriority,
+        left: typeof cyclePool[number],
+        right: typeof cyclePool[number],
+    ): number => {
+        switch (priority) {
+        case 'BOMB_PROTECTION':
+            return left.splitBombs - right.splitBombs;
+        case 'LIANGSHAN_TRIPLE_ATTACHMENTS':
+            return left.tripleBodyCount > 0 && right.tripleBodyCount > 0
+                ? liangshanAttachmentClass(left) - liangshanAttachmentClass(right) : 0;
+        case 'MINIMUM_REMAINING_TURNS':
+            return left.quality.turns - right.quality.turns;
+        case 'MAXIMUM_PLAYED_CARDS':
+            return right.cards.length - left.cards.length;
+        case 'MINIMUM_LOOSE_SINGLES':
+            return left.planLooseSingles - right.planLooseSingles;
+        case 'STRUCTURE_PROTECTION': {
+            if (normalizedRules.compareTripleAttachments
+                && left.tripleBodyCount === right.tripleBodyCount
+                && left.tripleBodyRank === right.tripleBodyRank) {
+                const attachmentOrder = compareNumberLists(attachmentRanks(left), attachmentRanks(right));
+                if (attachmentOrder !== 0) return attachmentOrder;
+            }
+            return left.splitTriples - right.splitTriples || left.splitPairs - right.splitPairs;
+        }
+        case 'ASCENDING_RANK':
+            return Math.min(...left.cards.map(rank)) - Math.min(...right.cards.map(rank));
+        case 'STABLE_SOURCE_ORDER':
+            return left.order - right.order;
+        default:
+            // Required-card, report constraints and same-shape-before-bomb are
+            // destructive stage-two filters, so no candidate-level tie remains.
+            return 0;
+        }
+    };
+    cyclePool.sort((left, right) => {
+        for (const priority of plan.priorities) {
+            const difference = priorityDifference(priority, left, right);
+            if (difference !== 0) return difference;
+        }
+        return (establishedPriorityOrder.get(left) ?? 0) - (establishedPriorityOrder.get(right) ?? 0);
+    });
     const uniquePatterns: number[][] = [];
     const seen = new Set<string>();
     for (const candidate of cyclePool) {

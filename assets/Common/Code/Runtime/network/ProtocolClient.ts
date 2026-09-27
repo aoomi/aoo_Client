@@ -5,16 +5,51 @@ import { requireCanonicalWebSocketUrl } from './GatewayEntryPolicy';
 import { resolvePageInstanceId } from '../config/RuntimeEndpoints';
 import type { LegacyIncomingPacket } from './LegacyPacketCodec';
 import { RoomPushGate } from '../state/RoomPushGate';
+import { ProtocolDefinitions } from './GeneratedProtocolIds';
 
 export type ProtocolStage = 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6' | 'M7' | 'M8';
 export type ProtocolWireMode = 'v2';
 
-// Canonical Poker identities are admitted explicitly. Unknown names must not
-// become authoritative room traffic merely because they share a `poker.` prefix.
-const CANONICAL_POKER_RUNTIME = '(?:CD201|NJ201|LS201|CD299|CN298|CN297)';
-const CANONICAL_POKER_MESSAGE = new RegExp(`^poker\\.${CANONICAL_POKER_RUNTIME}\\.(?:dispatch|state_push)$`);
-const CANONICAL_POKER_DISPATCH = new RegExp(`^poker\\.${CANONICAL_POKER_RUNTIME}\\.dispatch$`);
-const CANONICAL_POKER_STAGE = new RegExp(`^poker\\.(?:${CANONICAL_POKER_RUNTIME}|pdk)\\.`);
+// Canonical poker room identities are derived from the generated machine protocol
+// registry (Server/protocol/aoo-protocol-v2.json rendered by tools/protocol/generate.mjs).
+// A region becomes routable by declaring `poker.<CODE>.dispatch` and
+// `poker.<CODE>.state_push` in the machine source; no global network layer edit is
+// required for a new region. Unknown names still must not become authoritative room
+// traffic merely because they share a `poker.` prefix: admission requires a registered
+// business dispatch identity.
+const POKER_BUSINESS_DISPATCH = /^(poker\.[A-Z]{2}[1-5][0-9]{2})\.dispatch$/;
+const POKER_BUSINESS_MESSAGE = /^(poker\.[A-Z]{2}[1-5][0-9]{2})\.(?:dispatch|state_push)$/;
+interface RegisteredDefinition {
+    readonly kind: string;
+    readonly auth: string;
+    readonly stage: ProtocolStage;
+}
+const registeredDefinitions = ProtocolDefinitions as unknown as Readonly<Record<string, RegisteredDefinition | undefined>>;
+const registeredPokerMessageIds: ReadonlySet<string> = new Set(
+    Object.keys(ProtocolDefinitions).filter(msgId => msgId.startsWith('poker.')));
+
+/** Registered canonical poker region of `msgId`, or undefined when the region has no declared dispatch. */
+function canonicalPokerRegion(msgId: string): string | undefined {
+    const match = POKER_BUSINESS_MESSAGE.exec(msgId);
+    if (!match) return undefined;
+    return registeredDefinitions[`${match[1]}.dispatch`] ? match[1] : undefined;
+}
+
+function isCanonicalPokerMessage(msgId: string): boolean {
+    return canonicalPokerRegion(msgId) !== undefined;
+}
+
+function isCanonicalPokerDispatch(msgId: string): boolean {
+    return POKER_BUSINESS_DISPATCH.test(msgId) && registeredDefinitions[msgId] !== undefined;
+}
+
+/** Registry-declared room-scoped authoritative snapshot push (stage M4/M5/M6, room session). */
+function isRegisteredRoomStatePush(msgId: string): boolean {
+    const definition = registeredDefinitions[msgId];
+    return definition !== undefined && definition.kind === 'push' && definition.auth === 'room_session'
+        && msgId.endsWith('.state_push')
+        && (definition.stage === 'M4' || definition.stage === 'M5' || definition.stage === 'M6');
+}
 
 export interface ProtocolRouteDecision {
     readonly mode: ProtocolWireMode;
@@ -121,7 +156,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
     ): Promise<T> {
         const route = forcedRoute ?? this.getRoute(msgId);
         if (route.canonicalMsgId === 'poker.pdk.dispatch') {
-            throw new Error('旧 pdk 写协议已停用；跑得快请求必须携带 CD201、NJ201 或 LS201 地区业务编码');
+            throw new Error('旧 pdk 写协议已停用；跑得快请求必须携带规范地区业务编码');
         }
         this.publishRoute(route);
         const outbound = this.deferEnvelope(route, 'req', body);
@@ -145,19 +180,6 @@ export class ProtocolClient extends LegacyWebSocketClient {
                 throw new Error('V2 协议响应不匹配');
             }
             if ((response.code ?? 0) !== 0) throw new Error(`${response.code}: ${response.message ?? '请求失败'}`);
-            if (route.canonicalMsgId === 'common.room.hint_req') {
-                const value = response.body && typeof response.body === 'object'
-                    ? response.body as Record<string, unknown> : {};
-                console.info('[CommonRoomHint]', {
-                    requestId: envelope.requestId,
-                    roomId: Number(value.roomId ?? this.correlatedRoomId(body) ?? 0),
-                    stateVersion: Number(value.stateVersion ?? -1),
-                    operationId: String(value.operationId ?? ''),
-                    turnSeat: Number(value.turnSeat ?? -1),
-                    canPass: value.canPass === true,
-                    hintCount: Array.isArray(value.hints) ? value.hints.length : 0,
-                });
-            }
             return response.body;
         }).catch((error: unknown) => {
             const roomId = this.correlatedRoomId(body);
@@ -216,8 +238,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
             || typeof envelope.requestId !== 'string' || typeof envelope.traceId !== 'string'
             || !Number.isSafeInteger(envelope.seq) || Number(envelope.seq) <= 0
             || !Number.isSafeInteger(envelope.timestamp) || Number(envelope.timestamp) <= 0) return;
-        const directRoomState = envelope.msgId === 'common.room.state_push'
-            || /^poker\.[A-Z0-9]+\.state_push$/.test(envelope.msgId);
+        const directRoomState = isRegisteredRoomStatePush(envelope.msgId);
         const directRoomEvent = directRoomState || envelope.msgId === 'room.quick_text'
             || envelope.msgId === 'room.magic_expression' || envelope.msgId === 'room.voice';
         const wrapper = envelope.body && typeof envelope.body === 'object'
@@ -264,7 +285,9 @@ export class ProtocolClient extends LegacyWebSocketClient {
         this.v2Sequence = this.v2Sequence >= Number.MAX_SAFE_INTEGER ? 1 : this.v2Sequence + 1;
         const reconnect = route.canonicalMsgId === 'room.reconnect';
         const roomDispatch = route.canonicalMsgId === 'common.room.dispatch';
-        const canonicalPokerDispatch = CANONICAL_POKER_DISPATCH.test(route.canonicalMsgId);
+        const canonicalPokerDispatch = isCanonicalPokerDispatch(route.canonicalMsgId);
+        const canonicalMahjongDispatch = /^mahjong\.[a-z0-9]+\.dispatch$/.test(route.canonicalMsgId)
+            && registeredDefinitions[route.canonicalMsgId] !== undefined;
         const directRoomRequest = route.canonicalMsgId.startsWith('common.room.')
             && route.canonicalMsgId.endsWith('_req');
         const nonRoomDispatch = route.canonicalMsgId === 'account.session_dispatch'
@@ -287,7 +310,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
             playVersion: authoritative ? playVersion : undefined,
             body: directRoomRequest ? authority
                 : roomDispatch ? { command: String(authority.action ?? ''), ...authority }
-                : canonicalPokerDispatch ? authority
+                : canonicalPokerDispatch || canonicalMahjongDispatch ? authority
                 : { action: route.legacyEvent, payload: body ?? {} },
         };
     }
@@ -343,7 +366,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
 
     private static isRoomPush(action: string): boolean {
         return action.startsWith('common.room.')
-            || CANONICAL_POKER_MESSAGE.test(action) || /^poker\.pdk\.(?:dispatch|state_push)$/.test(action)
+            || registeredPokerMessageIds.has(action)
             || action.startsWith('mahjong.') || action.startsWith('longcard.') || action.startsWith('wordcard.');
     }
 
@@ -357,10 +380,11 @@ export class ProtocolClient extends LegacyWebSocketClient {
         if (event === 'room.quick_text' || event === 'room.magic_expression' || event === 'room.voice') return event;
         if (event === 'common.room.state_push' || /^common\.room\.[a-z0-9_]+_req$/.test(event)) return event;
         if (event === 'common.room.dispatch') return event;
+        if (event === 'mahjong.cdxzmj.dispatch') return event;
         if (event === 'club.room_templates_changed') return event;
         if (event === 'club.waiting_room_ready') return event;
         if (event === 'account.session_dispatch' || event === 'hall.dispatch' || event === 'club.dispatch') return event;
-        if (CANONICAL_POKER_MESSAGE.test(event)) return event;
+        if (isCanonicalPokerMessage(event)) return event;
         // These are session-scoped lobby queries despite their inherited names.
         // Keep the list explicit: authority boundaries must never be inferred from
         // a loose `room` substring because creation and current-room discovery run
@@ -394,8 +418,14 @@ export class ProtocolClient extends LegacyWebSocketClient {
         if (msgId.startsWith('hall.')) return 'M2';
         if (msgId.startsWith('club.')) return 'M3';
         if (msgId.startsWith('common.room.')) return 'M4';
-        if (CANONICAL_POKER_STAGE.test(msgId)) return 'M5';
-        if (msgId.startsWith('mahjong.xuezhan.')) return 'M6';
+        const pokerRegion = canonicalPokerRegion(msgId);
+        if (pokerRegion) {
+            const definition = registeredDefinitions[msgId] ?? registeredDefinitions[`${pokerRegion}.dispatch`];
+            if (definition) return definition.stage;
+        }
+        const registeredPoker = registeredDefinitions[msgId];
+        if (registeredPoker) return registeredPoker.stage;
+        if (msgId.startsWith('mahjong.xuezhan.') || msgId.startsWith('mahjong.cdxzmj.')) return 'M6';
         if (msgId.startsWith('longcard.')) return 'M7';
         return 'M7';
     }

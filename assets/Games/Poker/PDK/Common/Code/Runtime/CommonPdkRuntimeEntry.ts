@@ -1,12 +1,13 @@
 import type { LegacySubgameTicket } from '../../../../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import type { GameRuntimeEntry } from '../../../../../Common/Code/Runtime/GameRuntimeEntry';
+import { PDK_BUSINESS_CODE_LIST } from '../Regional/PdkBusinessCodes';
 import { CommonPdkGameSceneLauncher } from './CommonPdkGameSceneLauncher';
 import { CommonPdkSwitchCoordinator } from './CommonPdkSwitchCoordinator';
 
 /** Keeps the established PDK scene and replay paths behind the shared game-entry contract. */
 export class CommonPdkRuntimeEntry implements GameRuntimeEntry {
     public readonly id = 'common-pdk';
-    public readonly canonicalGameCodes = Object.freeze(['CD201', 'NJ201', 'LS201']);
+    public readonly canonicalGameCodes = Object.freeze([...PDK_BUSINESS_CODE_LIST]);
     public readonly families = Object.freeze(['poker-pao-de-kuai']);
 
     public constructor(

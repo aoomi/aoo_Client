@@ -1,6 +1,7 @@
 import { assetManager, Camera, instantiate, Node, Prefab, view } from 'cc';
 import { createCD299GameRuntimeEntry } from '../../../Poker/CX/Code/CD299GameRuntimeEntry';
 import { createCN298GameRuntimeEntry } from '../../../Poker/NN/Common/Code/CN298RuntimeEntry';
+import { createCD101GameRuntimeEntry } from '../../../Mahjong/Common/Code/CDXZ/CD101GameRuntimeEntry';
 import {
     createCN297GameRuntimeEntry,
     type CN297RuntimeHost,
@@ -19,6 +20,15 @@ export interface ProductionGameRuntimeEntriesOptions {
     readonly pdk: GameRuntimeEntry;
     readonly lobbyNode: Node;
     readonly playerId: number;
+    /** Account identity bound to the Gateway ticket; consumed by CD101 only. */
+    readonly accountId: number;
+    /** Issues a fresh, one-time Hall room ticket for every reconnect attempt. */
+    readonly refreshRoomConnection: (roomId: number) => Promise<{
+        authorityRoute: string;
+        gameTicket: string;
+    }>;
+    /** Commits the authoritative Hall leave before local room teardown/navigation. */
+    readonly requestRoomExit: (roomId: number) => Promise<void>;
     readonly onCD299ExitRequested?: (roomId: number) => Promise<void>;
 }
 
@@ -37,12 +47,17 @@ export function createProductionGameRuntimeEntryRegistry(
             parent: roomHost,
             playerId: options.playerId,
             requestPrefix: 'cd299',
-            onExitRequested: options.onCD299ExitRequested,
+            onExitRequested: options.onCD299ExitRequested ?? options.requestRoomExit,
         }),
         createCN298GameRuntimeEntry({
             playerId: options.playerId,
             requestPrefix: 'cn298',
             host: () => roomHost,
+        }),
+        createCD101GameRuntimeEntry({
+            parent: roomHost,
+            accountId: options.accountId,
+            requestRoomExit: options.requestRoomExit,
         }),
         createCN297GameRuntimeEntry(cn297Host, () => ({
             playerId: options.playerId,

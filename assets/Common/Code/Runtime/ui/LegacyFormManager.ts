@@ -75,6 +75,10 @@ export class LegacyForm {
     public show(args: unknown[] = []): void {
         if (!this.parent.isValid || !this.node.isValid) return;
         if (!this.node.parent) this.parent.addChild(this.node);
+        // A presentation handoff may hide a cached form root before closing it.
+        // Reopening that form must restore the root before its onShow lifecycle
+        // hides the underlying surface, otherwise both surfaces become invisible.
+        this.node.active = true;
         if (!this.shown && this.options.showFromCenter && this.name !== 'Numpad') {
             const scale = this.node.scale.clone();
             this.node.setScale(new Vec3(scale.x * 0.5, scale.y * 0.5, scale.z));

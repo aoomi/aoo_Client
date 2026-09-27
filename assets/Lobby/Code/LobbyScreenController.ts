@@ -19,6 +19,7 @@ import type {
     LegacySubgameTicket,
 } from '../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import { CommonPdkGameSceneLauncher } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher';
+import { isPdkBusinessCode } from '../../Games/Poker/PDK/Common/Code/Regional/PdkBusinessCodes';
 import { CommonPdkRuntimeEntry } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntimeEntry';
 import { createProductionGameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntries';
 import type { GameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntryRegistry';
@@ -329,6 +330,14 @@ export class LobbyScreenController {
             pdk: this.commonPdkRuntimeEntry,
             lobbyNode: main.node,
             playerId: this.role.playerId,
+            accountId: Number(this.account.accountId),
+            refreshRoomConnection: roomId => hallRoomGateway.refreshRoomConnection(roomId),
+            requestRoomExit: async roomId => {
+                if (!this.navigateToLobby) throw new Error('房间退出缺少大厅导航能力');
+                await hallRoomGateway.leave(roomId);
+                this.clearRoomNavigationContext();
+                await this.navigateToLobby();
+            },
             onCD299ExitRequested: async roomId => {
                 await hallRoomGateway.leave(roomId);
                 this.clearRoomNavigationContext();
@@ -1123,12 +1132,10 @@ export class LobbyScreenController {
         if (!roomKey) return;
         if (this.enteringRoom) return;
         const stableGameCode = gameName.trim().toUpperCase();
-        const isRegionalPdk = stableGameCode === 'CD201'
-            || stableGameCode === 'NJ201' || stableGameCode === 'LS201';
-        // SCJYMJ (628) now has a native 3.8.8 runtime. It must first execute
-        // the authoritative hall enter-room request just like PDK so the
-        // asynchronous response carries roomID into the one-time handoff.
-        if (!isRegionalPdk && gameType !== 629 && gameType !== 628 && gameType !== 399 && gameType !== 376 && gameType !== 308 && gameType !== 272 && gameType !== 174 && gameType !== 254 && gameType !== 232 && gameType !== 407 && gameType !== 0) {
+        const isRegionalPdk = isPdkBusinessCode(stableGameCode);
+        // Native Mahjong runtimes (CD101/516 and SCJYMJ/628) must execute
+        // the authoritative hall enter-room request before the one-time handoff.
+        if (!isRegionalPdk && gameType !== 629 && gameType !== 628 && gameType !== 516 && gameType !== 399 && gameType !== 376 && gameType !== 308 && gameType !== 272 && gameType !== 174 && gameType !== 254 && gameType !== 232 && gameType !== 407 && gameType !== 0) {
             if (!this.isActiveEpoch(epoch)) return;
             this.forms?.close('common/Numpad');
             this.subgame && this.mainNodeExternalBoundary(gameType, gameName, roomKey);

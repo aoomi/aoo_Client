@@ -25,7 +25,4 @@ export class RoomLifecycleController {
             roomID, pos, expectedStateVersion, trickId, operationId,
         });
     }
-    public hint(roomID: number, pos: number): Promise<unknown> {
-        return this.commands.action('hint', 'common.room.hint_req', { roomID, pos });
-    }
 }

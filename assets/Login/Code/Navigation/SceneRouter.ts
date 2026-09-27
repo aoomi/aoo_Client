@@ -8,6 +8,7 @@ import { legacyPlatformRuntime } from '../../../Common/Code/Runtime/platform/Leg
 import type { RoomRecoveryStore } from '../../../Common/Code/Runtime/room/RoomRecoveryStore';
 import { HallRoomGateway } from '../../../Lobby/Code/HallRoomGateway';
 import { CommonPdkGameSceneLauncher } from '../../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher';
+import { PDK_BUSINESS_CODE_LIST } from '../../../Games/Poker/PDK/Common/Code/Regional/PdkBusinessCodes';
 import { createProductionGameRuntimeEntryRegistry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntries';
 import type { GameRuntimeEntry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntry';
 import type { GameRuntimeEntryRegistry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntryRegistry';
@@ -515,7 +516,7 @@ export class SceneRouter {
         this.gameLauncher = launcher;
         const pdkEntry: GameRuntimeEntry = {
             id: 'startup-common-pdk',
-            canonicalGameCodes: Object.freeze(['CD201', 'NJ201', 'LS201']),
+            canonicalGameCodes: Object.freeze([...PDK_BUSINESS_CODE_LIST]),
             families: Object.freeze(['poker-pao-de-kuai']),
             preload: () => launcher.prewarmDefaultRoom(),
             enter: target => launcher.launch(target, { node: parent, report }),
@@ -528,6 +529,10 @@ export class SceneRouter {
             // by Hall (the public display ID in the legacy protocol). accountId is
             // an authentication-domain key and must never replace it here.
             playerId: role.playerId,
+            accountId: Number(account.accountId),
+            refreshRoomConnection: roomId => gateway.refreshRoomConnection(roomId),
+            requestRoomExit: roomId => this.exitRecoveredRoom(
+                account, role, handoff, gateway, roomId),
             onCD299ExitRequested: roomId => this.exitRecoveredCD299Spectator(
                 account, role, handoff, gateway, roomId),
         });
@@ -547,6 +552,16 @@ export class SceneRouter {
     }
 
     private async exitRecoveredCD299Spectator(
+        account: AuthenticatedAccount,
+        role: RoleSession,
+        handoff: LegacySubgameTicket,
+        gateway: HallRoomGateway,
+        roomId: number,
+    ): Promise<void> {
+        return this.exitRecoveredRoom(account, role, handoff, gateway, roomId);
+    }
+
+    private async exitRecoveredRoom(
         account: AuthenticatedAccount,
         role: RoleSession,
         handoff: LegacySubgameTicket,

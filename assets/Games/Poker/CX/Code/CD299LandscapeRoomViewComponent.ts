@@ -1,7 +1,7 @@
 import { _decorator, assetManager, Button, Component, EventTouch, instantiate, Label, Layout, Node, Prefab, sp, Sprite, SpriteAtlas, SpriteFrame, tween, Tween, UITransform, Vec3, Widget } from 'cc';
 import { CommonHeadController } from '../../../../Common/Code/UI/CommonHeadController';
 import { NumpadHandle, NumpadService } from '../../../../Common/Code/Runtime/ui/NumpadService';
-import { COMMON_ASSET_BUNDLE, NUMPAD_ASSET, resolveCommonNumpadAsset } from '../../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
+import { COMMON_ASSET_BUNDLE, COMMON_PREFAB_BUNDLE, NUMPAD_ASSET, resolveCommonNumpadAsset } from '../../../../Common/Code/Runtime/ui/CommonPrefabRegistry';
 import { Poker_Card_Face } from '../../Common/Code/Card/Poker_Card_Presenter';
 import { Poker_Card_Factory } from '../../Common/Code/Card/Poker_Card_Factory';
 import { settlementTemplateResolver } from '../../../Common/Code/Settlement/SettlementTemplateResolver';
@@ -22,6 +22,9 @@ const XQP_BET_EFFECTS = Object.freeze({
 });
 const LANDSCAPE_DESIGN_WIDTH = 1280;
 const LANDSCAPE_DESIGN_HEIGHT = 720;
+// Game-neutral room forms live in the single Games/Common bundle; CD299 mounts
+// the authored carry-score form from there instead of a game-local copy.
+const ADD_CENT_WINDOW_ASSET = 'Prefab/ChessRoomAddCentWindow';
 const PHASE_TEXT: Readonly<Record<CD299Phase, string>> = Object.freeze({
     WAITING: '等待玩家坐下', BASE_AND_MANGO: '选择底分和芒数', DEALING: '发牌', BETTING: '下注',
     ADD_CARD: '补牌', SPLITTING: '分牌', REVEAL: '开牌', ROUND_SETTLEMENT: '本局结算', FINISHED: '牌局结束',
@@ -562,7 +565,17 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
             }
             if (index >= previousCount) this.playDealTween(
                 card, seat, dealOrder, dealCycleSize, index - previousCount);
-        })).catch(error => console.error('[CD299] landscape card render failed', {
+        })).then(() => {
+            if (seat !== 0 || this.cardGenerations.get(seat) !== generation
+                || this.selectedSplitCards.length === 0) return;
+            // Every authoritative snapshot rebuilds the local hand nodes. When
+            // a player has already selected split cards, the replacement nodes
+            // are intentionally hidden in Hand; converge those current nodes
+            // back into the authored split slots after the async rebuild. This
+            // also removes stale slot children from the previous generation, so
+            // each authoritative card owns exactly one visible node.
+            this.renderSplitSelection();
+        }).catch(error => console.error('[CD299] landscape card render failed', {
             seat, reason: error instanceof Error ? error.message : String(error),
         }));
     }
@@ -1324,43 +1337,46 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
             this.node.addChild(source);
             source.setWorldPosition(startWorld);
             source.active = true;
-            if (selecting) this.reflowLocalSplitHand(rawCard, true);
+            if (selecting) this.reflowLocalSplitHand();
             const target = destination.worldPosition.clone();
             tween(source).to(0.2, { worldPosition: target }).call(() => {
                 if (!source.isValid || !destination.isValid) return;
                 source.removeFromParent();
                 destination.addChild(source);
                 source.setPosition(selecting ? Vec3.ZERO : new Vec3(0, 0, source.position.z));
-                if (!selecting) this.reflowLocalSplitHand(rawCard, false);
+                if (!selecting) this.reflowLocalSplitHand();
                 this.renderSplitSelection();
                 console.info('[CD299] split card moved', JSON.stringify({
-                    roomId: this.roomId, card: rawCard, selecting,
+                    roomId: this.roomId, selecting,
                     start: { x: startWorld.x, y: startWorld.y },
                     target: { x: target.x, y: target.y },
                 }));
             }).start();
         } else {
-            this.reflowLocalSplitHand(rawCard, selecting);
+            this.reflowLocalSplitHand();
             this.renderSplitSelection();
         }
     }
 
     /** Remaining local cards keep one centred horizontal row while selection changes. */
-    private reflowLocalSplitHand(movingCard: number, selecting: boolean): void {
+    private reflowLocalSplitHand(): void {
+        const hand = this.seat(0).getChildByName('Hand');
         const remaining = this.localHandCards.filter(card => !this.selectedSplitCards.includes(card));
         remaining.forEach((cardValue, index) => {
             const card = this.localCardNodes.get(cardValue);
             if (!card?.isValid) return;
             const x = (index - (remaining.length - 1) / 2) * 96;
-            card.active = !(cardValue === movingCard && !selecting);
+            card.active = true;
             Tween.stopAllByTarget(card);
             tween(card).to(0.2, { position: new Vec3(x, 0, card.position.z) }).start();
         });
         for (const cardValue of this.selectedSplitCards) {
             const node = this.localCardNodes.get(cardValue);
             if (!node?.isValid) continue;
-            if (node.parent?.name === 'RuntimeCards') node.active = true;
-            else node.active = !this.selectedSplitCards.includes(cardValue);
+            // Only a selected card still in Hand should be hidden. A card
+            // flying through the room root must stay active until the tween
+            // reparents it into its split slot.
+            node.active = node.parent !== hand;
         }
     }
 
@@ -1626,16 +1642,7 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
             this.reservedSeat = reservedSeat;
             const prefab = await this.loadAddCentWindow();
             if (this.reservedSeat !== reservedSeat || !this.controller || !this.node.isValid) return;
-            const window = instantiate(prefab);
-            window.name = `ChessRoomAddCentWindow_${reservedSeat}`;
-            // Mount inside the authored 1280×720 room root. The form container's
-            // origin is not the game-screen centre, so mounting as its sibling
-            // shifts a nominal (0, 0) popup toward the upper-right in browsers.
-            this.node.addChild(window);
-            window.setPosition(0, 0, 100);
-            window.setScale(1, 1, 1);
-            this.addCentWindow = window;
-            this.configureAddCentWindow(window);
+            const window = this.mountAddCentWindow(prefab, `ChessRoomAddCentWindow_${reservedSeat}`, 100);
             this.bindPopupButton(window.getChildByPath('Popup/Tag/Close'), () => this.closeAddCentWindow(true));
             const scoreInput = window.getChildByPath('Add/Num');
             if (!scoreInput) throw new Error('[CD299] add-cent score input missing');
@@ -1668,7 +1675,14 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
                 seat,
                 reason: error instanceof Error ? error.message : String(error),
             });
-            this.closeAddCentWindow(true);
+            // The authority already granted the seat; this form only edits the
+            // carry score. A form failure degrades that editor, it must not
+            // revoke the seat: cancelling here emitted stand_req and rolled the
+            // viewer back to SPECTATOR although the server reported SEATED.
+            this.closeAddCentWindow();
+            console.warn('[CD299] add-cent unavailable, seat reservation retained', {
+                roomId: this.roomId, seat: this.reservedSeat,
+            });
         }
     }
 
@@ -1679,12 +1693,7 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         try {
             const prefab = await this.loadAddCentWindow();
             if (!this.controller || !this.node.isValid) return;
-            const window = instantiate(prefab);
-            window.name = `ChessRoomRestartCentWindow_${seat}`;
-            this.node.addChild(window);
-            window.setPosition(0, 0, 101);
-            this.addCentWindow = window;
-            this.configureAddCentWindow(window);
+            const window = this.mountAddCentWindow(prefab, `ChessRoomRestartCentWindow_${seat}`, 101);
             this.bindPopupButton(window.getChildByPath('Popup/Tag/Close'), () => this.closeAddCentWindow());
             const scoreInput = window.getChildByPath('Add/Num');
             if (!scoreInput) throw new Error('[CD299] restart carry score input missing');
@@ -1710,12 +1719,7 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         try {
             const prefab = await this.loadAddCentWindow();
             if (!this.controller || !this.node.isValid) return;
-            const window = instantiate(prefab);
-            window.name = `ChessRoomRebuyCentWindow_${seat}`;
-            this.node.addChild(window);
-            window.setPosition(0, 0, 101);
-            this.addCentWindow = window;
-            this.configureAddCentWindow(window);
+            const window = this.mountAddCentWindow(prefab, `ChessRoomRebuyCentWindow_${seat}`, 101);
             this.bindPopupButton(window.getChildByPath('Popup/Tag/Close'), () => this.closeAddCentWindow());
             const scoreInput = window.getChildByPath('Add/Num');
             if (!scoreInput) throw new Error('[CD299] rebuy carry score input missing');
@@ -1797,6 +1801,10 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
             setValue: next => { value = next; label.string = next || '0'; },
         }, { title: '携带积分' });
         if (!handle) throw new Error('[CD299] carry score numpad unavailable');
+        // The shared numpad is authored on UI_2D while the gameplay camera
+        // renders the CX game layer, so it needs the same normalisation as the
+        // form: without this the editor is instantiated but never drawn.
+        this.setLayerRecursively(handle.node, this.node.layer);
         this.addCentNumpad = handle;
         console.info('[CD299] carry score editor opened', { roomId: this.roomId });
     }
@@ -1852,19 +1860,40 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         return this.commonHeadPrefab;
     }
 
+    /**
+     * Mounts the authored carry-score form inside the 1280×720 room root.
+     *
+     * The form container's origin is not the game-screen centre, so the form is
+     * mounted as a child of the room root instead of as a sibling. The gameplay
+     * camera renders the CX game layer, so the prefab's own UI_2D layer has to
+     * be normalised like the CommonHead and room mounts; otherwise the form is
+     * instantiated but never drawn.
+     */
+    private mountAddCentWindow(prefab: Prefab, name: string, z: number): Node {
+        const window = instantiate(prefab);
+        window.name = name;
+        this.node.addChild(window);
+        window.setPosition(0, 0, z);
+        window.setScale(1, 1, 1);
+        this.setLayerRecursively(window, this.node.layer);
+        this.addCentWindow = window;
+        this.configureAddCentWindow(window);
+        return window;
+    }
+
     private loadAddCentWindow(): Promise<Prefab> {
         if (this.addCentPrefab) return this.addCentPrefab;
         this.addCentPrefab = new Promise((resolve, reject) => {
             const load = (bundle: ReturnType<typeof assetManager.getBundle>): void => {
-                if (!bundle) return reject(new Error('[CD299] poker-cx bundle unavailable'));
-                bundle.load('Common/Prefab/ChessRoomAddCentWindow', Prefab, (error, prefab) =>
+                if (!bundle) return reject(new Error('[CD299] games-common bundle unavailable'));
+                bundle.load(ADD_CENT_WINDOW_ASSET, Prefab, (error, prefab) =>
                     error || !prefab
                         ? reject(error ?? new Error('[CD299] ChessRoomAddCentWindow unavailable'))
                         : resolve(prefab));
             };
-            const bundle = assetManager.getBundle('poker-cx');
+            const bundle = assetManager.getBundle(COMMON_PREFAB_BUNDLE);
             if (bundle) load(bundle);
-            else assetManager.loadBundle('poker-cx', (error, loaded) => error ? reject(error) : load(loaded));
+            else assetManager.loadBundle(COMMON_PREFAB_BUNDLE, (error, loaded) => error ? reject(error) : load(loaded));
         });
         return this.addCentPrefab;
     }

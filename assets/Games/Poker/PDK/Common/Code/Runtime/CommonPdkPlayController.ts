@@ -12,9 +12,9 @@ import { PdkGameAudioPresenter, pdkVoiceGender } from './Room/PdkGameAudioPresen
 import { PdkRoomAudioPresenter } from './Room/PdkRoomAudioPresenter';
 import type { CommonPdkSocialController } from './CommonPdkSocialController';
 import type { GameCapabilities } from '../../../../../Common/Code/Catalog/FamilyRuntimeRegistry';
-import { resolvePdkHintPolicyId } from '../Regional/PdkHintPolicyRegistry';
+import { resolvePdkHintPolicy } from '../Regional/PdkHintPolicyRegistry';
 import { CommonPdkGameLogic } from './logic/CommonPdkGameLogic';
-import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isAtomicPdkWholeHandCandidate, isAuthorityCompatiblePdkAircraft, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints, rankPdkDragCandidates } from './logic/PdkCleanHintRanker';
+import { effectivePdkMaximumSingleRanks, enumeratePdkRankMultisetCandidates, isAtomicPdkWholeHandCandidate, isAuthorityCompatiblePdkAircraft, isPdkResponseShape, isRegionalMaximumPdkCombination, isStrictlyHigherPdkSingle, largestLegalPdkSubsets, pdkSelectionMask, pdkSingleResponseCandidates, rankCleanPdkHints, rankPdkDragCandidates, resolvePdkHintRulePlan, type PdkHintRulePlan } from './logic/PdkCleanHintRanker';
 import type { CommonPdkRuntime } from './CommonPdkRuntime';
 import { canLeaveRoom } from '../../../../../Common/Code/Room/RoomController';
 import { CommonRoomNodePath, PdkRoomNodePath } from './Room/PdkRoomNodePaths';
@@ -28,6 +28,7 @@ import {
     type PdkRetainedPlayedCardFlow,
 } from './Room/PdkRetainedPlayedCardFlow';
 import { PdkCurrentPlayArrowPresenter } from './Room/PdkCurrentPlayArrowPresenter';
+import { projectPdkOperationClock } from './CommonPdkAuthoritativeViewAdapter';
 import {
     PdkRoundPresentationLifecycle,
     type PdkRoundPresentationAcceptance,
@@ -113,6 +114,7 @@ export class CommonPdkPlayController {
     private autoHintTurnKey = '';
     private hintCacheKey = '';
     private hintCache: number[][] = [];
+    private activeHintPlan: PdkHintRulePlan | null = null;
     private playInFlight = false;
     /**
      * Keep the current controls visually stable while play_req is resolving.
@@ -836,14 +838,18 @@ export class CommonPdkPlayController {
         this.commonView?.visible(CommonRoomNodePath.startButton, manualStart);
         const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
         const authorityDeadline = this.record(setInfo.operationDeadline);
+        const authorityClock = projectPdkOperationClock(authorityDeadline, setInfo.serverEpochMillis);
+        const actionableTurn = authorityClock.mode === 'unlimited' || authorityClock.mode === 'timed';
         const authorityOperationId = String(authorityDeadline?.operationId ?? '');
         const authorityTurnSeat = Number(setInfo.opPos ?? authorityDeadline?.seatId ?? -1);
-        const authorityLocalTurn = state === 1 && authorityTurnSeat === positions.GetClientPos();
+        const authorityLocalTurn = state === 1 && actionableTurn
+            && authorityClock.seatId === positions.GetClientPos()
+            && authorityTurnSeat === positions.GetClientPos();
         const automaticPlayOwnsTurn = this.autoPlayInFlight
             && authorityOperationId === this.autoPlayOperationId
             && authorityTurnSeat === positions.GetClientPos();
         const localTurn = authorityLocalTurn
-            || (state === 1 && this.keepOperationsVisibleDuringPlay);
+            || (state === 1 && actionableTurn && this.keepOperationsVisibleDuringPlay);
         if (state !== 1) this.hideClocks();
         const ruleOptions = this.record(config.ruleOptions) ?? {};
         const canPass = localTurn && !Boolean(setInfo.isFirstOp)
@@ -3185,13 +3191,12 @@ export class CommonPdkPlayController {
         this.tipIndex = (this.tipIndex + 1) % tips.length;
         this.updateSelection();
         const selectedCards = [...(this.logic.GetSelectCard() ?? [])].map(Number);
-        const diagnosticRules = this.authoritativeRuleOptions();
         const diagnosticGameCode = this.runtime.getGameCode();
-        const diagnosticPolicyId = resolvePdkHintPolicyId(diagnosticGameCode);
+        const diagnosticPolicyId = this.activeHintPlan?.policyId ?? 'COMMON';
         this.traceOutCards('hint-selection', {
             gameCode: diagnosticGameCode,
             policyId: diagnosticPolicyId,
-            minimumStraightLength: Number(diagnosticRules.minimumStraightLength),
+            minimumStraightLength: Number(this.activeHintPlan?.rules.minimumStraightLength),
             selectedCards,
             candidateCount: tips.length,
         });
@@ -3203,7 +3208,7 @@ export class CommonPdkPlayController {
                 playerId: this.runtime.getPlayerId(),
                 gameCode: diagnosticGameCode,
                 policyId: diagnosticPolicyId,
-                minimumStraightLength: Number(diagnosticRules.minimumStraightLength),
+                minimumStraightLength: Number(this.activeHintPlan?.rules.minimumStraightLength),
                 candidateCount: tips.length,
                 selectedCards,
                 computeMs: Number((computedAt - startedAt).toFixed(2)),
@@ -3237,7 +3242,7 @@ export class CommonPdkPlayController {
         const gameCode = this.runtime.getGameCode();
         this.traceOutCards('hint-cache', {
             gameCode,
-            policyId: resolvePdkHintPolicyId(gameCode),
+            policyId: this.activeHintPlan?.policyId ?? 'COMMON',
             minimumStraightLength: Number(rules.minimumStraightLength),
             leading,
             targetType: Number(this.logic.GetLastCardType()),
@@ -3771,6 +3776,7 @@ export class CommonPdkPlayController {
         this.promptCycleKey = '';
         this.hintCacheKey = '';
         this.hintCache = [];
+        this.activeHintPlan = null;
     }
 
     private authoritativeRuleOptions(): Record<string, unknown> {
@@ -3913,13 +3919,11 @@ export class CommonPdkPlayController {
     private responseTipCandidates(): number[][] {
         const targetCards = this.logic.lastCardList ?? [];
         if (Number(this.logic.GetLastCardType()) !== 2 || targetCards.length !== 1) {
-            const legacy = this.logic.GetTipCard();
-            // The migrated enumerator greedily fills attachments. In an EITHER
-            // room it can turn JJJ+A+K into JJJ+AA, classify that candidate as
-            // TRIPLE_WITH_PAIR, and then lose a legal response to TRIPLE_WITH_TWO.
-            // Enumerate exact-size physical subsets and let the regional rule
-            // engine below validate shape and comparison for every compound type.
-            const candidates = [...legacy, ...this.exactSizeResponseSubsets(targetCards.length)];
+            // Every non-single same-shape response has exactly the target size;
+            // exhaustive rank-multiset subsets therefore strictly contain the
+            // legacy type builders, while authority validation below removes
+            // illegal shapes. Bombs are added independently after this set.
+            const candidates = this.exactSizeResponseSubsets(targetCards.length);
             // Bombs are valid independent responses to every non-bomb shape and
             // do not have the target hand's card count. Enumerating only exact-
             // size subsets drops a four-card bomb when responding to a five-card
@@ -3990,10 +3994,27 @@ export class CommonPdkPlayController {
         constrainToHighestReportedSingle = true,
         strategy: 'HINT' | 'DRAG' = 'HINT',
     ): number[][] {
-        const previous = [...(this.logic.GetSelectCard() ?? [])].map(Number);
-        const hand = this.logic.GetHandCard() ?? [];
+        // Stage 1: resolve the authoritative rule plan before reading/splitting the hand.
+        const rules = this.authoritativeRuleOptions();
+        const gameCode = this.runtime.getGameCode();
+        const identity = resolvePdkHintPolicy(gameCode, rules);
         const targetType = Number(this.logic.GetLastCardType());
         const targetCount = Array.isArray(this.logic.lastCardList) ? this.logic.lastCardList.length : 0;
+        const nextPlayerCardCount = this.nextPlayerPublicCardCount();
+        const plan = resolvePdkHintRulePlan(rules, identity, {
+            leading: targetType === 0,
+            previousType: targetType,
+            previousCardCount: targetCount,
+            nextPlayerReportedSingle: nextPlayerCardCount === 1,
+            nextPlayerReportedPair: Boolean(rules.forceHighestPairAgainstReportedPair)
+                && nextPlayerCardCount === 2,
+            finalHand: false,
+        });
+        this.activeHintPlan = plan;
+
+        // Stage 2: only after the plan exists may the current hand be enumerated and filtered.
+        const previous = [...(this.logic.GetSelectCard() ?? [])].map(Number);
+        const hand = this.logic.GetHandCard() ?? [];
         const keyed = new Map<string, {
             cards: number[];
             order: number;
@@ -4026,17 +4047,18 @@ export class CommonPdkPlayController {
         } finally {
             this.logic.ChangeSelectCard(previous);
         }
-        const rules = this.authoritativeRuleOptions();
-        const minimumStraightLength = Number(rules.minimumStraightLength);
-        const minimumPairRunLength = Number(rules.minimumPairRunLength);
-        if (!Number.isSafeInteger(minimumStraightLength) || minimumStraightLength < 3
-            || !Number.isSafeInteger(minimumPairRunLength) || minimumPairRunLength < 2) {
-            throw new Error('CommonPdk 权威连续牌规则无效');
-        }
+        const minimumStraightLength = plan.rules.minimumStraightLength;
+        const minimumPairRunLength = plan.rules.minimumPairRunLength;
         const candidates = [...keyed.values()];
-        const constrained = constrainToHighestReportedSingle && this.nextPlayerReportedSingle()
+        let constrained = constrainToHighestReportedSingle && plan.ruleSources.reportedSingle.value === true
             ? candidates.filter((candidate) => candidate.cards.length !== 1 || this.cardRank(candidate.cards[0]) === this.highestHandRank())
             : candidates;
+        if (plan.ruleSources.reportedPair.value === true) {
+            const highestPairRank = this.highestHandPairRank();
+            constrained = constrained.filter((candidate) => candidate.cards.length !== 2
+                || this.cardRank(candidate.cards[0]) !== this.cardRank(candidate.cards[1])
+                || this.cardRank(candidate.cards[0]) === highestPairRank);
+        }
         if (strategy === 'DRAG') {
             return rankPdkDragCandidates(this.logic.GetHandCard() ?? [], constrained, {
                 minimumStraightLength,
@@ -4063,32 +4085,19 @@ export class CommonPdkPlayController {
                 candidate.containsRuleMaximum = true;
             }
         }
-        const rankCandidates = (values: typeof constrained): number[][] => rankCleanPdkHints(this.logic.GetHandCard() ?? [], values, {
-            minimumStraightLength,
-            minimumPairRunLength,
-            allowTwoInRuns: Boolean(rules.allowTwoInRuns),
+        const rankingPlan: PdkHintRulePlan = { ...plan, rules: {
+            ...plan.rules,
             protectedBombs: this.protectedBombGroups(),
-            tripleAttachmentMode: String(rules.tripleAttachmentMode ?? '') as
-                'DISABLED' | 'SINGLES' | 'PAIRS' | 'SINGLE_OR_PAIR' | 'EITHER',
-            optimizeWholeHand: Boolean(rules.optimizeWholeHand),
-            compareTripleAttachments:
-                Boolean(rules.compareTripleAttachments),
-            // Bomb preservation is a public rule derived exclusively from the
-            // authoritative scoring mode. Regions only publish the mode.
-            preserveScoringBombs: String(rules.bombScoreMode ?? 'DISABLED') !== 'DISABLED',
-            // The immutable regional deck is the sole source of maximum rank.
-            // LS201 therefore resolves A (not the public-rule 2) for complete
-            // singles, pairs, runs and other non-attachment control shapes.
             maximumSingleRanks: effectiveMaximumRanks.length > 0
                 ? effectiveMaximumRanks : [maximumSingleRank],
-            deckCards: Array.isArray(rules.deckCards) ? deckCards : [],
+            deckCards,
             playedRankCounts: authoritativePlayedRankCounts,
-            // Every response, including a single-card response, first keeps the
-            // fewest effective loose singles. Candidate point value is only a
-            // later tie-breaker, so equal cleanup starts from the lowest card
-            // that can beat the table play.
-            prioritizeLooseSingles: targetCount > 0,
-        }, preferLargest, preferFewestLooseSinglesOnEqualSize);
+        } };
+        // Stage 3: rank solely through the ordered priorities in the resolved plan.
+        const rankCandidates = (values: typeof constrained): number[][] => rankCleanPdkHints(
+            this.logic.GetHandCard() ?? [], values, rankingPlan,
+            preferLargest, preferFewestLooseSinglesOnEqualSize,
+        );
         // Response prompts always exhaust the same legal shape first. A bomb is
         // the fallback only when no same-shape response exists; remaining-hand
         // quality must never promote a bomb ahead of a valid triple-with-two.
@@ -4136,8 +4145,12 @@ export class CommonPdkPlayController {
     }
 
     private nextPlayerReportedSingle(): boolean {
+        return this.nextPlayerPublicCardCount() === 1;
+    }
+
+    private nextPlayerPublicCardCount(): number {
         const nextSeat = Number(this.runtime.getRoomPosManager().GetClientDownPos());
-        if (!Number.isSafeInteger(nextSeat) || nextSeat < 0) return false;
+        if (!Number.isSafeInteger(nextSeat) || nextSeat < 0) return -1;
         const setInfo = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
         const positions = Array.isArray(setInfo.posInfo) ? setInfo.posInfo : [];
         const nextPlayer = positions.find((entry: unknown) => {
@@ -4152,7 +4165,17 @@ export class CommonPdkPlayController {
         // multiple cards; the server remains the final legality authority when
         // a snapshot omits that public field.
         const publicCount = Number(nextPlayer?.cardCount);
-        return Number.isSafeInteger(publicCount) && publicCount === 1;
+        return Number.isSafeInteger(publicCount) ? publicCount : -1;
+    }
+
+    private highestHandPairRank(): number {
+        const counts = new Map<number, number>();
+        for (const card of this.logic.GetHandCard() ?? []) {
+            const value = this.cardRank(Number(card));
+            counts.set(value, (counts.get(value) ?? 0) + 1);
+        }
+        return Math.max(-1, ...Array.from(counts.entries())
+            .filter(([, count]) => count >= 2).map(([value]) => value));
     }
 
     private highestHandRank(): number {
@@ -4660,20 +4683,22 @@ export class CommonPdkPlayController {
     }
 
     private startClockFromSetInfo(packet: Record<string, unknown>): void {
-        const deadline = this.record(packet.operationDeadline);
-        const dataSeat = Number(deadline?.seatId ?? packet.opPos ?? -1);
-        const deadlineEpochMillis = Number(deadline?.deadlineEpochMillis ?? 0);
-        const serverEpochMillis = Number(packet.serverEpochMillis ?? Date.now());
-        const seconds = deadlineEpochMillis > serverEpochMillis
-            ? Math.ceil((deadlineEpochMillis - serverEpochMillis) / 1000)
-            : Number(packet.runWaitSec ?? 0);
-        if (dataSeat >= 0 && seconds > 0) this.startClock(dataSeat, seconds);
+        // Legacy turn-only events have no deadline. Reuse the latest authority
+        // projection instead of treating their absent field as a closed turn.
+        const authority = this.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+        const hasDeadline = Object.prototype.hasOwnProperty.call(packet, 'operationDeadline');
+        const deadline = this.record(hasDeadline ? packet.operationDeadline : authority.operationDeadline);
+        const clock = projectPdkOperationClock(deadline,
+            hasDeadline ? packet.serverEpochMillis : authority.serverEpochMillis);
+        if (clock.mode === 'unlimited') this.startClock(clock.seatId, null);
+        else if (clock.mode === 'timed') this.startClock(clock.seatId, clock.seconds);
         else this.hideClocks();
     }
 
-    private startClock(dataSeat: number, seconds: number): void {
+    private startClock(dataSeat: number, seconds: number | null): void {
         this.stopClock();
-        let remaining = Math.max(0, Math.floor(seconds));
+        const unlimited = seconds === null;
+        let remaining = unlimited ? 0 : Math.max(0, Math.floor(seconds));
         const entry = createSeatEntries(this.authoritativePlayerCount(), this.clientSeat())
             .find((item) => item.dataSeat === dataSeat);
         const rotationZ = entry ? (180 + entry.physicalSlot * 90) % 360 : 0;
@@ -4689,7 +4714,7 @@ export class CommonPdkPlayController {
                 roomId: this.roomId(), stateVersion, operationId,
                 dataSeat, clientSeat: this.clientSeat(),
                 physicalSlot: entry?.physicalSlot ?? -1,
-                rotationZ, seconds: remaining,
+                rotationZ, seconds: unlimited ? null : remaining, unlimited,
             }));
         }
         const update = () => {
@@ -4708,17 +4733,18 @@ export class CommonPdkPlayController {
                 pointer.active = Boolean(entry);
                 if (entry) pointer.setRotationFromEuler(0, 0, rotationZ);
             }
-            if (entry) this.view?.label('Clock/Time', String(remaining));
+            this.view?.visible('Clock/Time', Boolean(entry) && !unlimited);
+            if (entry && !unlimited) this.view?.label('Clock/Time', String(remaining));
             const countdownKey = `${dataSeat}:${remaining}`;
-            if (remaining > 3) this.lastCountdownSound = '';
-            if (remaining > 0 && remaining <= 3 && countdownKey !== this.lastCountdownSound) {
+            if (!unlimited && remaining > 3) this.lastCountdownSound = '';
+            if (!unlimited && remaining > 0 && remaining <= 3 && countdownKey !== this.lastCountdownSound) {
                 this.lastCountdownSound = countdownKey;
                 void this.roomAudio?.play('daojishi');
             }
-            if (remaining-- <= 0) this.stopClock();
+            if (!unlimited && remaining-- <= 0) this.stopClock();
         };
         update();
-        this.clockTimer = globalThis.setInterval(update, 1000) as unknown as number;
+        if (!unlimited) this.clockTimer = globalThis.setInterval(update, 1000) as unknown as number;
     }
     private hideClocks(): void {
         this.stopClock();

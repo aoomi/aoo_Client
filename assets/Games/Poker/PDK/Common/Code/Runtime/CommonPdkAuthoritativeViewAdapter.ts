@@ -112,11 +112,22 @@ function legacyOperationType(type: unknown): number {
     }
 }
 
-function remainingOperationSeconds(deadline: Record<string, unknown>, serverEpochMillis: unknown): number {
+export function projectPdkOperationClock(deadline: Record<string, unknown>, serverEpochMillis: unknown): {
+    mode: 'closed' | 'unlimited' | 'timed' | 'expired';
+    seatId: number;
+    seconds: number;
+} {
+    const seatId = deadline.seatId;
+    if (!String(deadline.operationId ?? '').trim() || !integer(seatId) || seatId < 0) {
+        return { mode: 'closed', seatId: -1, seconds: 0 };
+    }
+    if (deadline.unlimited === true) return { mode: 'unlimited', seatId, seconds: 0 };
     const deadlineEpochMillis = Number(deadline.deadlineEpochMillis ?? 0);
     const serverNow = Number(serverEpochMillis ?? Date.now());
-    if (!Number.isFinite(deadlineEpochMillis) || !Number.isFinite(serverNow) || deadlineEpochMillis <= serverNow) return 0;
-    return Math.ceil((deadlineEpochMillis - serverNow) / 1000);
+    if (!Number.isFinite(deadlineEpochMillis) || !Number.isFinite(serverNow) || deadlineEpochMillis <= serverNow) {
+        return { mode: 'expired', seatId, seconds: 0 };
+    }
+    return { mode: 'timed', seatId, seconds: Math.ceil((deadlineEpochMillis - serverNow) / 1000) };
 }
 
 /** Projects the authoritative V2 room view into the migrated 2.4.8 model shape. */
@@ -269,7 +280,7 @@ export function projectCommonPdkAuthoritativeView(packet: unknown, localPlayerId
     // gate before using this value.
     const activeRequiredFirstCard = integer(source.activeRequiredFirstCard) && source.activeRequiredFirstCard > 0
         ? source.activeRequiredFirstCard : 0;
-    const runWaitSec = remainingOperationSeconds(operationDeadline, source.serverEpochMillis);
+    const runWaitSec = projectPdkOperationClock(operationDeadline, source.serverEpochMillis).seconds;
     const tableLastOperation = record(tableSnapshot.lastOperation);
     const authorityOperationId = String(source.operationId || operationDeadline.operationId || tableLastOperation.operationId || '');
     const set = {
