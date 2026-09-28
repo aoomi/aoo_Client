@@ -8,7 +8,7 @@ import { CN297_PLAY_VERSION } from './CN297Rules';
 import { CN297RoomController } from './CN297RoomController';
 
 export const CN297_ROOM_PREFABS = Object.freeze({
-    landscape: 'Prefab/CN297RoomLandscape', portrait: 'Prefab/CN297RoomPortrait',
+    landscape: 'Prefab/CN297RoomLandscape', portrait: 'Prefab/ZJH_CommonRoom',
 });
 
 export interface CN297RuntimeIdentity { readonly playerId: number }

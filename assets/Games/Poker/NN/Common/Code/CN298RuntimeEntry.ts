@@ -1,4 +1,4 @@
-import { assetManager, AssetManager, director, instantiate, Node, Prefab, view } from 'cc';
+import { assetManager, AssetManager, director, instantiate, Node, Prefab } from 'cc';
 import type { LegacySubgameTicket } from '../../../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import type { GameRuntimeEntry } from '../../../../Common/Code/Runtime/GameRuntimeEntry';
 import { createOwnedGameClient } from '../../../../../Common/Code/Runtime/network/ConnectionOwnership';
@@ -8,7 +8,9 @@ import { CN298RoomViewComponent } from './CN298RoomViewComponent';
 import { CN298_PLAY_VERSION } from './CN298Rules';
 
 const BUNDLE = 'poker-nn';
-const PREFAB_PATH = 'Prefab/CN298Room';
+const PREFAB_PATH = 'Prefab/NN_CommonRoom';
+const SMALL_SETTLEMENT_PREFAB_PATH = 'XQPSource/SettlementSmall/Prefab/Landscape/ChessNNSmallSettlementWindow';
+const BIG_SETTLEMENT_PREFAB_PATH = 'Prefab/BigSettlement_0';
 
 export interface CN298RuntimeEntryOptions {
     readonly playerId: number;
@@ -32,7 +34,9 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
 
     public async preload(): Promise<void> {
         const bundle = await this.loadBundle();
-        await this.loadPrefab(bundle, this.orientation());
+        await Promise.all([this.loadPrefab(bundle, PREFAB_PATH),
+            this.loadPrefab(bundle, SMALL_SETTLEMENT_PREFAB_PATH),
+            this.loadPrefab(bundle, BIG_SETTLEMENT_PREFAB_PATH)]);
     }
 
     public async enter(handoff: LegacySubgameTicket): Promise<void> {
@@ -47,8 +51,7 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
         if (handoff.playVersion && handoff.playVersion !== CN298_PLAY_VERSION) {
             throw new Error(`[CN298] unexpected playVersion=${handoff.playVersion}`);
         }
-        console.info('[CN298] enter', { roomId, playVersion: CN298_PLAY_VERSION,
-            authorityRoute, orientation: this.orientation() });
+        console.info('[CN298] enter', { roomId, playVersion: CN298_PLAY_VERSION, authorityRoute });
         const client = createOwnedGameClient();
         this.gameClient = client;
         try {
@@ -57,7 +60,11 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
             await client.connect(authorityRoute);
             if (generation !== this.generation) return;
             const bundle = await this.loadBundle();
-            const prefab = await this.loadPrefab(bundle, this.orientation());
+            const [prefab, smallSettlementPrefab, bigSettlementPrefab] = await Promise.all([
+                this.loadPrefab(bundle, PREFAB_PATH),
+                this.loadPrefab(bundle, SMALL_SETTLEMENT_PREFAB_PATH),
+                this.loadPrefab(bundle, BIG_SETTLEMENT_PREFAB_PATH),
+            ]);
             if (generation !== this.generation) return;
             const host = this.options.host?.() ?? director.getScene()?.getChildByName('Canvas') ?? null;
             if (!host?.isValid) throw new Error('[CN298] room host is unavailable');
@@ -68,6 +75,8 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
             if (!roomView) throw new Error('[CN298] room prefab is missing CN298RoomViewComponent');
             const controller = new CN298RuntimeController(client, roomView, roomId,
                 this.options.playerId, this.options.requestPrefix);
+            roomView.attachSettlementPrefabs(smallSettlementPrefab, bigSettlementPrefab,
+                () => controller.continueRound());
             roomView.bindActions({
                 sit: () => controller.sit(), rob: value => controller.rob(value),
                 bet: value => controller.bet(value),
@@ -92,20 +101,23 @@ export class CN298GameRuntimeEntry implements GameRuntimeEntry {
         this.releaseSession();
     }
 
-    private orientation(): 'Landscape' | 'Portrait' {
-        const size = view.getVisibleSize();
-        return size.width >= size.height ? 'Landscape' : 'Portrait';
-    }
     private loadBundle(): Promise<AssetManager.Bundle> {
         const loaded = assetManager.getBundle(BUNDLE);
         if (loaded) return Promise.resolve(loaded);
         return new Promise((resolve, reject) => assetManager.loadBundle(BUNDLE,
             (error, bundle) => error || !bundle ? reject(error ?? new Error('[CN298] bundle unavailable')) : resolve(bundle)));
     }
-    private loadPrefab(bundle: AssetManager.Bundle,
-        orientation: 'Landscape' | 'Portrait'): Promise<Prefab> {
-        return new Promise((resolve, reject) => bundle.load(`${PREFAB_PATH}${orientation}`, Prefab,
-            (error, prefab) => error || !prefab ? reject(error ?? new Error('[CN298] prefab unavailable')) : resolve(prefab)));
+    private loadPrefab(bundle: AssetManager.Bundle, path: string): Promise<Prefab> {
+        return new Promise((resolve, reject) => bundle.load(path, Prefab, (error, prefab) => {
+            if (error || !prefab) {
+                const failure = error ?? new Error(`[CN298] prefab unavailable path=${path}`);
+                console.error('[CN298] prefab load failed', { bundle: BUNDLE, path,
+                    reason: failure instanceof Error ? failure.message : String(failure) });
+                reject(failure);
+                return;
+            }
+            resolve(prefab);
+        }));
     }
     private releaseSession(): void {
         if (this.roomNode?.isValid) this.roomNode.destroy();

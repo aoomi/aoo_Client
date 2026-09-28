@@ -70,7 +70,28 @@ export class CD299RoomPresenter {
     private render(snapshot: CD299Snapshot, previous: CD299Snapshot | null): void {
         const animateSettlement = snapshot.phase === 'ROUND_SETTLEMENT'
             && previous !== null && previous.phase !== 'ROUND_SETTLEMENT' && previous.phase !== 'FINISHED';
+        const settlementVisible = snapshot.phase === 'ROUND_SETTLEMENT' || snapshot.phase === 'FINISHED';
         const settlementChips: CD299SettlementChip[] = [];
+        const displaySeats = new Set<number>([
+            ...snapshot.roundSeats,
+            ...Object.keys(snapshot.hands).map(Number),
+            ...Object.keys(snapshot.bets).map(Number),
+            ...snapshot.splitSeats,
+            ...snapshot.droppedSeats,
+        ]);
+        const displayPlayerIds = new Map<number, number>();
+        Object.entries(snapshot.players).forEach(([seat, playerId]) => displayPlayerIds.set(Number(seat), playerId));
+        const livePlayerIds = new Set(Object.values(snapshot.players));
+        const departedPlayerIds = Object.keys(snapshot.lastDelta).map(Number)
+            .filter(playerId => !livePlayerIds.has(playerId));
+        snapshot.roundSeats.filter(seat => !displayPlayerIds.has(seat))
+            .forEach((seat, index) => {
+                const playerId = departedPlayerIds[index];
+                if (playerId !== undefined) displayPlayerIds.set(seat, playerId);
+            });
+        const displayDealOrder = Array.from({ length: snapshot.rules.maxPlayers }, (_, offset) =>
+            (Math.max(-1, snapshot.bankerSeat) + 1 + offset) % snapshot.rules.maxPlayers)
+            .filter(candidate => displaySeats.has(candidate));
         const roundLimit = snapshot.rules.roundCount ?? 0;
         const roomEndText = snapshot.rules.roundCount !== undefined
             ? `局数：${snapshot.round}/${snapshot.rules.roundCount}`
@@ -99,6 +120,7 @@ export class CD299RoomPresenter {
         for (let seat = 0; seat < snapshot.rules.maxPlayers; seat += 1) {
             const visualSeat = this.visualSeat(seat, localSeat, snapshot.rules.maxPlayers);
             const playerId = snapshot.players[seat] ?? null;
+            const displayPlayerId = displayPlayerIds.get(seat) ?? null;
             this.view.showSeat(visualSeat, seat, playerId,
                 snapshot.viewerRole === 'SPECTATOR' && playerId === null
                     && (snapshot.phase === 'WAITING' || snapshot.phase === 'ROUND_SETTLEMENT'),
@@ -112,12 +134,9 @@ export class CD299RoomPresenter {
             // XQP walks clockwise from the seat after the banker and advances
             // its 80 ms cadence only for valid, occupied roles. Empty chair
             // indices must not create visible pauses in a sparse room.
-            const occupiedDealOrder = Array.from({ length: snapshot.rules.maxPlayers }, (_, offset) =>
-                (Math.max(-1, snapshot.bankerSeat) + 1 + offset) % snapshot.rules.maxPlayers)
-                .filter(candidate => snapshot.players[candidate] !== undefined);
-            const dealOrder = Math.max(0, occupiedDealOrder.indexOf(seat));
+            const dealOrder = Math.max(0, displayDealOrder.indexOf(seat));
             this.view.showHand(visualSeat, cards, cards.some(card => card !== 0),
-                snapshot.rules.earthNineKing, dealOrder, Math.max(1, occupiedDealOrder.length));
+                snapshot.rules.earthNineKing, dealOrder, Math.max(1, displayDealOrder.length));
             this.view.showBanker(visualSeat, seat === snapshot.bankerSeat);
             this.view.showOpeningCommit(visualSeat, snapshot.bases[seat] ?? 0,
                 snapshot.mangos[seat] ?? 0, snapshot.round);
@@ -146,11 +165,11 @@ export class CD299RoomPresenter {
                     settledScore: snapshot.scores[seat] ?? 0, availableScore,
                 }));
             }
-            const roundDelta = this.deltaForPlayer(snapshot, playerId);
+            const roundDelta = this.deltaForPlayer(snapshot, displayPlayerId);
             this.view.showRoundDelta(visualSeat, animateSettlement ? 0 : Math.max(0, roundDelta));
-            if (animateSettlement && playerId !== null) {
+            if (settlementVisible && displayPlayerId !== null && displaySeats.has(seat)) {
                 settlementChips.push(Object.freeze({
-                    visualSeat, authoritativeSeat: seat, playerId, wager, delta: roundDelta,
+                    visualSeat, authoritativeSeat: seat, playerId: displayPlayerId, wager, delta: roundDelta,
                     finalScore: availableScore,
                     terminalAction: snapshot.allInSeats.includes(seat) ? 'ALL_IN'
                         : snapshot.lastBetActions[seat] ?? null,
@@ -175,7 +194,7 @@ export class CD299RoomPresenter {
                 snapshot.seatRetentionDeadlineEpochMillis[seat] ?? 0, seat === localSeat);
         }
 
-        if (animateSettlement) this.view.showSettlementChips(snapshot.stateVersion, settlementChips);
+        if (settlementVisible) this.view.showSettlementChips(snapshot.stateVersion, settlementChips);
 
         // XQP only exposes the live operation panel to the seat named by the
         // current operation notice.  Checking both fields prevents a stale
@@ -205,7 +224,7 @@ export class CD299RoomPresenter {
     }
 
     private deltaForPlayer(snapshot: CD299Snapshot, playerId: number | null): number {
-        if (snapshot.phase !== 'ROUND_SETTLEMENT' || playerId === null) return 0;
+        if ((snapshot.phase !== 'ROUND_SETTLEMENT' && snapshot.phase !== 'FINISHED') || playerId === null) return 0;
         return snapshot.lastDelta[playerId] ?? 0;
     }
 

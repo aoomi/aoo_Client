@@ -1,6 +1,7 @@
-import { _decorator, Button, Component, EventTouch, Label, Node, UITransform, Vec3 } from 'cc';
+import { _decorator, assetManager, Button, Component, EventTouch, instantiate, Label, Node, Prefab, Sprite, SpriteAtlas, UITransform, Vec3 } from 'cc';
+import { PlayerAvatarService } from '../../../../../Common/Code/UI/PlayerAvatarService';
 import { CN298ActionAvailability, CN298RoomView } from './CN298RoomPresenter';
-import { CN298Phase, CN298PlayerStats } from './CN298RoomState';
+import { CN298Phase, CN298PlayerStats, CN298Snapshot } from './CN298RoomState';
 
 const { ccclass, property } = _decorator;
 
@@ -8,6 +9,8 @@ const PHASE_TEXT: Readonly<Record<CN298Phase, string>> = Object.freeze({
     WAITING: '等待准备', ROBBING: '抢庄', BETTING: '下注', SPLITTING: '分牌',
     SETTLEMENT: '本局结算', FINISHED: '牌局结束',
 });
+const NN_BUNDLE = 'poker-nn';
+const POKER_ATLAS = 'XQPSource/Dependencies/PokerAtlas/PokerFront_0Trends';
 
 /** 横竖屏共用显示绑定；Prefab 只保存节点位置和资源引用。 */
 @ccclass('CN298RoomViewComponent')
@@ -29,6 +32,7 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
     private betOptions: readonly number[] = [];
     private continueIsStart = false;
     private readonly handCardCounts = new Map<number, number>();
+    private settlementView: CN298SettlementView | null = null;
 
     protected onLoad(): void {
         this.hydrateLegacyLandscapeBindings();
@@ -86,16 +90,25 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
         this.listen(this.continueButton, () => this.continueIsStart ? actions.start() : actions.continueRound());
     }
 
-    protected onDestroy(): void { this.unbindActions(); }
+    protected onDestroy(): void {
+        this.unbindActions();
+        this.settlementView?.destroy();
+        this.settlementView = null;
+    }
+
+    public attachSettlementPrefabs(smallPrefab: Prefab, bigPrefab: Prefab,
+        continueRound: () => Promise<boolean>): void {
+        this.settlementView?.destroy();
+        this.settlementView = new CN298SettlementView(this.node, smallPrefab, bigPrefab, continueRound);
+    }
 
     public showSeat(seat: number, playerId: number | null, visible: boolean, canSit: boolean): void {
         const seatNode = this.seatNode(seat);
         if (!seatNode?.isValid) return;
         seatNode.active = visible;
-        const name = seatNode.getChildByName('Lb_Name')?.getComponent(Label)
-            ?? this.findPath(seatNode, 'Head/NickName/Name')?.getComponent(Label) ?? null;
+        const name = this.findPath(seatNode, 'Head/NickName/Name')?.getComponent(Label) ?? null;
         if (name) name.string = playerId === null ? '空位' : `玩家${playerId}`;
-        const landscapePlayer = this.findPath(this.node, `Middle/Players/${seat}`);
+        const landscapePlayer = this.findPath(this.node, `Players/${seat}`);
         if (landscapePlayer?.isValid) landscapePlayer.active = visible;
         if (canSit) this.sitEnabled.add(seat); else this.sitEnabled.delete(seat);
     }
@@ -126,14 +139,13 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
     public showRobResult(seat: number, multiplier: number): void {
         const label = this.robLabels[seat];
         if (label) label.string = multiplier > 0 ? `抢庄×${multiplier}` : '不抢';
-        const rob = this.findPath(this.node, `Middle/Players/${seat}/RobNode`)
-            ?? this.findPath(this.node, `Middle/Players/${seat}/RobZhuang`);
+        const rob = this.findPath(this.node, `Players/${seat}/OperationDisplay/RobNode`);
         if (rob) rob.active = true;
     }
     public showBet(seat: number, multiplier: number): void {
         const label = this.betLabels[seat];
         if (label) label.string = multiplier > 0 ? `下注×${multiplier}` : '';
-        const bet = this.findPath(this.node, `Middle/Players/${seat}/BetArea`);
+        const bet = this.findPath(this.node, `Players/${seat}/BetArea`);
         if (bet) bet.active = multiplier > 0;
     }
     public showSplitState(seat: number, completed: boolean): void {
@@ -150,6 +162,16 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
         }
         const delta = roundDelta === 0 ? '' : ` (${roundDelta > 0 ? '+' : ''}${roundDelta})`;
         label.string = `总分 ${score}${delta}`;
+    }
+    public showSettlement(snapshot: CN298Snapshot): void {
+        if (!this.settlementView) {
+            if (snapshot.phase === 'SETTLEMENT' || snapshot.phase === 'FINISHED') {
+                console.error('[CN298] settlement prefabs are not attached', { phase: snapshot.phase,
+                    roomId: snapshot.roomId, stateVersion: snapshot.stateVersion });
+            }
+            return;
+        }
+        this.settlementView.render(snapshot);
     }
     public setActions(actions: Readonly<CN298ActionAvailability>): void {
         this.robOptions = actions.robOptions;
@@ -219,16 +241,12 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
     }
     private removeNodeListener(node: Node, eventType: string, listener: (...args: never[]) => void): void {
         if (!node.isValid) return;
-        try {
-            node.off(eventType, listener);
-        } catch {
-            // Cocos may clear a child node's event processor before the root component receives onDestroy.
-        }
+        node.off(eventType, listener);
     }
 
     /** Bind the preserved XQP landscape hierarchy without serializing legacy gameplay scripts. */
     private hydrateLegacyLandscapeBindings(): void {
-        if (!this.phaseLabel) this.phaseLabel = this.findPath(this.node, 'Middle/Clock/Time')?.getComponent(Label) ?? null;
+        if (!this.phaseLabel) this.phaseLabel = this.findPath(this.node, 'Clock/Time')?.getComponent(Label) ?? null;
         if (this.robButtons.length === 0) {
             const rob = this.findPath(this.node, 'OperateBtn/Rob');
             this.robButtons = ['NoRob', '0', '1', '2']
@@ -250,16 +268,16 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
         }
         if (this.bankerMarks.length === 0) {
             this.bankerMarks = Array.from({ length: 10 }, (_, seat) =>
-                this.findPath(this.node, `Players-001/${seat}/State/Banker`)).filter((node): node is Node => node !== null);
+                this.findPath(this.node, `Players-001/${seat}/AtateImg/Banker`)).filter((node): node is Node => node !== null);
         }
         if (this.splitMarks.length === 0) {
             this.splitMarks = Array.from({ length: 10 }, (_, seat) =>
-                this.findPath(this.node, `Middle/Players/${seat}/ResultNode`)).filter((node): node is Node => node !== null);
+                this.findPath(this.node, `Players/${seat}/OperationDisplay/ResultNode`)).filter((node): node is Node => node !== null);
         }
     }
 
     private seatNode(seat: number): Node | null {
-        return this.node.getChildByName(`Seat_${seat}`) ?? this.findPath(this.node, `Players-001/${seat}`);
+        return this.findPath(this.node, `Players-001/${seat}`);
     }
 
     private nodePath(node: Node): string {
@@ -278,4 +296,267 @@ export class CN298RoomViewComponent extends Component implements CN298RoomView {
         for (const segment of path.split('/')) current = current?.getChildByName(segment) ?? null;
         return current;
     }
+}
+
+/** Runtime-only wiring for the imported settlement prefabs; no serialized prefab mutation is required. */
+class CN298SettlementView {
+    private readonly small: Node;
+    private readonly big: Node;
+    private readonly rows: Node[];
+    private readonly bigRows: Node[];
+    private readonly disposers: Array<() => void> = [];
+    private page = 0;
+    private snapshot: CN298Snapshot | null = null;
+    private handTypeGapLogged = false;
+    private pokerAtlas: Promise<SpriteAtlas | null> | null = null;
+    private smallRenderVersion = 0;
+
+    public constructor(host: Node, smallPrefab: Prefab, bigPrefab: Prefab,
+        private readonly continueRound: () => Promise<boolean>) {
+        this.small = instantiate(smallPrefab);
+        this.big = instantiate(bigPrefab);
+        this.small.name = 'CN298SmallSettlementRuntime';
+        this.big.name = 'CN298BigSettlementRuntime';
+        host.addChild(this.small);
+        host.addChild(this.big);
+        this.small.setPosition(Vec3.ZERO);
+        this.big.setPosition(Vec3.ZERO);
+        this.small.active = false;
+        this.big.active = false;
+        this.rows = this.createRows(this.small, 'Small/Players/View/Content', 'Clone', 5);
+        this.bigRows = this.createRows(this.big,
+            'FinalSettlementPanel/PlayerList/PlayerListView/PlayerListContent', 'PlayerItemTemplate', 10);
+        this.bindClose(this.small, 'Mask');
+        this.bindClose(this.small, 'Popup/Bg');
+        this.bindClose(this.big, 'Mask');
+        this.bindClose(this.big, 'FinalSettlementPanel/BottomBar/NormalActions/Btn_ReturnLobby');
+        this.bindClose(this.big, 'FinalSettlementPanel/BottomBar/FinishedActions/Btn_ReturnLobby');
+        this.bindClick(this.small, 'Small/Bottom/PageTurning/LeftArrows', () => this.changePage(-1));
+        this.bindClick(this.small, 'Small/Bottom/PageTurning/RightArrows', () => this.changePage(1));
+        this.bindClick(this.big, 'FinalSettlementPanel/BottomBar/NormalActions/Btn_Continue', () => {
+            void this.continueRound().catch((error: unknown) => console.error(
+                '[CN298] final settlement continue failed', {
+                    reason: error instanceof Error ? error.message : String(error),
+                }));
+        });
+    }
+
+    public render(snapshot: CN298Snapshot): void {
+        this.snapshot = snapshot;
+        if (snapshot.phase === 'SETTLEMENT') {
+            this.big.active = false;
+            this.small.active = true;
+            this.renderSmall(snapshot);
+            return;
+        }
+        if (snapshot.phase === 'FINISHED') {
+            this.small.active = false;
+            this.big.active = true;
+            this.renderBig(snapshot);
+            return;
+        }
+        this.small.active = false;
+        this.big.active = false;
+    }
+
+    public destroy(): void {
+        for (const dispose of this.disposers.splice(0)) dispose();
+        if (this.small.isValid) this.small.destroy();
+        if (this.big.isValid) this.big.destroy();
+    }
+
+    private renderSmall(snapshot: CN298Snapshot): void {
+        const renderVersion = ++this.smallRenderVersion;
+        const top = this.find(this.small, 'Small/Top');
+        if (top) top.active = true;
+        this.setLabel(this.small, 'Small/Top/RoomID', `房号:${snapshot.roomId}`);
+        this.setLabel(this.small, 'Small/Top/Time', '');
+        const seats = Object.keys(snapshot.players).map(Number).sort((a, b) => a - b);
+        const pageCount = Math.max(1, Math.ceil(seats.length / this.rows.length));
+        this.page = Math.min(this.page, pageCount - 1);
+        this.setLabel(this.small, 'Small/Bottom/PageTurning/Num', `${this.page + 1}/${pageCount}`);
+        this.rows.forEach((row, index) => {
+            const seat = seats[this.page * this.rows.length + index];
+            row.active = seat !== undefined;
+            if (seat === undefined) return;
+            const cards = this.settlementCards(snapshot, seat);
+            const playerId = snapshot.players[seat];
+            this.setLabel(row, 'Head/NickName/Name', `玩家${playerId}`);
+            this.assignAvatar(row, 'Head/Square/Mask/Avatar', playerId);
+            const banker = this.find(row, 'Head/Banker');
+            if (banker) banker.active = seat === snapshot.roundSettlement.bankerSeat;
+            this.setLabel(row, 'Bet/Num', String(snapshot.bets[seat] ?? 0));
+            for (let cardIndex = 0; cardIndex < 5; cardIndex++) {
+                const cardNode = this.requireNode(row, `SplitPoker/Hand/Pokers/${cardIndex + 1}`);
+                cardNode.active = cardIndex < cards.length;
+            }
+            void this.renderSmallCards(row, seat, cards, renderVersion);
+            this.clearResultPlaceholders(row, snapshot);
+            const delta = snapshot.roundSettlement.scoreDelta?.[seat] ?? 0;
+            this.setLabel(row, 'Score/Win', delta > 0 ? `+${delta}` : '');
+            this.setLabel(row, 'Score/Lose', delta < 0 ? String(delta) : '');
+        });
+    }
+
+    private renderBig(snapshot: CN298Snapshot): void {
+        this.setLabel(this.big, 'FinalSettlementPanel/TopBar/RoomIdLabel', `房号:${snapshot.roomId}`);
+        this.setLabel(this.big, 'FinalSettlementPanel/TopBar/RoundCountLabel',
+            `局数:${snapshot.round}/${snapshot.roundLimit}`);
+        this.setLabel(this.big, 'FinalSettlementPanel/TopBar/EndTimeLabel', '');
+        const entries = Object.entries(snapshot.finalSettlement).sort(([a], [b]) => Number(a) - Number(b));
+        const winner = entries.reduce<CN298PlayerStats | null>((best, [, stats]) =>
+            !best || stats.totalScore > best.totalScore ? stats : best, null);
+        this.setLabel(this.big,
+            'FinalSettlementPanel/BestWinnerPanel/BestWinnerHead/NickNameBackground/BestWinnerNameLabel',
+            winner ? `玩家${winner.playerId}` : '');
+        this.setLabel(this.big, 'FinalSettlementPanel/BestWinnerPanel/BestWinnerScoreLabel',
+            winner ? this.scoreText(winner.totalScore) : '');
+        this.bigRows.forEach((row, index) => {
+            const stats = entries[index]?.[1];
+            row.active = Boolean(stats);
+            if (!stats) return;
+            this.setLabel(row, 'Head/NickNameBackground/PlayerNameLabel', `玩家${stats.playerId}`);
+            this.assignAvatar(row, 'Head/AvatarSquare/AvatarMask/AvatarImage', stats.playerId);
+            this.setLabel(row, 'Statistics/WinCount/WinCountLabel', String(stats.winRounds));
+            this.setLabel(row, 'Statistics/LoseCount/LoseCountLabel', String(stats.lossRounds));
+            this.requireNode(row, 'TotalScore/TotalWinScoreLabel').active = false;
+            this.requireNode(row, 'TotalScore/TotalLoseScoreLabel').active = false;
+        });
+    }
+
+    private async renderSmallCards(row: Node, seat: number, cards: readonly number[],
+        renderVersion: number): Promise<void> {
+        const atlas = await this.loadPokerAtlas();
+        if (!atlas || renderVersion !== this.smallRenderVersion || !row.isValid) return;
+        cards.forEach((card, cardIndex) => {
+            const path = `SplitPoker/Hand/Pokers/${cardIndex + 1}/Poker`;
+            const sprite = this.requireNode(row, path).getComponent(Sprite);
+            if (!sprite) throw new Error(`[CN298] settlement card sprite missing path=${path}`);
+            const frame = atlas.getSpriteFrame(String(card));
+            if (!frame) {
+                console.error('[CN298] settlement card frame missing', { seat, card, path });
+                return;
+            }
+            sprite.spriteFrame = frame;
+        });
+    }
+
+    private loadPokerAtlas(): Promise<SpriteAtlas | null> {
+        if (this.pokerAtlas) return this.pokerAtlas;
+        this.pokerAtlas = new Promise<SpriteAtlas>((resolve, reject) => {
+            const load = (bundle: ReturnType<typeof assetManager.getBundle>): void => {
+                if (!bundle) return reject(new Error(`[CN298] bundle unavailable: ${NN_BUNDLE}`));
+                bundle.load(POKER_ATLAS, SpriteAtlas, (error, atlas) => error || !atlas
+                    ? reject(error ?? new Error(`[CN298] card atlas unavailable: ${POKER_ATLAS}`))
+                    : resolve(atlas));
+            };
+            const bundle = assetManager.getBundle(NN_BUNDLE);
+            if (bundle) load(bundle);
+            else assetManager.loadBundle(NN_BUNDLE, (error, loaded) => error ? reject(error) : load(loaded));
+        }).catch((error: unknown) => {
+            console.error('[CN298] settlement card atlas load failed', {
+                bundle: NN_BUNDLE, path: POKER_ATLAS,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+        });
+        return this.pokerAtlas;
+    }
+
+    private assignAvatar(row: Node, path: string, playerId: number): void {
+        const sprite = this.requireNode(row, path).getComponent(Sprite);
+        if (!sprite) throw new Error(`[CN298] settlement avatar sprite missing path=${path}`);
+        void PlayerAvatarService.assign(sprite, playerId).catch((error: unknown) => console.error(
+            '[CN298] settlement avatar assignment failed', {
+                playerId, path, reason: error instanceof Error ? error.message : String(error),
+            }));
+    }
+
+    /**
+     * 结算行五张牌只有一个权威来源：`snapshot.hands`。服务端在 SETTLEMENT/FINISHED 阶段对全桌亮牌，
+     * 房间与结算视图因此共用同一份权威数据。`roundSettlement.hands` 是服务端 Hand 记录，
+     * 其线上字段名没有经服务端测试断言的客户端契约，禁止在此猜测键名。
+     */
+    private settlementCards(snapshot: CN298Snapshot, seat: number): readonly number[] {
+        if (!(seat in snapshot.hands)) {
+            console.error('[CN298] settlement hand missing from authoritative snapshot', {
+                roomId: snapshot.roomId, seat,
+            });
+            return [];
+        }
+        return this.validCards(snapshot.hands[seat], seat);
+    }
+
+    /**
+     * CN298 快照不下发牌型与本局倍数：牌型图与倍数标签只能清空，
+     * 既不能显示导入预制体的静态占位，也不能在客户端重算服务端牌型规则。
+     */
+    private clearResultPlaceholders(row: Node, snapshot: CN298Snapshot): void {
+        const typeSprite = this.requireNode(row, 'SplitPoker/Hand/ResultNode/TypeSp').getComponent(Sprite);
+        if (!typeSprite) throw new Error('[CN298] settlement type sprite missing');
+        typeSprite.spriteFrame = null;
+        this.setLabel(row, 'SplitPoker/Hand/ResultNode/MultSp', '');
+        if (!this.handTypeGapLogged) {
+            this.handTypeGapLogged = true;
+            console.warn('[CN298] settlement type and multiplier have no authoritative snapshot fields', {
+                roomId: snapshot.roomId,
+            });
+        }
+    }
+
+    private validCards(values: readonly unknown[], seat: number): readonly number[] {
+        const cards = values.filter((value): value is number => Number.isInteger(value) && Number(value) > 0);
+        if (cards.length !== 5) console.error('[CN298] settlement hand must contain five cards', {
+            seat, count: cards.length,
+        });
+        return cards.slice(0, 5);
+    }
+
+    private createRows(root: Node, contentPath: string, templateName: string, count: number): Node[] {
+        const content = this.requireNode(root, contentPath);
+        const template = this.requireNode(content, templateName);
+        const rows = [template];
+        for (let index = 1; index < count; index++) {
+            const row = instantiate(template);
+            row.name = `${templateName}_${index}`;
+            content.addChild(row);
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    private changePage(delta: number): void {
+        const snapshot = this.snapshot;
+        if (!snapshot) return;
+        const pageCount = Math.max(1, Math.ceil(Object.keys(snapshot.players).length / this.rows.length));
+        this.page = Math.min(pageCount - 1, Math.max(0, this.page + delta));
+        this.renderSmall(snapshot);
+    }
+
+    private bindClose(root: Node, path: string): void {
+        this.bindClick(root, path, () => { root.active = false; });
+    }
+    private bindClick(root: Node, path: string, listener: () => void): void {
+        const node = this.requireNode(root, path);
+        if (!node.getComponent(Button)) throw new Error(`[CN298] settlement button missing path=${path}`);
+        node.on(Button.EventType.CLICK, listener);
+        this.disposers.push(() => { if (node.isValid) node.off(Button.EventType.CLICK, listener); });
+    }
+    private requireNode(root: Node, path: string): Node {
+        const node = this.find(root, path);
+        if (!node) throw new Error(`[CN298] settlement node missing path=${path}`);
+        return node;
+    }
+    private find(root: Node, path: string): Node | null {
+        let current: Node | null = root;
+        for (const segment of path.split('/')) current = current?.getChildByName(segment) ?? null;
+        return current;
+    }
+    private setLabel(root: Node, path: string, value: string): void {
+        const node = this.requireNode(root, path);
+        const label = node.getComponent(Label);
+        if (!label) throw new Error(`[CN298] settlement label missing path=${path}`);
+        label.string = value;
+    }
+    private scoreText(score: number): string { return score > 0 ? `+${score}` : String(score); }
 }

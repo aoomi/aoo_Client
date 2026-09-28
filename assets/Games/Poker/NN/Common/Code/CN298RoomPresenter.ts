@@ -11,6 +11,7 @@ export interface CN298RoomView {
     showSplitState(seat: number, completed: boolean): void;
     showTotalScore(seat: number, score: number, roundDelta: number,
         stats: CN298PlayerStats | null, final: boolean): void;
+    showSettlement(snapshot: CN298Snapshot): void;
     setActions(actions: Readonly<CN298ActionAvailability>): void;
 }
 
@@ -94,6 +95,7 @@ export class CN298RoomPresenter {
             this.view.showTotalScore(seat, snapshot.totalScores[seat] ?? 0, delta,
                 snapshot.playerStats[seat] ?? null, snapshot.phase === 'FINISHED');
         }
+        this.view.showSettlement(snapshot);
         this.view.setActions(this.actions(snapshot, localSeat));
     }
 

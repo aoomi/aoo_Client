@@ -538,23 +538,7 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
                 card.setPosition(centeredX, 0, index);
                 this.localCardNodes.set(rawCard, card);
                 card.active = !this.selectedSplitCards.includes(rawCard);
-                // XQP's overlapping hand cards select on the card node itself.
-                // Button.CLICK is swallowed by the higher-z neighbour in the
-                // 25 px overlap strip and makes the lower card impossible to pick.
-                const selectCard = (): void => {
-                    if (!this.splitSelectionEnabled) return;
-                    const now = Date.now(), previous = this.lastCardSelectionAt.get(rawCard) ?? 0;
-                    // Mobile Chrome follows TOUCH_END with a synthesized mouse-up.
-                    // Treat that pair as one physical selection without suppressing
-                    // deliberate taps on different overlapping cards.
-                    if (now - previous < 250) return;
-                    this.lastCardSelectionAt.set(rawCard, now);
-                    this.toggleSplitCard(rawCard);
-                };
-                // Creator desktop Preview emits mouse events while mobile Preview
-                // emits touch events. Both must drive the same real card hit area.
-                card.on(Node.EventType.MOUSE_UP, selectCard, this);
-                card.on(Node.EventType.TOUCH_END, selectCard, this);
+                this.bindLocalHandSelection(card, rawCard);
             } else if (index < 2) {
                 this.scaleCardTo(card, 30, 39);
                 const overlap = seat >= 5 ? 5 : -5;
@@ -578,6 +562,26 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
         }).catch(error => console.error('[CD299] landscape card render failed', {
             seat, reason: error instanceof Error ? error.message : String(error),
         }));
+    }
+
+    private bindLocalHandSelection(card: Node, rawCard: number): void {
+        // The same node returns from a split slot to Hand, so replace its slot
+        // return listener instead of leaving both handlers on the card.
+        card.off(Node.EventType.MOUSE_UP, undefined, this);
+        card.off(Node.EventType.TOUCH_END, undefined, this);
+        const selectCard = (): void => {
+            if (!this.splitSelectionEnabled) return;
+            const now = Date.now(), previous = this.lastCardSelectionAt.get(rawCard) ?? 0;
+            // Mobile Chrome follows TOUCH_END with a synthesized mouse-up.
+            // Treat that pair as one physical selection without suppressing
+            // deliberate taps on different overlapping cards.
+            if (now - previous < 250) return;
+            this.lastCardSelectionAt.set(rawCard, now);
+            this.toggleSplitCard(rawCard);
+        };
+        // XQP's overlapping Hand cards select on the card node itself.
+        card.on(Node.EventType.MOUSE_UP, selectCard, this);
+        card.on(Node.EventType.TOUCH_END, selectCard, this);
     }
 
     /** XQP uses an 80 ms seat/card cadence and a 200 ms flight from the table world centre. */
@@ -1344,7 +1348,10 @@ export class CD299LandscapeRoomViewComponent extends Component implements CD299R
                 source.removeFromParent();
                 destination.addChild(source);
                 source.setPosition(selecting ? Vec3.ZERO : new Vec3(0, 0, source.position.z));
-                if (!selecting) this.reflowLocalSplitHand();
+                if (!selecting) {
+                    this.bindLocalHandSelection(source, rawCard);
+                    this.reflowLocalSplitHand();
+                }
                 this.renderSplitSelection();
                 console.info('[CD299] split card moved', JSON.stringify({
                     roomId: this.roomId, selecting,
