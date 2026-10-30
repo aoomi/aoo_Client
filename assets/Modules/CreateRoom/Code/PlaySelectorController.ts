@@ -1,8 +1,10 @@
-import { Button, Director, EventMouse, EventTouch, Label, Layout, Node, UITransform, Vec2, director, game, instantiate, view } from 'cc';
+import { Button, Director, EventMouse, EventTouch, Label, Layout, Node, Toggle, UITransform, Vec2, director, game, instantiate, view } from 'cc';
 import type { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import type { LobbyTopBarController } from '../../../Lobby/Code/LobbyTopBarController';
 import {
     HallCatalogGame,
+    HallPlayFilter,
+    HallRoomConfiguration,
     HallRoomGateway,
     createRoomRuleFields,
     normalizeCreateRoomRules,
@@ -22,13 +24,21 @@ import { hostRouteStore } from '../../../Common/Code/Runtime/navigation/HostRout
 
 interface ClubContext { clubId?: number; unionId?: number; gameIndex?: number; cfgData?: Record<string, unknown> | null; templateRoomMode?: boolean; onTemplateSaved?: (room?: unknown) => void | Promise<void>; }
 const FORM_PATH = 'UICreateRoom';
-const RULES_PATH = 'Rules';
-const CLOSE_BUTTON_PATH = 'Top/Btn_Close';
-const CREATE_BUTTON_PATH = 'Bottom/Btn_Create';
-const NEXT_BUTTON_PATH = 'Bottom/Btn_Next';
-const RESET_BUTTON_PATH = 'Top/Btn_Reset';
-const BASE_SCORE_BUTTON_PATH = 'Bottom/Ante/Btn_BaseScore';
-const BASE_SCORE_LABEL_PATH = 'Bottom/Ante/Btn_BaseScore/Label';
+const RULES_PATH = 'Create/Rules';
+const CLOSE_BUTTON_PATH = 'Create/Btn/Btn_Close';
+const CREATE_BUTTON_PATH = 'Create/Btn/Btn_Create';
+const NEXT_BUTTON_PATH = 'Create/Btn/Btn_Next';
+const RESET_BUTTON_PATH = 'Create/Btn/Btn_Reset';
+const BASE_SCORE_BUTTON_PATH = 'Create/Btn/Ante/Btn_BaseScore';
+const BASE_SCORE_LABEL_PATH = 'Create/Btn/Ante/Btn_BaseScore/Label';
+const GAME_LIST_TEMPLATE_PATH = 'Create/GamePlay/GameList/ScrollView/Viewport/Btn_Game';
+const GAME_LIST_CONTENT_PATH = 'Create/GamePlay/GameList/ScrollView/Viewport/Content';
+const ADD_GAME_PATH = 'AddGame';
+const ADD_GAME_CLOSE_PATH = 'AddGame/Btn/Btn_Close';
+const ADD_GAME_REGION_TEMPLATE_PATH = 'AddGame/Region/RegionList/ScrollView/Viewport/Btn_Game';
+const ADD_GAME_REGION_CONTENT_PATH = 'AddGame/Region/RegionList/ScrollView/Viewport/Content';
+const ADD_GAME_TEMPLATE_PATH = 'AddGame/GameGrid/TemplateRoot/GameItem';
+const ADD_GAME_CONTENT_PATH = 'AddGame/GameGrid/ScrollView/Viewport/Content';
 
 /** 创建房间只编排“权威目录 -> 权威 Schema -> 权威建房”，规则视图由独立 Presenter 管理。 */
 export class PlaySelectorController {
@@ -41,12 +51,25 @@ export class PlaySelectorController {
     private feedbackTimer: ReturnType<typeof setTimeout> | null = null;
     private schemaRefreshTimer: ReturnType<typeof setTimeout> | null = null;
     private activeSchemaHash = '';
+    private activeConfiguration: HallRoomConfiguration | null = null;
     private rulesReady = false;
     private generation = 0;
     private selectionGeneration = 0;
     private disposed = false;
     private readonly gameItems: Node[] = [];
+    private readonly gameItemDisposers: Array<() => void> = [];
+    private readonly addGameRegionItems: Node[] = [];
+    private readonly addGameItems: Node[] = [];
+    private readonly addGameRegionDisposers: Array<() => void> = [];
+    private readonly addGameGridDisposers: Array<() => void> = [];
     private readonly disposers: Array<() => void> = [];
+    private currentDisposerGroup: Array<() => void> | null = null;
+    private catalogGames: HallCatalogGame[] = [];
+    private regionFilters: HallPlayFilter[] = [];
+    private selectedRegionCode = 'ALL';
+    private addGameGeneration = 0;
+    private favoriteGameIds = new Set<number>();
+    private selectedCategory = 'POKER';
     private preferenceIdentity: ScopedPreferenceIdentity | null = null;
     private baseScore = 1;
     private baseScoreDraft = '';
@@ -72,6 +95,7 @@ export class PlaySelectorController {
                         : incoming;
                 } else this.club = incoming;
                 this.allowedGameKeys = this.readAllowedGames(serverPack); this.host.active = false;
+                const addGame = form.find(ADD_GAME_PATH); if (addGame) addGame.active = false;
                 this.rulesReady = false; this.setCreateButtonBusy(false);
                 void this.load(String(gameName ?? ''));
             },
@@ -95,6 +119,8 @@ export class PlaySelectorController {
         this.feedbackTimer = null;
         this.schemaRefreshTimer = null;
         this.numpad?.dispose(); this.numpad = null;
+        for (const dispose of this.gameItemDisposers.splice(0)) dispose();
+        this.clearAddGameItems();
         for (const dispose of this.disposers.splice(0)) dispose();
         this.presenter?.destroy(); this.presenter = null; this.form = null;
     }
@@ -106,11 +132,10 @@ export class PlaySelectorController {
         this.onClick(this.requireNode(form, NEXT_BUTTON_PATH), () => { void this.openUnionSettings(); }, form.node.scene ?? form.node);
         this.onClick(this.requireNode(form, RESET_BUTTON_PATH), () => this.presenter?.reset());
         this.onClick(this.requireNode(form, BASE_SCORE_BUTTON_PATH), () => { void this.openBaseScoreNumpad(); });
+        this.onClick(this.requireNode(form, 'Create/GamePlay/Btn_AddSubtractGame'), () => { void this.openAddGame(); });
+        this.onClick(this.requireNode(form, ADD_GAME_CLOSE_PATH), () => this.closeAddGame());
         this.renderBaseScore();
-        // 未实现能力必须显式隐藏，不能保留可点击的空成功或旧逻辑旁路。
-        for (const path of ['Left/Btn_AddGame', 'Left/Btn_RemoveGame', 'Bottom/Btn_LoadGame']) {
-            const node = form.find(path); if (node) node.active = false;
-        }
+        const addGame = this.requireNode(form, ADD_GAME_PATH); addGame.active = false;
     }
     private async load(preselect: string): Promise<void> {
         this.setStatus('正在读取可创建玩法...');
@@ -132,17 +157,23 @@ export class PlaySelectorController {
             // 首次使用没有历史记录时才回退成都跑得快。
             const selected = this.findGame(orderedGames, preselect)
                 ?? this.findGame(orderedGames, recentGameCode)
-                ?? orderedGames.find(game => game.gameCode === 'CD201')
+                ?? orderedGames.find(game => game.gameCode === 'chengdu2004')
                 ?? orderedGames[0];
             if (!selected) throw new Error('当前没有可创建玩法');
-            this.renderGames(orderedGames, selected);
+            this.catalogGames = [...orderedGames];
+            this.selectedCategory = this.categoryFor(selected);
+            this.favoriteGameIds = new Set(orderedGames
+                .filter(game => this.categoryFor(game) === this.selectedCategory)
+                .map(game => Number(game.gameId)));
+            this.renderGames(this.catalogGames, selected);
             await this.selectGame(selected);
         } catch (error: unknown) { this.fail(error, '获取可创建玩法失败，请重试'); }
     }
     private async selectGame(game: HallCatalogGame): Promise<void> {
         if (this.schemaRefreshTimer !== null) clearTimeout(this.schemaRefreshTimer);
-        this.schemaRefreshTimer = null; this.activeSchemaHash = '';
+        this.schemaRefreshTimer = null; this.activeSchemaHash = ''; this.activeConfiguration = null;
         const selectionGeneration = ++this.selectionGeneration;
+        this.selectedCategory = this.categoryFor(game);
         this.selectedGame = game; this.rulesReady = false; this.setCreateButtonBusy(false);
         for (const item of this.gameItems) {
             const selected = item.name === `Game_${game.gameCode}`;
@@ -171,6 +202,7 @@ export class PlaySelectorController {
             const fields = createRoomRuleFields(game.gameCode, publishedFields);
             const schemaHash = String(configuration.ui?.roomRuleSourceHash ?? '');
             this.activeSchemaHash = schemaHash;
+            this.activeConfiguration = configuration;
             this.preferenceIdentity = { accountId: this.accountId, gameId: Number(game.gameId),
                 playVersion: game.playVersion, schemaHash };
             const savedRules = this.preferences.load(this.preferenceIdentity);
@@ -223,6 +255,7 @@ export class PlaySelectorController {
                 this.presenter?.setSchema(fields, savedRules);
                 this.rulesReady = true; this.setCreateButtonBusy(false);
             }
+            if (fields.length && schemaHash === this.activeSchemaHash) this.activeConfiguration = configuration;
         } catch {
         } finally {
             this.scheduleSchemaRefresh(game, selectionGeneration);
@@ -302,9 +335,13 @@ export class PlaySelectorController {
         hideFallback = globalThis.setTimeout(hideSubmittingForm, 50);
         try {
             const clubId = Number(this.club?.clubId ?? 0);
+            const configurationRevision = this.activeConfiguration;
+            if (!configurationRevision || String(configurationRevision.ui?.roomRuleSourceHash ?? '') !== this.activeSchemaHash) {
+                throw new Error('房间规则版本尚未就绪，请等待规则刷新后重试');
+            }
             const handoff = await this.gateway.create(selectedGame.gameCode, submittedRules, clubId > 0 ?
                 { type: 'CLUB', clubId, templateCode: this.club?.gameIndex ? `template-${this.club.gameIndex}` : 'default' } :
-                { type: 'PERSONAL' });
+                { type: 'PERSONAL' }, undefined, configurationRevision);
             console.info('[CreateRoomSubmit] created', {
                 gameCode: selectedGame.gameCode,
                 gameId: Number(selectedGame.gameId),
@@ -352,7 +389,8 @@ export class PlaySelectorController {
         }
         finally { this.submitting = false; this.setCreateButtonBusy(false); }
     }
-    private onClick(node: Node | null, listener: () => void, captureRoot: Node | null = null): void {
+    private onClick(node: Node | null, listener: () => void, captureRoot: Node | null = null,
+        trackForController = true): (() => void) | undefined {
         if (!node) return; const button = node.getComponent(Button);
         if (!button) throw new Error(`创建房间预制体按钮组件缺失: ${node.name}`);
         let lastPointerAt = 0;
@@ -419,7 +457,7 @@ export class PlaySelectorController {
             window.addEventListener('mouseup', captureWindowPointer, true);
             window.addEventListener('click', captureWindowPointer, true);
         }
-        this.disposers.push(() => {
+        const dispose = (): void => {
             if (node.isValid && (node as unknown as { _eventProcessor?: unknown })._eventProcessor) {
                 node.off(Button.EventType.CLICK, invokeOnce, this);
                 node.off(Node.EventType.TOUCH_END, invokeOnce, this);
@@ -434,7 +472,9 @@ export class PlaySelectorController {
                 window.removeEventListener('mouseup', captureWindowPointer, true);
                 window.removeEventListener('click', captureWindowPointer, true);
             }
-        });
+        };
+        if (trackForController) (this.currentDisposerGroup ?? this.disposers).push(dispose);
+        return dispose;
     }
     private setCreateButtonBusy(busy: boolean): void {
         const form = this.form;
@@ -551,26 +591,155 @@ export class PlaySelectorController {
         return `${parts[0]}:${parts.slice(1).join('-')}`;
     }
     private renderGames(games: readonly HallCatalogGame[], selected: HallCatalogGame): void {
+        for (const dispose of this.gameItemDisposers.splice(0)) dispose();
         for (const item of this.gameItems.splice(0)) if (item.isValid) item.destroy();
-        const prototype = this.form?.find('Left/FavoriteList/ScrollView/Viewport/Btn_Game');
-        const content = this.form?.find('Left/FavoriteList/ScrollView/Viewport/Content');
+        const prototype = this.form?.find(GAME_LIST_TEMPLATE_PATH);
+        const content = this.form?.find(GAME_LIST_CONTENT_PATH);
         if (!prototype || !content) throw new Error('创建房间玩法列表模板缺失');
         prototype.active = false;
-        for (const game of games) {
-            const item = instantiate(prototype); item.name = `Game_${game.gameCode}`; item.active = true;
-            const label = item.getChildByName('Label')?.getComponent(Label);
-            if (!label) throw new Error('创建房间玩法列表文字节点缺失');
-            label.string = this.visibleGameName(game);
-            const selectedNode = item.getChildByName('Icon_Selected');
-            if (selectedNode) selectedNode.active = game.gameId === selected.gameId;
-            const hotNode = item.getChildByName('Icon_Hot');
-            if (hotNode) hotNode.active = game.gameId === selected.gameId;
-            this.onClick(item, () => { void this.selectGame(game); }); content.addChild(item); this.gameItems.push(item);
-        }
+        const visibleGames = games.filter(game => this.favoriteGameIds.has(Number(game.gameId)));
+        this.currentDisposerGroup = this.gameItemDisposers;
+        try {
+            for (const game of visibleGames) {
+                const item = instantiate(prototype); item.name = `Game_${game.gameCode}`; item.active = true;
+                const label = item.getChildByName('Label')?.getComponent(Label);
+                if (!label) throw new Error('创建房间玩法列表文字节点缺失');
+                label.string = this.visibleGameName(game);
+                const selectedNode = item.getChildByName('Icon_Selected');
+                if (selectedNode) selectedNode.active = game.gameId === selected.gameId;
+                const hotNode = item.getChildByName('Icon_Hot');
+                if (hotNode) hotNode.active = game.gameId === selected.gameId;
+                this.onClick(item, () => { void this.selectGame(game); });
+                content.addChild(item); this.gameItems.push(item);
+            }
+        } finally { this.currentDisposerGroup = null; }
         // Cloned entries must have their serialized Layout positions committed before the
         // first pointer event. Otherwise labels render in rows while every Button still
         // shares the prototype hit rectangle and the first game captures all clicks.
         content.getComponent(Layout)?.updateLayout();
+    }
+    private async openAddGame(): Promise<void> {
+        const form = this.form;
+        if (!form?.isShown() || !form.node.isValid) return;
+        const panel = this.requireNode(form, ADD_GAME_PATH);
+        panel.active = true;
+        this.clearAddGameItems();
+        this.selectedRegionCode = 'ALL';
+        const generation = ++this.addGameGeneration;
+        try {
+            this.regionFilters = await this.gateway.filters();
+            if (!form.isShown() || !panel.isValid || generation !== this.addGameGeneration) return;
+            if (!this.regionFilters.some(filter => filter.regionType === 'ALL' || filter.regionCode.toUpperCase() === 'ALL')) {
+                this.regionFilters = [{ regionCode: 'ALL', regionType: 'ALL', displayName: '全部', depth: 0 }, ...this.regionFilters];
+            }
+            this.renderAddGameRegions();
+            await this.renderAddGameItems();
+        } catch (error: unknown) {
+            panel.active = false;
+            this.fail(error, '读取玩法地区失败，请重试');
+        }
+    }
+    private closeAddGame(): void {
+        this.addGameGeneration += 1;
+        const panel = this.form?.find(ADD_GAME_PATH);
+        if (panel) panel.active = false;
+        this.clearAddGameItems();
+    }
+    private clearAddGameItems(): void {
+        for (const dispose of this.addGameRegionDisposers.splice(0)) dispose();
+        for (const dispose of this.addGameGridDisposers.splice(0)) dispose();
+        for (const item of this.addGameRegionItems.splice(0)) if (item.isValid) item.destroy();
+        for (const item of this.addGameItems.splice(0)) if (item.isValid) item.destroy();
+    }
+    private renderAddGameRegions(): void {
+        const form = this.form;
+        const prototype = form?.find(ADD_GAME_REGION_TEMPLATE_PATH);
+        const content = form?.find(ADD_GAME_REGION_CONTENT_PATH);
+        if (!prototype || !content) throw new Error('新增玩法地区列表模板缺失');
+        for (const dispose of this.addGameRegionDisposers.splice(0)) dispose();
+        for (const item of this.addGameRegionItems.splice(0)) if (item.isValid) item.destroy();
+        prototype.active = false;
+        for (const filter of this.regionFilters) {
+            const item = instantiate(prototype); item.name = 'Region_' + filter.regionCode; item.active = true;
+            const label = item.getChildByName('Label')?.getComponent(Label);
+            if (!label) throw new Error('地区列表文字节点缺失: ' + filter.regionCode);
+            label.string = filter.displayName;
+            const selected = item.getChildByName('Icon_Selected');
+            if (selected) selected.active = filter.regionCode.toUpperCase() === this.selectedRegionCode;
+            const dispose = this.onClick(item, () => {
+                this.selectedRegionCode = filter.regionCode.toUpperCase();
+                for (const regionItem of this.addGameRegionItems) {
+                    const icon = regionItem.getChildByName('Icon_Selected');
+                    if (icon) icon.active = regionItem.name === 'Region_' + filter.regionCode;
+                }
+                void this.renderAddGameItems().catch((error: unknown) => this.fail(error, '读取地区玩法失败，请重试'));
+            }, null, false);
+            if (dispose) this.addGameRegionDisposers.push(dispose);
+            content.addChild(item); this.addGameRegionItems.push(item);
+        }
+        content.getComponent(Layout)?.updateLayout(true);
+    }
+    private async renderAddGameItems(): Promise<void> {
+        const form = this.form;
+        const prototype = form?.find(ADD_GAME_TEMPLATE_PATH);
+        const content = form?.find(ADD_GAME_CONTENT_PATH);
+        if (!form || !prototype || !content) throw new Error('新增玩法网格模板缺失');
+        for (const dispose of this.addGameGridDisposers.splice(0)) dispose();
+        for (const item of this.addGameItems.splice(0)) if (item.isValid) item.destroy();
+        prototype.active = false;
+        const regionCode = this.selectedRegionCode.toUpperCase();
+        const generation = this.addGameGeneration;
+        const catalog = regionCode === 'ALL' ? this.catalogGames : await this.gateway.catalog(regionCode);
+        if (!form.isShown() || generation !== this.addGameGeneration || regionCode !== this.selectedRegionCode.toUpperCase()) return;
+        const catalogGameIds = new Set(this.catalogGames.map(game => Number(game.gameId)));
+        const games = catalog.filter(game => catalogGameIds.has(Number(game.gameId)));
+        for (const game of games) {
+            const item = instantiate(prototype); item.name = 'Game_' + game.gameCode; item.active = true;
+            const label = item.getChildByName('Label')?.getComponent(Label);
+            const toggleNode = item.getChildByName('AddGameToggle');
+            const toggle = toggleNode?.getComponent(Toggle);
+            if (!label || !toggleNode || !toggle) throw new Error('新增玩法模板契约无效: ' + game.gameCode);
+            label.string = this.visibleGameName(game);
+            toggle.isChecked = this.favoriteGameIds.has(Number(game.gameId));
+            const updateSelection = (): void => {
+                if (toggle.isChecked) this.favoriteGameIds.add(Number(game.gameId));
+                else this.favoriteGameIds.delete(Number(game.gameId));
+                this.updateFavoriteGameList();
+            };
+            toggleNode.on(Toggle.EventType.TOGGLE, updateSelection, this);
+            this.addGameGridDisposers.push(() => {
+                if (toggleNode.isValid) toggleNode.off(Toggle.EventType.TOGGLE, updateSelection, this);
+            });
+            content.addChild(item); this.addGameItems.push(item);
+        }
+        content.getComponent(Layout)?.updateLayout(true);
+    }
+    private updateFavoriteGameList(): void {
+        const previousGameId = Number(this.selectedGame?.gameId ?? 0);
+        const available = this.catalogGames.filter(game => this.favoriteGameIds.has(Number(game.gameId)));
+        const selected = available.find(game => Number(game.gameId) === previousGameId) ?? available[0];
+        if (!selected) {
+            for (const item of this.gameItems.splice(0)) if (item.isValid) item.destroy();
+            this.selectedGame = null; this.rulesReady = false; this.presenter?.clear();
+            this.setCreateButtonBusy(false);
+            this.message('玩法列表已清空，请选择至少一个玩法');
+            return;
+        }
+        this.renderGames(available, selected);
+        if (Number(selected.gameId) !== previousGameId) void this.selectGame(selected);
+    }
+    private categoryFor(game: HallCatalogGame): string {
+        const category = String(game.categoryCode ?? '').trim().toUpperCase();
+        if (category === 'MAHJONG' || category === 'POKER' || category === 'LONG_CARD') {
+            return category;
+        }
+        // WORD_CARD is a historical catalog value. Current room creation uses the LongCard carrier.
+        if (category === 'WORD_CARD') return 'LONG_CARD';
+        const family = this.runtimeFamily(game.familyCode);
+        if (family.startsWith('mahjong:')) return 'MAHJONG';
+        if (family.startsWith('long-card:')) return 'LONG_CARD';
+        if (family.startsWith('word-card:')) return 'LONG_CARD';
+        return 'POKER';
     }
     private requireNode(form: LegacyForm, path: string): Node {
         const node = form.find(path);
@@ -587,8 +756,14 @@ export class PlaySelectorController {
         if (this.feedbackTimer !== null) clearTimeout(this.feedbackTimer);
         if (this.schemaRefreshTimer !== null) clearTimeout(this.schemaRefreshTimer);
         this.feedbackTimer = null;
-        this.schemaRefreshTimer = null; this.activeSchemaHash = '';
+        this.schemaRefreshTimer = null; this.activeSchemaHash = ''; this.activeConfiguration = null;
+        for (const dispose of this.gameItemDisposers.splice(0)) dispose();
         for (const item of this.gameItems.splice(0)) if (item.isValid) item.destroy();
+        this.addGameGeneration += 1;
+        this.clearAddGameItems();
+        const addGame = this.form?.find(ADD_GAME_PATH); if (addGame) addGame.active = false;
+        this.regionFilters = []; this.selectedRegionCode = 'ALL';
+        this.favoriteGameIds.clear();
         this.numpad?.dispose(); this.numpad = null; this.baseScoreDraft = ''; this.baseScore = 1;
         this.selectedGame = null; this.preferenceIdentity = null; this.presenter?.clear(); this.club = null; this.allowedGameKeys.clear(); this.submitting = false; this.rulesReady = false;
     }

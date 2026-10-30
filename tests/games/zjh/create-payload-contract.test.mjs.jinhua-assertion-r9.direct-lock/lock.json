@@ -1,0 +1,33 @@
+{
+  "task": "DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration",
+  "owner": "/root/jinhua_mingming_low",
+  "state": "RELEASED",
+  "createdAt": "2026-10-16T17:33:15.371582+00:00",
+  "expiresAt": "2026-10-16T17:58:15.371582+00:00",
+  "inputSHA256": "66b07824b420320e7c4c71331e0bdc42c1aa53a0e55baf3ee6b7f61b64cdef6a",
+  "writePaths": [
+    "Client/tests/games/zjh/create-payload-contract.test.mjs",
+    "Client/tests/games/zjh/create-payload-contract.test.mjs.jinhua-assertion-r9.direct-lock/lock.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/input.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/lock.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/execution-lock.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/preimage.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/source-locks.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/apply.py",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/command.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/apply.stdout.log",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/apply.stderr.log",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/apply-exit.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/tests.stdout.log",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/tests.stderr.log",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/tests-exit.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/checks.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/rollback-plan.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/DEV_SELF_CHECK.md",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/manifest.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/review-input.json",
+    "docs/05-当前状态/evidence/DIRECT-20261016T134154Z-6e8b1c20-active-game-naming-migration/jinhua-client-assertion-delta-r9/release.json"
+  ],
+  "releasedAt": "2026-10-16T17:34:47.944528+00:00",
+  "releaseReason": "Single JH assertion delta frozen for nonproducer review; shared CommonRoom contract fail retained"
+}

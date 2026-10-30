@@ -6,8 +6,8 @@ import test from 'node:test';
 const root = path.resolve(import.meta.dirname, '../..');
 
 test('top club credit is visible only for alliance room tickets', () => {
-    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
-    const controller = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
+    const controller = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts'), 'utf8');
     const paths = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkRoomNodePaths.ts'), 'utf8');
 
     assert.match(paths, /clubCent:\s*'RoomInfo\/Lb_ClubCent'/);

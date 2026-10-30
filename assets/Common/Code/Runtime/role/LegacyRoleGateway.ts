@@ -65,20 +65,18 @@ export class LegacyRoleGateway {
         const playerId = Number(account.accountId);
         if (!Number.isSafeInteger(playerId) || playerId <= 0) throw new Error(`切换到 ${gameName} 服的账号标识无效`);
         return { playerId, displayName: account.displayName, headImageUrl: account.headImageUrl,
-            roomCard: 0, diamond: 0, raw: { accountID: account.accountId, transportAuthenticated: true } };
+            roomCard: 0, gold: 0, raw: { accountID: account.accountId, transportAuthenticated: true } };
     }
 
     private toRoleSession(packet: Record<string, unknown>, account: AuthenticatedAccount): RoleSession {
         const playerId = Number(packet.pid);
         if (!Number.isSafeInteger(playerId) || playerId <= 0) throw new Error('大厅服务器未返回有效玩家ID');
-        const diamond = this.numberValue(packet.diamond, packet.diamondCount, packet.crystal);
-        const legacyRoomCard = this.numberValue(packet.roomCard, packet.roomCardCount, packet.gold);
         return {
             playerId,
             displayName: this.stringValue(packet.name, packet.nickName, account.displayName),
             headImageUrl: this.stringValue(packet.headImageUrl, account.headImageUrl),
-            roomCard: diamond > 0 ? diamond : legacyRoomCard,
-            diamond,
+            roomCard: this.numberValue(packet.roomCard),
+            gold: this.numberValue(packet.gold),
             raw: packet,
         };
     }

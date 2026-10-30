@@ -1,0 +1,19 @@
+{
+  "taskId": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "client-room-session-r1",
+  "owner": "/root/repair_common_room_session_registration",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_COORDINATION",
+  "acquiredAt": "2026-10-10T10:47:39Z",
+  "path": "Client/tests/unit/common-room-auto-bootstrap.test.mjs",
+  "sourceWrite": true,
+  "preimageSha256": "48581a8c4247a98f08860f322a1fd3151fb28cf99a846ea3bd8e74ba1820d425",
+  "custody": "untracked inherited file preserved; no active owner found in fresh Agent Tree",
+  "allowedChange": "behavior regression for Common prepare, Gameplay connect, Common commit",
+  "forbidden": ["test deletion", "default/fake values", "protocol semantic changes"],
+  "independentReviewRequired": true,
+  "releasedAt": "2026-10-10T11:05:00Z",
+  "postimageSha256": "c7620a9a8dd785926e953fc128205acf10f0142280b24fc683aba8b503baf731",
+  "independentReview": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-independent-review-20261010/independent-acceptance-v2.md",
+  "independentReviewSha256": "dc34a7b53e65362ec79d5fd530626b76534ceb3f7b83d2163cb587d1f072410f"
+}

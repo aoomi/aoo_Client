@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { projectPdkOperationClock } from '../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkAuthoritativeViewAdapter.ts';
+import { projectPdkOperationClock } from '../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkAuthoritativeViewAdapter.ts';
 
-const controller = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
-const adapter = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkAuthoritativeViewAdapter.ts', import.meta.url), 'utf8');
+const controller = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
+const adapter = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkAuthoritativeViewAdapter.ts', import.meta.url), 'utf8');
 
 test('the first projection and same-state reconnect retain an unlimited active seat', () => {
   const deadline = { operationId: 'op-17', seatId: 1, deadlineEpochMillis: 0, unlimited: true };

@@ -2,10 +2,12 @@ import { ProtocolClient } from './ProtocolClient';
 import { ReconnectCoordinator } from './ReconnectCoordinator';
 import { StableTransportFacade } from './StableTransportFacade';
 
-/** Process-wide owner of the one Hall slot and one Game slot. */
+/** Process-wide owner of the one Lobby slot and one Game slot. Hall is retained only as a wire/compatibility alias. */
 class ConnectionOwnership {
     public readonly coordinator = new ReconnectCoordinator<ProtocolClient, ProtocolClient>();
     public readonly hall = new StableTransportFacade(this.coordinator.hall);
+    /** Canonical internal Lobby transport; `hall` remains source-compatible for legacy callers. */
+    public readonly lobby = this.hall;
     public readonly game = new StableTransportFacade(this.coordinator.game);
     private gameReconnectRecipe: ((client: ProtocolClient) => Promise<void>) | null = null;
     private gameReconnect: Promise<void> | null = null;
@@ -24,6 +26,11 @@ class ConnectionOwnership {
 
     public setGameReconnectRecipe(recipe: ((client: ProtocolClient) => Promise<void>) | null): void {
         this.gameReconnectRecipe = recipe;
+    }
+
+    /** Canonical Lobby reconnect cancellation/ownership surface. */
+    public cancelLobby(): void {
+        this.coordinator.cancelLobby();
     }
 
     public dispose(): void {
@@ -80,6 +87,15 @@ export function createOwnedGameClient(): ProtocolClient {
 
 export function setGameReconnectRecipe(recipe: ((client: ProtocolClient) => Promise<void>) | null): void {
     connectionOwnership.setGameReconnectRecipe(recipe);
+}
+
+/**
+ * Room presentation owners subscribe here instead of reaching into a socket.
+ * The callback runs only after the replacement game connection has recovered,
+ * so every registered gameplay entry receives one consistent restore boundary.
+ */
+export function onGameReconnect(listener: () => void | Promise<void>): () => void {
+    return connectionOwnership.game.onReconnect(listener);
 }
 
 export function setGameRoomReconnectRecipe(roomId: number, playVersion: string,

@@ -45,8 +45,8 @@ test('lobby scene mount resolves the stable Canvas component instead of a node n
     const source = fs.readFileSync(path.join(clientRoot, 'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
     assert.match(source, /child\.getComponent\(Canvas\)/);
     assert.doesNotMatch(source, /getChildByName\('Canvas'\)/);
-    assert.match(source, /Director\.EVENT_AFTER_SCENE_LAUNCH/);
-    assert.match(source, /director\.off\(Director\.EVENT_AFTER_SCENE_LAUNCH, launched\)/);
+    assert.match(source, /Director\.EVENT_AFTER_DRAW/);
+    assert.match(source, /director\.off\(Director\.EVENT_AFTER_DRAW, done\)/);
 });
 
 function account(name, token = `token-${name}`) {
@@ -304,7 +304,7 @@ test('production bootstrap reaches login and lobby scenes, and logout returns to
     assert.match(router, /recoverBootstrapTarget\(parent: Node/);
     assert.match(router, /activeRoom = await gateway\.activeRoom\(\);/);
   assert.match(router, /if \(!activeRoom\) \{[\s\S]*this\.showLobby\(\)/);
-  assert.match(router, /await this\.recoverRoomHandoff\(account, role, activeRoom, gateway, parent, report\)/);
+  assert.match(router, /await this\.recoverRoomHandoff\(account, role, activeRoom, gateway, parent, routeReport\)/);
   assert.match(router, /active-room recovery blocked; membership preserved/);
   assert.match(router, /membershipAction: 'PRESERVED'/);
     assert.doesNotMatch(router, /recoverRoomTarget\(|recoverMainSceneTarget\(/);
@@ -321,11 +321,9 @@ test('production bootstrap reaches login and lobby scenes, and logout returns to
 });
 
 test('AYCP has one authoritative resource root, native client bundle, and canonical dispatch', () => {
-    const authoritative = path.join(
-        clientRoot,
-        'assets/Games/Other/resources/native-ui/game/aycp/resources/game/AYCP/ui/AYCPPlay.prefab',
-    );
-    assert.equal(fs.existsSync(authoritative), true);
+    const aycpBootstrap = fs.readFileSync(path.join(
+        clientRoot, 'assets/Common/Code/Runtime/CompatibilityApp/aycp/AycpSceneBootstrap.ts'), 'utf8');
+    assert.match(aycpBootstrap, /resources\.load\('native-ui\/game\/aycp\/resources\/game\/AYCP\/ui\/AYCPPlay'/);
     const commonAycpRoot = path.join(clientRoot, 'assets/Common/Code/Runtime/CompatibilityApp/aycp');
     const gameplayFiles = fs.existsSync(commonAycpRoot)
         ? fs.readdirSync(commonAycpRoot, { recursive: true }).filter((entry) => String(entry).endsWith('.ts'))
@@ -351,13 +349,14 @@ test('club and NJPDK production routes use real protocol requests with recovery 
         'assets/Modules/CreateRoom/Code/PlaySelectorController.ts'), 'utf8');
     const management = fs.readFileSync(path.join(clientRoot,
         'assets/Club/Code/Runtime/LegacyClubManagementController.ts'), 'utf8');
-    const njpdkChat = fs.readFileSync(path.join(clientRoot,
-        'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkChatController.ts'), 'utf8');
+    const pdkSocial = fs.readFileSync(path.join(clientRoot,
+        'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
     assert.match(club, /CClubFindPIDInfo[\s\S]*CClubFindPIDAdd/);
     assert.match(club, /SClub_GetAllRoomMin[\s\S]*renderRooms\(\)/);
     assert.match(create, /selectedGame/);
     assert.match(create, /gateway\.create[\s\S]*type: 'CLUB'/);
     assert.doesNotMatch(create, /club\.CClubCreateRoom/);
     assert.match(management, /club\.CClubClose[\s\S]*catch/);
-    assert.match(njpdkChat, /common\.room\.dispatch[\s\S]*catch/);
+    assert.match(pdkSocial, /common\.room\.dispatch/);
+    assert.match(pdkSocial, /sendCommonSocial/);
 });

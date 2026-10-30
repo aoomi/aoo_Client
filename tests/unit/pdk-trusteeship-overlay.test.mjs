@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const registry = readFileSync(new URL('../../assets/Common/Code/Runtime/ui/CommonPrefabRegistry.ts', import.meta.url), 'utf8');
-const coordinator = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts', import.meta.url), 'utf8');
-const play = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
+const coordinator = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts', import.meta.url), 'utf8');
+const play = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
 
 test('PDK local trusteeship uses the one shared AutoPlay prefab', () => {
   assert.match(registry, /AutoPlay:\s*\{\s*bundle:\s*COMMON_PREFAB_BUNDLE,\s*asset:\s*'Prefab\/AutoPlay'/);

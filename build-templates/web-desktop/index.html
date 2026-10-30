@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= projectName %></title>
+  <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="full-screen" content="yes">
+  <meta name="screen-orientation" content="landscape">
+  <meta name="theme-color" content="#F2F1ED">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style>
+    html, body, #GameDiv, #Cocos3dGameContainer, #GameCanvas {
+      background: #F2F1ED !important;
+    }
+    html, body { width:100%; height:100%; margin:0; overflow:hidden; }
+    body { display:flex; align-items:center; justify-content:center; }
+    #GameDiv {
+      position:relative;
+      width:min(100vw, calc(100vh * 16 / 9)) !important;
+      height:min(100vh, calc(100vw * 9 / 16)) !important;
+      margin:auto;
+      overflow:hidden;
+    }
+    #Cocos3dGameContainer, #GameCanvas { width:100% !important; height:100% !important; }
+    #GameCanvas { display:block; }
+    @supports (height: 100dvh) {
+      #GameDiv {
+        width:min(100vw, calc(100dvh * 16 / 9)) !important;
+        height:min(100dvh, calc(100vw * 9 / 16)) !important;
+      }
+    }
+    #splash, .progress-bar {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+    #aoo-startup-cover { position: fixed; inset: 0; z-index:2147483647; display:grid; place-items:center; background:#F2F1ED url('assets/Startup/native/f6/f60d7021-4ffc-4350-bc4e-c2b8afc4dd04.png') center/cover no-repeat; color:#5d6268; font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; pointer-events:auto; }
+    #aoo-startup-cover[hidden] { display: none !important; }
+    .aoo-startup-card { position:fixed; left:50%; bottom:30px; width:min(1200px,calc(100vw - 48px)); transform:translateX(-50%); text-align:center; }
+    .aoo-startup-status { min-height:20px; color:#fff; text-shadow:-0.5px -0.5px 0 #000,0.5px -0.5px 0 #000,-0.5px 0.5px 0 #000,0.5px 0.5px 0 #000; }
+    .aoo-startup-progress { height:6px; margin:12px 0 8px; overflow:hidden; border-radius:999px; background:rgba(0,0,0,.38); box-shadow:inset 0 0 0 1px rgba(0,0,0,.22); }
+    .aoo-startup-progress>i { display:block; width:100%; height:100%; border-radius:inherit; background:linear-gradient(90deg,#e9a43a,#f5c45b); transform:scaleX(0); transform-origin:left center; animation:aoo-startup-first-motion 1.5s cubic-bezier(.2,.7,.3,1) forwards; will-change:transform; }
+    @keyframes aoo-startup-first-motion { to { transform:scaleX(.2); } }
+    .aoo-startup-retry { position:absolute; top:calc(100% + 36px); left:50%; transform:translateX(-50%); padding:8px 18px; border:0; border-radius:18px; background:#e9a43a; color:white; }
+  </style>
+</head>
+<body>
+  <div id="aoo-startup-cover" class="aoo-startup-cover" aria-hidden="false">
+    <div class="aoo-startup-card"><div class="aoo-startup-status">正在加载中......</div><div class="aoo-startup-progress"><i></i></div><button class="aoo-startup-retry" type="button" hidden>返回并重试</button></div>
+  </div>
+  <div id="GameDiv" cc_exact_fit_screen="false">
+    <div id="Cocos3dGameContainer">
+      <canvas id="GameCanvas" width="1280" height="720" tabindex="99"></canvas>
+    </div>
+  </div>
+  <script src="src/polyfills.bundle.js" charset="utf-8"></script>
+  <script src="src/system.bundle.js" charset="utf-8"></script>
+  <script src="src/import-map.json" type="systemjs-importmap" charset="utf-8"></script>
+  <script src="bundle-script-bootstrap.js" charset="utf-8"></script>
+  <script>
+    window.aooRegisterProjectBundleScripts()
+      .then(function () { return System.import('./index.js'); })
+      .catch(function (err) { console.error(err); });
+  </script>
+</body>
+</html>

@@ -10,11 +10,11 @@ const dashboard = await readFile(new URL('../../tools/dual-client-preview.mjs', 
 
 test('A/B/C/D use unique fixed snapshot ports and never expose Creator 7456', () => {
   assert.deepEqual(registry.clients, [
-    { slot: 'A', port: 7458 }, { slot: 'B', port: 7459 },
+    { slot: 'A', port: 7462 }, { slot: 'B', port: 7459 },
     { slot: 'C', port: 5188 }, { slot: 'D', port: 7461 },
   ]);
   assert.equal(new Set(registry.clients.map(({ port }) => port)).size, 4);
-  assert.match(dashboard, /\[7458, 7459, 5188, 7461\]/);
+  assert.match(dashboard, /\[7462, 7459, 5188, 7461\]/);
 });
 
 test('worker serves only current immutable snapshot with layered health', () => {
@@ -23,6 +23,8 @@ test('worker serves only current immutable snapshot with layered health', () => 
   assert.doesNotMatch(worker, /http\.request\(\{\s*hostname: creatorHost/);
   assert.match(worker, /max-age=31536000, immutable/);
   assert.match(worker, /STATIC_SNAPSHOT_UNAVAILABLE/);
+  assert.match(worker, /PREVIEW_SNAPSHOT_STALE/);
+  assert.match(worker, /PREVIEW_BUILD_EXPIRED/);
   for (const field of ['staticResources', 'api', 'hallWs', 'gameWs', 'lastSuccess']) assert.match(worker, new RegExp(field));
   assert.match(worker, /Object\.defineProperty\(window, '__aoo_CREATOR_LAN_PREVIEW__', \{ value: true \}\)/);
 });
@@ -34,7 +36,10 @@ test('publisher validates generation then atomically renames slot symlinks', () 
   assert.match(manager, /visible error/);
   assert.match(manager, /snapshotValidationRevision/);
   assert.match(manager, /await rename\(temporary, join\(slotDir, 'current'\)\)/);
-  assert.match(manager, /retainedPreviousSnapshot: true/);
+  assert.match(manager, /retainedPreviousSnapshot: false/);
+  assert.match(manager, /capture\.lock/);
+  assert.match(manager, /pruneSnapshots\(buildId\)/);
+  assert.match(manager, /sourceSignature/);
 });
 
 test('publisher closes every Creator import-map chunk despite its JavaScript MIME type', () => {
@@ -52,9 +57,17 @@ test('publisher closes scene asset UUIDs and proves the real guest route reaches
   assert.match(manager, /imported\?\.__type__ === 'cc\.ImageAsset'/);
   assert.match(manager, /\/native\/\$\{uuid\.slice\(0, 2\)\}\/\$\{uuid\}\.\$\{extension\}/);
   assert.match(manager, /pinCaptureHtml[\s\S]*__aoo_RUNTIME_CONFIG__[\s\S]*environment:"test"/);
-  assert.doesNotMatch(worker, /__aoo_RUNTIME_CONFIG__/);
+  assert.match(worker, /__aoo_RUNTIME_CONFIG__/);
+  assert.match(worker, /forwardGatewayHttp/);
+  assert.match(worker, /forwardGatewayUpgrade/);
+  assert.match(worker, /AOO_PREVIEW_GATEWAY_ORIGIN/);
   assert.match(manager, /Input\.dispatchMouseEvent/);
   assert.match(manager, /guestLoginNodeName = 'Btn_GuestLogin'/);
+  assert.match(manager, /guest-login-skipped-authenticated-route/);
+  assert.match(manager, /origin: upstream\.origin/);
+  assert.match(manager, /source-signature\.json/);
+  assert.match(manager, /mkdtemp\(join\(tmpdir\(\), `aoo-preview-capture-\$\{process\.pid\}-`\)\)/);
+  assert.match(manager, /void rm\(profile, \{ recursive: true, force: true \}\)\.catch/);
   assert.match(manager, /document\.readyState !== 'complete'/);
   assert.match(manager, /reason: 'document-loading'/);
   assert.match(manager, /System\.import\('cc'\)/);
@@ -65,7 +78,7 @@ test('publisher closes scene asset UUIDs and proves the real guest route reaches
   assert.match(manager, /canvas\.getBoundingClientRect\(\)/);
   assert.match(manager, /awaitPromise: true/);
   assert.match(manager, /request\.method/);
-  assert.match(manager, /for \(let attempt = 0; attempt < 80 && !loginPoint/);
+  assert.match(manager, /for \(let attempt = 0; attempt < 200 && !loginPoint/);
   assert.match(manager, /node-readiness-timeout/);
   assert.match(manager, /node\.hasEventListener\(Node\.EventType\.MOUSE_UP\)/);
   assert.match(manager, /node\.hasEventListener\(Node\.EventType\.TOUCH_END\)/);
@@ -82,6 +95,9 @@ test('publisher closes scene asset UUIDs and proves the real guest route reaches
 
 test('supervisor automatically retries failed generations and publishes only successful signatures', () => {
   assert.match(supervisor, /setInterval\(watch, 5000\)/);
+  assert.match(supervisor, /supervisor\.lock/);
+  assert.match(supervisor, /snapshot-stale/);
+  assert.match(supervisor, /retainedPreviousSnapshot: false/);
   assert.match(supervisor, /next !== current && !captureRunning/);
   assert.match(supervisor, /if \(succeeded && existsSync/);
   assert.match(supervisor, /source-signature\.json/);

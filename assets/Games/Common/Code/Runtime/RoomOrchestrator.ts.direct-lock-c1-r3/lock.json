@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "lockId": "c1-common-room-session-20261011-r3",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "C1",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "RELEASED_NO_CHANGE",
+  "path": "Client/assets/Games/Common/Code/Runtime/RoomOrchestrator.ts",
+  "scope": "sole lifecycle authority, generation/epoch and stale callback guards only",
+  "preimageSha256": "5e8328bf5946e2009374df5fe5c7ce35a7134be943faed2382b45da60ff1f23a",
+  "sourceWrite": true,
+  "testWrite": false,
+  "forbidden": ["PdkSwitchCoordinator.ts", "protocol semantics", "reconnect/handoff contract", "Compatibility", "fake client", "old cache", "shared runtime", "generated bundles", "LoginScene", "rules workbooks", "Server", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "5e8328bf5946e2009374df5fe5c7ce35a7134be943faed2382b45da60ff1f23a",
+  "evidence": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-20261011-r3/DEV_SELF_CHECK-v3.md"
+}

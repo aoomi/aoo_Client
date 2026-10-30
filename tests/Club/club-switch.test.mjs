@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from '../../node_modules/typescript/lib/typescript.js';
+const base = new URL('../../', import.meta.url);
+const read = p => fs.readFileSync(new URL(p, base), 'utf8');
+class Node {
+ constructor(name){this.name=name;this.isValid=true;this.children=[];this.parent=null;this.active=true;this.parts=new Map();this.events=new Map();}
+ addChild(n){n.parent=this;this.children.push(n);}
+ getComponent(c){return this.parts.get(c)||null;}
+ on(e,f){const list=this.events.get(e)||[];list.push(f);this.events.set(e,list);}
+ off(e,f){this.events.set(e,(this.events.get(e)||[]).filter(x=>x!==f));}
+ emit(e,...args){for(const f of this.events.get(e)||[])f(...args);}
+ destroy(){this.destroyed=true;this.isValid=false;if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}
+}
+class Button {static EventType={CLICK:'click'};} class Label{string='';} class Layout{updateLayout(){}} class ScrollView{} class Sprite{spriteFrame=null;}
+const classes={'cc.Sprite':Sprite,'cc.Button':Button,'cc.Label':Label,'cc.Layout':Layout,'cc.ScrollView':ScrollView};
+function instantiate(src){const n=new Node(src.name);n.active=src.active;for(const [c,v] of src.parts){const x=new c();Object.assign(x,v);x.node=n;n.parts.set(c,x);}for(const c of src.children)n.addChild(instantiate(c));return n;}
+function saved(){const a=JSON.parse(read('assets/Club/Prefab/ClubSwitch.prefab'));const nodes=new Map();a.forEach((v,i)=>{if(v.__type__==='cc.Node')nodes.set(i,new Node(v._name));});for(const [i,n]of nodes){const v=a[i];n.active=v._active;for(const c of v._children||[])n.addChild(nodes.get(c.__id__));for(const ref of v._components||[]){const raw=a[ref.__id__],C=classes[raw.__type__];if(C){const c=new C();c.node=n;if(C===Label)c.string=raw._string;if(C===ScrollView)c.content=nodes.get(raw.content?.__id__??raw._content?.__id__);n.parts.set(C,c);}}}return nodes.get(a[0].data.__id__);}
+const mod={exports:{}};vm.runInNewContext(ts.transpileModule(read('assets/Club/Code/Runtime/LegacyClubSwitchController.ts'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:mod.exports,require:p=>p==='cc'?{Node,Button,Label,Layout,ScrollView,Sprite,instantiate}:{PlayerAvatarService:{frame:async pid=>({pid})}},console});
+const Controller=mod.exports.LegacyClubSwitchController;
+const find=(n,name)=>n.name===name?n:n.children.map(c=>find(c,name)).find(Boolean);
+const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+function setup(request){let lifecycle;const shown=[];const events=new Map();const forms={register:(p,o)=>{lifecycle=o.lifecycle;},show:async(...a)=>{shown.push(a);return{};},close:()=>{lifecycle.onClose();}};const c=new Controller(forms,{request,on:(e,f)=>{events.set(e,f);return()=>events.delete(e);}},async()=>true,()=>{},new Node('main'));c.install();const root=saved();return{c,root,shown,events,open:()=>lifecycle.onShow({node:root},{id:8}),close:()=>lifecycle.onClose()};}
+test('saved templates: real fields, status, refresh cleanup, close/reopen',async()=>{const s=setup(async p=>p==='club.CGetClubListMin'?[{id:8,name:'actual',clubsign:88,minister:1,playerClubCard:12}]:[{roomKey:'123456',roomID:9,setID:0,setCount:8,playerNum:4,gameName:'真实玩法',posList:[{pid:1}]}]);s.open();await flush();assert.equal(s.c.rows.length,2);const row=s.c.rows[1];assert.equal(find(row,'game_name').getComponent(Label).string,'真实玩法');assert.equal(find(row,'room_key').getComponent(Label).string,'123456');assert.equal(find(row,'game_wait').active,true);assert.deepEqual(find(find(row,'Play'),'0').getComponent(Sprite).spriteFrame,{pid:1});assert.equal(find(find(row,'Play'),'1').active,false);assert.equal(find(s.root,'Demo').active,false);assert.equal(find(s.root,'Btn_Admin').active,true);await s.c.refresh();assert.equal(row.destroyed,true);assert.equal(row.events.get('click').length,0);assert.equal(s.c.rows.length,2);s.close();assert.equal(s.c.rows.length,0);assert.equal(s.c.rowDisposers.size,0);s.open();await flush();assert.equal(find(s.root,'Btn_Refresh').events.get('click').length,1);s.close();});
+test('nested buttons bind and duplicate reports all paths',async()=>{const s=setup(async()=>[]);const btn=find(s.root,'Btn_Back');btn.parent.children=btn.parent.children.filter(x=>x!==btn);const nest=new Node('nested');s.root.addChild(nest);nest.addChild(btn);s.open();await flush();s.close();const copy=instantiate(btn);s.root.addChild(copy);assert.throws(()=>s.open(),/ClubSwitch\/nested\/Btn_Back.*ClubSwitch\/Btn_Back/);});
+test('closing before response prevents late rows',async()=>{let resolve;const s=setup(()=>new Promise(r=>resolve=r));s.open();s.close();resolve([{id:8,name:'late'}]);await flush();assert.equal(s.c.rows.length,0);});
+test('empty response hides samples and admin; invalid response is diagnosed',async()=>{const s=setup(async()=>[]);s.open();await flush();assert.equal(s.c.rows.length,0);assert.equal(find(s.root,'Btn_Admin').active,false);s.close();const bad=setup(async()=>({bad:true}));bad.open();await flush();assert.match(bad.shown[0][3],/不是数组/);bad.close();});
+test('current entry and mapping use only requested new name',()=>{const main=read('assets/Club/Code/Runtime/LegacyClubMainController.ts');assert.ok(main.includes("bind('Btn_ClubList'" )||main.includes("'Btn_ClubList'"));assert.ok(main.includes("this.forms.show('ui/club/ClubSwitch'"));assert.ok(!main.includes("bind('Btn_ShowClubList'"));assert.match(read('assets/Common/Code/Runtime/ui/ModulePrefabRegistry.ts'),/ClubSwitch:.*Prefab\/ClubSwitch/);});
+
+test('current membership notifications refresh and unsubscribe on close',async()=>{let requests=0;const s=setup(async()=>{requests++;return[];});s.open();await flush();for(const event of ['SClub_PlayerNtf','OnClubPlayerNtf','SUnion_ClubCent']){s.events.get(event)();await flush();}assert.equal(requests,4);assert.equal(s.events.size,9);s.close();assert.equal(s.events.size,0);s.open();await flush();assert.equal(s.events.size,9);s.close();});
+test('old payment text uses authoritative fields, without calculating fees',()=>{const s=setup(async()=>[]);const room={roomKey:'8',wanfaDesc:'真实规则'};for(const [type,expected] of [[0,'管理付'],[1,'AA付3圈卡'],[2,'胜家付3圈卡']])assert.equal(s.c.roomDescription(room,{paymentRoomCardType:type,clubWinnerPayConsume:3}),`真实规则,${expected}`);assert.equal(s.c.roomDescription(room,{}),'真实规则');assert.equal(s.c.roomDescription(room,{paymentRoomCardType:2}),'真实规则');assert.match(s.shown.at(-1)[3],/clubWinnerPayConsume/);assert.equal(s.c.roomDescription({roomKey:'9'},{}),'');assert.match(s.shown.at(-1)[3],/RoomCfgManager/);});

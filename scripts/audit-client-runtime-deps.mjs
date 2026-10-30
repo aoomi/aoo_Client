@@ -9,7 +9,6 @@ const entrypoints = [
     'assets/Login/Code/Auth/AuthSession.ts',
     'assets/Login/Code/Network/NetworkRuntime.ts',
     'assets/Login/Code/Navigation/SceneRouter.ts',
-    'assets/Lobby/Code/Runtime/LegacyLobbyScreen.ts',
 ];
 
 function scan(relative) {

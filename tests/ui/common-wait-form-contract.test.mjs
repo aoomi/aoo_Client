@@ -26,7 +26,7 @@ test('lobby normal loading uses the one Creator WaitForm without a competing DOM
 
 test('login and game-entry managers retain the explicit transition exception', () => {
   const login = read('assets/Login/Code/Bootstrap/LoginScreenBootstrap.ts');
-  const game = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+  const game = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
   assert.match(login, /new LegacyFormManager\(this\.node\)/);
   assert.match(game, /new LegacyFormManager\(uiLayer\)/);
 });

@@ -1,0 +1,48 @@
+{
+  "batch": "CLIENT-HALL-LOBBY-R86",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/lane_c_client_e2e",
+  "task": "Hall to Lobby canonical internal naming with Hall wire/compatibility aliases preserved",
+  "whitelist": [
+    "Client/assets/Common/Code/Runtime/network/ReconnectCoordinator.ts",
+    "Client/assets/Common/Code/Runtime/network/ConnectionOwnership.ts",
+    "Client/assets/Common/Code/Runtime/network/HallHeartbeatService.ts",
+    "Client/assets/Login/Code/Network/NetworkRuntime.ts",
+    "Client/assets/Common/Code/Runtime/room/RoomLifecycleGateway.ts",
+    "Client/tests/unit/lobby-naming-contract.test.mjs",
+    "docs/05-当前状态/evidence/c2-client-hall-lobby-r86-20261012/**"
+  ],
+  "forbidden": [
+    "Client/assets/Lobby/Code/HallRoomGateway.ts",
+    "Client/assets/Login/Code/Navigation/SceneRouter.ts",
+    "Client/assets/Login/Scenes/LoginScene.scene",
+    "Client/docs/开房规则表/**",
+    "Client/build/**",
+    "Client/library/**",
+    "Client/temp/**",
+    "Server/**",
+    "protocol strings and endpoints",
+    "shared Creator/四端/shared ports/production DB"
+  ],
+  "preimage": {
+    "Client/assets/Common/Code/Runtime/network/ReconnectCoordinator.ts": "fb94f3933099dbe16a62a38f07ccf34b3990e84233af92d3fcb3a9495e8fcedd",
+    "Client/assets/Common/Code/Runtime/network/ConnectionOwnership.ts": "ccf03cc7d188af581982a29c495bc15e265470dd7f59a1537dcab3a10e3dd982",
+    "Client/assets/Common/Code/Runtime/network/HallHeartbeatService.ts": "71514d6e1685cdab8d373e707c63f7f0427fe2d6d940bcee4441399b06bfac1e",
+    "Client/assets/Login/Code/Network/NetworkRuntime.ts": "eb9eca6979a24718ce1254763c8475a4006eab0c5a1f8ada1f4fd10347ff6167",
+    "Client/assets/Common/Code/Runtime/room/RoomLifecycleGateway.ts": "9d00a1acf35a81626c88b5fe84c79d8d67b5f0779340c7ea126a23313c161d59",
+    "Client/tests/unit/lobby-naming-contract.test.mjs": "ABSENT"
+  },
+  "postimage": {
+    "Client/assets/Common/Code/Runtime/network/ReconnectCoordinator.ts": "d1b9658be42644b00fec04e99768ba798fe9cac1e922fe330973b588b140ac07",
+    "Client/assets/Common/Code/Runtime/network/ConnectionOwnership.ts": "4f0806e1ed4e009c5027690a523acad4814d786257ad36c2196bf9f8f5130d5b",
+    "Client/assets/Common/Code/Runtime/network/HallHeartbeatService.ts": "426fe4eff6000547cd5b104a2c0630c81eae98b51c389e53e526a3e33868ab04",
+    "Client/assets/Login/Code/Network/NetworkRuntime.ts": "f566cc02063ee3af41921474a0296d8a8c0637365a3fa51bb6886cf4122190e3",
+    "Client/assets/Common/Code/Runtime/room/RoomLifecycleGateway.ts": "d103fb683673dd6e32a87974be1375ef0b21718a932981b2e9f6eeb14ff8dde3",
+    "Client/tests/unit/lobby-naming-contract.test.mjs": "000989ede098b4057f78526c817e23a4dde63b7532a4cca2036fd30b918d5554",
+    "Client/tests/unit/host-route-refresh-recovery.test.mjs": "eee032141a373396138541bed55a91a22bf8dadcbcfdc1603dff50312f0dab8a"
+  },
+  "releasedAt": "2026-10-12T11:46:00Z",
+  "productionWrite": true,
+  "tests": ["node --check Client/tests/unit/lobby-naming-contract.test.mjs", "node Client/tests/unit/lobby-naming-contract.test.mjs", "node --test Client/tests/unit/host-route-refresh-recovery.test.mjs (6/7; pre-existing LegacyClub refreshTemplateRooms assertion)", "node --test Client/tests/unit/client-manager-lifecycle.test.mjs", "node --test Client/tests/unit/reconnect-coordinator.test.mjs"],
+  "toolchain": {"nodeObserved": "v26.8.2", "pnpmObserved": "11.25.0", "required": "Node24.19.0/pnpm11.19.0"}
+}

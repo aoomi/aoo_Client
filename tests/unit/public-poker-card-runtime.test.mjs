@@ -7,11 +7,11 @@ const clientRoot = join(import.meta.dirname, '../..');
 const read = (path) => readFileSync(join(clientRoot, path), 'utf8');
 
 test('PDK room and replay use the one public Poker_Card factory', () => {
-  const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/CardPresenter.ts');
-  const replay = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkReplayController.ts');
+  const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkCardPresenter.ts');
+  const replay = read('assets/Modules/Records/Code/PdkReplayController.ts');
   const factory = read('assets/Games/Poker/Common/Code/Card/Poker_Card_Factory.ts');
   assert.match(room, /Poker_Card_Factory/);
-  assert.match(replay, /Poker_Card_Factory/);
+  assert.match(replay, /PdkCardPresenter/);
   assert.match(factory, /POKER_CARD_BUNDLE = 'poker-common'/);
   assert.match(factory, /POKER_CARD_ASSET = 'Prefab\/Poker_Card'/);
   assert.doesNotMatch(room + replay + factory, /common-poker-card(?:['"]|\/)|poker_card\/card|legacy-ui\/assets\/njpdk\/texture\/new_poker/);
@@ -27,7 +27,7 @@ test('public card state changes remain inside Poker_Card_Presenter', () => {
 });
 
 test('PDK cards never carry selection or disabled overlays into public card areas', () => {
-  const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/CardPresenter.ts');
+  const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkCardPresenter.ts');
   const presenter = read('assets/Games/Poker/Common/Code/Card/Poker_Card_Presenter.ts');
   assert.match(room, /presenter\.setPdkVisualState\(selected, false\)/);
   assert.match(presenter, /this\.selectedMask!\.active = false/);
@@ -66,7 +66,7 @@ test('public card factory decodes only the authoritative decimal card protocol',
 });
 
 test('settlement cards are fully built off-tree before atomic attachment', () => {
-  const result = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
+  const result = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
   const method = result.slice(result.indexOf('private async createCardSlot'));
   assert.ok(method.indexOf('await this.cards.create(slot, value)') < method.indexOf('parent.addChild(slot)'));
   assert.match(method, /if \(!parent\.isValid\)[\s\S]*slot\.destroy\(\)/);

@@ -16,7 +16,7 @@ test('ClubMain uses lobby-style positional folders and stable semantic node name
     const names = new Set(nodes.map((node) => node._name));
     for (const name of [
         'RoomList', 'RoomFilter', 'PlayFilter', 'ClubSwitcher', 'LockTip',
-        'Btn_ShowPlayFilter', 'Btn_ShowClubList', 'Btn_HideClubList',
+        'Btn_ShowPlayFilter', 'Btn_ClubList', 'Btn_HideClubList',
         'Btn_Back', 'Btn_QuickJoin', 'Btn_Join', 'Btn_Modify', 'Lb_RoomName',
         'Lb_ClubName', 'Icon_Notice',
     ]) assert.ok(names.has(name), `missing semantic node: ${name}`);

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r2",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Common/Code/Runtime/network/ProtocolHttpClient.ts",
+  "preimageSha256": "6b68914d017c34261ccf65a62e9305577b307008d7172c01b35c7fcf6a53ee7a",
+  "scope": "map HTTP error envelopes/status failures to AppError",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "non-writer reviewer required"
+}

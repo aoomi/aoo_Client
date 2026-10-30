@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
+import { access, mkdir, open, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import net from 'node:net';
 import { join, resolve } from 'node:path';
@@ -9,7 +9,7 @@ import process from 'node:process';
 
 const root = resolve(process.env.AOO_PREVIEW_SNAPSHOT_ROOT ?? join(process.cwd(), 'work/preview-snapshots'));
 const upstream = new URL(process.env.AOO_CREATOR_PREVIEW_URL ?? 'http://127.0.0.1:7456/');
-const slots = (process.env.AOO_PREVIEW_SLOTS ?? 'A:7458,B:7459,C:5188,D:7461').split(',').map((pair) => {
+const slots = (process.env.AOO_PREVIEW_SLOTS ?? 'A:7462,B:7459,C:5188,D:7461').split(',').map((pair) => {
   const [name, port] = pair.split(':');
   return { name, port: Number(port) };
 });
@@ -21,6 +21,45 @@ let observedSignature;
 let stableObservations = 0;
 const previewChunksRoot = join(process.cwd(), 'temp/programming/packer-driver/targets/preview/chunks');
 const compiledFileCache = new Map();
+const supervisorLockPath = join(root, 'supervisor.lock');
+const stalePath = join(root, 'stale.json');
+let supervisorLock;
+
+async function acquireSupervisorLock() {
+  try {
+    supervisorLock = await open(supervisorLockPath, 'wx');
+    await supervisorLock.writeFile(`${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`);
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      let owner;
+      try { owner = JSON.parse(await readFile(supervisorLockPath, 'utf8')); } catch { owner = null; }
+      let alive = false;
+      if (Number.isInteger(owner?.pid)) {
+        try { process.kill(owner.pid, 0); alive = true; } catch (probeError) { alive = probeError.code === 'EPERM'; }
+      }
+      if (!alive) {
+        await rm(supervisorLockPath, { force: true });
+        return acquireSupervisorLock();
+      }
+      log('duplicate-suppressed', { lock: supervisorLockPath, ownerPid: owner?.pid ?? null });
+      process.exit(0);
+    }
+    throw error;
+  }
+}
+
+async function releaseSupervisorLock() {
+  try { await supervisorLock?.close(); } finally { await rm(supervisorLockPath, { force: true }); }
+}
+
+async function markStale(detail) {
+  await writeFile(stalePath, `${JSON.stringify({ schemaVersion: 1, status: 'STALE', ...detail, updatedAt: new Date().toISOString() }, null, 2)}\n`);
+  log('snapshot-stale', detail);
+}
+
+async function clearStale() {
+  await rm(stalePath, { force: true });
+}
 
 await mkdir(join(root, 'logs'), { recursive: true });
 
@@ -80,6 +119,12 @@ function fetchText(path) {
 }
 
 async function signature() {
+  let chunksReady = false;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try { await access(previewChunksRoot); chunksReady = true; break; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; await new Promise((done) => setTimeout(done, 250)); }
+  }
+  if (!chunksReady) throw new Error(`preview chunks unavailable after bounded wait: ${previewChunksRoot}`);
   const compiledFiles = [];
   async function collectCompiledFiles(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -119,7 +164,7 @@ async function runCapture(reason) {
   captureRunning = true;
   log('capture-started', { reason });
   const child = spawn(process.execPath, ['scripts/preview-snapshot-manager.mjs', 'capture'], {
-    cwd: process.cwd(), env: { ...process.env, AOO_PREVIEW_SNAPSHOT_ROOT: root }, stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: process.cwd(), env: { ...process.env, AOO_PREVIEW_SNAPSHOT_ROOT: root, AOO_EXPECTED_SOURCE_SIGNATURE: observedSignature ?? '' }, stdio: ['ignore', 'pipe', 'pipe'],
   });
   child.stdout.pipe(process.stdout);
   child.stderr.pipe(process.stderr);
@@ -136,17 +181,25 @@ async function watch() {
     let current;
     try { current = JSON.parse(await readFile(join(root, 'source-signature.json'), 'utf8')).signature; } catch { /* first healthy capture */ }
     if (stableObservations >= 2 && next !== current && !captureRunning) {
+      await markStale({
+        reason: current ? 'creator-generation-changed' : 'initial-snapshot',
+        expectedSourceSignature: next,
+        previousSourceSignature: current ?? null,
+      });
+      observedSignature = next;
       const succeeded = await runCapture(current ? 'creator-generation-changed' : 'initial-snapshot');
       if (succeeded && existsSync(join(root, 'last-success.json'))) {
-        const { writeFile } = await import('node:fs/promises');
         await writeFile(join(root, 'source-signature.json'), `${JSON.stringify({ signature: next, updatedAt: new Date().toISOString() })}\n`);
+        await clearStale();
       }
     }
   } catch (error) {
-    log('upstream-unavailable', { upstream: upstream.toString(), error: error.message, retainedPreviousSnapshot: true });
+    await markStale({ reason: 'upstream-unavailable', expectedSourceSignature: null, error: error.message });
+    log('upstream-unavailable', { upstream: upstream.toString(), error: error.message, retainedPreviousSnapshot: false });
   }
 }
 
+await acquireSupervisorLock();
 for (const slot of slots) await startSlot(slot);
 await watch();
 const timer = setInterval(watch, 5000);
@@ -157,5 +210,5 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   for (const child of children.values()) child.kill('SIGTERM');
   const deadline = setTimeout(() => process.exit(0), 3000);
   deadline.unref();
-  if (children.size === 0) process.exit(0);
+  if (children.size === 0) void releaseSupervisorLock().finally(() => process.exit(0));
 });

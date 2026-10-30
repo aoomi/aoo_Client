@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/lane_b_ws_contract",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "taskCardSha256": "6d4b950b668076760ce48e37e6b8fbee5e0dccbe00b51f5c1ce6cb471c44d685",
+  "purpose": "Lane B lossless reconnect runtime identity payload",
+  "allowlist": ["Client/assets/Games/Common/Code/Room/RoomReconnectController.ts", "Client/assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts"],
+  "forbidden": ["Client/work/pdk-007-hint-real-canvas-e2e.mjs", "LoginScene", "规则工作簿", "生成 bundle", "共享 Creator", "共享端口"],
+  "preimage": {"RoomReconnectController.ts": "98cdc547009ccd2a872c07ef4b19b2973bfad4d07079009515276cfd4d544835", "RoomNetworkControllerMount.ts": "eb90eb3fda11ce2bc624629359455d8ecff9bc2536a2dd2ee1dc4c4d0ee76b18"},
+  "postimage": {
+    "Client/assets/Games/Common/Code/Room/RoomReconnectController.ts": "789a198dc3df97126282a9d76df69717496f915bc8adbc715f250aa2b0778703",
+    "Client/assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts": "9258975a07e42fd17d318d3d7433245441423915be067bc0ffaabfddc75c85b6"
+  },
+  "sourceWrite": true,
+  "productionDatabase": false,
+  "sharedRuntime": false
+}

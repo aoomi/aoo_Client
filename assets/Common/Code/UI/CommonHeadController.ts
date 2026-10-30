@@ -1,4 +1,4 @@
-import { _decorator, assetManager, Animation, AssetManager, Color, Component, Graphics, Label, Mask, Node, Sprite, SpriteFrame, sp, UITransform, view } from 'cc';
+import { _decorator, assetManager, Animation, AssetManager, Color, Component, Graphics, Label, Mask, MaskType, Node, Sprite, SpriteFrame, sp, UITransform, view } from 'cc';
 import { PlayerAvatarService } from './PlayerAvatarService';
 
 const { ccclass } = _decorator;
@@ -32,7 +32,7 @@ export class CommonHeadController extends Component {
     private readonly authoredAvatarFrames = new Map<Sprite, SpriteFrame | null>();
     private readonly defaultGameLayouts = new Map<Node, NodeLayout>();
     private skin: CommonHeadSkin = 'DEFAULT';
-    private defaultRoundMaskType: Mask.Type | null = null;
+    private defaultRoundMaskType: MaskType | null = null;
     private defaultPlayerInfoSpriteEnabled: boolean | null = null;
     private readyOffsetX = 0;
     private voiceTimer: number | undefined;
@@ -166,6 +166,25 @@ export class CommonHeadController extends Component {
         game.active = true;
     }
 
+    /** Renders public identity only; vacancy always clears identity and transient state. */
+    public renderPublicSeat(player: {
+        readonly occupied: boolean;
+        readonly playerId?: number;
+        readonly displayName?: string;
+        readonly score?: string | number;
+        readonly avatarUrl?: string;
+    }): void {
+        this.showGamePlayer(player.occupied);
+        if (!player.occupied) return;
+        const info = this.required('Game/Head/PlayerInfo');
+        const name = info.getChildByName('Lb_PlayerName')?.getComponent(Label);
+        const score = info.getChildByName('Lb_PlayerScore')?.getComponent(Label);
+        if (name) name.string = String(player.displayName ?? '');
+        if (score) score.string = String(player.score ?? '');
+        const playerId = Number(player.playerId ?? 0);
+        if (playerId > 0) void this.showPlayerAvatar(playerId, String(player.avatarUrl ?? ''));
+    }
+
     private captureAuthoredAvatars(): void {
         if (this.authoredAvatarFrames.size > 0) return;
         for (const sprite of this.avatarSprites()) this.authoredAvatarFrames.set(sprite, sprite.spriteFrame);
@@ -202,7 +221,7 @@ export class CommonHeadController extends Component {
         mask.active = true;
         const roundMask = mask.getComponent(Mask);
         if (!roundMask) throw new Error('CommonHead XQP 圆形皮肤缺少 Mask 组件');
-        roundMask.type = Mask.Type.ELLIPSE;
+        roundMask.type = MaskType.GRAPHICS_ELLIPSE;
         const playerInfoSprite = playerInfo.getComponent(Sprite);
         if (playerInfoSprite) playerInfoSprite.enabled = false;
         this.layout(head, 0, 0, 90, 90);

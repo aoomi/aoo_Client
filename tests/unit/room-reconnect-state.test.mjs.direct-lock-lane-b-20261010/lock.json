@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/lane_b_ws_contract",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "taskCardSha256": "6d4b950b668076760ce48e37e6b8fbee5e0dccbe00b51f5c1ce6cb471c44d685",
+  "purpose": "Lane B runtime reconnect identity and event-order behavior fixtures",
+  "allowlist": [
+    "Client/tests/unit/room-reconnect-state.test.mjs"
+  ],
+  "forbidden": ["Client/work", "LoginScene", "规则工作簿", "生产数据库", "共享服务", "生成 bundle", "旧链路回退"],
+  "preimage": {
+    "Client/tests/unit/room-reconnect-state.test.mjs": "3b84e0af951b9756c3c3bc1536154082402e3aab37a19fb29258ceb2eee0dea9"
+  },
+  "postimage": {
+    "Client/tests/unit/room-reconnect-state.test.mjs": "55f84ae04f7792073ab82e7b62eb52fa6af8ab1dc9cef035dce7c24a6ceac292"
+  },
+  "sourceWrite": false,
+  "productionDatabase": false,
+  "sharedRuntime": false
+}

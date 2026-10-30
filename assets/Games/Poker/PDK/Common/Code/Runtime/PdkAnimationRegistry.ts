@@ -39,7 +39,7 @@ for (const [key, definition] of Object.entries(DEFINITIONS) as Array<[PdkAnimati
     for (const alias of definition.aliases) ALIAS_TO_KEY.set(normalize(alias), key);
 }
 
-// Operation numbers are the existing CommonPdkGameLogic protocol contract.
+// Operation numbers are the existing PdkGameLogic protocol contract.
 const OP_CARD_TYPE_TO_KEY: Readonly<Record<number, PdkAnimationFolderKey>> = Object.freeze({
     4: 'Straight', 5: 'TripleWithoutAttachment', 6: 'TripleWithSingle', 7: 'TripleWithTwo',
     8: 'FourWithSingle', 9: 'FourWithTwo', 10: 'FourWithThree', 11: 'Bomb',
@@ -61,9 +61,6 @@ export function pdkAnimationDefinition(folderKey: PdkAnimationFolderKey): PdkAni
     return DEFINITIONS[folderKey];
 }
 
-export function pdkAnimationFolderKeys(): readonly PdkAnimationFolderKey[] {
-    return Object.keys(DEFINITIONS) as PdkAnimationFolderKey[];
-}
 
 export function pdkAnimationForOpCardType(opCardType: number): PdkAnimationFolderKey | null {
     return OP_CARD_TYPE_TO_KEY[opCardType] ?? null;

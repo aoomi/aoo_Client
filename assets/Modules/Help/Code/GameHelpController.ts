@@ -33,7 +33,7 @@ export class GameHelpController {
             y -= this.addText(content, description, y, 22, new Color(92, 129, 61, 255), 104);
         }
         content.getComponent(UITransform)?.setContentSize(780, Math.max(620, -y + 30));
-        form.node.emit('game-help-rendered', 'CD201');
+        form.node.emit('game-help-rendered', 'chengdu2004');
     }
 
     private addText(parent: Node, text: string, y: number, fontSize: number, color: Color, height: number): number {

@@ -3,6 +3,7 @@ import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolCli
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { setClubDynamicLabel } from './ClubDynamicLabel';
 import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
+import type { RoomHistoryPage, RoomLifecycleGateway } from '../../../Common/Code/Runtime/room/RoomLifecycleGateway';
 
 interface ClubRecordPlayer {
     pid?: number;
@@ -48,12 +49,14 @@ export class LegacyClubRecordListController {
     private pageTotal = 1;
     private epoch = 0;
     private loading = false;
+    private historyCursors = new Map<number, number>();
     private selectAll = true;
     private readonly rowRecords = new Map<Node, ClubRecordInfo>();
 
     public constructor(
         private readonly forms: LegacyFormManager,
         private readonly client: ProtocolClient,
+        private readonly hallRoomGateway: RoomLifecycleGateway,
         private readonly playerId: number,
         private readonly lobbyNode: Node,
     ) {}
@@ -106,6 +109,7 @@ export class LegacyClubRecordListController {
         this.recordType = 0;
         this.page = 1;
         this.pageTotal = 1;
+        this.historyCursors.clear();
         this.selectAll = true;
         this.epoch += 1;
         this.loading = false;
@@ -148,18 +152,23 @@ export class LegacyClubRecordListController {
             packet.type = 0;
         }
         try {
-            const summaryPromise = refreshSummary
-                ? this.client.request<RecordSummary>('club.CClubTotalInfo', { ...packet, pageNum: undefined, type: undefined, query: undefined })
-                : Promise.resolve<RecordSummary | null>(null);
-            const [records, summary] = await Promise.all([
-                this.client.request<RecordResponse>('club.CClubGetRecord', packet),
-                summaryPromise,
-            ]);
+            const history = await this.hallRoomGateway.history(
+                query ? 0 : this.historyCursors.get(this.page) ?? 0,
+                query ? 100 : 20,
+                0, 0, this.clubId,
+            );
+            const records = this.historyRecords(history, query);
+            const summary: RecordSummary | null = refreshSummary ? {
+                pageNumTotal: history.hasMore ? this.page + 1 : this.page,
+                roomTotalCount: Number(history.totalCount ?? records.length),
+                roomCardTotalCount: 0,
+            } : null;
             if (!this.form || this.form !== form || requestEpoch !== this.epoch) return;
             if (summary) this.renderSummary(form, summary);
-            this.pageTotal = query ? 1 : Math.max(1, Number(summary?.pageNumTotal ?? records.pageNumTotal ?? this.pageTotal));
+            this.pageTotal = query ? 1 : Math.max(1, Number(summary?.pageNumTotal ?? this.pageTotal));
+            if (!query && history.hasMore) this.historyCursors.set(this.page + 1, Number(history.nextBeforeRoomId ?? 0));
             if (!append) this.clearRows();
-            for (const record of records.clubRecordInfos ?? []) this.addRecord(form, record);
+            for (const record of records) this.addRecord(form, record);
         } catch (error: unknown) {
             if (requestEpoch === this.epoch) {
                 await this.forms.show('UIMessage_Drift', null, null,
@@ -168,6 +177,27 @@ export class LegacyClubRecordListController {
         } finally {
             if (requestEpoch === this.epoch) this.loading = false;
         }
+    }
+
+    private historyRecords(page: RoomHistoryPage, query?: string): ClubRecordInfo[] {
+        const expectedRoomId = query ? Number(query) : 0;
+        return page.items.flatMap((raw): ClubRecordInfo[] => {
+            const item = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+            const roomId = Number(item.roomId ?? 0);
+            if (expectedRoomId > 0 && roomId !== expectedRoomId) return [];
+            const settlement = item.settlement && typeof item.settlement === 'object'
+                ? item.settlement as Record<string, unknown> : {};
+            const entries = Array.isArray(settlement.entries) ? settlement.entries : [];
+            const playerList = entries.map(entry => {
+                const value = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {};
+                return { pid: Number(value.playerId ?? 0), name: String(value.name ?? ''),
+                    point: Number(value.scoreDelta ?? value.score ?? 0) };
+            });
+            return [{ roomID: roomId, roomKey: roomId, roomState: 0,
+                endTime: String(item.playedAt ?? ''), gameType: Number(settlement.gameType ?? 0),
+                configName: String(settlement.gameCode ?? item.playVersion ?? ''),
+                playerList }];
+        });
     }
 
     private renderSummary(form: LegacyForm, summary: RecordSummary): void {
@@ -365,7 +395,7 @@ export class LegacyClubRecordListController {
     }
 
     private setLabel(root: Node, path: string, value: string): void {
-        const label = Label ? this.find(root, path)?.getComponent(Label) : null;
+        const label = Label ? this.find(root, path)?.getComponent(Label) ?? null : null;
         setClubDynamicLabel(label, path, value);
     }
 

@@ -6,6 +6,7 @@ import test from 'node:test';
 const root = path.resolve(import.meta.dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const entries = read('assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts');
+const contract = read('assets/Games/Common/Code/Runtime/GameRuntimeEntry.ts');
 const lobby = read('assets/Lobby/Code/LobbyScreenController.ts');
 const router = read('assets/Login/Code/Navigation/SceneRouter.ts');
 
@@ -48,4 +49,23 @@ test('shared exit injection does not invent a next-round or local reset path', (
   for (const source of [entries, lobby, router]) {
     assert.doesNotMatch(source, /requestRoomExit:[\s\S]{0,500}(?:nextRound|continueGame|resetRound|startRound)/);
   }
+});
+
+test('Common delegates exit policy once and restores Back only after failure', () => {
+  assert.match(contract, /readonly exit\?: CommonRoomExitPort/);
+  assert.match(entries, /exit: overrides\.exit \?\? Object\.freeze\(\{ request: \(\) => requestRoomExit\(roomId\) \}\)/);
+  const block = entries.match(/private bindExit\(\): void \{([\s\S]*?)\n    \}\n\n    private installMountedHook/)?.[1];
+  assert.ok(block, 'Common Back binding is missing');
+  assert.match(block, /if \(this\.destroyed \|\| this\.exitPending \|\| !button\.interactable\) return/);
+  assert.equal((block.match(/ports\.exit\.request\(\)/g) ?? []).length, 1);
+  assert.doesNotMatch(block, /requestRoomExit|overrides\.exit/);
+  assert.match(block, /catch\(error => \{[\s\S]*this\.report\(error\)[\s\S]*button\.interactable = true/);
+  const success = block.slice(block.indexOf('.then(() =>'), block.indexOf('}).catch(error'));
+  assert.doesNotMatch(success, /interactable = true/);
+});
+
+test('Common destroys Back and mounted subscriptions symmetrically', () => {
+  assert.match(entries, /this\.disposers\.push\(\(\) => \{ if \(node\.isValid\) node\.off\(Button\.EventType\.CLICK/);
+  assert.match(entries, /let dispose: \(\(\) => void\) \| void;[\s\S]*active = false;[\s\S]*dispose = this\.ports\.mounted\(view\)/);
+  assert.match(entries, /for \(const dispose of this\.disposers\.splice\(0\)\) dispose\(\)/);
 });

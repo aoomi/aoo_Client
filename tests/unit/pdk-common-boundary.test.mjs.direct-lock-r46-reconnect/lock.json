@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "lockId": "R46-PDK-RECONNECT-TEST-20261012",
+  "task": "DIRECT-20261006T193000Z-f4c9e2a1-PDK公共能力归属迁移",
+  "attempt": "R46-PDK-reconnect-ownership-20261012",
+  "lane": "PDK/CommonRoom",
+  "owner": "/root/pdk_compat_boundary",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "acquiredAtUtc": "2026-10-12T02:14:58Z",
+  "path": "Client/tests/unit/pdk-common-boundary.test.mjs",
+  "scope": "focused behavior coverage for unique Common reconnect owner, compatibility fail-closed, duplicate registration and destroy",
+  "taskCardSha256": "694271e6e84456faaccecd59c2b23d7e33ac15363daae79e4b3eeaeb4aa43136",
+  "preimageSha256": "fdb0a65284cc4171e9c1e62f33f8a1a09c04d99b58f5ecb994f357cd18561649",
+  "postimageSha256": "95b5bd2e6e3cbd4bda7d08a78f62ee11346ce50debd25bc25c513d796d8d3ae5",
+  "releasedAtUtc": "2026-10-12T02:20:16Z",
+  "evidencePath": "/tmp/r46-pdk-reconnect-ownership-implementation-20261012",
+  "sourceWrite": false,
+  "testWrite": true,
+  "allowlist": [
+    "Client/tests/unit/pdk-common-boundary.test.mjs",
+    "Client/tests/unit/pdk-common-boundary.test.mjs.direct-lock-r46-reconnect/lock.json"
+  ],
+  "forbidden": [
+    "Client/assets/Login/Scenes/LoginScene.scene",
+    "Client/docs/开房规则表/**",
+    "Server/**",
+    "protocol semantics",
+    "generated Bundle/**",
+    "shared services",
+    "shared ports",
+    "production source outside PdkSwitchCoordinator.ts",
+    "PdkMagicExpressionPresenter deletion",
+    "production database",
+    "shared runtime/preview/ports"
+  ],
+  "acceptance": [
+    "behavior tests prove Common owner and PDK negative boundary",
+    "legacy compatibility current identities stay fail-closed",
+    "duplicate registration and destroy are covered",
+    "independent Lane G review required; implementation owner cannot accept"
+  ],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review"
+}

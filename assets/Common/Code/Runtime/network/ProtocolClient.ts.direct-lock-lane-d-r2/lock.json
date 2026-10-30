@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r2",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Common/Code/Runtime/network/ProtocolClient.ts",
+  "preimageSha256": "71baf2e0df0e5f11d7519c79d988318cf0bf249bcab1839d1542a87bb26107e3",
+  "scope": "map Protocol V2 error envelopes to AppError while retaining correlation",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "non-writer reviewer required"
+}

@@ -9,9 +9,9 @@ const gateway = read('assets/Lobby/Code/HallRoomGateway.ts');
 const protocol = read('assets/Common/Code/Runtime/network/ProtocolClient.ts');
 const router = read('assets/Login/Code/Navigation/SceneRouter.ts');
 
-test('only explicitly selected LS201 uses waiting entry', () => {
-    assert.match(club, /isWaitingEntry[\s\S]{0,500}gameFilterKey\(room\) === 'LS201'/,
-        '精简的当前房间包必须通过亲友圈模板恢复LS201身份');
+test('only explicitly selected Liangshan PDK uses waiting entry', () => {
+    assert.match(club, /isWaitingEntry[\s\S]{0,500}gameFilterKey\(room\) === 'liangshan2006'/,
+        '精简的当前房间包必须通过亲友圈模板恢复凉山跑得快身份');
     assert.doesNotMatch(club, /=== 'CD201'[\s\S]{0,120}waitingEntry/);
     assert.doesNotMatch(club, /=== 'NJ201'[\s\S]{0,120}waitingEntry/);
 });
@@ -19,11 +19,11 @@ test('only explicitly selected LS201 uses waiting entry', () => {
 test('waiting entry stays in club until full or a second tap', () => {
     assert.doesNotMatch(club, /this\.rooms = next;[\s\S]{0,300}this\.enterFullWaitingRoom\(\)/,
         '亲友圈桌面刷新不得与大厅会话并发签票和切场');
-    assert.match(lobby, /sameSelectedDesk = currentRoomId > 0 && this\.sameWaitingDesk/,
+    assert.match(lobby, /sameSelectedDesk = currentRoomId > 0[\s\S]{0,120}sameWaitingDesk/,
         '已占座后再点同一模板桌必须识别为同一张实体桌');
     assert.match(lobby, /currentRoomId === existingRoomId \|\| sameSelectedDesk/);
     assert.match(lobby, /if \(!enterCurrentWaitingRoom\)/);
-    assert.match(lobby, /room\.CBaseRoomConfig[\s\S]{0,300}mainNode\.emit\('legacy-club-show-current-room'/,
+    assert.match(lobby, /roomDetails\(waitingRoomId\)[\s\S]{0,300}mainNode\.emit\('legacy-club-show-current-room'/,
         '等待玩法坐下成功后必须留在亲友圈并显示当前座位提示层');
     assert.match(club, /mainNode\.on\('legacy-club-show-current-room'/,
         'ClubMain 必须接收等待房间数据并打开内嵌 RoomDetails');
@@ -48,23 +48,12 @@ test('waiting entry supports changing and leaving the reserved seat', () => {
     assert.match(lobby, /换桌成功/);
     assert.match(gateway, /public async joinWaiting/);
     assert.match(gateway, /public async leaveWaiting/);
-    assert.match(club, /room\.CBaseExitRoom/);
-    assert.match(club, /const roomId = Number\(current\.roomId \?\? current\.roomID \?\? 0\);[\s\S]{0,500}if \(roomId > 0\)[\s\S]{0,300}room\.CBaseExitRoom/,
+    assert.match(club, /const roomId = Number\(current\.roomId \?\? current\.roomID \?\? 0\);[\s\S]{0,500}if \(roomId > 0\)[\s\S]{0,300}hallRoomGateway\.leave/,
         '亲友圈返回必须依据权威 roomId 退出当前房间，不得受精简投影缺少玩法字段影响');
-    assert.match(club, /room\.CBaseExitRoom[\s\S]{0,500}this\.forms\.closeAfterPointer\(path\)/,
+    assert.match(club, /hallRoomGateway\.leave[\s\S]{0,500}this\.forms\.closeAfterPointer\(path\)/,
         '退出当前房间成功后必须继续返回大厅');
-    assert.match(club, /isNoActiveRoomError\(configError\)[\s\S]{0,500}this\.forms\.closeAfterPointer\(path\)/,
-        '兼容服务明确返回玩家不在房间时必须直接返回大厅');
-    assert.match(club, /PLAYER_NOT_ROOM\|玩家不在房间\|player is not/,
-        '只能把明确的无房错误识别为无房，不能吞掉网络或超时错误');
-    assert.match(club, /room\.CBaseRoomConfig[\s\S]{0,900}game\.C1101GetRoomID/,
-        'RoomConfig不可用时必须使用大厅启动查询作为权威房间号兜底');
-    assert.match(club, /active-room-fallback-used/,
-        '兜底查询必须留下可检索诊断日志');
-    assert.match(club, /projectedPlayerRoom\(\)[\s\S]{0,600}active-room-local-fallback/,
-        '两种查询都不可用时必须使用当前玩家的桌面座位投影判断是否需要退房');
-    assert.match(club, /source: 'local-projection'[\s\S]{0,300}this\.forms\.closeAfterPointer\(path\)/,
-        '查询不可用且桌面没有当前玩家座位时应直接返回大厅');
+    assert.doesNotMatch(club, /room\.CBaseRoomConfig|room\.CBaseExitRoom|isNoActiveRoomError|projectedPlayerRoom/,
+        '亲友圈公共房间生命周期不得保留旧协议和本地恢复分支');
 });
 
 test('ordinary re-entry resumes the current account seat before attempting another join', () => {
@@ -74,11 +63,11 @@ test('ordinary re-entry resumes the current account seat before attempting anoth
         < gateway.indexOf("`/api/v2/hall/rooms/${roomId}/join`"));
 });
 
-test('refresh keeps a non-full LS201 waiting room in ClubMain', () => {
-    assert.match(router, /gameName\?\.trim\(\)\.toUpperCase\(\) === 'LS201'/);
+test('refresh keeps a non-full Liangshan PDK waiting room in ClubMain', () => {
+    assert.match(router, /gameName\?\.trim\(\)\.toLowerCase\(\) === 'liangshan2006'/);
     assert.match(router, /waitingFull !== true[\s\S]{0,120}state !== 'PLAYING'/);
     assert.match(router, /restoreLastClubBeforeShow: true[\s\S]{0,160}skipRoomRecovery: true[\s\S]{0,400}waiting-club-room-held/);
-    assert.ok(router.indexOf('if (activeRoom && waitingClubRoom)')
-        < router.indexOf('await this.recoverRoomHandoff(account, role, activeRoom, gateway, parent, report)'),
-    '等待状态必须在普通活动房间自动恢复之前截获');
+    const waitingBlock = router.slice(router.indexOf('if (activeRoom && waitingClubRoom)'));
+    assert.match(waitingBlock, /skipRoomRecovery: true[\s\S]{0,400}presentLobbyScene/,
+        '等待状态必须在大厅恢复分支中截获');
 });

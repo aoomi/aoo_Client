@@ -3,6 +3,13 @@ import { assetManager, ImageAsset, Sprite, SpriteFrame, Texture2D } from 'cc';
 const LOCAL_AVATAR_PORT = 8765;
 const AVATAR_FILE_COUNT = 10000;
 const frames = new Map<string, Promise<SpriteFrame>>();
+let remoteFailureReported = false;
+
+function reportRemoteFailure(): void {
+    if (remoteFailureReported) return;
+    remoteFailureReported = true;
+    console.warn('[PlayerAvatarService] AVATAR_REMOTE_LOAD_FAILED');
+}
 
 function avatarBaseUrl(): string {
     const configured = globalThis.__aoo_RUNTIME_CONFIG__?.avatarBaseUrl?.trim();
@@ -61,6 +68,7 @@ function loadFrame(url: string): Promise<SpriteFrame> {
         const extension = /\.png(?:$|\?)/iu.test(url) ? '.png' : '.jpg';
         assetManager.loadRemote<ImageAsset>(url, { ext: extension }, (error, image) => {
             if (error || !image) {
+                reportRemoteFailure();
                 reject(error ?? new Error(`玩家头像加载失败: ${url}`));
                 return;
             }

@@ -1,7 +1,7 @@
 import { assetManager, Button, Color, instantiate, isValid, Label, Layout, Node, Prefab, UITransform } from 'cc';
 import type { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
-import { CardPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/CardPresenter';
-import { createSeatEntries, SeatPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/SeatPresenter';
+import { PdkCardPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/PdkCardPresenter';
+import { createSeatEntries, PdkSeatPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/PdkSeatPresenter';
 import { PdkAnimationResolver } from '../../../Games/Poker/PDK/Common/Code/Runtime/PdkAnimationResolver';
 import type { ReplayGateway } from '../../../Common/Code/Runtime/Replay/ReplayGateway';
 
@@ -54,6 +54,8 @@ interface ReplaySnapshot {
     readonly seats?: Readonly<Record<string, ReplaySeat>>;
 }
 
+const MAX_REPLAY_CHUNKS = 10_000;
+
 interface ReplayFrame {
     readonly sequence: number;
     readonly messageId: string;
@@ -67,9 +69,9 @@ interface ReplayFrame {
 /** Plays ordered hall replay chunks inside the same PDK_CommonRoom used by live play. */
 export class PdkReplayController {
     private form: LegacyForm | null = null;
-    private readonly cards = new CardPresenter();
+    private readonly cards = new PdkCardPresenter();
     private readonly animations = new PdkAnimationResolver(path => this.node(path));
-    private seats: SeatPresenter | null = null;
+    private seats: PdkSeatPresenter | null = null;
     private readonly bindings: Array<{ node: Node; action: () => void }> = [];
     private frames: ReplayFrame[] = [];
     private frameIndex = 0;
@@ -117,7 +119,7 @@ export class PdkReplayController {
 
     private onCreate(form: LegacyForm): void {
         this.form = form;
-        this.seats = new SeatPresenter(form.node);
+        this.seats = new PdkSeatPresenter(form.node);
         this.prepareCommonRoom(form.node);
         void this.mountControls(form);
         this.ensureStatus(form.node);
@@ -143,17 +145,19 @@ export class PdkReplayController {
             const events: ReplayEvent[] = [];
             const cursors = new Set<number>();
             let afterSequence = 0;
-            for (;;) {
+            let paginationComplete = false;
+            for (let page = 0; page < MAX_REPLAY_CHUNKS; page += 1) {
                 if (cursors.has(afterSequence)) throw new Error('回放分页游标重复');
                 cursors.add(afterSequence);
                 const chunk = await this.api.chunks(target.roomId, target.setId, afterSequence, 100) as ReplayChunk;
                 if (generation !== this.renderGeneration || !this.form?.isShown()) return;
                 if (Array.isArray(chunk.events)) events.push(...chunk.events);
-                if (!chunk.hasMore) break;
+                if (!chunk.hasMore) { paginationComplete = true; break; }
                 const next = Number(chunk.nextSequence ?? -1);
                 if (!Number.isSafeInteger(next) || next <= afterSequence) throw new Error('回放分页数据无效');
                 afterSequence = next;
             }
+            if (!paginationComplete) throw new Error('回放分页超过安全上限');
             this.frames = this.decode(events, target.setId);
             if (!this.frames.length) throw new Error('该战绩暂无可播放的权威状态');
             this.status(`房间 ${target.roomId} · 共 ${this.frames.length} 帧`);
@@ -169,6 +173,7 @@ export class PdkReplayController {
         const frames: ReplayFrame[] = [];
         const expectedRound = Number(setId) + 1;
         let previous = -1;
+        let complete = false;
         for (const event of events) {
             const sequence = Number(event.sequence ?? -1);
             if (!Number.isSafeInteger(sequence) || sequence < previous) throw new Error('回放事件顺序无效');
@@ -205,8 +210,9 @@ export class PdkReplayController {
                 frames.push({ sequence, messageId, playVersion,
                     playedAtEpochMillis: Number(snapshot.serverEpochMillis ?? 0), snapshot });
             }
-            if (this.isTerminalSnapshot(snapshot)) break;
+            if (this.isTerminalSnapshot(snapshot)) { complete = true; break; }
         }
+        if (!complete) throw new Error('本小局回放数据不完整，暂不可播放');
         return frames;
     }
 
@@ -291,18 +297,18 @@ export class PdkReplayController {
         this.text('BG/Room_Info/Room_Num', `${seatEntries.length}人场  局数:${snapshot.roundNo ?? 0}/${snapshot.roundLimit ?? '-'}`);
         this.text('BG/Room_Info/Room_Id', `房间号:${snapshot.roomId ?? this.target?.roomId ?? ''}`);
         for (let ui = 0; ui < 4; ui += 1) {
-            this.active(`Players/Play_${ui}`, false);
-            this.active(`Players/Play_${ui}/Clock`, false);
+            this.active(`Players/Seat_${ui}`, false);
+            this.active(`Players/Seat_${ui}/Clock`, false);
             this.clearOutCard(ui);
-            this.node(`Players/Play_${ui}/Card/Table_Cards`)?.removeAllChildren();
-            this.node(`Players/Play_${ui}/Card/Card_Layout`)?.removeAllChildren();
+            this.node(`Players/Seat_${ui}/Card/Table_Cards`)?.removeAllChildren();
+            this.node(`Players/Seat_${ui}/Card/Card_Layout`)?.removeAllChildren();
         }
-        this.node('Players/Play_0/Card/Hand_Cards')?.removeAllChildren();
+        this.node('Players/Seat_0/Card/Hand_Cards')?.removeAllChildren();
         for (const [key, seat] of seatEntries) {
             const dataSeat = Number(key);
             const ui = physicalSlot(dataSeat);
-            this.active(`Players/Play_${ui}`, true);
-            this.active(`Players/Play_${ui}/Head`, true);
+            this.active(`Players/Seat_${ui}`, true);
+            this.active(`Players/Seat_${ui}/Head`, true);
             const hand = this.remainingHand(snapshot, dataSeat, frame.playIndex ?? 0, seat);
             const score = (frame.playIndex ?? 0) < this.maxPlayIndex(snapshot)
                 ? Number(seat.totalScore ?? 0) - Number(seat.roundScore ?? 0)
@@ -311,9 +317,9 @@ export class PdkReplayController {
                 pid: Number(seat.playerId ?? 0), name: String(seat.name ?? ''),
                 headImageUrl: String(seat.headImageUrl ?? ''), totalScore: score,
             });
-            const handPath = ui === 0 ? 'Players/Play_0/Card/Hand_Cards' : `Players/Play_${ui}/Card/Card_Layout`;
+            const handPath = ui === 0 ? 'Players/Seat_0/Card/Hand_Cards' : `Players/Seat_${ui}/Card/Card_Layout`;
             if (hand.length) await this.renderCards(handPath, this.sortCards(hand));
-            this.text(`Players/Play_${ui}/Head/Count`, `${hand.length}张`);
+            this.text(`Players/Seat_${ui}/Head/Count`, `${hand.length}张`);
         }
         const lastPlay = Array.isArray(snapshot.playHistory) && snapshot.playHistory.length
             ? [...snapshot.playHistory].sort((left, right) => Number(left.playIndex ?? 0) - Number(right.playIndex ?? 0)).at(-1)
@@ -321,7 +327,7 @@ export class PdkReplayController {
         const trickCards = this.cardsOf(snapshot.currentTrick?.cards, lastPlay?.cards);
         if (trickCards.length) {
             const ui = physicalSlot(Number(snapshot.currentTrick?.seat ?? lastPlay?.seat ?? 0));
-            await this.renderCards(`Players/Play_${ui}/Card/Out_Card`, trickCards);
+            await this.renderCards(`Players/Seat_${ui}/Card/Out_Card`, trickCards);
             const animation = this.animationKey(frame.playType);
             if (animation) void this.animations.play(animation, ui).catch(this.reportError);
         }
@@ -346,11 +352,11 @@ export class PdkReplayController {
     }
 
     private clearTable(): void {
-        this.node('Players/Play_0/Card/Hand_Cards')?.removeAllChildren();
+        this.node('Players/Seat_0/Card/Hand_Cards')?.removeAllChildren();
         for (let index = 0; index < 4; index += 1) {
             this.clearOutCard(index);
-            this.node(`Players/Play_${index}/Card/Table_Cards`)?.removeAllChildren();
-            this.node(`Players/Play_${index}/Card/Card_Layout`)?.removeAllChildren();
+            this.node(`Players/Seat_${index}/Card/Table_Cards`)?.removeAllChildren();
+            this.node(`Players/Seat_${index}/Card/Card_Layout`)?.removeAllChildren();
         }
     }
 
@@ -376,7 +382,7 @@ export class PdkReplayController {
             if (index <= 0 || index >= playIndex) continue;
             const slot = layout.find(entry => entry.dataSeat === Number(play.seat ?? -1))?.physicalSlot;
             if (slot === undefined) continue;
-            const parent = this.node(`Players/Play_${slot}/Card/Table_Cards`);
+            const parent = this.node(`Players/Seat_${slot}/Card/Table_Cards`);
             if (!parent) continue;
             parent.active = true;
             const outer = parent.getComponent(Layout) ?? parent.addComponent(Layout);
@@ -395,7 +401,7 @@ export class PdkReplayController {
     }
 
     private addPlayCount(hand: Node, playIndex: number): void {
-        const template = this.node('Players/Play_0/Card/Out_Card/Count');
+        const template = this.node('Players/Seat_0/Card/Out_Card/Count');
         const cards = hand.children.filter(child => !child.name.startsWith('PlayCount_'));
         const lastCard = cards[cards.length - 1];
         if (!template || !lastCard || playIndex <= 0) return;
@@ -409,14 +415,14 @@ export class PdkReplayController {
     }
 
     private clearOutCard(slot: number): void {
-        const parent = this.node(`Players/Play_${slot}/Card/Out_Card`);
+        const parent = this.node(`Players/Seat_${slot}/Card/Out_Card`);
         this.cards.clearExcept(parent, ['Count']);
         const count = parent?.getChildByName('Count');
         if (count) count.active = false;
     }
 
     private renderTurnCountdown(snapshot: ReplaySnapshot, layout: readonly { dataSeat: number; physicalSlot: number }[], playIndex: number): void {
-        for (let slot = 0; slot < 4; slot += 1) this.active(`Players/Play_${slot}/Clock`, false);
+        for (let slot = 0; slot < 4; slot += 1) this.active(`Players/Seat_${slot}/Clock`, false);
         const history = Array.isArray(snapshot.playHistory) ? snapshot.playHistory : [];
         const next = [...history]
             .filter(play => Number(play.playIndex ?? 0) > playIndex)
@@ -424,8 +430,8 @@ export class PdkReplayController {
         if (!next) return;
         const slot = layout.find(entry => entry.dataSeat === Number(next.seat ?? -1))?.physicalSlot;
         if (slot === undefined) return;
-        this.active(`Players/Play_${slot}/Clock`, true);
-        this.text(`Players/Play_${slot}/Clock/Num`, '1');
+        this.active(`Players/Seat_${slot}/Clock`, true);
+        this.text(`Players/Seat_${slot}/Clock/Num`, '1');
     }
 
     private sortCards(cards: readonly number[]): number[] {
@@ -497,16 +503,18 @@ export class PdkReplayController {
             const events: ReplayEvent[] = [];
             let afterSequence = 0;
             const cursors = new Set<number>();
-            for (;;) {
+            let paginationComplete = false;
+            for (let page = 0; page < MAX_REPLAY_CHUNKS; page += 1) {
                 if (cursors.has(afterSequence)) throw new Error('回放分页游标重复');
                 cursors.add(afterSequence);
                 const chunk = await this.api.chunks(target.roomId, target.setId, afterSequence, 100) as ReplayChunk;
                 if (Array.isArray(chunk.events)) events.push(...chunk.events);
-                if (!chunk.hasMore) break;
+                if (!chunk.hasMore) { paginationComplete = true; break; }
                 const cursor = Number(chunk.nextSequence ?? -1);
                 if (!Number.isSafeInteger(cursor) || cursor <= afterSequence) throw new Error('回放分页数据无效');
                 afterSequence = cursor;
             }
+            if (!paginationComplete) throw new Error('回放分页超过安全上限');
             const frames = this.decode(events, target.setId);
             if (!frames.length) throw new Error(delta < 0 ? '当前已经是第一局' : '当前已经是最后一局');
             this.target = target;

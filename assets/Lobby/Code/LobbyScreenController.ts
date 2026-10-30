@@ -1,4 +1,4 @@
-import { assetManager, Button, director, EventMouse, EventTouch, game, Label, Layout, Node, RichText, Sprite, UITransform, Vec2 } from 'cc';
+import { assetManager, Button, director, EventMouse, EventTouch, game, Label, Node, RichText, Sprite, UITransform, Vec2 } from 'cc';
 import type { AuthenticatedAccount } from '../../Login/Code/Auth/AuthTypes';
 import type { RoleSession } from '../../Common/Code/Runtime/role/RoleTypes';
 import { LegacyFormManager, type LegacyForm } from '../../Common/Code/Runtime/ui/LegacyFormManager';
@@ -12,15 +12,15 @@ import { HallRoomGateway } from './HallRoomGateway';
 import { PlaySelectorController } from '../../Modules/CreateRoom/Code/PlaySelectorController';
 import { LobbyClubEntryController } from './ClubList/LobbyClubEntryController';
 import {
-    CommonPdkSwitchCoordinator,
-} from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator';
+    PdkSwitchCoordinator,
+} from '../../Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator';
 import type {
     LegacyExternalSubgameHandoff,
     LegacySubgameTicket,
 } from '../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
-import { CommonPdkGameSceneLauncher } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher';
+import { PdkGameSceneLauncher } from '../../Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher';
 import { isPdkBusinessCode } from '../../Games/Poker/PDK/Common/Code/Regional/PdkBusinessCodes';
-import { CommonPdkRuntimeEntry } from '../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntimeEntry';
+import { PdkRuntimeEntry } from '../../Games/Poker/PDK/Common/Code/Runtime/PdkRuntimeEntry';
 import { createProductionGameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntries';
 import type { GameRuntimeEntryRegistry } from '../../Games/Common/Code/Runtime/GameRuntimeEntryRegistry';
 import { ScjymjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/scjymj/ScjymjSwitchCoordinator';
@@ -36,7 +36,6 @@ import { AsmjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityAp
 import { AydssSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/aydss/AydssSwitchCoordinator';
 import { AycpSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/aycp/AycpSwitchCoordinator';
 import { AymjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/aymj/AymjSwitchCoordinator';
-import { AypdkSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/aypdk/AypdkSwitchCoordinator';
 import { BamjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/bamj/BamjSwitchCoordinator';
 import { BdjhmjSwitchCoordinator } from '../../Common/Code/Runtime/CompatibilityApp/bdjhmj/BdjhmjSwitchCoordinator';
 import { ReplayCodeController } from '../../Modules/Records/Code/ReplayCodeController';
@@ -57,7 +56,9 @@ import { ShareInviteController } from '../../Common/Code/Runtime/Share/ShareInvi
 import { InviteDeepLinkRuntime } from '../../Common/Code/Runtime/DeepLink/InviteDeepLinkRuntime';
 import { RoomNetworkControllerMount } from '../../Games/Common/Code/Room/RoomNetworkControllerMount';
 import { PlayerAvatarService } from '../../Common/Code/UI/PlayerAvatarService';
-import type { VoiceRecorder } from '../../Common/Code/Runtime/Voice/VoiceMediaClient';
+import {
+    BrowserVoiceRecorder, type VoiceClientContext, type VoiceRecorder,
+} from '../../Common/Code/Runtime/Voice/VoiceMediaClient';
 import { RoomRecoveryStore } from '../../Common/Code/Runtime/room/RoomRecoveryStore';
 import { CommonSettingsController } from '../../Common/Code/UI/CommonSettingsController';
 import { NoticeController } from '../../Modules/Activity/Social/Code/NoticeController';
@@ -70,7 +71,19 @@ export interface AooLobbyStartupOptions {
     readonly skipRoomRecovery?: boolean;
 }
 
-type LobbyRegionName = 'Top' | 'Bottom' | 'Left' | 'Right' | 'Center';
+type LobbyRegionName = 'Top' | 'Bottom' | 'Left' | 'Right' | 'Middle';
+
+interface CommonRoomFormHost {
+    readonly show: (path: string, ...args: readonly unknown[]) => Promise<LegacyForm | null>;
+    readonly close: (path: string) => void;
+}
+
+type LobbyRoomRuntimeDependencies = (() => VoiceRecorder) & {
+    readonly bearer: () => Promise<string>;
+    readonly formHost: CommonRoomFormHost;
+    readonly apiBaseUrl: string;
+    readonly context: () => VoiceClientContext;
+};
 
 export class LobbyScreenController {
     private forms: LegacyFormManager | null = null;
@@ -79,13 +92,20 @@ export class LobbyScreenController {
     private gameIds: string[] = [];
     private session: LobbySessionService | null = null;
     private playSelector: PlaySelectorController | null = null;
+    private createRoomControllerReady = false;
+    private createRoomOpenPending = false;
+    private createRoomReadyPromise: Promise<void> | null = null;
+    private resolveCreateRoomReady: (() => void) | null = null;
+    private rejectCreateRoomReady: ((error: unknown) => void) | null = null;
     private joinRoomController: JoinRoomController | null = null;
     private hallRoomGateway: HallRoomGateway | null = null;
     private clubEntry: LobbyClubEntryController | null = null;
-    private subgame: CommonPdkSwitchCoordinator | null = null;
-    private commonPdkSceneLauncher: CommonPdkGameSceneLauncher | null = null;
-    private commonPdkRuntimeEntry: CommonPdkRuntimeEntry | null = null;
+    private subgame: PdkSwitchCoordinator | null = null;
+    private commonPdkSceneLauncher: PdkGameSceneLauncher | null = null;
+    private commonPdkRuntimeEntry: PdkRuntimeEntry | null = null;
     private gameRuntimeEntries: GameRuntimeEntryRegistry | null = null;
+    /** Runtime asset readiness is shared by normal entry and reload recovery. */
+    private readonly runtimePreloads = new Map<string, Promise<void>>();
     private scjymj: ScjymjSwitchCoordinator | null = null;
     private hzmj: HzmjSwitchCoordinator | null = null;
     private a3pk: A3pkSwitchCoordinator | null = null;
@@ -99,7 +119,6 @@ export class LobbyScreenController {
     private aydss: AydssSwitchCoordinator | null = null;
     private aycp: AycpSwitchCoordinator | null = null;
     private aymj: AymjSwitchCoordinator | null = null;
-    private aypdk: AypdkSwitchCoordinator | null = null;
     private bamj: BamjSwitchCoordinator | null = null;
     private bdjhmj: BdjhmjSwitchCoordinator | null = null;
     private readonly nodeDisposers: Array<() => void> = [];
@@ -162,7 +181,18 @@ export class LobbyScreenController {
 
     public async mount(parent: Node): Promise<Node> {
         const epoch = ++this.lifecycleEpoch;
+        this.rejectCreateRoomReady?.(this.createRoomReadinessError('LOBBY_CREATE_ROOM_INIT_CANCELLED'));
         this.disposed = false;
+        this.createRoomControllerReady = false;
+        this.createRoomOpenPending = false;
+        this.createRoomReadyPromise = new Promise<void>((resolve, reject) => {
+            this.resolveCreateRoomReady = resolve;
+            this.rejectCreateRoomReady = reject;
+        });
+        // A failed mount is also surfaced through showProductionError below;
+        // keep the readiness promise observed so a queued click cannot create
+        // an unhandled rejection while the mount error is being propagated.
+        void this.createRoomReadyPromise.catch(() => undefined);
         this.forms = new LegacyFormManager(parent, (loading) => this.onFormsLoadingChanged(loading), true);
         this.registerCommonSystemForms();
         this.forms.register('UILobbyMain', {
@@ -174,8 +204,7 @@ export class LobbyScreenController {
                     this.setLobbyLabel(form.node, 'Top', ['Player', 'PlayerName'], this.role.displayName || this.account.displayName);
                     this.setLobbyLabel(form.node, 'Top', ['Player', 'PlayerId'], `ID:${this.role.playerId}`);
                     this.setLobbyLabel(form.node, 'Top', ['Balances', 'RoomCard', 'Value'], String(this.role.roomCard));
-                    this.setLobbyLabel(form.node, 'Top', ['Balances', 'ClubCard', 'Value'], String(this.role.raw.clubCard ?? 0));
-                    this.setLobbyLabel(form.node, 'Top', ['Balances', 'Gold', 'Value'], String(this.role.raw.gold ?? 0));
+                    this.setLobbyLabel(form.node, 'Top', ['Balances', 'GoldBean', 'Value'], String(this.role.gold));
                     const clientVersion = globalThis.__aoo_RUNTIME_CONFIG__?.clientVersion?.trim() || '0.1.0';
                     this.setLobbyLabel(form.node, 'Top', ['Version'], `V${clientVersion}`);
                     this.updateAvatar(form.node, this.role.headImageUrl);
@@ -281,11 +310,12 @@ export class LobbyScreenController {
         this.shareController = new ShareInviteController(main.node, new ShareInviteGateway(this.socialApi), error => this.showProductionError(error));
         this.shareController.install();
         this.deepLinkRuntime = new InviteDeepLinkRuntime(main.node, this.socialApi, () => true, () => true, () => undefined);
+        const roomRuntimeDependencies = this.createRoomRuntimeDependencies(this.forms);
         this.roomNetworkControllers = new RoomNetworkControllerMount(
             main.node,
             this.client,
-            async () => this.account.accessToken || this.account.token,
-            () => (globalThis as typeof globalThis & { aooVoiceRecorder?: VoiceRecorder }).aooVoiceRecorder,
+            roomRuntimeDependencies.bearer,
+            roomRuntimeDependencies,
         );
         this.roomNetworkControllers.install();
         const onBack = (): void => {
@@ -301,13 +331,11 @@ export class LobbyScreenController {
             playerId: this.role.playerId,
             name: this.role.displayName || this.account.displayName,
             roomCard: this.role.roomCard,
-            diamond: this.role.diamond,
-            clubCard: Number(this.role.raw.clubCard ?? 0),
-            gold: Number(this.role.raw.gold ?? 0),
+            gold: this.role.gold,
         });
         top.install();
         this.lobbyTop = top;
-        this.commonPdkSceneLauncher = new CommonPdkGameSceneLauncher(
+        this.commonPdkSceneLauncher = new PdkGameSceneLauncher(
             this.account,
             this.role.playerId,
             roomId => hallRoomGateway.refreshRoomConnection(roomId),
@@ -317,7 +345,7 @@ export class LobbyScreenController {
             async (roomId, setId) => (await hallRoomGateway.currentReplayCode(roomId, setId)).code,
             roomId => hallRoomGateway.historyDetail(roomId),
         );
-        this.subgame = new CommonPdkSwitchCoordinator(
+        this.subgame = new PdkSwitchCoordinator(
             this.account, this.role.playerId, this.client, this.forms, main.node,
             roomId => hallRoomGateway.refreshRoomConnection(roomId),
             roomId => hallRoomGateway.leave(roomId),
@@ -325,7 +353,7 @@ export class LobbyScreenController {
             async (roomId, setId) => (await hallRoomGateway.currentReplayCode(roomId, setId)).code,
             roomId => hallRoomGateway.historyDetail(roomId),
         );
-        this.commonPdkRuntimeEntry = new CommonPdkRuntimeEntry(this.commonPdkSceneLauncher, this.subgame);
+        this.commonPdkRuntimeEntry = new PdkRuntimeEntry(this.commonPdkSceneLauncher, this.subgame);
         this.gameRuntimeEntries = createProductionGameRuntimeEntryRegistry({
             pdk: this.commonPdkRuntimeEntry,
             lobbyNode: main.node,
@@ -344,17 +372,42 @@ export class LobbyScreenController {
                 this.gameRuntimeEntries?.all().find(entry => entry.id === 'cd299')?.destroy();
             },
         });
-        // Start before create-room controls and club restoration are mounted, so
-        // the first visible desk click can use the parsed room scene immediately.
-        void this.commonPdkRuntimeEntry.preload().catch(() => undefined);
+        // Warm registered runtime assets while the lobby is interactive, but
+        // retain the same promises so a room click or reload recovery cannot
+        // enter a runtime while its SystemJS/bundle graph is still loading.
+        this.runtimePreloads.clear();
+        for (const entry of this.gameRuntimeEntries.all()) {
+            const preload = Promise.resolve(entry.preload?.() ?? undefined);
+            this.runtimePreloads.set(entry.id, preload);
+            void preload.catch(() => undefined);
+        }
         this.playSelector = new PlaySelectorController(
             this.forms, main.node, top, hallRoomGateway,
             packet => this.enterAuthoritativeSubgame(packet as LegacySubgameTicket),
             message => { void this.forms?.show('UIMessage_Drift', null, null, message); },
             String(this.account.accountId),
         );
-        await this.playSelector.install();
+        try {
+            await this.playSelector.install();
+        } catch (cause: unknown) {
+            const failure = this.createRoomReadinessError('LOBBY_CREATE_ROOM_INIT_FAILED', cause);
+            this.createRoomControllerReady = false;
+            this.createRoomOpenPending = false;
+            this.rejectCreateRoomReady?.(failure);
+            this.resolveCreateRoomReady = null;
+            this.rejectCreateRoomReady = null;
+            this.showProductionError(failure);
+            throw failure;
+        }
         if (!this.isActiveEpoch(epoch)) return main.node;
+        this.createRoomControllerReady = true;
+        this.resolveCreateRoomReady?.();
+        this.resolveCreateRoomReady = null;
+        this.rejectCreateRoomReady = null;
+        if (this.createRoomOpenPending) {
+            this.createRoomOpenPending = false;
+            this.openCreateRoomSelector();
+        }
         this.onNode(main.node, 'legacy-club-prewarm-room', (payload) => {
             const roomId = Number((payload as { roomId?: unknown })?.roomId ?? 0);
             if (!Number.isSafeInteger(roomId) || roomId <= 0) return;
@@ -363,7 +416,7 @@ export class LobbyScreenController {
                 .catch(() => undefined);
         });
         this.clubEntry = new LobbyClubEntryController(
-            this.forms, this.client, main.node, top, this.role.playerId,
+            this.forms, this.client, hallRoomGateway, main.node, top, this.role.playerId,
             this.role.displayName || this.account.displayName, String(this.account.accountId),
         );
         this.clubEntry.install();
@@ -443,10 +496,6 @@ export class LobbyScreenController {
             this.account, this.client, main.node,
             (message) => { void this.forms?.show('UIMessage_Drift', null, null, message); },
         );
-        this.aypdk = new AypdkSwitchCoordinator(
-            this.account, this.role.playerId, this.client, this.forms, main.node,
-            roomId => hallRoomGateway.refreshRoomConnection(roomId),
-        );
         this.onNode(main.node, 'authoritative-subgame-handoff', (payload) => {
             const handoff = payload as LegacyExternalSubgameHandoff;
             if (this.scjymj?.accepts(handoff)) void this.scjymj.enter(handoff);
@@ -462,7 +511,6 @@ export class LobbyScreenController {
             else if (this.aycp?.accepts(handoff)) void this.aycp.enter(handoff);
             else if (this.aydss?.accepts(handoff)) void this.aydss.enter(handoff);
             else if (this.aymj?.accepts(handoff)) void this.aymj.enter(handoff);
-            else if (this.aypdk?.accepts(handoff)) void this.aypdk.enter(handoff);
             else if (this.bamj?.accepts(handoff)) void this.bamj.enter(handoff);
             else if (this.bdjhmj?.accepts(handoff)) void this.bdjhmj.enter(handoff);
         });
@@ -556,6 +604,7 @@ export class LobbyScreenController {
         try {
             const runtimeEntry = this.gameRuntimeEntries?.resolveUnique(handoff);
             if (runtimeEntry) {
+                await this.runtimePreloads.get(runtimeEntry.id);
                 await runtimeEntry.enter(handoff);
                 return;
             }
@@ -642,7 +691,7 @@ export class LobbyScreenController {
                 return;
             }
             const roomId = Number(intent?.roomId ?? authoritative?.roomId ?? 0);
-            const handoff = intent ? await hallRoomGateway.join(roomId) : authoritative!;
+            const handoff = intent ? await hallRoomGateway.join(intent.roomId) : authoritative!;
             console.info('[RoomMembershipBoundary] restoring-authoritative-room', {
                 roomId,
                 playerId: this.role.playerId,
@@ -1010,6 +1059,63 @@ export class LobbyScreenController {
         return Number.isFinite(expiresAt) && expiresAt - Date.now() < 120000;
     }
 
+    private createRoomRuntimeDependencies(forms: LegacyFormManager): LobbyRoomRuntimeDependencies {
+        const endpoints = resolveRuntimeEndpoints();
+        const apiBaseUrl = String(endpoints.apiBaseUrl ?? '').trim();
+        const deviceId = String(endpoints.deviceId ?? '').trim();
+        const channel = String(endpoints.clientChannel ?? '').trim();
+        const clientVersion = String(endpoints.clientVersion ?? '').trim();
+        try {
+            if (!apiBaseUrl) throw new Error('missing');
+            new URL(apiBaseUrl);
+        } catch {
+            throw new Error('COMMON_ROOM_MEDIA_ENDPOINT_INVALID');
+        }
+        if (!deviceId || !channel || !clientVersion) throw new Error('COMMON_ROOM_CLIENT_CONTEXT_REQUIRED');
+
+        const assertActive = (): void => {
+            if (this.disposed || this.sessionInvalidated) throw new Error('COMMON_ROOM_SESSION_INVALID');
+            if (this.forms !== forms || !forms.isAlive()) throw new Error('COMMON_ROOM_FORM_HOST_DESTROYED');
+        };
+        const bearer = async (): Promise<string> => {
+            assertActive();
+            if (this.shouldRefreshAccessToken()) await this.refreshAccessToken();
+            assertActive();
+            const current = String(this.account.accessToken || this.account.token || '').trim();
+            if (!current) throw new Error('COMMON_ROOM_ACCESS_TOKEN_REQUIRED');
+            return current;
+        };
+        const formHost: CommonRoomFormHost = Object.freeze({
+            show: async (path: string, ...args: readonly unknown[]): Promise<LegacyForm | null> => {
+                assertActive();
+                const normalized = String(path ?? '').trim();
+                if (!normalized) throw new Error('COMMON_ROOM_FORM_PATH_REQUIRED');
+                return forms.show(normalized, ...args);
+            },
+            close: (path: string): void => {
+                assertActive();
+                const normalized = String(path ?? '').trim();
+                if (!normalized) throw new Error('COMMON_ROOM_FORM_PATH_REQUIRED');
+                forms.close(normalized);
+            },
+        });
+        const browserRecorder = new BrowserVoiceRecorder();
+        const recorder = (): VoiceRecorder => {
+            assertActive();
+            const injected = (globalThis as typeof globalThis & { aooVoiceRecorder?: VoiceRecorder }).aooVoiceRecorder;
+            const selected = injected ?? browserRecorder;
+            if (typeof selected.record !== 'function' || typeof selected.play !== 'function'
+                || typeof selected.cancel !== 'function') throw new Error('COMMON_ROOM_VOICE_RECORDER_INVALID');
+            return selected;
+        };
+        return Object.assign(recorder, {
+            bearer,
+            formHost,
+            apiBaseUrl,
+            context: (): VoiceClientContext => ({ deviceId, channel, clientVersion }),
+        });
+    }
+
     private tokenExpiry(value: unknown): string | number {
         if (typeof value === 'string' && value.length > 0) return value;
         if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -1046,6 +1152,13 @@ export class LobbyScreenController {
         this.backTapGuard.clear();
         this.systemCloseTapGuard.clear();
         this.mainActionBusy.clear();
+        const readinessReject = this.rejectCreateRoomReady;
+        this.createRoomControllerReady = false;
+        this.createRoomOpenPending = false;
+        this.resolveCreateRoomReady = null;
+        this.rejectCreateRoomReady = null;
+        this.createRoomReadyPromise = null;
+        readinessReject?.(this.createRoomReadinessError('LOBBY_CREATE_ROOM_INIT_CANCELLED'));
         this.joinRoomController?.destroy();
         this.joinRoomController = null;
         this.playSelector?.destroy();
@@ -1071,6 +1184,7 @@ export class LobbyScreenController {
         this.productionBridge = null;
         this.gameRuntimeEntries?.destroy();
         this.gameRuntimeEntries = null;
+        this.runtimePreloads.clear();
         this.commonPdkRuntimeEntry = null;
         this.subgame = null;
         this.commonPdkSceneLauncher = null;
@@ -1100,8 +1214,6 @@ export class LobbyScreenController {
         this.aycp = null;
         this.aymj?.destroy();
         this.aymj = null;
-        this.aypdk?.destroy();
-        this.aypdk = null;
         this.bamj?.destroy();
         this.bamj = null;
         this.bdjhmj?.destroy();
@@ -1133,9 +1245,17 @@ export class LobbyScreenController {
         if (this.enteringRoom) return;
         const stableGameCode = gameName.trim().toUpperCase();
         const isRegionalPdk = isPdkBusinessCode(stableGameCode);
-        // Native Mahjong runtimes (CD101/516 and SCJYMJ/628) must execute
+        // The runtime registry is the source of truth for room-entry routing.
+        // Falling back to the historical numeric game-type allowlist lets a
+        // newly registered game (notably chengdu1001) escape through the legacy
+        // external boundary before the shared CommonRoom lifecycle is ever
+        // installed.  Registered codes must always take the authoritative
+        // handoff path, regardless of which legacy numeric id the Hall sends.
+        const hasRegisteredRuntime = Boolean(this.gameRuntimeEntries?.all().some(entry =>
+            entry.canonicalGameCodes.some(code => code.trim().toUpperCase() === stableGameCode)));
+        // Native Mahjong runtimes (chengdu1001/516 and SCJYMJ/628) must execute
         // the authoritative hall enter-room request before the one-time handoff.
-        if (!isRegionalPdk && gameType !== 629 && gameType !== 628 && gameType !== 516 && gameType !== 399 && gameType !== 376 && gameType !== 308 && gameType !== 272 && gameType !== 174 && gameType !== 254 && gameType !== 232 && gameType !== 407 && gameType !== 0) {
+        if (!isRegionalPdk && !hasRegisteredRuntime && gameType !== 629 && gameType !== 628 && gameType !== 516 && gameType !== 399 && gameType !== 376 && gameType !== 308 && gameType !== 272 && gameType !== 174 && gameType !== 254 && gameType !== 232 && gameType !== 407 && gameType !== 0) {
             if (!this.isActiveEpoch(epoch)) return;
             this.forms?.close('common/Numpad');
             this.subgame && this.mainNodeExternalBoundary(gameType, gameName, roomKey);
@@ -1150,9 +1270,13 @@ export class LobbyScreenController {
         };
         try {
             if (waitingEntry && this.hallRoomGateway) {
-                const current = await this.client.request<Record<string, unknown>>('room.CBaseRoomConfig', {});
+                const active = await this.hallRoomGateway.activeRoom();
+                const current = active
+                    ? await this.hallRoomGateway.roomDetails(active.roomId).catch(() => active as unknown as Record<string, unknown>)
+                    : null;
                 const currentRoomId = Number(current?.roomID ?? current?.roomId ?? 0);
-                const sameSelectedDesk = currentRoomId > 0 && this.sameWaitingDesk(current, selectedDesk);
+                const sameSelectedDesk = currentRoomId > 0
+                    && this.sameWaitingDesk((current ?? {}) as unknown as Record<string, unknown>, selectedDesk);
                 const enterCurrentWaitingRoom = currentRoomId > 0
                     && (currentRoomId === existingRoomId || sameSelectedDesk);
                 if (enterCurrentWaitingRoom && existingRoomId <= 0) existingRoomId = currentRoomId;
@@ -1170,11 +1294,7 @@ export class LobbyScreenController {
                     if (existingRoomId > 0) {
                         await this.hallRoomGateway.joinWaiting(existingRoomId);
                     } else {
-                        const created = await this.client.request<{ roomId?: unknown; roomID?: unknown }>(
-                            'room.CBaseEnterRoom', {
-                                roomKey, posID: -1, password: '', clubId, existQuickJoin: false,
-                            });
-                        waitingRoomId = Number(created?.roomId ?? created?.roomID ?? 0);
+                    waitingRoomId = await this.hallRoomGateway.createClubTemplateRoom(roomKey, clubId);
                     }
                     if (changedDesk) {
                         await this.forms?.show('UIMessage_Drift', null, null, '换桌成功');
@@ -1183,10 +1303,10 @@ export class LobbyScreenController {
                     // RoomDetails now belongs to ClubMain, so ask its controller to
                     // reveal the embedded node instead of loading a second prefab.
                     try {
-                        const waitingRoom = await this.client.request<Record<string, unknown>>(
-                            'room.CBaseRoomConfig', {});
+                        const waitingRoom = await this.hallRoomGateway.roomDetails(waitingRoomId);
                         if (Number(waitingRoom.roomID ?? waitingRoom.roomId ?? waitingRoomId) > 0) {
-                            this.mainNode.emit('legacy-club-show-current-room', waitingRoom);
+                            const mainNode = this.forms?.get('UILobbyMain')?.node;
+                            if (mainNode) mainNode.emit('legacy-club-show-current-room', waitingRoom);
                         }
                     } catch {
                         // The seat has already been committed. A transient detail
@@ -1200,20 +1320,17 @@ export class LobbyScreenController {
                     await this.hallRoomGateway.leaveWaiting(currentRoomId);
                 }
             }
-            const entered = existingRoomId > 0 ? { roomId: existingRoomId } :
-                await this.client.request<{ roomId?: unknown; roomID?: unknown }>('room.CBaseEnterRoom', {
-                    roomKey, posID: -1, password: '', clubId, existQuickJoin: false,
-                });
-            const roomId = Number(entered?.roomId ?? entered?.roomID ?? 0);
-            if (Number.isSafeInteger(roomId) && roomId > 0 && this.hallRoomGateway) {
+            if (this.hallRoomGateway) {
                 // Waiting players are already JOINED before the room-ready push.
                 // Replaying the ordinary join mutation from every client races the
                 // full-room transition and can leave both launchers behind the
                 // navigation cover. Resume only the committed membership and issue
                 // an independent one-time game ticket for each player.
+                let roomId = existingRoomId;
                 const handoff = existingRoomId <= 0 && clubId > 0
-                        ? await this.hallRoomGateway.resumeCommittedClubEntry(roomId)
-                        : await this.hallRoomGateway.join(roomId);
+                    ? await this.hallRoomGateway.enterClubTemplateRoom(roomKey, clubId)
+                    : await this.hallRoomGateway.join(roomId);
+                roomId = handoff.roomId;
                 await this.enterAuthoritativeSubgame({
                     ...handoff,
                     roomKey: roomId,
@@ -1237,6 +1354,7 @@ export class LobbyScreenController {
         if (!this.isActiveEpoch(epoch)) return;
         this.enteringRoom = false;
     }
+
 
     /** A template desk and its instantiated waiting room are the same clickable desk. */
     private sameWaitingDesk(current: Record<string, unknown>,
@@ -1317,8 +1435,14 @@ export class LobbyScreenController {
             case 'btn_club':
                 void this.clubEntry?.openAll();
                 return;
-            case 'JoinClub':
+            case 'ClubList':
                 void this.clubEntry?.openAll();
+                return;
+            case 'LsPDK':
+            case 'NN':
+            case 'XZMJ':
+            case 'GDYX':
+                void this.forms?.show('UIMessage_Drift', null, null, '暂未开放');
                 return;
             case 'JoinRoom':
                 console.info('[LobbyJoinRoomEntry]', {
@@ -1347,6 +1471,7 @@ export class LobbyScreenController {
             case 'More':
                 void this.toggleMorePanel(formRoot);
                 return;
+            case 'Balances':
             case 'Shop':
                 this.runMainAction(normalized, () => this.productionBridge?.store.open());
                 return;
@@ -1424,20 +1549,11 @@ export class LobbyScreenController {
             case 'Bounty':
                 this.runMainAction(normalized, () => this.productionBridge?.task.open());
                 return;
-            case 'AddRoomCard':
-                this.runMainAction(normalized, () => this.productionBridge?.store.open('btn_table2'));
-                return;
             case 'btn_uploadImg_test':
                 this.handleUploadImgTest();
                 return;
             case 'Logout':
                 void this.confirmAccountLogout();
-                return;
-            case 'AddGold':
-                this.runMainAction(normalized, () => this.productionBridge?.store.open('btn_table0'));
-                return;
-            case 'AddClubCard':
-                this.runMainAction(normalized, () => this.productionBridge?.store.open('btn_table1'));
                 return;
             case 'btn_location':
                 this.runMainAction(normalized, () => this.productionBridge?.location.open());
@@ -1467,8 +1583,14 @@ export class LobbyScreenController {
     }
 
     private bindMainLegacyButtons(formRoot: Node): void {
+        const supportIcon = this.lobbyNode(formRoot, 'Left', 'Support', 'icon');
+        this.bindSingleLegacyButton(supportIcon, formRoot, () => this.routeMainButton(formRoot, 'Support'));
+        // These entries are withdrawn from LobbyMain; their feature routes remain available.
+        const withdrawnEntries = new Set([
+            'Practice', 'Agent', 'Bounty', 'Rebate', 'LuckyDraw', 'InviteRewards',
+        ]);
         for (const node of this.findAll(formRoot, (candidate) => {
-            return this.isLobbyMainInteractiveNode(candidate);
+            return !withdrawnEntries.has(candidate.name) && this.isLobbyMainInteractiveNode(candidate);
         })) {
             this.bindSingleLegacyButton(node, formRoot, candidate => this.routeMainButton(formRoot, candidate.name));
         }
@@ -1615,16 +1737,38 @@ export class LobbyScreenController {
         const selector = this.playSelector;
         console.info('[LobbyCreateRoomEntry]', {
             action: 'CLICK',
-            controllerReady: Boolean(selector),
+            controllerReady: this.createRoomControllerReady,
             disposed: this.disposed,
             lifecycleEpoch: this.lifecycleEpoch,
             scene: director.getScene()?.name ?? '',
         });
+        if (!this.createRoomControllerReady) {
+            if (!this.createRoomReadyPromise) {
+                this.showProductionError(this.createRoomReadinessError('LOBBY_CREATE_ROOM_NOT_MOUNTED'));
+                return;
+            }
+            if (this.createRoomOpenPending) return;
+            this.createRoomOpenPending = true;
+            void this.forms?.show('UIMessage_Drift', null, null, '创建房间功能正在初始化，请稍候');
+            void this.createRoomReadyPromise.catch((error: unknown) => {
+                if (!this.createRoomOpenPending) return;
+                this.createRoomOpenPending = false;
+                this.showProductionError(error);
+            });
+            return;
+        }
         if (!selector) {
-            void this.forms?.show('UIMessage_Drift', null, null, '创建房间功能正在初始化，请稍后重试');
+            this.showProductionError(this.createRoomReadinessError('LOBBY_CREATE_ROOM_SELECTOR_UNAVAILABLE'));
             return;
         }
         void selector.open().catch((error: unknown) => this.showProductionError(error));
+    }
+
+    private createRoomReadinessError(code: string, cause?: unknown): Error & { readonly code: string; readonly cause?: unknown } {
+        const error = new Error(code) as Error & { readonly code: string; readonly cause?: unknown };
+        Object.defineProperty(error, 'code', { value: code, enumerable: true });
+        if (cause !== undefined) Object.defineProperty(error, 'cause', { value: cause, enumerable: false });
+        return error;
     }
 
     private openFeedback(): void {
@@ -1645,19 +1789,19 @@ export class LobbyScreenController {
         const property = String(packet.Property ?? packet.property ?? '');
         const value = packet.Value ?? packet.value ?? packet[property];
         if (property === 'gold') {
-            this.setLobbyLabel(root, 'Top', ['Balances', 'Gold', 'Value'], String(value ?? 0));
+            this.setLobbyLabel(root, 'Top', ['Balances', 'GoldBean', 'Value'], String(value ?? 0));
             top.setGold(Number(value ?? 0));
         }
         if (property === 'roomCard') {
             this.setLobbyLabel(root, 'Top', ['Balances', 'RoomCard', 'Value'], String(value ?? 0));
             top.setRoomCard(Number(value ?? 0));
         }
-        if (property === 'clubCard') {
-            this.setLobbyLabel(root, 'Top', ['Balances', 'ClubCard', 'Value'], String(value ?? 0));
-            top.setClubCard(Number(value ?? 0));
-        }
         if (property === 'name') this.setLobbyLabel(root, 'Top', ['Player', 'PlayerName'], String(value ?? '').slice(0, 9));
-        if (property === 'headimg') this.updateAvatar(root, String(value ?? this.role.headImageUrl));
+        if (property === 'headimg') {
+            const preferred = String(value ?? '').trim();
+            if (preferred) this.role.headImageUrl = preferred;
+            this.updateAvatar(root, this.role.headImageUrl);
+        }
     }
 
     private updateAvatar(root: Node, url: string): void {
@@ -1665,9 +1809,8 @@ export class LobbyScreenController {
         if (!resolvedUrl || resolvedUrl === this.avatarUrl) return;
         this.avatarUrl = resolvedUrl;
         const epoch = this.lifecycleEpoch;
-        // Avatar is an interactive lobby entry. Its parent hierarchy is a designer
-        // concern, so runtime binding follows the semantic name.
-        const sprite = this.lobbySemanticNode(root, 'Avatar').getComponent(Sprite);
+        // Resolve the actual Sprite inside the saved AvatarMask hierarchy.
+        const sprite = this.lobbyNode(root, 'Top', 'Player', 'AvatarMask', 'Avatar').getComponent(Sprite);
         void PlayerAvatarService.frame(this.role.playerId, url).then((frame) => {
             if (!sprite?.node.isValid || !this.isActiveEpoch(epoch) || this.avatarUrl !== resolvedUrl) return;
             sprite.spriteFrame = frame;
@@ -1780,35 +1923,25 @@ export class LobbyScreenController {
         // the bar first while keeping MoreMenu/Actions (the expanded More
         // panel) under its original toggle lifecycle.
         this.lobbyNode(root, 'Bottom').active = true;
-        // Lobby entries are intentionally located by their unique semantic
-        // names. Artists may regroup or move them anywhere below LobbyMain
-        // without coupling runtime behavior to a particular parent hierarchy.
-        const visibleNodeNames: readonly string[] = [
-            'Practice',
-            'JoinClub', 'CreateRoom', 'JoinRoom',
-            'AddRoomCard', 'AddClubCard', 'AddGold',
-            'More', 'Agent', 'Bounty', 'Rebate', 'LuckyDraw', 'InviteRewards',
-            'Settings', 'Report', 'Help', 'Feedback', 'Bind', 'Notice', 'GiftRoomCard', 'BindPromotion',
-            'VerifyIdentity', 'Support', 'CheckIn', 'Records', 'Share', 'Shop',
-            'Logout', 'Avatar',
+        // Use the saved prefab hierarchy: some entries now have a container
+        // and an interactive child with the same name.
+        const visibleNodePaths: ReadonlyArray<readonly [LobbyRegionName, ...string[]]> = [
+            ['Top', 'Balances'],
+            ['Right', 'ClubList'], ['Right', 'CreateRoom'], ['Right', 'JoinRoom'],
+            ['Bottom', 'Navigation', 'More'],
+            ['Bottom', 'Navigation', 'Settings'],
+            ['Bottom', 'MoreMenu', 'Report'], ['Bottom', 'MoreMenu', 'Help'],
+            ['Bottom', 'MoreMenu', 'Feedback'], ['Bottom', 'MoreMenu', 'Bind'],
+            ['Bottom', 'Navigation', 'Notice'],
+            ['Left', 'GiftRoomCard'],
+            ['Bottom', 'MoreMenu', 'BindPromotion'],
+            ['Bottom', 'MoreMenu', 'VerifyIdentity'],
+            ['Left', 'Support'], ['Bottom', 'MoreMenu', 'CheckIn'],
+            ['Bottom', 'Navigation', 'Records'], ['Bottom', 'Navigation', 'Share'],
+            ['Bottom', 'Shop'], ['Top', 'Logout'],
+            ['Top', 'Player', 'AvatarMask', 'Avatar'],
         ];
-        for (const name of visibleNodeNames) this.lobbySemanticNode(root, name).active = true;
-        // btn_pdk is the serialized game-button template. Creator 2.2 keeps it
-        // hidden and inserts the runtime game entries into gameLayout. Showing
-        // the template at the scene root produces the oversized standalone card
-        // seen in the migrated lobby.
-        const gameTemplate = this.find(root, 'btn_pdk');
-        const gameLayout = this.findDescendant(root, 'gameLayout');
-        if (gameTemplate && gameLayout) {
-            gameTemplate.setParent(gameLayout);
-            gameTemplate.setPosition(0, 0, 0);
-            gameTemplate.active = this.gameIds.length > 0;
-            gameLayout.active = true;
-            gameLayout.getComponent(Layout)?.updateLayout();
-        } else if (gameTemplate) {
-            gameTemplate.active = false;
-        }
-
+        for (const [region, ...path] of visibleNodePaths) this.lobbyNode(root, region, ...path).active = true;
         // Production-only controls are added after the serialized 2.2 lobby is
         // instantiated. Do not let the temporary matchmaking entry cover the
         // user's authoritative Records placement; its event API remains mounted
@@ -1833,13 +1966,6 @@ export class LobbyScreenController {
             if (result) return result;
         }
         return null;
-    }
-
-    private lobbySemanticNode(root: Node, name: string): Node {
-        const matches = this.findAll(root, node => node.name === name);
-        if (matches.length === 0) throw new Error(`大厅缺少语义节点: ${name}`);
-        if (matches.length > 1) throw new Error(`大厅语义节点名称不唯一: ${name}`);
-        return matches[0];
     }
 
     private handleUploadImgTest(): void {

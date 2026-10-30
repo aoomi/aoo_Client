@@ -13,7 +13,7 @@ const MAX_CLIENT_COUNT = 4;
 // browser storage stays isolated without competing with the other project.
 // Creator 7456 is only the mutable snapshot source. Every browser gets an
 // isolated, immutable origin managed by PreviewSnapshotSupervisor.
-const DEFAULT_CLIENT_PORTS = [7458, 7459, 5188, 7461];
+const DEFAULT_CLIENT_PORTS = [7462, 7459, 5188, 7461];
 const maintenanceFile = resolve('work/fw003-dashboard-maintenance.txt');
 const maintenanceMessage = existsSync(maintenanceFile) ? readFileSync(maintenanceFile, 'utf8').trim() : '';
 

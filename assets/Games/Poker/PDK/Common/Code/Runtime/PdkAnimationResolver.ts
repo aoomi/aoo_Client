@@ -38,7 +38,7 @@ export class PdkAnimationResolver {
         // Every seat owns one authoritative card-pattern mount in the current
         // common-room prefab. Switching SkeletonData on this stable node keeps
         // presentation code independent from the removed per-pattern mounts.
-        const mountPath = `Players/Play_${physicalSlot}/Spine/Play_CardSpine`;
+        const mountPath = `Players/Seat_${physicalSlot}/Spine/Play_CardSpine`;
         const mount = this.findMount(mountPath);
         if (!mount?.isValid) throw new Error(`跑得快动画挂载点缺失：${mountPath}`);
         const revision = (this.mountRevisions.get(mount) ?? 0) + 1;

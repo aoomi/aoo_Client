@@ -31,10 +31,10 @@ test('refresh queues every registered and module-routed form after the current s
 
 test('login uses public warmup while an active room warms only room-reachable panels', () => {
     const login = read('assets/Login/Code/Bootstrap/LoginScreenBootstrap.ts');
-    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
     assert.match(login, /forms\.preloadRefreshSurface\(false, 1\)/);
     assert.doesNotMatch(room, /forms\.preloadRefreshSurface/);
-    assert.match(room, /Room-reachable panels are preloaded by CommonPdkSwitchCoordinator/);
+    assert.match(room, /Room-reachable panels are preloaded by PdkSwitchCoordinator/);
 });
 
 test('button and background warmup share prefab and bundle single-flight caches', () => {

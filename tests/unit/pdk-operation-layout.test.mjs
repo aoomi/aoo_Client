@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import test from 'node:test';
 
 const prefabPath = new URL('../../assets/Games/Poker/PDK/Common/Prefab/PDK_CommonRoom.prefab', import.meta.url);
-const presenterPath = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/Room/OperationPresenter.ts', import.meta.url);
-const controllerPath = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url);
+const presenterPath = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkOperationPresenter.ts', import.meta.url);
+const controllerPath = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url);
 
 test('PDK operation button adaptation is owned only by the prefab', () => {
     const prefab = JSON.parse(fs.readFileSync(prefabPath, 'utf8'));
@@ -37,10 +37,10 @@ test('PDK four play areas adapt against the room boundary without changing autho
     const prefab = JSON.parse(fs.readFileSync(prefabPath, 'utf8'));
     const roomIndex = prefab.findIndex((entry) => entry?.__type__ === 'cc.Node' && entry._name === 'PDK_CommonRoom');
     const expected = {
-        Play_0: { position: [0, 0], flags: 20, horizontalCenter: 0, bottom: 320 },
-        Play_1: { position: [530, 100], flags: 34, right: 70, verticalCenter: 100 },
-        Play_2: { position: [280, 280], flags: 33, right: 320, top: 40 },
-        Play_3: { position: [-530, 100], flags: 10, left: 70, verticalCenter: 100 },
+        Seat_0: { position: [0, 0], flags: 20, horizontalCenter: 0, bottom: 320 },
+        Seat_1: { position: [530, 100], flags: 34, right: 70, verticalCenter: 100 },
+        Seat_2: { position: [280, 280], flags: 33, right: 320, top: 40 },
+        Seat_3: { position: [-530, 100], flags: 10, left: 70, verticalCenter: 100 },
     };
 
     for (const [name, rule] of Object.entries(expected)) {
@@ -67,15 +67,15 @@ test('local player head keeps its authored position and adapts to the room left-
         if (entry?.__type__ !== 'cc.Node' || entry._name !== 'Head') return false;
         const play = prefab[entry._parent?.__id__];
         const players = prefab[play?._parent?.__id__];
-        return play?._name === 'Play_0' && players?._name === 'Players' && index > 0;
+        return play?._name === 'Seat_0' && players?._name === 'Players' && index > 0;
     });
     const head = prefab[headIndex];
     const widget = prefab.find((entry) => entry?.__type__ === 'cc.Widget' && entry.node?.__id__ === headIndex);
 
-    assert.deepEqual([head._lpos.x, head._lpos.y], [-530, -220], 'Play_0/Head authored coordinates must stay unchanged');
-    assert.ok(widget, 'Play_0/Head must own a Widget');
-    assert.equal(widget._alignFlags, 12, 'Play_0/Head must align left and bottom');
-    assert.equal(widget._target?.__id__, roomIndex, 'Play_0/Head must adapt against PDK_CommonRoom');
+    assert.deepEqual([head._lpos.x, head._lpos.y], [-530, -220], 'Seat_0/Head authored coordinates must stay unchanged');
+    assert.ok(widget, 'Seat_0/Head must own a Widget');
+    assert.equal(widget._alignFlags, 12, 'Seat_0/Head must align left and bottom');
+    assert.equal(widget._target?.__id__, roomIndex, 'Seat_0/Head must adapt against PDK_CommonRoom');
     assert.equal(widget._left, 60);
     assert.equal(widget._bottom, 90);
 });

@@ -14,16 +14,17 @@ test('club desk rendering warms at most one shared room family per club', () => 
 });
 
 test('the shared PDK room shell is still warmed once before club restoration', () => {
-    const warmup = lobbySource.indexOf('prewarmDefaultRoom()');
+    const warmup = lobbySource.indexOf("legacy-club-prewarm-room");
     const clubInstall = lobbySource.indexOf('this.clubEntry.install()');
-    assert.ok(warmup >= 0, 'shared PDK room warmup is missing');
+    assert.ok(warmup >= 0, 'shared PDK room warmup bridge is missing');
     assert.ok(clubInstall >= 0, 'club entry installation is missing');
     assert.ok(warmup < clubInstall, 'shared room warmup must start before the club becomes interactive');
 });
 
 test('a committed club-template seat reads room metadata and ticket in parallel', () => {
     assert.match(gatewaySource,
-        /resumeCommittedClubEntry[\s\S]*?Promise\.all\(\[[\s\S]*?this\.prepare\(roomId\)[\s\S]*?this\.issueRoomTicket\(/);
+        /resumeCommittedRoom[\s\S]*?Promise\.all\(\[[\s\S]*?this\.prepare\(roomId\)[\s\S]*?this\.issueRoomTicket\(/);
+    assert.match(gatewaySource, /POST', '\/api\/v2\/hall\/club-template-rooms'/);
     assert.match(lobbySource,
-        /existingRoomId <= 0 && clubId > 0[\s\S]{0,160}resumeCommittedClubEntry\(roomId\)/);
+        /existingRoomId <= 0 && clubId > 0[\s\S]{0,220}enterClubTemplateRoom\(roomKey, clubId/);
 });

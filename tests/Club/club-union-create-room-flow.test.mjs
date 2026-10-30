@@ -72,13 +72,13 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
         '列表接口短暂延迟时必须立即补入本次保存成功的模板桌');
     assert.match(lobby, /String\(room\.gameName \?\? ''\)/,
         '模板桌点击必须把稳定玩法编码传入进房分流');
-    assert.match(lobby, /stableGameCode === 'CD201'[\s\S]*stableGameCode === 'NJ201'[\s\S]*stableGameCode === 'LS201'/);
-    assert.match(lobby, /await this\.client\.request<\{ roomId\?: unknown; roomID\?: unknown \}>\('room\.CBaseEnterRoom'/,
-        '地区跑得快模板桌必须先执行权威建桌/进房请求');
+    assert.match(lobby, /isPdkBusinessCode\(stableGameCode\)/);
+    assert.match(lobby, /private createClubTemplateRoom\(roomKey: string, clubId: number\)/,
+        '模板桌旧协议必须收敛到统一 Hall 房间入口适配器');
     assert.match(lobby, /roomKey, posID: -1, password: '', clubId, existQuickJoin: false/,
         '模板桌必须按旧版协议把空配置房间号交给服务端权威建桌并进入');
-    assert.match(lobby, /this\.hallRoomGateway\.join\(roomId\)/,
-        '服务端返回真实房间号后必须签发票据并进入权威玩法');
+    assert.match(lobby, /this\.hallRoomGateway\.enterClubTemplateRoom\(roomKey, clubId/,
+        '模板桌必须通过统一 Hall 房间入口签发票据并进入权威玩法');
     assert.match(lobby, /private roomEntryMessage\(reason: unknown\): string/);
     for (const text of ['房间密码错误', '房间人数已满', '房间已经开局', '该模板桌已停用',
         '房主房卡不足，暂时无法进入', '房间暂不可用，请刷新后重试']) {

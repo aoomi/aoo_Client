@@ -22,6 +22,28 @@ export interface ClientServices {
 const runtimeKey = Symbol.for('aoo.client.runtime.services');
 type RuntimeRegistry = typeof globalThis & { [runtimeKey]?: ClientServices };
 
+type RoomCleanupBootState = Pick<ReturnType<typeof currentAooLoadingBootState>,
+    'claimRoomCleanup' | 'releaseRoomCleanupClaim'>;
+
+/** Clears authoritative membership before SceneRouter can consume a stale local recovery intent. */
+export async function cleanupRoomAfterExplicitLogin(
+    bootState: RoomCleanupBootState,
+    roomRecovery: Pick<RoomRecoveryStore, 'clear'>,
+    account: Parameters<StuckRoomCleanupService['cleanup']>[0],
+    cleanup: (account: Parameters<StuckRoomCleanupService['cleanup']>[0]) => Promise<void>
+        = (authenticated) => new StuckRoomCleanupService().cleanup(authenticated),
+): Promise<void> {
+    if (!bootState.claimRoomCleanup()) return;
+    const accountId = String(account.accountId);
+    try {
+        await cleanup(account);
+        roomRecovery.clear(accountId);
+    } catch (error: unknown) {
+        bootState.releaseRoomCleanupClaim();
+        throw error;
+    }
+}
+
 /** Presentation scenes may consume the Boot-owned runtime but must never create it. */
 export function getStartedClientServices(): ClientServices | null {
     return (globalThis as RuntimeRegistry)[runtimeKey] ?? null;
@@ -40,25 +62,7 @@ export function startClientServices(): ClientServices {
         () => sessionLifecycle.resumeAfterExplicitLogin(),
         async (account) => {
             const bootState = currentAooLoadingBootState();
-            if (!bootState.claimRoomCleanup()) return;
-            const recovery = roomRecovery.load(String(account.accountId));
-            if (recovery) {
-                // SceneRouter owns authoritative membership reconciliation when a
-                // recoverable room intent exists. The generic clean-login service
-                // must not leave that room first and then restore a host from stale
-                // local intent, which creates two competing leave owners.
-                console.info('[RoomMembershipBoundary] startup-cleanup-skipped-for-recovery', {
-                    roomId: recovery.roomId,
-                    playerId: String(account.accountId),
-                });
-                return;
-            }
-            try {
-                await new StuckRoomCleanupService().cleanup(account);
-            } catch (error: unknown) {
-                bootState.releaseRoomCleanupClaim();
-                throw error;
-            }
+            await cleanupRoomAfterExplicitLogin(bootState, roomRecovery, account);
         },
     );
     const network = new NetworkRuntime();

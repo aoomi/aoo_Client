@@ -4,6 +4,21 @@
     <dict>
         <key>frames</key>
         <dict>
+            <key>bg.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{956,580}</string>
+                <key>spriteSourceSize</key>
+                <string>{956,580}</string>
+                <key>textureRect</key>
+                <string>{{2,2},{956,580}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
             <key>bg_ante.png</key>
             <dict>
                 <key>aliases</key>
@@ -15,7 +30,7 @@
                 <key>spriteSourceSize</key>
                 <string>{153,51}</string>
                 <key>textureRect</key>
-                <string>{{247,55},{153,51}}</string>
+                <string>{{676,737},{153,51}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -30,7 +45,7 @@
                 <key>spriteSourceSize</key>
                 <string>{44,72}</string>
                 <key>textureRect</key>
-                <string>{{440,55},{44,72}}</string>
+                <string>{{833,737},{44,72}}</string>
                 <key>textureRotated</key>
                 <true/>
             </dict>
@@ -45,7 +60,7 @@
                 <key>spriteSourceSize</key>
                 <string>{57,25}</string>
                 <key>textureRect</key>
-                <string>{{520,2},{57,25}}</string>
+                <string>{{921,586},{57,25}}</string>
                 <key>textureRotated</key>
                 <true/>
             </dict>
@@ -60,9 +75,24 @@
                 <key>spriteSourceSize</key>
                 <string>{269,49}</string>
                 <key>textureRect</key>
-                <string>{{247,2},{269,49}}</string>
+                <string>{{676,684},{269,49}}</string>
                 <key>textureRotated</key>
                 <false/>
+            </dict>
+            <key>bg_zuo.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{210,580}</string>
+                <key>spriteSourceSize</key>
+                <string>{210,580}</string>
+                <key>textureRect</key>
+                <string>{{2,586},{210,580}}</string>
+                <key>textureRotated</key>
+                <true/>
             </dict>
             <key>btn_playmodeselect.png</key>
             <dict>
@@ -75,9 +105,24 @@
                 <key>spriteSourceSize</key>
                 <string>{241,94}</string>
                 <key>textureRect</key>
-                <string>{{2,2},{241,94}}</string>
+                <string>{{676,586},{241,94}}</string>
                 <key>textureRotated</key>
                 <false/>
+            </dict>
+            <key>btndb_0.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{214,86}</string>
+                <key>spriteSourceSize</key>
+                <string>{214,86}</string>
+                <key>textureRect</key>
+                <string>{{586,586},{214,86}}</string>
+                <key>textureRotated</key>
+                <true/>
             </dict>
             <key>icon_roomcard.png</key>
             <dict>
@@ -90,7 +135,7 @@
                 <key>spriteSourceSize</key>
                 <string>{43,32}</string>
                 <key>textureRect</key>
-                <string>{{404,63},{43,32}}</string>
+                <string>{{909,737},{43,32}}</string>
                 <key>textureRotated</key>
                 <true/>
             </dict>
@@ -106,9 +151,9 @@
             <key>realTextureFileName</key>
             <string>CreateRoom.png</string>
             <key>size</key>
-            <string>{547,108}</string>
+            <string>{960,802}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:61354abe1b8253911579cc9ce236d50c:0aa2c0280667ada48384f19af3812937:65819d390b3e89b27b63741b1671ebf3$</string>
+            <string>$TexturePacker:SmartUpdate:dedf5d1e4066ff0ca05c8593e494bf9b:eafd1070632fe04ce0222a778aa08f4a:65819d390b3e89b27b63741b1671ebf3$</string>
             <key>textureFileName</key>
             <string>CreateRoom.png</string>
         </dict>

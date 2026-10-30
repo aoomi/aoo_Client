@@ -2,7 +2,7 @@ import { Button, Color, instantiate, isValid, Label, Layout, Node, UITransform, 
 import type { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
 import { ReplayGateway } from '../../../Common/Code/Runtime/Replay/ReplayGateway';
 import { PdkReplayController, type PdkReplayTarget } from './PdkReplayController';
-import { CardPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/CardPresenter';
+import { PdkCardPresenter } from '../../../Games/Poker/PDK/Common/Code/Runtime/Room/PdkCardPresenter';
 import { StaticList } from '../../../Common/Code/UI/StaticList';
 import { formatPdkRuleSummary } from '../../../Games/Poker/PDK/Common/Code/Rules/PdkRuleSummaryFormatter';
 
@@ -41,7 +41,7 @@ export class ReplayController {
     private readonly replayPlayer: PdkReplayController;
     private historyClubId = 0;
     private historyUnionId = 0;
-    private readonly historyCards = new CardPresenter();
+    private readonly historyCards = new PdkCardPresenter();
 
     public constructor(private readonly forms: LegacyFormManager, private readonly node: Node,
         private readonly api: ReplayGateway, private readonly playerId: string,
@@ -54,6 +54,12 @@ export class ReplayController {
         this.forms.register('UILobbyRecords', { zOrder: 10, lifecycle: {
             onCreate: form => this.bindRecords(form), onShow: form => { this.form = form; },
             onClose: form => this.resetRecords(form), onDestroy: form => this.resetRecords(form),
+        }});
+        this.forms.register('UIGameStats', { zOrder: 11, lifecycle: {
+            onCreate: form => this.clickAt(form.node, 'Popup/Btn_Close', () => this.forms.close('UIGameStats')),
+        }});
+        this.forms.register('UIMatchReplay', { zOrder: 11, lifecycle: {
+            onCreate: form => this.clickAt(form.node, 'Btn_Return', () => this.forms.close('UIMatchReplay')),
         }});
         this.forms.register(HISTORY_SMALL_SETTLEMENT, { zOrder: 12, lifecycle: {
             onCreate: form => this.bindHistorySettlement(form),
@@ -73,7 +79,7 @@ export class ReplayController {
         const form = await this.forms.show('UILobbyRecords');
         if (!form) return;
         this.form = form; this.pageIndex = 0; this.cursors = [0];
-        this.active(form.node, 'Btn_Stats', this.historyClubId > 0);
+        this.active(form.node, 'Right/Btn_Stats', true);
         await this.loadPage(0);
     }
 
@@ -85,20 +91,16 @@ export class ReplayController {
     }
 
     private bindRecords(form: LegacyForm): void {
-        this.click(form.node, 'Btn_Close', () => this.forms.close('UILobbyRecords'));
-        this.click(form.node, 'Btn_Replay', () => { void this.forms.show('UIReplayCode'); });
-        this.click(form.node, 'Btn_Stats', () => {
-            if (this.historyClubId > 0) void this.forms.show(
-                'ui/club/ClubPlayerLog', this.historyClubId, this.historyUnionId,
-            );
-        });
-        const dateNavigation = 'DateFilter/Page/Date';
+        this.clickAt(form.node, 'Popup/Btn_Close', () => this.forms.close('UILobbyRecords'));
+        this.clickAt(form.node, 'Right/Btn_Replay', () => { void this.forms.show('UIMatchReplay'); });
+        this.clickAt(form.node, 'Right/Btn_Stats', () => { void this.forms.show('UIGameStats'); });
+        const dateNavigation = 'Top/Page/Date';
         this.ensureButtonAt(form.node, `${dateNavigation}/Btn_Previous`);
         this.ensureButtonAt(form.node, `${dateNavigation}/Btn_Next`);
         this.clickAt(form.node, `${dateNavigation}/Btn_Previous`, () => { void this.shiftDate(form, 1); });
         this.clickAt(form.node, `${dateNavigation}/Btn_Next`, () => { void this.shiftDate(form, -1); });
         this.updateDatePagination(form);
-        this.active(form.node, 'Btn_Stats', this.historyClubId > 0);
+        this.active(form.node, 'Right/Btn_Stats', true);
     }
 
     private ensureButtonAt(root: Node, path: string): void {
@@ -122,7 +124,7 @@ export class ReplayController {
         this.cursors = [0]; this.currentPage = {}; this.selectedReplay = null; this.replayLoading = false;
         this.dateOffset = 0;
         this.historyClubId = 0; this.historyUnionId = 0;
-        this.clearGenerated(form.node); this.pageLabel(form, 1); this.replayButtonLabel(form, '查看他人回放');
+        this.clearGenerated(form.node); this.replayButtonLabel(form, '查看他人回放');
     }
 
     private async nextPage(): Promise<void> {
@@ -160,18 +162,17 @@ export class ReplayController {
     }
 
     private async renderPage(form: LegacyForm, page: HistoryPage, generation: number): Promise<void> {
-        const content = form.find('Record/View/Content');
-        if (!content) throw new Error('Records/Record/View/Content contract is missing');
+        const content = form.find('Right/View/Content');
+        if (!content) throw new Error('Records/Right/View/Content contract is missing');
         this.clearGenerated(form.node);
         const rows = Array.isArray(page.items) ? page.items : [];
         this.selectedReplay = null;
-        this.pageLabel(form, this.pageIndex + 1);
         const totalCount = Math.max(0, Number(page.totalCount ?? rows.length));
         const bigWinnerCount = Math.max(0, Number(page.bigWinnerCount ?? 0));
-        this.textAt(form.node, 'DateFilter/Lb_Players', `大赢家次数:${bigWinnerCount}`);
+        this.textAt(form.node, 'Top/Lb_Players', `大赢家次数:${bigWinnerCount}`);
         if (!rows.length) { this.renderState(form, '暂无战绩', new Color(225, 235, 242, 255)); return; }
-        const template = form.find('Record/Item');
-        if (!template) throw new Error('Records/Record/Item contract is missing');
+        const template = form.find('Right/Dome');
+        if (!template) throw new Error('Records/Right/Dome contract is missing');
         rows.forEach((row, offset) => {
             const item = instantiate(template), roomId = Number(row.roomId ?? 0);
             item.name = `runtime-record-${roomId || offset}`;
@@ -196,7 +197,7 @@ export class ReplayController {
     }
 
     private renderState(form: LegacyForm, text: string, color: Color): void {
-        const content = form.find('Record/View/Content'); if (!content) return;
+        const content = form.find('Right/View/Content'); if (!content) return;
         this.clearGenerated(form.node);
         const node = new Node('runtime-record-state'); node.addComponent(UITransform).setContentSize(900, 120);
         const label = node.addComponent(Label); label.string = text; label.fontSize = 28; label.lineHeight = 36;
@@ -474,11 +475,10 @@ export class ReplayController {
     }
 
     private clearGenerated(root: Node): void {
-        for (const name of ['Content', 'mj_layout_player', 'poker_layout_player']) { const parent = this.desc(root, name); if (!parent) continue;
+        for (const name of ['Right/View/Content', 'mj_layout_player', 'poker_layout_player']) { const parent = name.includes('/') ? this.at(root, name) : this.desc(root, name); if (!parent) continue;
             for (const child of [...parent.children]) if (child.name.startsWith('runtime-record-') || child.name.startsWith('runtime-result-')) child.destroy(); }
     }
     private accept(generation: number, form: LegacyForm): boolean { return generation === this.generation && this.form === form && form.isShown(); }
-    private pageLabel(form: LegacyForm, page: number): void { this.label(form.node, 'PageLabel', String(page)); }
     private async shiftDate(form: LegacyForm, delta: number): Promise<void> {
         if (this.loading) return;
         this.dateOffset = Math.max(0, Math.min(2, this.dateOffset + delta));
@@ -489,8 +489,8 @@ export class ReplayController {
         await this.loadPage(0);
     }
     private updateDatePagination(form: LegacyForm): void {
-        const dateNavigation = 'DateFilter/Page/Date';
-        this.textAt(form.node, `${dateNavigation}/Lb_Date`, ['今天', '昨天', '前天'][this.dateOffset]);
+        const dateNavigation = 'Top/Page/Date';
+        this.textAt(form.node, `${dateNavigation}/Time`, ['今天', '昨天', '前天'][this.dateOffset]);
         const previous = this.at(form.node, `${dateNavigation}/Btn_Previous`)?.getComponent(Button);
         const next = this.at(form.node, `${dateNavigation}/Btn_Next`)?.getComponent(Button);
         if (previous) previous.interactable = this.dateOffset < 2;

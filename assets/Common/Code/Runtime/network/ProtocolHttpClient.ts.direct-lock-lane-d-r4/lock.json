@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r4",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Common/Code/Runtime/network/ProtocolHttpClient.ts",
+  "preimageSha256": "57114392b4bd274c11980636357b50b4072a1d5a7efcf002c9b47a99085888cd",
+  "scope": "HTTP responses/statuses to AppError with correlation",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "lane_g",
+  "replacementCounts": {"AppError import":1,"HTTP/status mappings":4,"catch enrichment":2},
+  "postimageSha256": "57114392b4bd274c11980636357b50b4072a1d5a7efcf002c9b47a99085888cd"
+}

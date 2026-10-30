@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r2",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Lobby/Code/ClubList/LobbyClubListGateway.ts",
+  "preimageSha256": "94115d6d242f392aa9eadfa4b56f48f5a78a98fcb9a2818f72bc73ab9e20eb78",
+  "scope": "preserve structured Club list failures without empty-list masking",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "non-writer reviewer required"
+}

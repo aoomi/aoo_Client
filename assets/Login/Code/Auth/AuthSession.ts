@@ -127,6 +127,19 @@ export class AuthSession {
         try { this.lastAccountStore.clear(); } catch { /* account hint must not unblock restore */ }
     }
 
+    /**
+     * A Creator preview can retain the process-wide service instance while its
+     * bootstrap scene restarts. A later boot that did not request a clear must
+     * not keep displaying the prior boot's clear notice. This only releases
+     * the in-memory gate; it never recreates credentials removed by a real
+     * clear operation.
+     */
+    public beginBootWithoutLocalDataClear(): void {
+        this.assertStarted();
+        this.autoRestoreBlocked = false;
+        this.restoreFailureMessage = '';
+    }
+
     public loginGateState(): Readonly<{ autoRestoreBlocked: boolean; interactiveLoginAllowed: boolean }> {
         return Object.freeze({
             autoRestoreBlocked: this.autoRestoreBlocked,

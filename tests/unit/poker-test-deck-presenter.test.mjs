@@ -4,8 +4,8 @@ import test from 'node:test';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const source = read('assets/Games/Poker/Common/Code/Card/Poker_Deck_Presenter.ts');
-const pdkController = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
-const pdkCoordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
+const pdkController = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
+const pdkCoordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
 const prefab = JSON.parse(read('assets/Games/Poker/Common/Prefab/PokerTest.prefab'));
 
 test('PokerTest owns both the card view and rule-driven deck presenter without CardTest dependency', () => {

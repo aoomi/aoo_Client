@@ -70,8 +70,7 @@ expectAll(entry, [
     "createPanel.getChildByPath('Create/Confirm')",
     'new LegacyJoinClubController(',
     "client.request<ClubDetail>('club.CClubCreate'",
-    'this.top.setDiamond(balance)',
-    "'club.CClubRoomConfigItemList'",
+    'this.top.setRoomCard(balance)',
     "forms.show('UIMessage_Drift'",
 ], 'create/join/entry feedback');
 assert.doesNotMatch(entry, /forms\.register\('ui\/club\/UIClubCreate'/,
@@ -79,7 +78,7 @@ assert.doesNotMatch(entry, /forms\.register\('ui\/club\/UIClubCreate'/,
 const lobbyList = read('Lobby/Code/ClubList/LobbyClubListController.ts');
 expectAll(lobbyList, ['Body/List/View/Content', 'Body/Actions/Create', 'Body/Actions/Join'], 'lobby club-list prefab contract');
 assert.doesNotMatch(entry, /getDiamond\(\)\s*<\s*100/, 'client must not pre-block club creation by local diamond balance');
-assert.doesNotMatch(entry, /钻石不足100无法创建亲友圈/, 'server CRYSTAL debit authority must own insufficient-balance feedback');
+assert.doesNotMatch(entry, /钻石不足100无法创建亲友圈/, 'server policy authority must own insufficient-balance feedback');
 
 const formManager = read('Common/Code/Runtime/ui/LegacyFormManager.ts');
 expectAll(formManager, [
@@ -93,14 +92,11 @@ const clubAtlasMeta = JSON.parse(read('Club/Atlas.meta'));
 assert.notEqual(clubAtlasMeta.userData?.isBundle, true, 'Club/Atlas must remain in main instead of publishing a Bundle');
 assert.equal(clubAtlasMeta.userData?.bundleName, undefined, 'Club/Atlas must not retain a Bundle name');
 
-for (const gatewayPath of ['Common/Code/Runtime/role/LegacyRoleGateway.ts']) {
-    const gateway = read(gatewayPath);
-    expectAll(gateway, [
-        'const diamond = this.numberValue(packet.diamond, packet.diamondCount, packet.crystal);',
-        'const legacyRoomCard = this.numberValue(packet.roomCard, packet.roomCardCount, packet.gold);',
-        'roomCard: diamond > 0 ? diamond : legacyRoomCard',
-    ], `${gatewayPath} role currency compatibility`);
-}
+const roleGateway = read('Common/Code/Runtime/role/LegacyRoleGateway.ts');
+assert.doesNotMatch(roleGateway, /packet\.(?:diamond|diamondCount|crystal|roomCardCount)/,
+    'role projection must not source retired balances or legacy aliases');
+assert.doesNotMatch(roleGateway, /roomCard:\s*[^,\n}]*\b(?:diamond|gold)\b/,
+    'gold and retired balances must not override roomCard');
 
 const join = read('Club/Code/Runtime/LegacyJoinClubController.ts');
 expectAll(join, ["forms.register('ui/club/UIJoinClub'", "'club.CClubJoin'", "'加入失败,当前俱乐部已满'"], 'join');
@@ -108,7 +104,6 @@ expectAll(join, ["forms.register('ui/club/UIJoinClub'", "'club.CClubJoin'", "'�
 const main = read('Club/Code/Runtime/LegacyClubMainController.ts');
 expectAll(main, [
     "forms.show('ui/club/ClubMembers'",
-    "show('top/right_btn/btn_fenxiang', 'ui/club/UIYaoQing')",
     "if (path === 'ui/club/UIUnionNone') this.bindUnionNone(form);",
     "forms.show('ui/club/UIUnionCreate', {",
     "clubId: this.clubId()",
@@ -116,14 +111,13 @@ expectAll(main, [
     "forms.show('ui/club/UIJoinUnion', this.clubId())",
     "'ui/club/ClubRooms'",
     "forms.show('ui/club/ClubMsg'",
-    "forms.show('ui/club/ClubManage'",
-    "show('bottom/btn_ksjr', 'ui/club/UIQuickJoinRoom')",
+    "forms.show('ui/club/ClubAdmin'",
     "this.openClubRecord()",
     "mainNode.emit('legacy-open-records'",
     "'SClub_RoomStatusChange'",
     "'SClub_RoomPlayerChange'",
     "'club.CClubRoomConfigItemList'",
-    "'room.CBaseExitRoom'",
+    'hallRoomGateway.leave',
     "'club.CClubFindPIDInfo'",
     "'club.CClubFindPIDAdd'",
     "'legacy-club-rooms-refreshed'",
@@ -153,6 +147,6 @@ expectAll(unionManagement, [
 ], 'dissolve union');
 
 const records = read('Club/Code/Runtime/LegacyClubRecordListController.ts');
-expectAll(records, ["'club.CClubGetRecord'", "'club.CClubRoomIdOperation'", "'战绩加载失败，请稍后重试'"], 'records');
+expectAll(records, ['hallRoomGateway.history', "'club.CClubRoomIdOperation'", "'战绩加载失败，请稍后重试'"], 'records');
 
 console.log('club production-entry structural interaction checks passed');

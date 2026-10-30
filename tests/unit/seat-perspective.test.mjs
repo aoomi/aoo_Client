@@ -6,7 +6,7 @@ const sourceUrl = new URL('../../assets/Common/Code/Runtime/state/SeatPerspectiv
 const source = ts.transpileModule(await readFile(sourceUrl, 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
 const { createSeatPerspective, SeatVisualSlot } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
-for (let count = 2; count <= 8; count += 1) {
+for (let count = 2; count <= 10; count += 1) {
     for (let local = 0; local < count; local += 1) {
         const mapping = createSeatPerspective(count, local);
         const localIndexes = new Set();
@@ -20,7 +20,7 @@ for (let count = 2; count <= 8; count += 1) {
     }
 }
 
-for (let count = 2; count <= 8; count += 1) {
+for (let count = 2; count <= 10; count += 1) {
     for (let before = 0; before < count; before += 1) {
         for (let after = 0; after < count; after += 1) {
             const restored = createSeatPerspective(count, after);

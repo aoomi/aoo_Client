@@ -109,7 +109,7 @@ export class Poker_Card_Presenter extends Component {
         this.selected = selected;
         this.disabled = disabled;
         this.selectedMask!.active = false;
-        this.disabledMask!.active = this.presentationOnly ? false : !selected && disabled;
+        this.disabledMask!.active = !selected && disabled;
     }
 
     /** Drag-range feedback only; taps and committed selections never use a mask. */

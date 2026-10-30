@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "p0-e-ws-contract-20261011-r1",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "P0-E",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "path": "Client/tests/unit/room-reconnect-state.test.mjs",
+  "scope": "focused reconnect stale/duplicate/out-of-order/destroyed and 19-digit identity assertions",
+  "preimageSha256": "55f84ae04f7792073ab82e7b62eb52fa6af8ab1dc9cef035dce7c24a6ceac292",
+  "sourceWrite": false,
+  "testWrite": true,
+  "forbidden": ["production source", "Server", "Gateway", "generated bundles", "shared services", "shared ports", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "b1287e90d998f1461d05fb89d19c92dd18e908bd59dc26ae85e47da8dbbcabfe",
+  "evidence": "docs/05-当前状态/evidence/p0-e-ws-contract-20261011-r1/DEV_SELF_CHECK-v1.md"
+}

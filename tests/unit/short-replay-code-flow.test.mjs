@@ -38,27 +38,40 @@ test('authoritative replay keeps the selected round terminal cards visible', () 
     assert.match(replay, /phase: 'PLAYING'/);
     assert.match(replay, /scheduleStep\(1200\)/);
     assert.doesNotMatch(replay, /setInterval/);
-    assert.match(replay, /Players\/Play_\$\{ui\}\/Card\/Out_Card/);
-    assert.match(replay, /Players\/Play_0\/Card\/Hand_Cards/);
+    assert.match(replay, /Players\/Seat_\$\{ui\}\/Card\/Out_Card/);
+    assert.match(replay, /Players\/Seat_0\/Card\/Hand_Cards/);
     assert.doesNotMatch(replay, /Players\/Sp_Seat_/);
     assert.match(replay, /createSeatEntries\(seatEntries\.length, clientSeat\)/);
     assert.match(replay, /changeRound\(-1\)/);
     assert.match(replay, /changeRound\(1\)/);
     assert.match(replay, /出牌时间/);
-    assert.match(replay, /new SeatPresenter\(form\.node\)/);
+    assert.match(replay, /new PdkSeatPresenter\(form\.node\)/);
     assert.match(replay, /remainingHand\(snapshot, dataSeat/);
     assert.match(replay, /Card\/Card_Layout/);
     assert.match(replay, /renderTableCards\(snapshot, layout/);
     assert.match(replay, /PdkAnimationResolver/);
     assert.match(replay, /renderTurnCountdown\(snapshot, layout/);
-    assert.match(replay, /Players\/Play_\$\{slot\}\/Clock\/Num/);
+    assert.match(replay, /Players\/Seat_\$\{slot\}\/Clock\/Num/);
     assert.match(replay, /addPlayCount\(hand, index\)/);
     assert.match(replay, /PlayCount_\$\{playIndex\}/);
     assert.match(replay, /clearExcept\(parent, \['Count'\]\)/);
 });
 
+test('authoritative replay pagination is bounded and fails closed after the limit', () => {
+    const replay = read('Modules/Records/Code/PdkReplayController.ts');
+    assert.match(replay, /const MAX_REPLAY_CHUNKS = 10_000/);
+    assert.equal((replay.match(/for \(let page = 0; page < MAX_REPLAY_CHUNKS; page \+= 1\)/g) ?? []).length, 2);
+    assert.equal((replay.match(/if \(!paginationComplete\) throw new Error\('回放分页超过安全上限'\)/g) ?? []).length, 2);
+    assert.equal((replay.match(/if \(!chunk\.hasMore\) \{ paginationComplete = true; break; \}/g) ?? []).length, 2);
+    assert.doesNotMatch(replay, /for \(;;\)/);
+    assert.match(replay, /cursors\.has\(afterSequence\)/);
+    assert.match(replay, /Number\.isSafeInteger\(next\) \|\| next <= afterSequence/);
+    assert.match(replay, /Number\.isSafeInteger\(cursor\) \|\| cursor <= afterSequence/);
+    assert.match(replay, /generation !== this\.renderGeneration \|\| !this\.form\?\.isShown\(\)/);
+});
+
 test('small settlement fetches displays and copies its stable code', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
     assert.match(result, /this\.viewSetEnd\.replayCode/);
     assert.match(result, /回放码:\$\{replayCode\}/);
     assert.match(result, /loadReplayCode\(roomId, setId\)/);
@@ -70,7 +83,7 @@ test('small settlement fetches displays and copies its stable code', () => {
 });
 
 test('settlement resolves the durable round code but never blocks result presentation', () => {
-    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
     assert.match(coordinator, /payload = await this\.withReplayCode\(payload, roomId, roundNo\);[\s\S]*forms\.show\(this\.smallSettlementForm, payload\)/);
     assert.match(coordinator, /const setId = Math\.max\(0, roundNo - 1\)/);
     assert.match(coordinator, /return \{ \.\.\.payload, replayCode: '', replaySetId: setId \}/);
@@ -80,14 +93,14 @@ test('settlement resolves the durable round code but never blocks result present
 });
 
 test('terminal round still opens the eighth small settlement before totals', () => {
-    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
     assert.match(coordinator, /terminal round is still a completed round/);
     assert.doesNotMatch(coordinator, /settlementPresentation === 'FLOATING' && \(matchFinished \|\| finalSettlement\)/);
     assert.match(coordinator, /forms\.show\(this\.smallSettlementForm, payload\)/);
 });
 
 test('small settlement keeps global hand boundaries and completed-round pagination', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
     assert.match(result, /Bottom\/Page\/Label', `\$\{roundNo\}\/\$\{roundLimit\}`/);
     assert.match(result, /PlayedCard_\$\{hand\.playIndex\}_\$\{index\}/);
     assert.match(result, /: order \+ 1/);
@@ -98,9 +111,9 @@ test('small settlement keeps global hand boundaries and completed-round paginati
 });
 
 test('final settlement receives the exact terminal payload instead of relying on room cache timing', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
-    const record = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkRecordController.ts');
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
+    const record = read('Games/Poker/PDK/Common/Code/Runtime/PdkRecordController.ts');
     assert.match(result, /forms\.show\(this\.bigSettlementForm, this\.setEnd\)/);
     assert.match(coordinator, /onShow: \(form, roomEnd\)[\s\S]*recordController\?\.onShow\(form, roomEnd\)/);
     assert.match(record, /this\.terminalPayload = this\.record\(roomEnd\)/);
@@ -108,7 +121,7 @@ test('final settlement receives the exact terminal payload instead of relying on
 });
 
 test('terminal small settlement exposes only summary and cannot overlay it with return lobby', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
     assert.match(result, /Bottom\/Btn\/Btn_Final', roomEnded/);
     assert.match(result, /Bottom\/Btn\/Btn_Return', false/);
     assert.doesNotMatch(result, /Bottom\/Btn\/Btn_Return', roomEnded/);

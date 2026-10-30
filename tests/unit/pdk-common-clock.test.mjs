@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const root = new URL('../../assets/Games/Poker/PDK/Common/', import.meta.url);
-const controller = readFileSync(new URL('Code/Runtime/CommonPdkPlayController.ts', root), 'utf8');
+const controller = readFileSync(new URL('Code/Runtime/PdkPlayController.ts', root), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL('Prefab/PDK_CommonRoom.prefab', root), 'utf8'));
 
 function nodePath(index) {
@@ -40,7 +40,7 @@ test('the authority seat rotates the central pointer from the artwork upward bas
   assert.match(clock, /\[PdkTurnPointer\]/);
   assert.match(clock, /traceKey !== this\.lastTurnPointerTraceKey/);
   assert.doesNotMatch(clock, /Clock\/Pointer\/\$\{slot\}/);
-  assert.match(clock, /Players\/Play_\$\{slot\}\/Clock`, false/);
+  assert.match(clock, /Players\/Seat_\$\{slot\}\/Clock`, false/);
 });
 
 test('the first playing phase restores the authoritative clock after round reset', () => {

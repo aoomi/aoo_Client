@@ -7,7 +7,7 @@ const clientRoot = path.resolve(import.meta.dirname, '../..');
 const commonRoot = path.join(clientRoot, 'assets/Games/Poker/PDK/Common');
 const audioRoot = path.join(commonRoot, 'Audio/Room');
 const source = fs.readFileSync(path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkRoomAudioPresenter.ts'), 'utf8');
-const controller = fs.readFileSync(path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+const controller = fs.readFileSync(path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts'), 'utf8');
 const sounds = ['baojing', 'bg', 'chupai', 'daojishi', 'fapai', 'lose', 'win', 'xipai', 'xuanpai', 'zhuang', 'zuoxia'];
 
 test('room audio is published inside the shared PDK common bundle and every semantic sound exists', () => {

@@ -31,7 +31,7 @@ test('web templates disable the default Cocos splash before the engine starts', 
     assert.match(preview, /prefers-reduced-motion/);
     assert.doesNotMatch(preview, /Object\.defineProperty\(window, 'System'|System\.import = function/);
     assert.match(preview, /const aooPreviewVersion = 'aoo-preview-/);
-    assert.match(preview, /previewPorts = new Set\(\['7456', '7457', '7458', '7459', '7460', '5173', '5188'\]\)/);
+    assert.match(preview, /previewPorts = new Set\(\['7456', '7457', '7459', '7460', '7461', '7462', '5173', '5188'\]\)/);
     assert.match(preview, /window\.__aoo_RUNTIME_CONFIG__ = \{[\s\S]*environment: 'test',[\s\S]*apiBaseUrl: `http:\/\/\$\{location\.hostname\}:8080\/`/);
     assert.ok(preview.indexOf('window.__aoo_RUNTIME_CONFIG__ = {') < preview.indexOf('versionPreviewMarkup(include(cocosTemplate'));
     assert.match(preview, /Object\.defineProperty\(window, '__aoo_CREATOR_LAN_PREVIEW__'/);
@@ -95,7 +95,7 @@ test('startup transition stays visible until login or lobby presentation is read
     assert.match(bootstrap, /presentationTransition\.updateInitial\(message, this\.bootstrapProgress\)/);
     assert.doesNotMatch(bootstrap, /__aooReleaseBootCover\?\.\(\);[\s\S]*const safeProgress/);
 
-    const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+    const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
     assert.doesNotMatch(launcher, /toDataURL|captureCanvasFrame|aoo-startup-dom-mask|sleep\(150\)/);
     assert.match(launcher, /presentationTransition\.begin/);
     assert.match(launcher, /await this\.waitForBaseLayers\(1_200\)/);

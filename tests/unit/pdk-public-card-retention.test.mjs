@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const controller = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
+const controller = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
 
 test('an answered play remains visible while another seat is deciding', () => {
   const reconcile = controller.slice(

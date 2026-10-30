@@ -5,7 +5,7 @@ import type { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime
 interface StatsPlayer { pid?: number; name?: string }
 interface StatsRow {
     player?: StatsPlayer; size?: number; winner?: number; point?: number; clubCent?: number;
-    roomCard?: number; roomCardSize?: number; clubCard?: number; clubCardSize?: number;
+    roomCard?: number; roomCardSize?: number;
 }
 interface StatsPage { totalPageNum?: number; clubPlayerRoomAloneLogBOS?: StatsRow[] }
 interface OpenContext { clubId?: number; unionId?: number }

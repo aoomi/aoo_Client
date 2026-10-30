@@ -4,8 +4,8 @@ import test from 'node:test';
 
 const base = new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/', import.meta.url);
 const arrow = readFileSync(new URL('Room/PdkCurrentPlayArrowPresenter.ts', base), 'utf8');
-const play = readFileSync(new URL('CommonPdkPlayController.ts', base), 'utf8');
-const runtime = readFileSync(new URL('CommonPdkRuntime.ts', base), 'utf8');
+const play = readFileSync(new URL('PdkPlayController.ts', base), 'utf8');
+const runtime = readFileSync(new URL('PdkRuntime.ts', base), 'utf8');
 const capabilities = readFileSync(new URL('../Regional/PdkGameplayCapabilities.ts', base), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL('../../Prefab/PDK_CommonRoom.prefab', base), 'utf8'));
 

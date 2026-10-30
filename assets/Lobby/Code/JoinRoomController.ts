@@ -3,9 +3,31 @@ import { LegacyForm, LegacyFormManager } from '../../Common/Code/Runtime/ui/Lega
 import { HallRoomGateway, HallRoomHandoff } from './HallRoomGateway';
 import { NumpadHandle, NumpadService } from '../../Common/Code/Runtime/ui/NumpadService';
 import { ProductionApiError } from '../../Common/Code/Runtime/Activity/ProductionApiClient';
+import {
+    CANONICAL_RUNTIME_METADATA_BINDINGS,
+    CANONICAL_RUNTIME_METADATA_MANIFEST_SHA256,
+    CANONICAL_RUNTIME_METADATA_RELEASE_EDITION,
+} from '../../Games/Common/Code/Catalog/CanonicalRuntimeMetadataBindings';
+import { requireCanonicalIdentityProjection } from '../../Games/Common/Code/Catalog/CanonicalIdentityRuntimeGate';
 
 const FORM_PATH = 'common/Numpad';
 const ROOM_KEY_DIGITS = 6;
+
+function requireCanonicalHandoffProjection(handoff: HallRoomHandoff) {
+    const gameId = Number(handoff.gameId);
+    const gameCode = String(handoff.gameCode ?? '').trim().toLowerCase();
+    const family = String(handoff.playFamily ?? '').trim();
+    const playVersion = String(handoff.playVersion ?? '').trim();
+    const binding = CANONICAL_RUNTIME_METADATA_BINDINGS.find(candidate =>
+        candidate.gameId === gameId && candidate.gameCode === gameCode
+        && candidate.family === family && candidate.playVersion === playVersion);
+    if (!binding) throw new Error('房间身份合同缺失或不匹配，已拒绝进入');
+    return requireCanonicalIdentityProjection(
+        CANONICAL_RUNTIME_METADATA_MANIFEST_SHA256,
+        CANONICAL_RUNTIME_METADATA_RELEASE_EDITION,
+        binding,
+    );
+}
 
 /** 公共 Numpad 是加入房间唯一界面；本控制器只维护房号和权威 Hall join 生命周期。 */
 export class JoinRoomController {
@@ -113,17 +135,21 @@ export class JoinRoomController {
                 });
                 return;
             }
+            const canonicalIdentity = requireCanonicalHandoffProjection(handoff);
             console.info('[JoinRoomConfirm] response', {
                 roomId: Number(handoff.roomId ?? roomKey),
                 gameCode: String(handoff.gameCode ?? ''),
+                providerKey: canonicalIdentity.provider.providerKey,
+                contractVersion: canonicalIdentity.provider.contractVersion,
                 bundleName: String(handoff.bundleName ?? ''),
                 sceneName: String(handoff.sceneName ?? ''),
                 epoch,
             });
             this.resolving = false;
             if (this.confirmButton?.isValid) this.confirmButton.interactable = true;
-            this.form.node.emit('authoritative-join-room-resolved', handoff);
-            this.onResolved?.(handoff);
+            const resolved = { ...handoff, canonicalIdentity: canonicalIdentity.client };
+            this.form.node.emit('authoritative-join-room-resolved', resolved);
+            this.onResolved?.(resolved);
         } catch (error: unknown) {
             console.error('[JoinRoomConfirm] failed', {
                 roomId: Number(roomKey),

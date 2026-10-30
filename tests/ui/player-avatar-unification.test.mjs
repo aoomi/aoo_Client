@@ -14,7 +14,6 @@ test('all active avatar renderers use the public player avatar service', () => {
         'assets/Lobby/Code/LobbyScreenController.ts',
         'assets/Lobby/Code/ClubList/LobbyClubListController.ts',
         'assets/Club/Code/Runtime/ClubBox/ClubBoxController.ts',
-        'assets/Common/Code/Runtime/CompatibilityApp/aypdk/AypdkPlayController.ts',
     ];
     for (const path of consumers) assert.match(read(path), /PlayerAvatarService/, path);
 });
@@ -52,8 +51,8 @@ test('CommonHead keeps its authored avatar when a stale or failed request cannot
 
 test('empty game seats keep CommonHead Game visible and hide player labels', () => {
     const controller = read('assets/Common/Code/UI/CommonHeadController.ts');
-    const seats = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/SeatPresenter.ts');
-    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+    const seats = read('assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkSeatPresenter.ts');
+    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
 
     assert.match(controller, /public showGamePlayer\(occupied: boolean\)/);
     assert.match(controller, /const game = this\.useVariant\('Game'\)/);

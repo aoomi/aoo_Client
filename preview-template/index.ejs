@@ -41,6 +41,25 @@
                 </div>
             </div>
         </div>
-        <%- include(cocosTemplate, {}) %>
+        <script>
+            // Local preview on this host always uses the authorized issuer handoff.
+            window.__aoo_LOCAL_PREVIEW_OPT_IN__ = location.origin === 'http://localhost:7456'
+                && location.hostname === 'localhost';
+            if (window.__aoo_LOCAL_PREVIEW_OPT_IN__) {
+                document.write('<script src="http://127.0.0.1:18662/bootstrap.js" referrerpolicy="origin"><\/script>');
+            }
+        </script>
+        <script>
+            if (!window.__aoo_LOCAL_PREVIEW_OPT_IN__ || window.__aoo_LOCAL_PREVIEW_BOOTSTRAP_READY__ === true) {
+                document.write(<%- JSON.stringify(include(cocosTemplate, {})).replace(/</g, '\\u003c') %>);
+            } else {
+                // No engine/module executes on issuer failure, so no unsigned 8080 fallback.
+                var failure = document.createElement('div');
+                failure.setAttribute('role', 'alert');
+                failure.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#171a20;color:white;display:grid;place-content:center;text-align:center;padding:32px;font:20px sans-serif';
+                failure.textContent = '本机登录启动器不可用。请启动 local-preview-login 后刷新此入口。';
+                document.body.appendChild(failure);
+            }
+        </script>
     </body>
 </html>

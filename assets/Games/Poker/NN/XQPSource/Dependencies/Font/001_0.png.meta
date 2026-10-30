@@ -39,7 +39,6 @@
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "trimType": "auto",
         "trimThreshold": 1,
         "rotated": false,
         "offsetX": -1,
@@ -115,7 +114,8 @@
         },
         "isUuid": true,
         "imageUuidOrDatabaseUri": "de2cda64-3904-4811-a63e-2cfa860c98d8@6c48a",
-        "atlasUuid": ""
+        "atlasUuid": "",
+        "trimType": "auto"
       },
       "ver": "1.0.12",
       "imported": true,

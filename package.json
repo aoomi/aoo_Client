@@ -14,6 +14,7 @@
     "version": "3.8.8"
   },
   "scripts": {
+    "typecheck": "node scripts/verify-client-manager.mjs --typecheck",
     "preview:snapshot": "node scripts/preview-snapshot-manager.mjs capture",
     "preview:snapshot:status": "node scripts/preview-snapshot-manager.mjs status",
     "preview:snapshot:supervisor": "node scripts/preview-snapshot-supervisor.mjs",
@@ -21,6 +22,7 @@
     "preview:dual": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs",
     "preview:quad": "node scripts/verify-unresolved-identifiers.mjs && node tools/dual-client-preview.mjs --clients 4",
     "audit:client-runtime": "node scripts/verify-unresolved-identifiers.mjs && node scripts/audit-client-runtime-deps.mjs",
+    "test:pdk-hints": "node --test tests/unit/pdk-complete-decomposition-v53.test.mjs tests/unit/pdk-public-hint-authority-v54.test.mjs tests/unit/pdk-authoritative-auto-pass.test.mjs tests/unit/pdk-required-first-card-regression.test.mjs tests/unit/liangshan2003-played-card-flow.test.mjs tests/unit/pdk-card-selection-hit-policy.test.mjs tests/unit/pdk-hand-touch-area.test.mjs",
     "verify:client-manager": "node scripts/verify-client-manager.mjs",
     "verify:component-registration": "node scripts/verify-component-registration.mjs",
     "verify:unresolved-identifiers": "node scripts/verify-unresolved-identifiers.mjs",

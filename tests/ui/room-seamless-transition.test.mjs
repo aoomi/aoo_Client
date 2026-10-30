@@ -6,7 +6,7 @@ import test from 'node:test';
 const root = path.resolve(import.meta.dirname, '../..');
 
 test('normal room entry and exit keep the current scene visible without progress UI', () => {
-    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
     const router = fs.readFileSync(path.join(root, 'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
     const createRoom = fs.readFileSync(path.join(root, 'assets/Modules/CreateRoom/Code/PlaySelectorController.ts'), 'utf8');
 
@@ -25,7 +25,7 @@ test('normal room entry and exit keep the current scene visible without progress
 
 test('room reconnect keeps its cover until authoritative avatars and cards are presented', () => {
     const controller = fs.readFileSync(path.join(root,
-        'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+        'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts'), 'utf8');
     assert.match(controller, /waitForInitialPresentation\(\): Promise<void>[\s\S]{0,220}pendingPresentations[\s\S]{0,160}Promise\.allSettled\(initial\)/);
     assert.doesNotMatch(controller, /waitForInitialPresentation\(\): Promise<void>\s*\{\s*return Promise\.resolve\(\);/);
 });
@@ -80,9 +80,9 @@ test('silent transitions still reveal their error cover on failure', () => {
 });
 
 test('room transitions avoid serial bundle loads and duplicate exit-frame commits', () => {
-    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
     const router = fs.readFileSync(path.join(root, 'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
-    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
+    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
 
     assert.match(launcher, /const commonBundleReady = this\.stage\('load-common-bundle'/);
     assert.match(launcher, /const sceneBundleReady = this\.stage\('load-common-scene-bundle'/);
@@ -120,13 +120,13 @@ test('room transitions avoid serial bundle loads and duplicate exit-frame commit
 
 test('PDK room cold-load failures retry once and never expose Safari Load failed', () => {
     const coordinator = fs.readFileSync(path.join(root,
-        'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
+        'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
     const preload = coordinator.slice(coordinator.indexOf('private async preloadRequiredRoomForms'),
         coordinator.indexOf('private async refreshRoomConnectionWithRetry'));
     assert.match(preload, /attempt <= 2/);
     assert.match(preload, /this\.forms\.preload\(COMMON_ROOM_FORM\)/);
     assert.match(preload, /this\.forms\.preload\(PDK_ROOM_FORM\)/);
-    assert.match(coordinator, /\[CommonPdkRoomLoadRetry\]/);
+    assert.match(coordinator, /\[PdkRoomLoadRetry\]/);
     assert.match(coordinator, /load failed\|failed to fetch/);
     assert.match(coordinator, /房间资源或网络加载失败，请重新进入房间/);
 });
@@ -135,7 +135,7 @@ test('room admission reuses lobby metadata and parallelizes post-join requests',
     const gateway = fs.readFileSync(path.join(root, 'assets/Lobby/Code/HallRoomGateway.ts'), 'utf8');
     const lobby = fs.readFileSync(path.join(root, 'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');
     const club = fs.readFileSync(path.join(root, 'assets/Club/Code/Runtime/LegacyClubMainController.ts'), 'utf8');
-    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
     assert.match(gateway, /private static readonly metadataCacheMs = 60_000/);
     assert.match(gateway, /private readonly catalogCache/);
     assert.match(gateway, /private readonly configurationCache/);
@@ -152,20 +152,27 @@ test('room admission reuses lobby metadata and parallelizes post-join requests',
 });
 
 test('regional PDK desk clicks use one authoritative scene launch after admission', () => {
-    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
     const lobby = fs.readFileSync(path.join(root, 'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');
     const router = fs.readFileSync(path.join(root, 'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
 
     assert.match(launcher, /private async ensureMountedShell\(sceneName: string\)/);
     assert.doesNotMatch(launcher, /presentDefaultRoomShell|rollbackRoomShell|presentRoomShell|shellPending|shellTransition/);
-    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
-    const play = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
+    const play = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts'), 'utf8');
     const forms = fs.readFileSync(path.join(root, 'assets/Common/Code/Runtime/ui/LegacyFormManager.ts'), 'utf8');
+    const commonRuntime = fs.readFileSync(path.join(root, 'assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts'), 'utf8');
+    const commonHeadMount = fs.readFileSync(path.join(root, 'assets/Games/Common/Code/Room/CommonRoomHeadMount.ts'), 'utf8');
     assert.match(coordinator, /await this\.playController\?\.waitForInitialPresentation\(\)/);
-    assert.equal((coordinator.match(/presentationOwnedExternally: true/g) ?? []).length, 2);
+    assert.match(coordinator, /this\.forms\.register\('UIMessage_Drift',[\s\S]*?presentationOwnedExternally: true/);
+    assert.match(coordinator, /this\.forms\.register\(AUTO_PLAY_FORM,[\s\S]*?presentationOwnedExternally: true/);
+    assert.match(coordinator, /this\.forms\.register\(PDK_ROOM_FORM,[\s\S]*?presentationOwnedExternally: true/);
     assert.match(forms, /presentationOwnedExternally\) transition\.cancel\(\)/);
-    assert.match(play, /trackPresentation\(this\.renderHeads\(\)/);
+    assert.doesNotMatch(play, /trackPresentation\(this\.renderHeads\(\)/);
     assert.match(play, /trackPresentation\(this\.renderHand\(\)/);
+    assert.match(commonRuntime, /CommonRoomRuntimeLifecycle/);
+    assert.match(commonRuntime, /renderPublicSeat/);
+    assert.match(commonHeadMount, /class CommonRoomHeadRenderer/);
 
     const enterRoom = lobby.slice(lobby.indexOf('private async enterRoom('), lobby.indexOf('private roomEntryMessage('));
     const admissionAt = enterRoom.indexOf('this.hallRoomGateway.join(roomId)');
@@ -178,7 +185,7 @@ test('regional PDK desk clicks use one authoritative scene launch after admissio
 });
 
 test('room re-entry retains warmed prefabs instead of reusing destroyed promise-only cache', () => {
-    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+    const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
     assert.match(launcher, /private readonly prewarmedAssets = new Map<string, readonly Asset\[\]>/);
     assert.match(launcher, /retained\.every\(asset => isValid\(asset, true\)\)/);
     assert.match(launcher, /for \(const asset of assets\) asset\.addRef\(\)/);
@@ -202,7 +209,7 @@ test('room re-entry retains warmed prefabs instead of reusing destroyed promise-
 });
 
 test('runtime room exit contains Hall failures instead of leaking an unhandled rejection', () => {
-    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
+    const coordinator = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts'), 'utf8');
     assert.match(coordinator, /onExit:\s*\(\)\s*=>\s*\{\s*this\.requestLeave\('room-not-found'\);\s*\}/);
     assert.doesNotMatch(coordinator, /onExit:\s*\(\)\s*=>\s*\{\s*void this\.leave\('room-not-found'\)/);
 });

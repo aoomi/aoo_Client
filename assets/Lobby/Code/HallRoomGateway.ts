@@ -7,6 +7,7 @@ import {
 } from '../../Common/Code/Runtime/Activity/ProductionApiClient';
 import { resolveRuntimeEndpoints } from '../../Common/Code/Runtime/config/RuntimeEndpoints';
 import { resolvePublishedRoomBundle } from '../../Common/Code/Runtime/navigation/PublishedRoomResourceRoute';
+import type { RoomLifecycleGateway } from '../../Common/Code/Runtime/room/RoomLifecycleGateway';
 
 export interface HallPlayFilter {
     regionCode: string; parentRegionCode?: string; regionType: 'ALL' | 'GLOBAL' | 'PROVINCE' | 'CITY' | 'DISTRICT';
@@ -19,6 +20,7 @@ export interface HallCatalogGame {
 }
 export interface HallRoomConfiguration {
     gameId: number; classificationRegionCode: string; playVersion: string;
+    releaseId: number; indexGeneration: number;
     rules: Record<string, unknown>; ui: {
         fields?: HallRoomRuleField[];
         roomRuleSourceHash?: string;
@@ -50,7 +52,7 @@ export interface HallRoomHandoff {
     roundNo?: number; roundLimit?: number;
 }
 export interface HallRoomPreparation {
-    room: { roomId:number; gameId:number; gameCode?:string; playVersion:string; route:string; bundleName:string; sceneName:string; rules?:Record<string,unknown> };
+    room: { roomId:number; gameId:number; gameCode?:string; playVersion:string; route:string; bundleName:string; sceneName:string; rules?:Record<string,unknown>; classificationRegionCode?:string; configuration?:HallRoomConfiguration };
     game: HallCatalogGame;
     configuration: HallRoomConfiguration;
 }
@@ -59,6 +61,8 @@ export interface HallActiveRoom {
     route?: string; bundleName?: string; sceneName?: string; playFamily?: string;
     smallSettleTemplate?: string; bigSettleTemplate?: string;
     rules?: Record<string, unknown>;
+    classificationRegionCode?: string;
+    configuration?: HallRoomConfiguration;
     clubId?: number; playerNum?: number; occupiedCount?: number; waitingFull?: boolean;
     roundNo?: number; roundLimit?: number;
 }
@@ -70,7 +74,7 @@ export interface HallRoomScope {
     type: 'PERSONAL' | 'CLUB'; clubId?: number; templateCode?: string;
 }
 export interface HallAdmissionLocation { latitude: number; longitude: number; }
-export interface HallHistoryPage { items: unknown[]; nextBeforeRoomId: number; hasMore: boolean; }
+export interface HallHistoryPage { items: unknown[]; nextBeforeRoomId: number; hasMore: boolean; totalCount?: number; bigWinnerCount?: number; }
 export interface HallHistoryDetail { roomId: number; rounds: unknown[]; }
 export interface HallReplayChunk { roomId: number; setId: number; events: unknown[]; nextSequence: number; hasMore: boolean; contentHash: string; }
 export interface HallReplayCodeResolution {
@@ -88,7 +92,7 @@ const CD299_DURATION_MINUTES = new Set([30, 45, 60]);
  * fail-closed 时，由共享建房页把旧的固定维度字段投影成同一个六选一控件。
  */
 export function createRoomRuleFields(gameCode: string, fields: readonly HallRoomRuleField[]): HallRoomRuleField[] {
-    if (gameCode.trim().toUpperCase() !== 'CD299') return fields.map(field => ({ ...field }));
+    if (gameCode.trim().toLowerCase() !== 'chengdu2999') return fields.map(field => ({ ...field }));
     const endKeys = new Set([CD299_ROOM_END_SELECTION_KEY, 'roundCount', 'roomDurationMinutes']);
     const retained = fields.filter(field => !endKeys.has(field.key)).map(field => ({ ...field }));
     const replacedOrders = fields.filter(field => endKeys.has(field.key))
@@ -118,7 +122,7 @@ export function createRoomRuleFields(gameCode: string, fields: readonly HallRoom
 /** Convert the one CD299 selection into exactly one canonical request dimension. */
 export function normalizeCreateRoomRules(gameCode: string, rules: Record<string, unknown>): Record<string, unknown> {
     const normalized = { ...rules };
-    if (gameCode.trim().toUpperCase() !== 'CD299') return normalized;
+    if (gameCode.trim().toLowerCase() !== 'chengdu2999') return normalized;
 
     const selected = normalized[CD299_ROOM_END_SELECTION_KEY];
     const hasRoundCount = Object.prototype.hasOwnProperty.call(normalized, 'roundCount');
@@ -154,7 +158,7 @@ export function normalizeCreateRoomRules(gameCode: string, rules: Record<string,
 }
 
 /** Canonical HTTPS boundary for room lifecycle before the realtime room connection exists. */
-export class HallRoomGateway {
+export class HallRoomGateway implements RoomLifecycleGateway {
     private static readonly joins = new Map<string, Promise<HallRoomHandoff>>();
     private static readonly leaves = new Map<string, Promise<unknown>>();
     private static readonly metadataCacheMs = 60_000;
@@ -168,7 +172,8 @@ export class HallRoomGateway {
         refreshSession?: SessionRefresher, shouldRefreshSession?: SessionRefreshPolicy) {
         this.api = new ProductionApiClient(token, playerId, undefined, undefined, refreshSession, shouldRefreshSession);
     }
-    public create(gameCode: string, rules: Record<string, unknown>, scope: HallRoomScope = { type: 'PERSONAL' }, location?: HallAdmissionLocation): Promise<HallRoomHandoff> {
+    public create(gameCode: string, rules: Record<string, unknown>, scope: HallRoomScope = { type: 'PERSONAL' }, location?: HallAdmissionLocation,
+        configurationRevision?: HallRoomConfiguration): Promise<HallRoomHandoff> {
         if (this.pending) return this.pending;
         let normalizedRules: Record<string, unknown>;
         try {
@@ -176,7 +181,7 @@ export class HallRoomGateway {
         } catch (error: unknown) {
             return Promise.reject(error);
         }
-        this.pending = this.createOnce(gameCode, normalizedRules, scope, location).finally(() => { this.pending = null; });
+        this.pending = this.createOnce(gameCode, normalizedRules, scope, location, configurationRevision).finally(() => { this.pending = null; });
         return this.pending;
     }
     public join(roomId: number): Promise<HallRoomHandoff>;
@@ -212,10 +217,16 @@ export class HallRoomGateway {
         ]).then(async ([room, catalog]) => {
             const game = catalog.find(item => Number(item.gameId) === Number(room.gameId));
             if (!game) throw new Error('该房间玩法当前不可用，请联系房主重新创建');
+            const configuration = room.configuration;
+            if (!configuration || Number(configuration.gameId) !== Number(room.gameId)
+                || configuration.playVersion !== room.playVersion
+                || configuration.classificationRegionCode !== room.classificationRegionCode) {
+                throw new Error('房间规则快照缺失或身份不匹配，无法恢复');
+            }
             return {
                 room: { ...room, bundleName: resolvePublishedRoomBundle(room.bundleName) },
                 game,
-                configuration: await this.configuration(game),
+                configuration,
             };
         }).catch((error: unknown) => {
             this.roomPreparationCache.delete(roomId);
@@ -250,6 +261,7 @@ export class HallRoomGateway {
     }
 
     private async leaveOnce(roomId: number, callId: string): Promise<unknown> {
+        const identity = await this.leaveIdentity(roomId);
         let result: unknown;
         let leaveError: unknown = null;
         const leaveOperationId = ProductionApiClient.operationKey(`hall-room-leave:${roomId}`);
@@ -259,7 +271,7 @@ export class HallRoomGateway {
             roomId, playerId: this.playerId,
         });
         try {
-            result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {},
+            result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, identity,
                 leaveOperationId);
         } catch (error: unknown) {
             leaveError = error;
@@ -277,7 +289,7 @@ export class HallRoomGateway {
                 roomId, playerId: this.playerId,
             });
             try {
-                result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {}, reconcileOperationId);
+                result = await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, identity, reconcileOperationId);
             } catch (reconcileError: unknown) {
                 // Recheck membership after the authority replay. This is stronger than
                 // the first inactive read: it proves the rejected replay did not restore
@@ -315,7 +327,9 @@ export class HallRoomGateway {
         if (!(error instanceof ProductionApiError) || error.status !== 409) return false;
         return error.code === 'HALL_AUTHORITY_REJECTED' || error.code === 'ROOM_LEAVE_REJECTED';
     }
-    public history(beforeRoomId = 0, limit = 20): Promise<HallHistoryPage> { return this.api.get('/api/v2/hall/history', { beforeRoomId, limit }); }
+    public history(beforeRoomId = 0, limit = 20, startAt = 0, endAt = 0, clubId = 0): Promise<HallHistoryPage> {
+        return this.api.get('/api/v2/hall/history', { beforeRoomId, limit, startAt, endAt, clubId });
+    }
     public historyDetail(roomId: number): Promise<HallHistoryDetail> { return this.api.get(`/api/v2/hall/history/${roomId}`); }
     public replay(roomId: number, setId: number, afterSequence = 0, limit = 100): Promise<HallReplayChunk> { return this.api.get(`/api/v2/hall/replays/${roomId}/${setId}/chunks`, { afterSequence, limit }); }
     public resolveReplayCode(value: string): Promise<HallReplayCodeResolution> {
@@ -331,20 +345,21 @@ export class HallRoomGateway {
             roomId: Number(room.roomId), gameId: Number(room.gameId), playVersion: String(room.playVersion ?? ''),
             route: String(room.route ?? ''), bundleName: String(room.bundleName ?? ''), sceneName: String(room.sceneName ?? ''),
             rules: room.rules, clubId: Number(room.clubId ?? 0), state: String(room.state ?? ''),
+            classificationRegionCode: String(room.classificationRegionCode ?? ''), configuration: room.configuration,
             playerNum: Number(room.playerNum ?? 0), occupiedCount: Number(room.occupiedCount ?? 0),
             waitingFull: room.waitingFull === true, roundNo: Number(room.roundNo ?? 0),
             roundLimit: Number(room.roundLimit ?? 0),
         }, '活动房间玩法当前不可用，请联系房主重新创建');
     }
     /**
-     * Complete a handoff after the legacy club-template transaction has already
+     * Complete a handoff after the Hall club-template transaction has already
      * created the room and committed this player's seat. Re-running join() would
      * first query membership that the same transaction just wrote, then fetch
      * metadata and finally issue a ticket. The room read and one-time ticket have
      * no ordering dependency, so keep only those two authoritative reads and run
      * them together on the click path.
      */
-    public async resumeCommittedClubEntry(roomId: number): Promise<HallRoomHandoff> {
+    public async resumeCommittedRoom(roomId: number): Promise<HallRoomHandoff> {
         if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) {
             throw new Error('俱乐部房间号无效，请重新点击桌子');
         }
@@ -355,10 +370,38 @@ export class HallRoomGateway {
         return this.handoff(prepared.room, prepared.game.gameCode, prepared.game.familyCode,
             prepared.configuration.ui, ticket);
     }
+    /**
+     * Materialize a visible Club template through Hall. Committed membership,
+     * published metadata, one-time ticket and the final handoff all follow the
+     * same lifecycle boundary as a personal or direct room entry.
+     */
+    public async createClubTemplateRoom(roomKey: string, clubId: number): Promise<number> {
+        if (!roomKey.trim() || !Number.isSafeInteger(clubId) || clubId <= 0) {
+            throw new Error('亲友圈桌信息无效，请刷新后重试');
+        }
+        const operationId = ProductionApiClient.operationKey(`hall-club-template:${clubId}:${roomKey}`);
+        const result = await this.api.mutate<{ roomId?: unknown; roomKey?: unknown }>(
+            'POST', '/api/v2/hall/club-template-rooms', { roomKey, clubId }, operationId);
+        const roomId = Number(result.roomId ?? result.roomKey ?? 0);
+        if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) {
+            throw new Error('亲友圈房间创建失败，请重试');
+        }
+        return roomId;
+    }
+    public async enterClubTemplateRoom(roomKey: string, clubId: number): Promise<HallRoomHandoff> {
+        const roomId = await this.createClubTemplateRoom(roomKey, clubId);
+        return this.resumeCommittedRoom(roomId);
+    }
     public async refreshRoomConnection(roomId: number): Promise<HallRoomConnectionTicket> {
         if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) throw new Error('房间号无效，无法重连');
         const room = await this.api.get<{route:string}>(`/api/v2/hall/rooms/${roomId}`);
         return this.issueRoomTicket(roomId, room.route);
+    }
+    public roomDetails(roomId: number): Promise<Record<string, unknown>> {
+        if (!Number.isSafeInteger(roomId) || roomId < 100000 || roomId > 999999) {
+            return Promise.reject(new Error('房间号无效'));
+        }
+        return this.api.get<Record<string, unknown>>(`/api/v2/hall/rooms/${roomId}`);
     }
     public filters(): Promise<HallPlayFilter[]> {
         return this.api.get<HallPlayFilter[]>('/api/v2/hall/play-filters', { clientVersion: '3.8.8' });
@@ -377,7 +420,7 @@ export class HallRoomGateway {
         return value;
     }
     public configuration(game: HallCatalogGame, options: { readonly refresh?: boolean } = {}): Promise<HallRoomConfiguration> {
-        const key = `${game.gameId}:${game.playVersion}`;
+        const key = `${game.gameId}:${game.classificationRegionCode}:${game.playVersion}`;
         const cached = this.configurationCache.get(key);
         if (!options.refresh && cached && cached.expiresAt > Date.now()) {
             console.info('[HallRoomConfiguration]', {
@@ -391,7 +434,8 @@ export class HallRoomGateway {
             playVersion: game.playVersion,
         });
         const value = this.api.get<HallRoomConfiguration>('/api/v2/hall/configuration', {
-            gameId: game.gameId, playVersion: game.playVersion, clientVersion: '3.8.8',
+            gameId: game.gameId, classificationRegionCode: game.classificationRegionCode,
+            playVersion: game.playVersion, clientVersion: '3.8.8',
         }).then(configuration => {
             console.info('[HallRoomConfiguration]', {
                 action: 'RESPONSE', gameCode: game.gameCode, gameId: Number(game.gameId),
@@ -415,11 +459,21 @@ export class HallRoomGateway {
         return value;
     }
     public destroy(): void { this.api.destroy(); }
-    private async createOnce(gameCode: string, rules: Record<string, unknown>, scope: HallRoomScope, location?: HallAdmissionLocation): Promise<HallRoomHandoff> {
+    private async createOnce(gameCode: string, rules: Record<string, unknown>, scope: HallRoomScope,
+        location: HallAdmissionLocation | undefined, configurationRevision?: HallRoomConfiguration): Promise<HallRoomHandoff> {
         const catalog = await this.catalog('ALL');
         const selected = catalog.find(item => String(item.gameCode).toLowerCase() === gameCode.toLowerCase());
         if (!selected) throw new Error('该玩法当前不可用，请重新选择');
-        const configuration = await this.configuration(selected);
+        const configuration = configurationRevision;
+        if (!configuration || Number(configuration.gameId) !== Number(selected.gameId)
+            || configuration.playVersion !== selected.playVersion
+            || configuration.classificationRegionCode !== selected.classificationRegionCode
+            || !configuration.classificationRegionCode
+            || !Number.isSafeInteger(Number(configuration.releaseId)) || Number(configuration.releaseId) <= 0
+            || !Number.isSafeInteger(Number(configuration.indexGeneration)) || Number(configuration.indexGeneration) <= 0
+            || !String(configuration.ui?.roomRuleSourceHash ?? '').trim()) {
+            throw new Error('创建规则版本已失效，请等待规则刷新后重试');
+        }
         const operation = ProductionApiClient.operationKey(`room-create:${selected.gameId}`);
         console.info('[HallRoomCreate] request', {
             operationId: operation,
@@ -429,9 +483,16 @@ export class HallRoomGateway {
             scope: scope.type,
             ruleKeys: Object.keys(rules).sort(),
         });
-        const room = await this.api.mutate<{roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string}>('POST', '/api/v2/hall/rooms', {
+        const room = await this.api.mutate<{roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;configuration?:HallRoomConfiguration}>('POST', '/api/v2/hall/rooms', {
             requestId: operation, gameId: selected.gameId, playVersion: selected.playVersion,
-            clientVersion: '3.8.8', rules, scope, ...this.locationBody(location),
+            clientVersion: '3.8.8', rules, scope,
+            ruleRevision: {
+                classificationRegionCode: configuration.classificationRegionCode,
+                releaseId: Number(configuration.releaseId),
+                indexGeneration: Number(configuration.indexGeneration),
+                sourceHash: String(configuration.ui.roomRuleSourceHash),
+            },
+            ...this.locationBody(location),
         }, operation);
         if (!Number.isSafeInteger(Number(room.roomId)) || Number(room.roomId) <= 0 || !room.route
             || !room.bundleName?.trim() || !room.sceneName?.trim()) {
@@ -445,7 +506,8 @@ export class HallRoomGateway {
             bundleName: room.bundleName,
             sceneName: room.sceneName,
         });
-        return this.handoff({ ...room, rules }, gameCode, selected.familyCode, configuration.ui);
+        if (!room.rules || !room.configuration) throw new Error('房间服务未返回规范化规则快照');
+        return this.handoff({ ...room, rules: room.rules }, gameCode, selected.familyCode, room.configuration.ui);
     }
     private async joinOnce(roomId: number, location?: HallAdmissionLocation): Promise<HallRoomHandoff> {
         console.info('[HallRoomJoin] begin', { roomId, playerId: this.playerId });
@@ -470,6 +532,8 @@ export class HallRoomGateway {
                 bundleName: String(active.bundleName ?? ''),
                 sceneName: String(active.sceneName ?? ''),
                 rules: active.rules,
+                classificationRegionCode: String(active.classificationRegionCode ?? ''),
+                configuration: active.configuration,
             }, '活动房间玩法当前不可用，请联系房主重新创建');
             console.info('[HallRoomJoin] resumed', {
                 roomId, playerId: this.playerId, gameCode: resumed.gameCode,
@@ -501,26 +565,64 @@ export class HallRoomGateway {
 
     /** Leave a waiting seat before returning to Hall or choosing another club desk. */
     public async leaveWaiting(roomId: number): Promise<void> {
+        const identity = await this.leaveIdentity(roomId);
         const operationId = ProductionApiClient.operationKey(`room-waiting-leave:${roomId}:${this.playerId}:${Date.now()}`);
         console.info('[HallRoomLifecycle] leave-request', {
             owner: 'HallRoomGateway.leaveWaiting', stage: 'initial', callId: operationId,
             gatewayInstanceId: this.gatewayInstanceId, operationId, roomId, playerId: this.playerId,
         });
-        await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, {}, operationId);
+        await this.api.mutate('POST', `/api/v2/hall/rooms/${roomId}/leave`, identity, operationId);
+    }
+    /** A room-pinned projection supplies identity only; HTTP authentication supplies the actor. */
+    private async leaveIdentity(roomId: number): Promise<Readonly<Record<string, string>>> {
+        const room = await this.roomDetails(roomId);
+        const raw = room.leaveAdmission;
+        const fail = (): never => { throw new Error('HALL_LEAVE_IDENTITY_INVALID'); };
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail();
+        const fields = ['roomId', 'gameId', 'gameCode', 'playVersion', 'roomInstanceId',
+            'lifecycleEpoch', 'fencingToken', 'stateVersion', 'releaseId', 'indexGeneration',
+            'regionCode', 'sourceHash', 'ruleContentHash', 'componentContentHash',
+            'cardCodecVersion', 'eventInterpreterVersion', 'protocolVersion', 'snapshotSchemaVersion'];
+        const source = raw as Record<string, unknown>;
+        if (Object.keys(source).length !== fields.length || Object.keys(source).some(key => !fields.includes(key))) return fail();
+        const identity: Record<string, string> = {};
+        for (const key of fields) {
+            const value = source[key];
+            if (typeof value !== 'string' || !value.trim() || value !== value.trim()) return fail();
+            identity[key] = value;
+        }
+        for (const key of ['roomId', 'gameId', 'lifecycleEpoch', 'fencingToken', 'stateVersion', 'releaseId', 'indexGeneration']) {
+            const value = identity[key];
+            if (!/^(0|[1-9][0-9]{0,18})$/.test(value)
+                || value.length === 19 && value > '9223372036854775807'
+                || key !== 'stateVersion' && value === '0') return fail();
+        }
+        if (identity.roomId !== String(roomId)) return fail();
+        for (const key of ['sourceHash', 'ruleContentHash', 'componentContentHash']) {
+            if (!/^[0-9a-f]{64}$/.test(identity[key])) return fail();
+        }
+        for (const key of ['playVersion', 'cardCodecVersion', 'eventInterpreterVersion', 'protocolVersion', 'snapshotSchemaVersion']) {
+            if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(identity[key])) return fail();
+        }
+        return Object.freeze(identity);
     }
     private async handoffFromRoom(
-        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number},
+        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;classificationRegionCode?:string;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number;configuration?:HallRoomConfiguration},
         unavailableMessage: string,
         ticket?: HallRoomConnectionTicket,
     ): Promise<HallRoomHandoff> {
         const catalog = await this.catalog('ALL');
         const selected = catalog.find(item => Number(item.gameId) === Number(room.gameId));
         if (!selected) throw new Error(unavailableMessage);
-        const configuration = await this.configuration(selected);
-        return this.handoff(room, selected.gameCode, selected.familyCode, configuration.ui, ticket);
+        if (!room.configuration || Number(room.configuration.gameId) !== Number(room.gameId)
+            || room.configuration.playVersion !== room.playVersion
+            || room.configuration.classificationRegionCode !== room.classificationRegionCode) {
+            throw new Error('房间规则快照缺失或身份不匹配，无法恢复');
+        }
+        return this.handoff(room, selected.gameCode, selected.familyCode, room.configuration.ui, ticket);
     }
     private async handoff(
-        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number},
+        room: {roomId:number;gameId:number;playVersion:string;route:string;bundleName:string;sceneName:string;rules?:Record<string,unknown>;clubId?:number;state?:string;playerNum?:number;occupiedCount?:number;waitingFull?:boolean;roundNo?:number;roundLimit?:number;configuration?:HallRoomConfiguration},
         gameCode: string,
         playFamily: string,
         ui: HallRoomConfiguration['ui'],

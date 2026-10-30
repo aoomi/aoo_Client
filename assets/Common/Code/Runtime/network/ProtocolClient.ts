@@ -6,6 +6,7 @@ import { resolvePageInstanceId } from '../config/RuntimeEndpoints';
 import type { LegacyIncomingPacket } from './LegacyPacketCodec';
 import { RoomPushGate } from '../state/RoomPushGate';
 import { ProtocolDefinitions } from './GeneratedProtocolIds';
+import { AppError } from '../core/AppError';
 
 export type ProtocolStage = 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6' | 'M7' | 'M8';
 export type ProtocolWireMode = 'v2';
@@ -17,8 +18,9 @@ export type ProtocolWireMode = 'v2';
 // required for a new region. Unknown names still must not become authoritative room
 // traffic merely because they share a `poker.` prefix: admission requires a registered
 // business dispatch identity.
-const POKER_BUSINESS_DISPATCH = /^(poker\.[A-Z]{2}[1-5][0-9]{2})\.dispatch$/;
-const POKER_BUSINESS_MESSAGE = /^(poker\.[A-Z]{2}[1-5][0-9]{2})\.(?:dispatch|state_push)$/;
+const POKER_CANONICAL_IDENTITY = '[a-z][a-z0-9]*(?:20(?:0[1-9]|1[0-9]|2[0-8])|299[7-9])';
+const POKER_BUSINESS_DISPATCH = new RegExp(`^(poker\\.${POKER_CANONICAL_IDENTITY})\\.dispatch$`);
+const POKER_BUSINESS_MESSAGE = new RegExp(`^(poker\\.${POKER_CANONICAL_IDENTITY})\\.(?:dispatch|state_push)$`);
 interface RegisteredDefinition {
     readonly kind: string;
     readonly auth: string;
@@ -32,7 +34,7 @@ const registeredPokerMessageIds: ReadonlySet<string> = new Set(
 function canonicalPokerRegion(msgId: string): string | undefined {
     const match = POKER_BUSINESS_MESSAGE.exec(msgId);
     if (!match) return undefined;
-    return registeredDefinitions[`${match[1]}.dispatch`] ? match[1] : undefined;
+    return registeredDefinitions[`${match[1]}.dispatch`] && registeredDefinitions[msgId] ? match[1] : undefined;
 }
 
 function isCanonicalPokerMessage(msgId: string): boolean {
@@ -64,11 +66,27 @@ export interface ProtocolMigrationConfig {
     readonly messageModes?: Readonly<Record<string, ProtocolWireMode>>;
 }
 
+export type CommonRoomSessionEvent = Readonly<
+    | { kind: 'snapshot'; snapshot: unknown }
+    | { kind: 'social'; event: 'room.quick_text' | 'room.magic_expression' | 'room.voice'; payload: unknown }
+>;
+
+export interface CommonRoomSession {
+    snapshot(): unknown;
+    subscribe(listener: (event: CommonRoomSessionEvent) => void): () => void;
+    dispatch(command: string,
+        payload: Readonly<Record<string, unknown>>): Promise<unknown>;
+}
+
 /**
  * The only network client business modules may depend on.
  * Business traffic is V2-only; the inherited packet transport is an isolated framing adapter.
  */
 export class ProtocolClient extends LegacyWebSocketClient {
+    private static readonly activeRoomClients = new Map<string, Set<ProtocolClient>>();
+    private static readonly commonRoomListeners = new Map<string, Set<(event: CommonRoomSessionEvent) => void>>();
+    private static readonly commonRoomSnapshots = new Map<string, unknown>();
+    private static readonly commonRoomCursors = new Map<string, { stateVersion: number; roundNo: number }>();
     private readonly routeListeners = new Set<(route: ProtocolRouteDecision) => void>();
     private readonly v2PushListeners = new Map<string, Set<(body: unknown) => void>>();
     private pushBridgeDisposer: (() => void) | null = null;
@@ -77,6 +95,9 @@ export class ProtocolClient extends LegacyWebSocketClient {
     private roomAuthority: Readonly<{ roomId: string; playVersion: string }> | null = null;
     private readonly roomPushGate = new RoomPushGate();
     private readonly causalGuard = new CausalEventGuard();
+    private commonRoomSendTail: Promise<void> = Promise.resolve();
+    private commonRoomGeneration = 0;
+    private registeredRoomId: string | null = null;
 
     public setWsTicket(ticket: string): void { this.wsTicket = ticket; }
 
@@ -88,7 +109,10 @@ export class ProtocolClient extends LegacyWebSocketClient {
         // Without this, raw room pushes reach the browser but are rejected before
         // every gameplay listener on the first connection and after reconnect.
         const authority = this.roomAuthority;
-        if (authority) this.roomPushGate.bind(authority.roomId, authority.playVersion);
+        if (authority) {
+            this.roomPushGate.bind(authority.roomId, authority.playVersion);
+            this.registerRoomClient(authority.roomId);
+        }
     }
 
     public bindRoomAuthority(roomId: number | string, playVersion: string): void {
@@ -96,8 +120,71 @@ export class ProtocolClient extends LegacyWebSocketClient {
         const normalizedVersion = playVersion.trim();
         if (!/^[1-9]\d*$/.test(normalizedRoomId)) throw new Error('房间权威上下文 roomId 无效');
         if (!normalizedVersion) throw new Error('房间权威上下文 playVersion 无效');
+        this.commonRoomGeneration += 1;
+        this.commonRoomSendTail = Promise.resolve();
+        this.unregisterRoomClient();
         this.roomAuthority = Object.freeze({ roomId: normalizedRoomId, playVersion: normalizedVersion });
         this.roomPushGate.bind(normalizedRoomId, normalizedVersion);
+        if (this.isConnected()) this.registerRoomClient(normalizedRoomId);
+    }
+
+    public static commonRoomSession(roomId: number | string): CommonRoomSession {
+        const normalizedRoomId = ProtocolClient.positiveId(roomId);
+        if (!normalizedRoomId) throw new Error('COMMON_ROOM_SESSION_ROOM_ID_INVALID');
+        ProtocolClient.requireActiveRoomClient(normalizedRoomId);
+        return Object.freeze({
+            snapshot: (): unknown => {
+                ProtocolClient.requireActiveRoomClient(normalizedRoomId);
+                if (!ProtocolClient.commonRoomSnapshots.has(normalizedRoomId)) {
+                    throw new Error('COMMON_ROOM_PUBLIC_VIEW_MISSING');
+                }
+                return ProtocolClient.commonRoomSnapshots.get(normalizedRoomId);
+            },
+            subscribe: (listener: (event: CommonRoomSessionEvent) => void): (() => void) => {
+                ProtocolClient.requireActiveRoomClient(normalizedRoomId);
+                const listeners = ProtocolClient.commonRoomListeners.get(normalizedRoomId) ?? new Set();
+                listeners.add(listener);
+                ProtocolClient.commonRoomListeners.set(normalizedRoomId, listeners);
+                return () => {
+                    listeners.delete(listener);
+                    if (listeners.size === 0) ProtocolClient.commonRoomListeners.delete(normalizedRoomId);
+                };
+            },
+            dispatch: (command: string, payload: Readonly<Record<string, unknown>>) =>
+                ProtocolClient.requireActiveRoomClient(normalizedRoomId)
+                .dispatchCommonRoom(command, payload),
+        });
+    }
+
+    /**
+     * Publishes the normalized public seat projection when an established
+     * runtime receives its authoritative snapshot through a request response
+     * rather than a state-push envelope.
+     */
+    public static publishCommonRoomSnapshot(roomId: number | string, snapshot: unknown,
+        cursor?: Readonly<{ stateVersion: number; roundNo: number }>): void {
+        const normalizedRoomId = ProtocolClient.positiveId(roomId);
+        if (!normalizedRoomId) throw new Error('COMMON_ROOM_SESSION_ROOM_ID_INVALID');
+        ProtocolClient.requireActiveRoomClient(normalizedRoomId);
+        if (cursor) {
+            const stateVersion = Number(cursor.stateVersion);
+            const roundNo = Number(cursor.roundNo);
+            if (!Number.isSafeInteger(stateVersion) || stateVersion < 0
+                || !Number.isSafeInteger(roundNo) || roundNo < 0) {
+                throw new Error('COMMON_ROOM_SESSION_CURSOR_INVALID');
+            }
+            ProtocolClient.commonRoomCursors.set(normalizedRoomId, { stateVersion, roundNo });
+        }
+        ProtocolClient.commonRoomSnapshots.set(normalizedRoomId, snapshot);
+        ProtocolClient.emitCommonRoom(normalizedRoomId, { kind: 'snapshot', snapshot });
+    }
+
+    public publishCommonRoomSnapshot(snapshot: unknown): void {
+        const roomId = this.registeredRoomId;
+        if (!roomId || ProtocolClient.requireActiveRoomClient(roomId) !== this) {
+            throw new Error('COMMON_ROOM_SESSION_NOT_ACTIVE');
+        }
+        ProtocolClient.publishCommonRoomSnapshot(roomId, snapshot);
     }
 
     protected override resolveSocketUrl(url: string): string {
@@ -162,7 +249,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
         const outbound = this.deferEnvelope(route, 'req', body);
         return send('protocol.v2.dispatch', outbound, timeoutMs).then((response) => {
             const envelope = outbound.envelope;
-            if (!envelope) throw new Error('V2 协议请求未发送');
+            if (!envelope) throw AppError.fromProtocol('INVALID_ENVELOPE', 'V2 协议请求未发送');
             if (response.protocolVersion !== '2.0' || response.kind !== 'resp'
                 || response.requestId !== envelope.requestId || response.traceId !== envelope.traceId
                 || response.msgId !== envelope.msgId || response.seq !== envelope.seq) {
@@ -177,14 +264,14 @@ export class ProtocolClient extends LegacyWebSocketClient {
                         requestId: response?.requestId, traceId: response?.traceId, seq: response?.seq,
                     },
                 });
-                throw new Error('V2 协议响应不匹配');
+                throw AppError.fromProtocol('INVALID_ENVELOPE', 'V2 协议响应不匹配');
             }
-            if ((response.code ?? 0) !== 0) throw new Error(`${response.code}: ${response.message ?? '请求失败'}`);
+            if ((response.code ?? 0) !== 0) throw AppError.fromProtocol(response.code, response.message ?? '请求失败');
             return response.body;
         }).catch((error: unknown) => {
             const roomId = this.correlatedRoomId(body);
             const envelope = outbound.envelope;
-            throw ClientErrorCorrelation.enrich(error, {
+            throw ClientErrorCorrelation.enrich(AppError.fromUnknown(error), {
                 traceId: envelope?.traceId ?? 'unsent',
                 requestId: envelope?.requestId ?? 'unsent',
                 msgId: envelope?.msgId ?? route.canonicalMsgId,
@@ -214,6 +301,9 @@ export class ProtocolClient extends LegacyWebSocketClient {
     }
 
     public override close(): void {
+        this.commonRoomGeneration += 1;
+        this.commonRoomSendTail = Promise.resolve();
+        this.unregisterRoomClient();
         this.pushBridgeDisposer?.();
         this.pushBridgeDisposer = null;
         this.v2PushListeners.clear();
@@ -253,17 +343,176 @@ export class ProtocolClient extends LegacyWebSocketClient {
             sessionLifecycle.confirmReplacement('protocol-push', String(replacement.reasonCode ?? ''));
         }
         const canonicalAction = ProtocolClient.canonicalize(action);
-        const listeners = this.v2PushListeners.get(canonicalAction);
-        if (!listeners) return;
         const payload = directRoomEvent ? envelope.body : wrapper.payload;
         // State snapshots are version-gated. Ephemeral room events are already scoped by the
         // authenticated room WebSocket and intentionally do not carry a full room snapshot.
         if (directRoomState && ProtocolClient.isRoomPush(canonicalAction)
             && !this.roomPushGate.accepts(payload, envelope)) return;
+        if (directRoomState) {
+            const publicView = payload && typeof payload === 'object'
+                ? (payload as Record<string, unknown>).commonRoom : undefined;
+            if (publicView !== undefined) {
+                if (this.registeredRoomId) {
+                    ProtocolClient.commonRoomSnapshots.set(this.registeredRoomId, publicView);
+                    const state = payload as Record<string, unknown>;
+                    const stateVersion = Number(state.stateVersion);
+                    const roundNo = Number(state.roundNo ?? state.round);
+                    if (Number.isSafeInteger(stateVersion) && stateVersion >= 0
+                        && Number.isSafeInteger(roundNo) && roundNo >= 0) {
+                        ProtocolClient.commonRoomCursors.set(this.registeredRoomId, { stateVersion, roundNo });
+                    }
+                }
+                this.publishCommonRoom({ kind: 'snapshot', snapshot: publicView });
+            }
+        } else if (canonicalAction === 'room.quick_text' || canonicalAction === 'room.magic_expression'
+            || canonicalAction === 'room.voice') {
+            this.publishCommonRoom({ kind: 'social', event: canonicalAction, payload });
+        }
+        const listeners = this.v2PushListeners.get(canonicalAction);
+        if (!listeners) return;
         const causalId = envelope.requestId;
         this.causalGuard.dispatch('network', causalId, () => {
             for (const listener of listeners) listener(payload);
         });
+    }
+
+    private dispatchCommonRoom(command: string,
+        payload: Readonly<Record<string, unknown>>): Promise<unknown> {
+        const generation = this.commonRoomGeneration;
+        const operation = this.commonRoomSendTail.then(() => {
+            if (generation !== this.commonRoomGeneration) {
+                throw new Error('COMMON_ROOM_SESSION_CHANGED');
+            }
+            return this.sendCommonRoom(command, payload);
+        });
+        this.commonRoomSendTail = operation.then(() => undefined, () => undefined);
+        return operation;
+    }
+
+    private sendCommonRoom(command: string,
+        payload: Readonly<Record<string, unknown>>): Promise<unknown> {
+        const authority = this.roomAuthority;
+        if (!authority || this.registeredRoomId !== authority.roomId || !this.isConnected()) {
+            return Promise.reject(new Error('COMMON_ROOM_SESSION_NOT_ACTIVE'));
+        }
+        const dissolveMessage = command === 'dissolve.request' ? 'common.room.dissolve_req'
+            : command === 'dissolve.agree' ? 'common.room.dissolve_agree_req'
+                : command === 'dissolve.refuse' ? 'common.room.dissolve_refuse_req' : null;
+        if (dissolveMessage) return this.sendCommonRoomDissolve(dissolveMessage, payload);
+        const action = command === 'chat.text' || command === 'chat.quick' || command === 'chat.expression'
+            || command === 'chat.quickText' ? 'quick_text'
+            : command === 'voice' ? 'voice'
+                : command === 'magic.expression' || command === 'magicExpression' ? 'magic_expression' : null;
+        if (!action) return Promise.reject(new Error('COMMON_ROOM_COMMAND_UNSUPPORTED'));
+        const cursor = ProtocolClient.commonRoomCursors.get(authority.roomId);
+        const view = ProtocolClient.commonRoomSnapshots.get(authority.roomId) as
+            { localSeatId?: unknown } | undefined;
+        const seatId = Number(view?.localSeatId);
+        if (!cursor || !Number.isSafeInteger(seatId) || seatId < 0) {
+            return Promise.reject(new Error('COMMON_ROOM_AUTHORITY_CURSOR_REQUIRED'));
+        }
+        const identity = String(payload.identity ?? '').trim();
+        const quickId = command === 'chat.text' ? 0
+            : command === 'chat.expression' ? 100 + Number(identity)
+                : command === 'chat.quick' ? Number(identity) : undefined;
+        if (quickId !== undefined && (!Number.isSafeInteger(quickId) || quickId < 0 || quickId > 9999)) {
+            return Promise.reject(new Error('COMMON_ROOM_QUICK_ID_INVALID'));
+        }
+        const assetId = command === 'voice' ? Number(identity) : undefined;
+        if (assetId !== undefined && (!Number.isSafeInteger(assetId) || assetId <= 0)) {
+            return Promise.reject(new Error('COMMON_ROOM_VOICE_ASSET_INVALID'));
+        }
+        return this.request<unknown>('common.room.dispatch', {
+            ...payload, action,
+            ...(quickId !== undefined ? { quickId, content: command === 'chat.text' ? payload.text : '' } : {}),
+            ...(assetId !== undefined ? { assetId } : {}),
+            roomId: authority.roomId, playVersion: authority.playVersion,
+            roundNo: cursor.roundNo, expectedStateVersion: cursor.stateVersion, seatId,
+        }).then(response => {
+            const body = response && typeof response === 'object'
+                ? response as Record<string, unknown> : {};
+            const nested = body.payload && typeof body.payload === 'object'
+                ? body.payload as Record<string, unknown> : {};
+            const stateVersion = Number(body.stateVersion ?? nested.stateVersion);
+            const latest = ProtocolClient.commonRoomCursors.get(authority.roomId);
+            if (latest && Number.isSafeInteger(stateVersion) && stateVersion > latest.stateVersion) {
+                ProtocolClient.commonRoomCursors.set(authority.roomId,
+                    { stateVersion, roundNo: latest.roundNo });
+            }
+            return response;
+        });
+    }
+
+    /** Common owns the canonical dissolve wire messages; gameplay only supplies typed state. */
+    private sendCommonRoomDissolve(message: string,
+        payload: Readonly<Record<string, unknown>>): Promise<unknown> {
+        const authority = this.roomAuthority;
+        if (!authority || this.registeredRoomId !== authority.roomId || !this.isConnected()) {
+            return Promise.reject(new Error('COMMON_ROOM_SESSION_NOT_ACTIVE'));
+        }
+        const cursor = ProtocolClient.commonRoomCursors.get(authority.roomId);
+        const view = ProtocolClient.commonRoomSnapshots.get(authority.roomId) as
+            { localSeatId?: unknown } | undefined;
+        const seatId = Number(view?.localSeatId);
+        if (!cursor || !Number.isSafeInteger(seatId) || seatId < 0) {
+            return Promise.reject(new Error('COMMON_ROOM_AUTHORITY_CURSOR_REQUIRED'));
+        }
+        return this.request<unknown>(message, {
+            ...payload,
+            roomID: Number(authority.roomId),
+            playVersion: authority.playVersion,
+            roundNo: cursor.roundNo,
+            expectedStateVersion: cursor.stateVersion,
+            seatId,
+        }).then(response => {
+            const body = response && typeof response === 'object'
+                ? response as Record<string, unknown> : {};
+            const stateVersion = Number(body.stateVersion);
+            const latest = ProtocolClient.commonRoomCursors.get(authority.roomId);
+            if (latest && Number.isSafeInteger(stateVersion) && stateVersion > latest.stateVersion) {
+                ProtocolClient.commonRoomCursors.set(authority.roomId,
+                    { stateVersion, roundNo: latest.roundNo });
+            }
+            return response;
+        });
+    }
+
+    private static emitCommonRoom(roomId: string, event: CommonRoomSessionEvent): void {
+        for (const listener of ProtocolClient.commonRoomListeners.get(roomId) ?? []) listener(event);
+    }
+
+    private publishCommonRoom(event: CommonRoomSessionEvent): void {
+        const roomId = this.registeredRoomId;
+        if (!roomId || ProtocolClient.requireActiveRoomClient(roomId) !== this) return;
+        ProtocolClient.emitCommonRoom(roomId, event);
+    }
+
+    private registerRoomClient(roomId: string): void {
+        this.unregisterRoomClient();
+        const clients = ProtocolClient.activeRoomClients.get(roomId) ?? new Set<ProtocolClient>();
+        clients.add(this);
+        ProtocolClient.activeRoomClients.set(roomId, clients);
+        this.registeredRoomId = roomId;
+    }
+
+    private unregisterRoomClient(): void {
+        const roomId = this.registeredRoomId;
+        if (!roomId) return;
+        const clients = ProtocolClient.activeRoomClients.get(roomId);
+        clients?.delete(this);
+        if (clients?.size === 0) {
+            ProtocolClient.activeRoomClients.delete(roomId);
+            ProtocolClient.commonRoomSnapshots.delete(roomId);
+            ProtocolClient.commonRoomCursors.delete(roomId);
+        }
+        this.registeredRoomId = null;
+    }
+
+    private static requireActiveRoomClient(roomId: string): ProtocolClient {
+        const clients = [...(ProtocolClient.activeRoomClients.get(roomId) ?? [])]
+            .filter(client => client.isConnected() && client.roomAuthority?.roomId === roomId);
+        if (clients.length !== 1) throw new Error(`COMMON_ROOM_SESSION_CLIENT_COUNT:${clients.length}`);
+        return clients[0];
     }
 
     protected override prepareOutboundBody(_event: string, body: unknown): unknown {
@@ -279,17 +528,24 @@ export class ProtocolClient extends LegacyWebSocketClient {
 
     private envelope(route: ProtocolRouteDecision, kind: 'req' | 'push', body: unknown): ProtocolRequest {
         const authority = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+        const nestedPayload = authority.payload && typeof authority.payload === 'object'
+            ? authority.payload as Record<string, unknown> : {};
         const suppliedIdempotencyKey = typeof authority.idempotencyKey === 'string'
-            ? authority.idempotencyKey.trim() : '';
+            ? authority.idempotencyKey.trim()
+            : route.canonicalMsgId === 'room.handoff' && typeof nestedPayload.requestId === 'string'
+                ? nestedPayload.requestId.trim() : '';
         const requestId = suppliedIdempotencyKey || ProtocolClient.uuid();
         this.v2Sequence = this.v2Sequence >= Number.MAX_SAFE_INTEGER ? 1 : this.v2Sequence + 1;
-        const reconnect = route.canonicalMsgId === 'room.reconnect';
+        const reconnect = route.canonicalMsgId === 'room.reconnect'
+            || route.canonicalMsgId === 'room.handoff';
         const roomDispatch = route.canonicalMsgId === 'common.room.dispatch';
         const canonicalPokerDispatch = isCanonicalPokerDispatch(route.canonicalMsgId);
         const canonicalMahjongDispatch = /^mahjong\.[a-z0-9]+\.dispatch$/.test(route.canonicalMsgId)
             && registeredDefinitions[route.canonicalMsgId] !== undefined;
-        const directRoomRequest = route.canonicalMsgId.startsWith('common.room.')
-            && route.canonicalMsgId.endsWith('_req');
+        const directRoomRequest = (route.canonicalMsgId.startsWith('common.room.')
+            && route.canonicalMsgId.endsWith('_req'))
+            || route.canonicalMsgId === 'room.reconnect'
+            || route.canonicalMsgId === 'room.handoff';
         const nonRoomDispatch = route.canonicalMsgId === 'account.session_dispatch'
             || route.canonicalMsgId === 'hall.dispatch' || route.canonicalMsgId === 'club.dispatch';
         const authoritative = reconnect || directRoomRequest
@@ -374,6 +630,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
         if (event === 'gateway.heartbeat') return event;
         if (event === 'system.heartbeat' || event === 'system.kick_out') return event;
         if (event === 'room.reconnect') return 'room.reconnect';
+        if (event === 'room.handoff') return 'room.handoff';
         // Social pushes are independent room events. Keeping their exact names
         // prevents quick text, voice and magic-expression listeners from sharing
         // the generic dispatch bucket and consuming one another's payloads.
@@ -381,6 +638,8 @@ export class ProtocolClient extends LegacyWebSocketClient {
         if (event === 'common.room.state_push' || /^common\.room\.[a-z0-9_]+_req$/.test(event)) return event;
         if (event === 'common.room.dispatch') return event;
         if (event === 'mahjong.cdxzmj.dispatch') return event;
+        if (/^mahjong\.[a-z0-9]+\.(?:dispatch|state_push)$/.test(event)
+            && registeredDefinitions[event] !== undefined) return event;
         if (event === 'club.room_templates_changed') return event;
         if (event === 'club.waiting_room_ready') return event;
         if (event === 'account.session_dispatch' || event === 'hall.dispatch' || event === 'club.dispatch') return event;
@@ -389,8 +648,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
         // Keep the list explicit: authority boundaries must never be inferred from
         // a loose `room` substring because creation and current-room discovery run
         // before a room session exists.
-        if (event === 'game.C1101GetRoomID' || event === 'room.CBaseRoomConfig'
-            || event === 'room.CBaseEnterRoom'
+        if (event === 'game.C1101GetRoomID'
             || event === 'game.CPlayerSetRoomRecord' || event === 'game.CPlayerPlayBack') return 'hall.dispatch';
         const normalized = event.replace(/^S/, '').replace(/^C/, '');
         const snake = normalized
@@ -413,7 +671,7 @@ export class ProtocolClient extends LegacyWebSocketClient {
 
     private static stageOf(msgId: string): ProtocolStage {
         if (msgId === 'gateway.heartbeat') return 'M2';
-        if (msgId === 'room.reconnect') return 'M8';
+        if (msgId === 'room.reconnect' || msgId === 'room.handoff') return 'M8';
         if (msgId.startsWith('account.')) return 'M1';
         if (msgId.startsWith('hall.')) return 'M2';
         if (msgId.startsWith('club.')) return 'M3';
@@ -423,8 +681,8 @@ export class ProtocolClient extends LegacyWebSocketClient {
             const definition = registeredDefinitions[msgId] ?? registeredDefinitions[`${pokerRegion}.dispatch`];
             if (definition) return definition.stage;
         }
-        const registeredPoker = registeredDefinitions[msgId];
-        if (registeredPoker) return registeredPoker.stage;
+        const registeredMessage = registeredDefinitions[msgId];
+        if (registeredMessage) return registeredMessage.stage;
         if (msgId.startsWith('mahjong.xuezhan.') || msgId.startsWith('mahjong.cdxzmj.')) return 'M6';
         if (msgId.startsWith('longcard.')) return 'M7';
         return 'M7';

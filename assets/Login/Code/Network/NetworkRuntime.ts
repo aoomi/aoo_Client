@@ -1,6 +1,6 @@
 import type { AuthenticatedAccount } from '../Auth/AuthTypes';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
-import { HallHeartbeatService } from '../../../Common/Code/Runtime/network/HallHeartbeatService';
+import { LobbyHeartbeatService } from '../../../Common/Code/Runtime/network/HallHeartbeatService';
 import { LegacyRoleGateway } from '../../../Common/Code/Runtime/role/LegacyRoleGateway';
 import type { RoleSession } from '../../../Common/Code/Runtime/role/RoleTypes';
 import { resolveRuntimeEndpoints } from '../../../Common/Code/Runtime/config/RuntimeEndpoints';
@@ -11,21 +11,21 @@ import { connectionOwnership } from '../../../Common/Code/Runtime/network/Connec
 
 export type SessionReplacementListener = () => void;
 
-/** Owns the hall socket, ticket, reconnect policy and heartbeat. */
+/** Owns the Lobby socket, ticket, reconnect policy and heartbeat. Hall names remain protocol aliases. */
 export class NetworkRuntime {
     private readonly connections = connectionOwnership.coordinator;
-    private readonly hallTransport = connectionOwnership.hall;
+    private readonly lobbyTransport = connectionOwnership.lobby;
     private client: ProtocolClient | null = null;
-    private heartbeat: HallHeartbeatService | null = null;
+    private heartbeat: LobbyHeartbeatService | null = null;
     private activeAccount: AuthenticatedAccount | null = null;
     private transportEpoch = 0;
     private started = false;
     private disposed = false;
-    private hallReconnect: Promise<void> | null = null;
-    private readonly hallCloseDisposer: () => void;
+    private lobbyReconnect: Promise<void> | null = null;
+    private readonly lobbyCloseDisposer: () => void;
 
     public constructor() {
-        this.hallCloseDisposer = this.hallTransport.onClose(() => this.handleHallUnhealthy(this.transportEpoch));
+        this.lobbyCloseDisposer = this.lobbyTransport.onClose(() => this.handleLobbyUnhealthy(this.transportEpoch));
     }
 
     public start(): void {
@@ -34,23 +34,23 @@ export class NetworkRuntime {
         this.started = true;
     }
 
-    public async loginToHall(account: AuthenticatedAccount): Promise<RoleSession> {
+    public async loginToLobby(account: AuthenticatedAccount): Promise<RoleSession> {
         this.assertStarted();
         const epoch = ++this.transportEpoch;
         this.disposeTransport();
-        this.connections.cancelHall();
+        this.connections.cancelLobby();
         const selected = bootstrapRuntime.selectedServer();
         if (!selected) throw new Error('启动目录未选出可用区服');
         const endpoints = resolveRuntimeEndpoints();
         const client = new ProtocolClient('hall');
-        const heartbeat = new HallHeartbeatService(this.hallTransport, () => this.handleHallUnhealthy(epoch));
+        const heartbeat = new LobbyHeartbeatService(this.lobbyTransport, () => this.handleLobbyUnhealthy(epoch));
         this.client = client;
         this.heartbeat = heartbeat;
         this.activeAccount = this.withSingleFlightTicket(account);
         const active = () => this.started && !this.disposed && this.transportEpoch === epoch && this.client === client;
         try {
             let role: RoleSession | null = null;
-            await this.connections.hall.establish(({ signal, generation }) => ({
+            await this.connections.lobby.establish(({ signal, generation }) => ({
                 signal,
                 generation,
                 reconnecting: false,
@@ -68,26 +68,31 @@ export class NetworkRuntime {
             return role;
         } catch (error) {
             if (this.client === client) this.disposeTransport();
-            this.connections.cancelHall();
+            this.connections.cancelLobby();
             throw error;
         }
     }
 
+    /** Compatibility alias for the historical Hall-named caller surface. */
+    public loginToHall(account: AuthenticatedAccount): Promise<RoleSession> {
+        return this.loginToLobby(account);
+    }
+
     public get protocol(): ProtocolClient {
         this.assertStarted();
-        if (!this.connections.hall.current()) throw new Error('NetworkRuntime transport is unavailable');
-        return this.hallTransport as unknown as ProtocolClient;
+        if (!this.connections.lobby.current()) throw new Error('NetworkRuntime transport is unavailable');
+        return this.lobbyTransport as unknown as ProtocolClient;
     }
 
     public reset(): void {
         this.assertStarted();
         this.transportEpoch += 1;
         this.disposeTransport();
-        this.connections.cancelHall();
+        this.connections.cancelLobby();
         this.connections.cancelGame();
     }
 
-    /** Leaves the authenticated Hall session intact while replacing or abandoning a room socket. */
+    /** Leaves the authenticated Lobby session intact while replacing or abandoning a room socket. */
     public resetGame(): void {
         this.assertStarted();
         this.connections.cancelGame();
@@ -101,7 +106,7 @@ export class NetworkRuntime {
         this.assertStarted();
         this.transportEpoch += 1;
         this.disposeTransport();
-        this.connections.cancelHall();
+        this.connections.cancelLobby();
         this.connections.cancelGame();
     }
 
@@ -117,7 +122,7 @@ export class NetworkRuntime {
         if (this.disposed) return;
         this.stop();
         this.disposed = true;
-        this.hallCloseDisposer();
+        this.lobbyCloseDisposer();
     }
 
     private disposeTransport(): void {
@@ -129,30 +134,35 @@ export class NetworkRuntime {
         this.client = null;
     }
 
+    public onLobbyConnectionState(listener: (snapshot: ConnectionSlotSnapshot) => void): () => void {
+        return this.connections.lobby.onState(listener);
+    }
+
+    /** Compatibility alias for the historical Hall-named observer surface. */
     public onHallConnectionState(listener: (snapshot: ConnectionSlotSnapshot) => void): () => void {
-        return this.connections.hall.onState(listener);
+        return this.onLobbyConnectionState(listener);
     }
 
-    private handleHallUnhealthy(epoch: number): void {
+    private handleLobbyUnhealthy(epoch: number): void {
         if (!this.started || this.disposed || epoch !== this.transportEpoch) return;
-        if (this.hallReconnect) return;
-        const pending = this.reconnectHall(epoch);
-        this.hallReconnect = pending;
-        void pending.then(() => this.clearHallReconnect(pending), () => this.clearHallReconnect(pending));
+        if (this.lobbyReconnect) return;
+        const pending = this.reconnectLobby(epoch);
+        this.lobbyReconnect = pending;
+        void pending.then(() => this.clearLobbyReconnect(pending), () => this.clearLobbyReconnect(pending));
     }
 
-    private async reconnectHall(epoch: number): Promise<void> {
+    private async reconnectLobby(epoch: number): Promise<void> {
         const account = this.activeAccount;
         const selected = bootstrapRuntime.selectedServer();
         if (!account || !selected) throw new Error('大厅重连上下文不存在');
         const endpoints = resolveRuntimeEndpoints();
-        await this.connections.retry(this.connections.hall, async (reconnecting) => {
+        await this.connections.retry(this.connections.lobby, async (reconnecting) => {
             if (!this.started || this.disposed || epoch !== this.transportEpoch) throw new Error('登录会话已取消');
             const client = new ProtocolClient('hall');
             this.client = client;
             const active = () => this.started && !this.disposed && epoch === this.transportEpoch && this.client === client;
             try {
-                return await this.connections.hall.establish(({ signal, generation }) => ({
+                return await this.connections.lobby.establish(({ signal, generation }) => ({
                     signal,
                     generation,
                     reconnecting,
@@ -162,7 +172,7 @@ export class NetworkRuntime {
                             selected.id, endpoints.clientVersion, active).login(account);
                         return client;
                     },
-                    recover: async () => this.hallTransport.recoverGeneration(generation),
+                    recover: async () => this.lobbyTransport.recoverGeneration(generation),
                 }), reconnecting);
             } catch (error) {
                 client.close();
@@ -171,8 +181,8 @@ export class NetworkRuntime {
         });
     }
 
-    private clearHallReconnect(pending: Promise<void>): void {
-        if (this.hallReconnect === pending) this.hallReconnect = null;
+    private clearLobbyReconnect(pending: Promise<void>): void {
+        if (this.lobbyReconnect === pending) this.lobbyReconnect = null;
     }
 
     private withSingleFlightTicket(account: AuthenticatedAccount): AuthenticatedAccount {

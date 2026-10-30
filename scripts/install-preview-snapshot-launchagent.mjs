@@ -37,7 +37,7 @@ const supervisorPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>Label</key><string>${supervisorLabel}</string>
-<key>ProgramArguments</key><array><string>${xmlEscape(process.execPath)}</string><string>${xmlEscape(resolve('scripts/static-build-supervisor.mjs'))}</string></array>
+<key>ProgramArguments</key><array><string>${xmlEscape(process.execPath)}</string><string>${xmlEscape(resolve('scripts/preview-snapshot-supervisor.mjs'))}</string></array>
 <key>WorkingDirectory</key><string>${xmlEscape(process.cwd())}</string>
 <key>RunAtLoad</key><true/><key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
 <key>ThrottleInterval</key><integer>30</integer>

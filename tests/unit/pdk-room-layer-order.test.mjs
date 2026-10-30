@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const source = readFileSync(new URL(
-  '../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts',
+  '../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts',
   import.meta.url,
 ), 'utf8');
 
@@ -24,7 +24,7 @@ test('general room controls render above gameplay while only chat and voice move
     `Common room zOrder ${commonOrder} must keep back/more above PDK ${pokerOrder}`);
 
   const controller = readFileSync(new URL(
-    '../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts',
+    '../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts',
     import.meta.url,
   ), 'utf8');
   const place = controller.slice(controller.indexOf('private placeCommonSocialControlsBelowCards'),

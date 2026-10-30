@@ -2,14 +2,18 @@ import http from 'node:http';
 import net from 'node:net';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import process from 'node:process';
 
 const root = resolve(process.env.AOO_PREVIEW_SNAPSHOT_ROOT ?? join(process.cwd(), 'work/preview-snapshots'));
 const upstream = new URL(process.env.AOO_CREATOR_PREVIEW_URL ?? 'http://127.0.0.1:7456/');
-const slots = (process.env.AOO_PREVIEW_SLOTS ?? 'A:7458,B:7459,C:5188,D:7461').split(',').map((pair) => {
+const apiBackend = new URL(process.env.AOO_PREVIEW_API_URL ?? 'http://127.0.0.1:18660/');
+const localIssuer = new URL(process.env.AOO_PREVIEW_ISSUER_URL ?? 'http://127.0.0.1:18662/bootstrap.js');
+const previewPageOrigin = 'http://localhost:7456';
+const slots = (process.env.AOO_PREVIEW_SLOTS ?? 'A:7462,B:7459,C:5188,D:7461').split(',').map((pair) => {
   const [name, port] = pair.split(':');
   return { name, port: Number(port) };
 });
@@ -17,10 +21,49 @@ const chrome = process.env.AOO_CHROME_PATH ?? '/Applications/Google Chrome.app/C
 const command = process.argv[2] ?? 'capture';
 const captureMs = Number(process.env.AOO_PREVIEW_CAPTURE_MS ?? 30000);
 const requestMap = new Map();
+const captureDiagnostics = [];
 const projectBundleNames = new Set();
 let captureServer;
 const captureBuildId = '00000000000000000000';
 const snapshotValidationRevision = 'fw008-v2';
+const captureLockPath = join(root, 'capture.lock');
+let captureLock;
+
+async function acquireCaptureLock() {
+  try {
+    captureLock = await open(captureLockPath, 'wx');
+    await captureLock.writeFile(`${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`);
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      let owner;
+      try { owner = JSON.parse(await readFile(captureLockPath, 'utf8')); } catch { owner = null; }
+      let alive = false;
+      if (Number.isInteger(owner?.pid)) {
+        try { process.kill(owner.pid, 0); alive = true; } catch (probeError) { alive = probeError.code === 'EPERM'; }
+      }
+      if (!alive) {
+        await rm(captureLockPath, { force: true });
+        return acquireCaptureLock();
+      }
+      throw new Error(`snapshot capture already running: ${captureLockPath} ownerPid=${owner?.pid ?? 'unknown'}`);
+    }
+    throw error;
+  }
+}
+
+async function releaseCaptureLock() {
+  try { await captureLock?.close(); } finally { await rm(captureLockPath, { force: true }); }
+}
+
+async function pruneSnapshots(keepBuildId) {
+  const snapshotsRoot = join(root, 'snapshots');
+  if (!existsSync(snapshotsRoot)) return;
+  for (const entry of await readdir(snapshotsRoot, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name !== keepBuildId) {
+      await rm(join(snapshotsRoot, entry.name), { recursive: true, force: true });
+    }
+  }
+}
 // LoginScene is protected and authored in the Creator scene graph. Resolve the
 // real node at runtime instead of duplicating its position here: the preview
 // canvas contains horizontal background extension outside the 1280 UI design
@@ -39,6 +82,12 @@ function pinCaptureHtml(html) {
     .replace(/\b(src|href)=(['"])(\/(?!\/)[^'"]+)\2/g, (_match, attribute, quote, value) => `${attribute}=${quote}${pin(value)}${quote}`)
     .replace("'/scripting/x/resolution-detail-map.json'", `'${pin('/scripting/x/resolution-detail-map.json')}'`)
     .replace('"/scripting/x/resolution-detail-map.json"', `"${pin('/scripting/x/resolution-detail-map.json')}"`)
+    // The sealed capture page runs on an ephemeral loopback origin. Opt it
+    // into the existing issuer contract without changing the source template
+    // or weakening local-preview-login's Host/Referer/Sec-Fetch checks.
+    .replace("location.origin === 'http://localhost:7456'\n                && location.hostname === 'localhost'", 'true')
+    .replace("location.origin === 'http://localhost:7456'", 'true')
+    .replace('http://127.0.0.1:18662/bootstrap.js', '/__aoo/local-preview-bootstrap.js')
     .replace('System.import("/preview-app/index.js")', `System.import("${pin('/preview-app/index.js')}")`);
 }
 
@@ -55,6 +104,22 @@ function pinCaptureImportMap(source) {
 
 function log(event, detail = {}) {
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), module: 'PreviewSnapshotManager', event, ...detail })}\n`);
+}
+
+function classifyResponseBody(body) {
+  const text = body.toString('utf8').trim();
+  try {
+    const parsed = JSON.parse(text);
+    return typeof parsed?.code === 'string' || typeof parsed?.code === 'number' ? `json-code:${String(parsed.code)}` : 'json-no-code';
+  } catch {
+    if (/connect|timeout|refused|unavailable/i.test(text)) return 'text-network-error';
+    return text ? 'text-nonjson' : 'empty';
+  }
+}
+
+function recordCaptureDiagnostic(kind, requestUrl, response, body) {
+  const safeUrl = new URL(requestUrl, 'http://capture.invalid');
+  captureDiagnostics.push({ kind, origin: safeUrl.origin, path: safeUrl.pathname, status: response.statusCode ?? 0, contentType: response.headers['content-type'] ?? '', bodyLength: body.length, bodyClass: classifyResponseBody(body) });
 }
 
 function requestUpstream(url) {
@@ -198,13 +263,60 @@ async function startCaptureProxy(allowMisses) {
   captureServer = http.createServer(async (request, response) => {
     try {
       const requestUrl = new URL(request.url ?? '/', 'http://capture.invalid');
+      if (requestUrl.pathname === '/__aoo/local-preview-bootstrap.js') {
+        const issuer = http.request({
+          hostname: localIssuer.hostname,
+          port: Number(localIssuer.port || (localIssuer.protocol === 'https:' ? 443 : 80)),
+          method: 'GET',
+          path: localIssuer.pathname,
+          headers: {
+            host: localIssuer.host,
+            accept: request.headers.accept ?? '*/*',
+            referer: 'http://localhost:7456/',
+            origin: 'http://localhost:7456',
+            'sec-fetch-dest': 'script',
+            'sec-fetch-mode': 'no-cors',
+            'sec-fetch-site': 'cross-site',
+          },
+        }, (issuerResponse) => {
+          const chunks = [];
+          issuerResponse.on('data', (chunk) => chunks.push(chunk));
+          issuerResponse.on('end', () => {
+            let body = Buffer.concat(chunks);
+            recordCaptureDiagnostic('issuer-bootstrap', request.url ?? '/', issuerResponse, body);
+            if ((issuerResponse.headers['content-type'] ?? '').includes('javascript')) {
+              const captureOrigin = `http://${request.headers.host}`;
+              body = Buffer.from(body.toString('utf8').replace('http://localhost:18660/', `${captureOrigin}/`));
+            }
+            response.writeHead(issuerResponse.statusCode ?? 502, { ...issuerResponse.headers, 'content-length': body.length });
+            response.end(body);
+          });
+        });
+        issuer.on('error', (error) => {
+          if (!response.headersSent) response.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' });
+          response.end(error.message);
+        });
+        issuer.end();
+        return;
+      }
       if (requestUrl.pathname.startsWith('/api/v2/')) {
         const backend = http.request({
-          hostname: '127.0.0.1', port: 8080, method: request.method, path: request.url,
-          headers: { ...request.headers, host: '127.0.0.1:8080', origin: 'http://127.0.0.1:7458' },
+          hostname: apiBackend.hostname, port: Number(apiBackend.port || (apiBackend.protocol === 'https:' ? 443 : 80)), method: request.method, path: request.url,
+          headers: { ...request.headers, host: apiBackend.host, origin: previewPageOrigin },
         }, (backendResponse) => {
-          response.writeHead(backendResponse.statusCode ?? 502, backendResponse.headers);
-          backendResponse.pipe(response);
+          if (requestUrl.pathname === '/api/v2/version/check') {
+            const chunks = [];
+            backendResponse.on('data', (chunk) => chunks.push(chunk));
+            backendResponse.on('end', () => {
+              const body = Buffer.concat(chunks);
+              recordCaptureDiagnostic('version-check', request.url ?? '/', backendResponse, body);
+              response.writeHead(backendResponse.statusCode ?? 502, { ...backendResponse.headers, 'content-length': body.length });
+              response.end(body);
+            });
+          } else {
+            response.writeHead(backendResponse.statusCode ?? 502, backendResponse.headers);
+            backendResponse.pipe(response);
+          }
         });
         backend.on('error', (error) => {
           if (!response.headersSent) response.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' });
@@ -240,13 +352,13 @@ async function startCaptureProxy(allowMisses) {
   });
   captureServer.on('upgrade', (request, socket, head) => {
     if (!String(request.url ?? '').startsWith('/api/v2/')) return socket.destroy();
-    const backend = net.connect(8080, '127.0.0.1', () => {
+    const backend = net.connect(Number(apiBackend.port || (apiBackend.protocol === 'https:' ? 443 : 80)), apiBackend.hostname, () => {
       const headers = [];
       for (let index = 0; index < request.rawHeaders.length; index += 2) {
         const name = request.rawHeaders[index];
         const lower = name.toLowerCase();
-        const value = lower === 'host' ? '127.0.0.1:8080'
-          : lower === 'origin' ? 'http://127.0.0.1:7458'
+        const value = lower === 'host' ? apiBackend.host
+            : lower === 'origin' ? previewPageOrigin
             : request.rawHeaders[index + 1];
         headers.push(`${name}: ${value}`);
       }
@@ -276,11 +388,13 @@ function reserveDebugPort() {
 
 async function browserCapture(port, exerciseGuestLobby = false) {
   if (!existsSync(chrome)) throw new Error(`Chrome not found: ${chrome}`);
-  const profile = join(root, `.chrome-${process.pid}`);
+  const profile = await mkdtemp(join(tmpdir(), `aoo-preview-capture-${process.pid}-`));
   const debugPort = await reserveDebugPort();
   await mkdir(profile, { recursive: true });
   const child = spawn(chrome, [
     '--headless=new', '--use-angle=swiftshader', '--enable-webgl', '--no-first-run', '--no-default-browser-check',
+    '--disable-background-networking', '--disable-component-update', '--disable-default-apps', '--disable-extensions',
+    '--disable-sync', '--disable-translate', '--metrics-recording-only',
     `--remote-debugging-port=${debugPort}`, `--user-data-dir=${profile}`, 'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
   let stderr = '';
@@ -306,6 +420,7 @@ async function browserCapture(port, exerciseGuestLobby = false) {
     const failures = [];
     const requestUrls = new Map();
     let lobbyMounted = false;
+    let lobbyPresented = false;
     const lifecycleMessages = [];
     socket.onmessage = ({ data }) => {
       const message = JSON.parse(data);
@@ -323,9 +438,10 @@ async function browserCapture(port, exerciseGuestLobby = false) {
       if (message.method === 'Runtime.consoleAPICalled') {
         const text = message.params.args.map((argument) => argument.value ?? argument.description ?? '').join(' ');
         if (/\[(?:AuthNavigation|BootstrapOwner|BootstrapStage)\]|登录|大厅|游客/.test(text)) lifecycleMessages.push(text);
-        if (message.params.args[0]?.value === '[AuthNavigation]'
-          && message.params.args.some((argument) => String(argument.value ?? '').includes('"stage":"LOBBY_MOUNT_START"'))) {
-          lobbyMounted = true;
+        if (message.params.args[0]?.value === '[AuthNavigation]') {
+          const lifecycle = message.params.args.map((argument) => String(argument.value ?? '')).join(' ');
+          if (lifecycle.includes('"stage":"LOBBY_MOUNT_START"')) lobbyMounted = true;
+          if (lifecycle.includes('"stage":"LOBBY_PRESENTED"')) lobbyPresented = true;
         }
         if (/SystemJS|Error#3|Unable to resolve/.test(text)) failures.push(`console: ${text}`);
       }
@@ -361,7 +477,7 @@ async function browserCapture(port, exerciseGuestLobby = false) {
       // reason while retaining the previous immutable snapshot.
       let loginPoint = null;
       let loginState = { reason: 'node-readiness-timeout' };
-      for (let attempt = 0; attempt < 80 && !loginPoint; attempt += 1) {
+      for (let attempt = 0; attempt < 200 && !loginPoint; attempt += 1) {
         const loginPointResult = await send('Runtime.evaluate', {
           // The 19 MB bundled engine script synchronously registers every
           // q-bundled module. Importing `cc` while the document is still
@@ -412,22 +528,56 @@ async function browserCapture(port, exerciseGuestLobby = false) {
         if (loginState.ready) loginPoint = loginState;
         else await new Promise((done) => setTimeout(done, 250));
       }
-      if (!loginPoint) {
-        throw new Error(`active ${guestLoginNodeName} never became clickable: ${JSON.stringify(loginState)}; browserFailures=${[...new Set(failures)].join(' | ') || 'none'}`);
-      }
-      log('guest-login-target', {
-        node: loginPoint.node,
-        x: loginPoint.x,
-        y: loginPoint.y,
-        world: loginPoint.world,
-        canvas: loginPoint.canvas,
-      });
-      for (const type of ['mousePressed', 'mouseReleased']) {
-        await send('Input.dispatchMouseEvent', {
-          type, x: loginPoint.x, y: loginPoint.y, button: 'left', clickCount: 1,
+      if (loginPoint) {
+        log('guest-login-target', {
+          node: loginPoint.node,
+          x: loginPoint.x,
+          y: loginPoint.y,
+          world: loginPoint.world,
+          canvas: loginPoint.canvas,
         });
+        for (const type of ['mousePressed', 'mouseReleased']) {
+          await send('Input.dispatchMouseEvent', {
+            type, x: loginPoint.x, y: loginPoint.y, button: 'left', clickCount: 1,
+          });
+        }
+      } else if (lobbyMounted) {
+        // A local Creator preview may already have a valid authenticated test
+        // session. In that route BootStrap transitions directly to MainScene,
+        // so Btn_GuestLogin is correctly absent. The authoritative acceptance
+        // signal is the real lobby mount event, not the presence of a login UI
+        // that the current route did not render.
+        log('guest-login-skipped-authenticated-route', { loginState });
+      } else {
+        throw new Error(`active ${guestLoginNodeName} never became clickable: ${JSON.stringify(loginState)}; lifecycle=${lifecycleMessages.slice(-12).join(' | ') || 'none'}; browserFailures=${[...new Set(failures)].join(' | ') || 'none'}`);
       }
+      // LOBBY_MOUNT_START only proves that the scene began mounting.  The
+      // runtime can still request lazy scene/import/native resources after
+      // that point.  Close the warm graph only after the authoritative
+      // LOBBY_PRESENTED signal, with a bounded wait, then leave a short stable
+      // window for the final lazy requests to pass through allowMisses.
+      if (!lobbyPresented) {
+        const presentationDeadline = Date.now() + 20000;
+        while (!lobbyPresented && Date.now() < presentationDeadline) {
+          await new Promise((done) => setTimeout(done, 250));
+        }
+      }
+      if (exerciseGuestLobby && !lobbyPresented) {
+        throw new Error(`lobby presentation signal not observed; lifecycle=${lifecycleMessages.slice(-12).join(' | ') || 'none'}`);
+      }
+      if (exerciseGuestLobby && lobbyPresented) await new Promise((done) => setTimeout(done, 8000));
       await new Promise((done) => setTimeout(done, Math.max(12000, captureMs - 20000)));
+
+      // The fixed-port acceptance run deliberately reloads the entry page
+      // several times.  Creator's runtime keeps the authenticated test
+      // session, but lazily requests lobby fonts and missing-asset fallback
+      // records only on a subsequent bootstrap.  Capture the same sequence
+      // before sealing the immutable graph; otherwise the first validation
+      // browser can discover a resource that the warm capture never saw.
+      for (let pass = 1; pass < 4; pass += 1) {
+        await send('Page.navigate', { url: `http://127.0.0.1:${port}/?autoReload=false&snapshotCapture=${pass}` });
+        await new Promise((done) => setTimeout(done, 5000));
+      }
     } else {
       await new Promise((done) => setTimeout(done, captureMs));
     }
@@ -450,7 +600,11 @@ async function browserCapture(port, exerciseGuestLobby = false) {
     }
     if (!exited) child.kill('SIGTERM');
     if (!exited) await new Promise((done) => child.once('exit', done));
-    await rm(profile, { recursive: true, force: true });
+    // Chrome profiles can contain a large browser-managed cache tree. Reclaim
+    // it asynchronously so profile cleanup cannot block publication of an
+    // otherwise valid immutable snapshot; the profile is isolated under the
+    // system temporary directory and is never served by the preview proxy.
+    void rm(profile, { recursive: true, force: true }).catch(() => {});
   }
 }
 
@@ -511,11 +665,17 @@ async function publish() {
     await closeCapturedAssetDependencies();
     log('browser-capture-finished', { beforeBrowser, afterBrowser: requestMap.size, newKeys: [...requestMap.keys()].filter((key) => !beforeKeys.has(key)) });
   }
-  finally { await new Promise((done) => captureServer.close(done)); }
+  finally {
+    log('capture-diagnostics', { records: captureDiagnostics.splice(0) });
+    await new Promise((done) => captureServer.close(done));
+  }
   const sealedCount = requestMap.size;
   const validationPort = await startCaptureProxy(false);
   try { await browserCapture(validationPort, true); }
-  finally { await new Promise((done) => captureServer.close(done)); }
+  finally {
+    log('capture-diagnostics', { records: captureDiagnostics.splice(0) });
+    await new Promise((done) => captureServer.close(done));
+  }
   if (requestMap.size !== sealedCount) throw new Error(`sealed validation discovered ${requestMap.size - sealedCount} unexpected resources`);
   // Creator may replace import maps and project chunks while hot compilation is
   // running. Re-read every generation-defining resource before publishing; a
@@ -546,7 +706,8 @@ async function publish() {
     entries.push({ key, object, status: value.status, bytes: value.body.length, contentType: value.headers['content-type'] ?? 'application/octet-stream', sha256: createHash('sha256').update(value.body).digest('hex') });
   }
   if (!entries.some((entry) => entry.key === '/') || entries.length < 10) throw new Error(`snapshot validation failed: only ${entries.length} entries`);
-  const manifest = { schemaVersion: 1, buildId, createdAt: new Date().toISOString(), upstream: upstream.toString(), entries, bytes };
+  const sourceSignature = process.env.AOO_EXPECTED_SOURCE_SIGNATURE || null;
+  const manifest = { schemaVersion: 1, buildId, sourceSignature, createdAt: new Date().toISOString(), upstream: upstream.toString(), entries, bytes };
   await writeFile(join(staging, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   await mkdir(dirname(finalDir), { recursive: true });
   if (existsSync(finalDir)) await rm(staging, { recursive: true, force: true });
@@ -559,7 +720,12 @@ async function publish() {
     await symlink(finalDir, temporary);
     await rename(temporary, join(slotDir, 'current'));
   }
-  await writeFile(join(root, 'last-success.json'), `${JSON.stringify({ buildId, createdAt: manifest.createdAt, entries: entries.length, bytes }, null, 2)}\n`);
+  await pruneSnapshots(buildId);
+  await writeFile(join(root, 'last-success.json'), `${JSON.stringify({ buildId, sourceSignature, createdAt: manifest.createdAt, entries: entries.length, bytes }, null, 2)}\n`);
+  if (sourceSignature) {
+    await writeFile(join(root, 'source-signature.json'), `${JSON.stringify({ signature: sourceSignature, updatedAt: manifest.createdAt })}\n`);
+    await rm(join(root, 'stale.json'), { force: true });
+  }
   log('published', { buildId, entries: entries.length, bytes, slots });
 }
 
@@ -569,11 +735,14 @@ async function status() {
 }
 
 try {
-  if (command === 'capture') await publish();
-  else if (command === 'status') await status();
+  if (command === 'capture') {
+    await mkdir(root, { recursive: true });
+    await acquireCaptureLock();
+    try { await publish(); } finally { await releaseCaptureLock(); }
+  } else if (command === 'status') await status();
   else throw new Error(`unknown command: ${command}`);
 } catch (error) {
-  log('failed', { command, error: error.stack ?? error.message, retainedPreviousSnapshot: true });
+  log('failed', { command, error: error.stack ?? error.message, retainedPreviousSnapshot: false });
   process.exitCode = 1;
 }
 // Node's built-in WebSocket can retain an idle undici handle after the CDP

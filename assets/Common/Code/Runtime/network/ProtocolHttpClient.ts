@@ -1,4 +1,5 @@
 import { ClientErrorCorrelation } from './ClientErrorCorrelation';
+import { AppError } from '../core/AppError';
 import { API_VERSION, API_VERSION_HEADER, canonicalApiPath, testPreviewGatewayOrigin } from './GatewayEntryPolicy';
 
 export interface HttpProtocolEnvelope<T> {
@@ -9,7 +10,7 @@ export interface HttpProtocolEnvelope<T> {
     seq: number;
     traceId: string;
     timestamp: number;
-    code?: number;
+    code?: number | string;
     message?: string;
     body: T;
 }
@@ -76,18 +77,18 @@ export class ProtocolHttpClient {
             });
             const result = await response.json() as HttpProtocolEnvelope<TResponse>;
             if (!response.ok) {
-                const code = typeof result.code === 'number' ? result.code : response.status;
-                throw new Error(`${code}: ${result.message ?? `HTTP ${response.status}`}`);
+                const code = result.code ?? response.status;
+                throw AppError.fromProtocol(code, result.message ?? `HTTP ${response.status}`, response.status);
             }
             if (result.protocolVersion !== '2.0' || result.kind !== 'resp' || result.requestId !== requestId) {
-                throw new Error('HTTP V2 响应不匹配');
+                throw AppError.fromProtocol('INVALID_ENVELOPE', 'HTTP V2 响应不匹配');
             }
-            if ((result.code ?? 0) !== 0) throw new Error(`${result.code}: ${result.message ?? '请求失败'}`);
+            if ((result.code ?? 0) !== 0) throw AppError.fromProtocol(result.code, result.message ?? '请求失败');
             return result.body;
         } catch (error: unknown) {
             const roomId = data && typeof data === 'object' && 'roomId' in data
                 ? String((data as { roomId?: unknown }).roomId ?? '') : undefined;
-            throw ClientErrorCorrelation.enrich(error, { traceId: requestId, requestId, msgId, roomId });
+            throw ClientErrorCorrelation.enrich(AppError.fromUnknown(error), { traceId: requestId, requestId, msgId, roomId });
         } finally {
             globalThis.clearTimeout(timeoutId);
         }
@@ -99,8 +100,10 @@ export class ProtocolHttpClient {
         const timeoutId = globalThis.setTimeout(() => abortController.abort(), this.timeoutMs);
         try {
             const response = await fetch(endpoint, { method: 'GET', signal: abortController.signal });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) throw AppError.fromProtocol(response.status, `HTTP ${response.status}`, response.status);
             return await response.json() as TResponse;
+        } catch (error: unknown) {
+            throw AppError.fromUnknown(error);
         } finally {
             globalThis.clearTimeout(timeoutId);
         }

@@ -18,7 +18,7 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(args.root).expanduser().resolve(strict=True)
     handler = lambda *values, **options: AvatarHandler(*values, directory=str(root), **options)
-    ThreadingHTTPServer(("0.0.0.0", args.port), handler).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", args.port), handler).serve_forever()
 
 
 if __name__ == "__main__":

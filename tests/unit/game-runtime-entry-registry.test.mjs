@@ -1,8 +1,17 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const read = relative => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const generatedProtocolText = () => {
+    const generatedDir = fileURLToPath(new URL('../../assets/Common/Code/Runtime/network/', import.meta.url));
+    return ['GeneratedProtocolIds.ts', ...readdirSync(generatedDir)
+        .filter(name => /^GeneratedProtocolDefinitions\.\d{3}\.ts$/.test(name))
+        .sort()]
+        .map(name => readFileSync(path.join(generatedDir, name), 'utf8')).join('\n');
+};
 
 test('game runtime registry resolves canonical codes before family fallback and rejects ambiguity', () => {
     const registry = read('assets/Games/Common/Code/Runtime/GameRuntimeEntryRegistry.ts');
@@ -28,7 +37,7 @@ test('startup room recovery dispatches through the same production runtime regis
 
 test('lobby delegates native PDK entry and replay to one feature adapter', () => {
     const lobby = read('assets/Lobby/Code/LobbyScreenController.ts');
-    const adapter = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntimeEntry.ts');
+    const adapter = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntimeEntry.ts');
     assert.match(lobby, /createProductionGameRuntimeEntryRegistry\(\{/);
     assert.match(lobby, /this\.gameRuntimeEntries\?\.resolveUnique\(handoff\)/);
     assert.match(lobby, /await runtimeEntry\.enter\(handoff\)/);
@@ -53,7 +62,9 @@ test('production composition registers CD299, CN298 and CN297 exactly once', () 
 
 test('all production runtimes share one successful-entry presentation lifecycle', () => {
     const composition = read('assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts');
-    assert.match(composition, /\.map\(entry => withPresentationLifecycle\(entry, presentation\)\)/);
+    assert.match(composition, /\.map\(entry => withPresentationLifecycle\(entry, presentation, roomHost, options\.requestRoomExit\)\)/);
+    assert.match(composition, /function withPresentationLifecycle\(entry: GameRuntimeEntry,[\s\S]*requestRoomExit: \(roomId: number\) => Promise<void>/);
+    assert.equal((composition.match(/withPresentationLifecycle\(entry, presentation, roomHost, options\.requestRoomExit\)/g) ?? []).length, 1);
     assert.match(composition, /const roomHost = options\.lobbyNode/);
     assert.doesNotMatch(composition, /options\.lobbyNode\.parent \?\?/);
     assert.ok(composition.indexOf('presentation.preparing()') < composition.indexOf('await entry.enter(handoff)'));
@@ -64,12 +75,32 @@ test('all production runtimes share one successful-entry presentation lifecycle'
     assert.doesNotMatch(composition, /onEntered:\s*\(\)\s*=>\s*\{\s*options\.lobbyNode\.active = false/);
 });
 
+test('production composition resolves Common defaults before installing a runtime', () => {
+    const composition = read('assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts');
+    const mount = read('assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts');
+    assert.match(composition, /RoomNetworkControllerMount\.createCommonRoomDefaultPorts\(roomHost\)/);
+    assert.match(mount, /COMMON_ROOM_DEFAULT_DEPENDENCIES_REQUIRED/);
+    assert.match(mount, /COMMON_ROOM_DEFAULT_FACTORY_DUPLICATE/);
+    assert.match(composition, /defaults\?\.destroy\(\)[\s\S]*root\?\.isValid[\s\S]*root\.destroy\(\)/);
+});
+
 test('three new Poker families retain canonical dispatch identity and M5 routing', () => {
     const protocol = read('assets/Common/Code/Runtime/network/ProtocolClient.ts');
-    assert.match(protocol, /CD299\|CN298\|CN297/);
-    assert.match(protocol, /CANONICAL_POKER_MESSAGE\.test\(event\)/);
-    assert.match(protocol, /CANONICAL_POKER_STAGE\.test\(msgId\).*'M5'/);
-    assert.match(protocol, /canonicalPokerDispatch \? authority/);
+    const generated = generatedProtocolText();
+    for (const code of ['CD299', 'CN298', 'CN297']) {
+        assert.match(generated, new RegExp(`'poker\\.${code}\\.dispatch': \\{"kind":"req","direction":"client_to_server","transport":"WSS","version":"2\\.0","stage":"M5","auth":"room_session"`));
+    }
+    assert.match(protocol, /import \{ ProtocolDefinitions \} from '\.\/GeneratedProtocolIds'/);
+    assert.match(protocol, /const POKER_BUSINESS_DISPATCH = \/\^\(poker\\\.\[A-Z\]\{2}\[1-5\]\[0-9\]\{2}\)\\\.dispatch\$\//);
+    assert.match(protocol, /POKER_BUSINESS_DISPATCH\.test\(msgId\) && registeredDefinitions\[msgId\] !== undefined/);
+    assert.match(protocol, /return registeredDefinitions\[`\$\{match\[1\]}\.dispatch`\] \? match\[1\] : undefined/);
+    assert.match(protocol, /if \(isCanonicalPokerMessage\(event\)\) return event/);
+    const shapedButUnregistered = 'poker.ZZ299.dispatch';
+    assert.match(shapedButUnregistered, /^poker\.[A-Z]{2}[1-5][0-9]{2}\.dispatch$/);
+    assert.doesNotMatch(generated, new RegExp(`'${shapedButUnregistered.replaceAll('.', '\\.')}':`));
+    assert.match(protocol, /const definition = registeredDefinitions\[msgId\] \?\? registeredDefinitions\[`\$\{pokerRegion\}\.dispatch`\]/);
+    assert.match(protocol, /if \(definition\) return definition\.stage/);
+    assert.match(protocol, /canonicalPokerDispatch \|\| canonicalMahjongDispatch \? authority/);
     assert.match(protocol, /roomId: authoritative \? roomId/);
     assert.match(protocol, /roundNo: authoritative \? Number\(authority\.roundNo/);
     assert.match(protocol, /playVersion: authoritative \? playVersion/);

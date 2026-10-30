@@ -1,0 +1,19 @@
+{
+  "taskId": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "client-room-session-r1",
+  "owner": "/root/repair_common_room_session_registration",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_COORDINATION",
+  "acquiredAt": "2026-10-10T10:47:39Z",
+  "path": "Client/tests/unit/common-room-orchestrator.test.mjs",
+  "sourceWrite": true,
+  "preimageSha256": "5388926f67cf851ede0062a35e85844e50a71ace461a38eb34d4ed7b6603d93c",
+  "custody": "untracked inherited file preserved; no active owner found in fresh Agent Tree",
+  "allowedChange": "orchestrator ordering, duplicate mount, destroy-before-connect and stale callback behavior",
+  "forbidden": ["test deletion", "default/fake values", "protocol semantic changes"],
+  "independentReviewRequired": true,
+  "releasedAt": "2026-10-10T11:05:00Z",
+  "postimageSha256": "3c9e63239bfb559a007d5688ef66f706a0e42f947b06e014eb7d3fdebe72d83e",
+  "independentReview": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-independent-review-20261010/independent-acceptance-v2.md",
+  "independentReviewSha256": "dc34a7b53e65362ec79d5fd530626b76534ceb3f7b83d2163cb587d1f072410f"
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r4",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Lobby/Code/ClubList/LobbyClubListGateway.ts",
+  "preimageSha256": "81760f6308e4dce0238bbc5b51e6049722e0b35072d632479656aa6ca88b99ef",
+  "scope": "Club list 3008 disambiguation and typed AppError propagation",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "lane_g",
+  "replacementCounts": {"3008 AppError disambiguation":1,"structured propagation":1},
+  "postimageSha256": "81760f6308e4dce0238bbc5b51e6049722e0b35072d632479656aa6ca88b99ef"
+}

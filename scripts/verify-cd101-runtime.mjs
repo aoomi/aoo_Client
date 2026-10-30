@@ -6,10 +6,11 @@ import process from 'node:process';
 const require = createRequire(import.meta.url);
 const root = resolve(import.meta.dirname, '..');
 const files = [
-    'assets/Games/Mahjong/Common/Code/CDXZ/CD101GameRuntimeEntry.ts',
-    'assets/Games/Mahjong/Common/Code/CDXZ/CD101RoomView.ts',
-    'assets/Games/Mahjong/Common/Code/CDXZ/CD101SmallSettlementAdapter.ts',
-    'assets/Games/Mahjong/Common/Code/CDXZ/CDXZBigSettlementAdapter.ts',
+    'assets/Games/Mahjong/Chengdu1001/Chengdu1001RuntimeEntry.ts',
+    'assets/Games/Mahjong/Chengdu1001/Chengdu1001RoomView.ts',
+    'assets/Games/Mahjong/Chengdu1001/Chengdu1001SmallSettlementAdapter.ts',
+    'assets/Games/Mahjong/Chengdu1001/Chengdu1001BigSettlementAdapter.ts',
+    'assets/Games/Mahjong/Chengdu1001/Chengdu1001ProtocolAdapter.ts',
     'assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts',
 ].map(file => resolve(root, file));
 const creatorDeclarations = [
@@ -43,29 +44,30 @@ if (diagnostics.length > 0) {
 }
 
 const runtime = readFileSync(files[0], 'utf8');
-const entries = readFileSync(files[4], 'utf8');
+const protocol = readFileSync(files[4], 'utf8');
+const entries = readFileSync(files[5], 'utf8');
 const lobby = readFileSync(resolve(root, 'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');
 const meta = JSON.parse(readFileSync(resolve(root, 'assets/Games/Mahjong.meta'), 'utf8'));
 const failures = [];
 if (meta.userData?.isBundle !== true || meta.userData?.bundleName !== 'games-mahjong') failures.push('Mahjong bundle declaration is invalid');
-if ((entries.match(/createCD101GameRuntimeEntry\(/g) ?? []).length !== 1) failures.push('CD101 must have one production registry entry');
+if ((entries.match(/createChengdu1001RuntimeEntry\(/g) ?? []).length !== 1) failures.push('Chengdu1001 must have one production registry entry');
 for (const existing of ['createCD299GameRuntimeEntry(', 'createCN298GameRuntimeEntry(', 'createCN297GameRuntimeEntry(']) {
     if (!entries.includes(existing)) failures.push(`existing registry entry lost: ${existing}`);
 }
-if (!runtime.includes("const DISPATCH = 'mahjong.cdxzmj.dispatch'")) failures.push('CD101 authority dispatch route is missing');
-if (!runtime.includes("canonicalGameCodes = Object.freeze(['CD101'])")
-    || !runtime.includes('families = Object.freeze([] as string[])')) failures.push('CD101 exact-only registry isolation is missing');
-if (runtime.includes('joinFirstFreeSeat') || !runtime.includes('this.options.accountId')) {
-    failures.push('CD101 must match Gateway account identity without attempting a second seat join');
+if (!protocol.includes("dispatch = 'mahjong.chengdu1001.dispatch'")) failures.push('Chengdu1001 authority dispatch route is missing');
+if (!runtime.includes("canonicalGameCodes = Object.freeze(['chengdu1001'])")
+    || !runtime.includes('families = Object.freeze([] as string[])')) failures.push('Chengdu1001 exact-only registry isolation is missing');
+if (runtime.includes('joinFirstFreeSeat') || !runtime.includes('options.accountId')) {
+    failures.push('Chengdu1001 must match Gateway account identity without attempting a second seat join');
 }
 if (/CHZMJ|HzmjRuntime|hzmj\./.test(runtime)) failures.push('CD101 runtime depends on the legacy HZMJ protocol');
 if (!runtime.includes('roundScoreDelta') || !runtime.includes('totalScore') || !runtime.includes('roomFinished')) {
     failures.push('authoritative small/big settlement fields are not projected');
 }
-if (!/gameType !== 628\s*&&\s*gameType !== 516/.test(lobby)) {
-    failures.push('CD101 join-by-room-id must use the native authoritative Hall handoff');
+if (!lobby.includes('hasRegisteredRuntime') || !lobby.includes('entry.canonicalGameCodes')) {
+    failures.push('Chengdu1001 join-by-room-id must use the registered authoritative Hall handoff');
 }
-for (const prefab of ['assets/Games/Mahjong/Common/Prefab/CD101SmallSettlement_JDZ2D.prefab',
+for (const prefab of ['assets/Games/Mahjong/Common/Prefab/SmallSettlement.prefab',
     'assets/Games/Mahjong/Common/Prefab/BigSettlement_0.prefab']) {
     if (!existsSync(resolve(root, prefab)) || !existsSync(resolve(root, `${prefab}.meta`))) {
         failures.push(`CD101 settlement prefab or meta is missing: ${prefab}`);
@@ -75,4 +77,4 @@ if (failures.length > 0) {
     failures.forEach(message => console.error(`[CD101RuntimeGate] ${message}`));
     process.exit(1);
 }
-console.log(`[CD101RuntimeGate] PASS (${files.length} TypeScript files, bundle/registry/join/protocol/settlement contracts)`);
+console.log(`[Chengdu1001RuntimeGate] PASS (${files.length} TypeScript files, bundle/registry/join/protocol/settlement contracts)`);

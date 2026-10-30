@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const coordinator = readFileSync(new URL(
-  '../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts',
+  '../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts',
   import.meta.url,
 ), 'utf8');
 const prefab = JSON.parse(readFileSync(new URL(

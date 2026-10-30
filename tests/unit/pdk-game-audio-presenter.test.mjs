@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const clientRoot = path.resolve(import.meta.dirname, '../..');
 const sourcePath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkGameAudioPresenter.ts');
-const controllerPath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+const controllerPath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
 const commonRoot = path.join(clientRoot, 'assets/Games/Poker/PDK/Common');
 const audioRoot = path.join(commonRoot, 'Audio/Game');
 const source = fs.readFileSync(sourcePath, 'utf8');

@@ -1,0 +1,19 @@
+{
+  "taskId": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "client-room-session-r1",
+  "owner": "/root/repair_common_room_session_registration",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_COORDINATION",
+  "acquiredAt": "2026-10-10T10:47:39Z",
+  "path": "Client/assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts",
+  "sourceWrite": true,
+  "preimageSha256": "1b21ba6292adc76d9e4bd5e11e8e042e5bb67dc31c0ee4ab102634549f23c495",
+  "custody": "inherited-dirty-preserved; no active owner found in fresh Agent Tree; do not overwrite unrelated changes",
+  "allowedChange": "defer Common session acquisition until Gameplay room client is active; no public behavior redesign",
+  "forbidden": ["LoginScene", "rules workbooks", "Server", "protocol semantics", "generated bundles", "shared runtime", "reconnect/handoff contract", "deletion"],
+  "independentReviewRequired": true,
+  "releasedAt": "2026-10-10T11:05:00Z",
+  "postimageSha256": "694a45b6d1446c9fb7df896cbbc065b2c7f208bb4d2e9afa960d90bc3aa98ce4",
+  "independentReview": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-independent-review-20261010/independent-acceptance-v2.md",
+  "independentReviewSha256": "dc34a7b53e65362ec79d5fd530626b76534ceb3f7b83d2163cb587d1f072410f"
+}

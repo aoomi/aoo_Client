@@ -30,9 +30,30 @@ import { legacyPlatformRuntime } from '../../../Common/Code/Runtime/platform/Leg
 import { applyLoadingEnvironment, currentAooLoadingBootState } from './LoadingEnvironmentPolicy';
 import { presentationTransition } from '../../../Common/Code/Runtime/ui/PresentationTransitionCoordinator';
 import '../../../Startup/Code/StartupPresentationView';
+import { canonicalDiscoveryJson, resolveVerifiedDiscovery, type DiscoveryDependencies, type DiscoveryReply, type DiscoverySource } from '../../../Common/Code/Runtime/config/TrustedConfigurationDiscovery';
+import { IndexedDbDiscoveryStateStore } from '../../../Common/Code/Runtime/config/IndexedDbDiscoveryStateStore';
 
 const { ccclass, property } = _decorator;
 const DISPLAY_PROGRESS_RATE_PER_MS = 0.0025;
+
+/** Public build/deployment input. Its distribution approval is supplied by the release owner. */
+interface StartupDiscoveryProvision {
+    schemaVersion: 1;
+    environment: 'test' | 'production';
+    issuer: string;
+    issuerNamespace: string;
+    clientVersion: string;
+    sources: DiscoverySource[];
+    anchors: DiscoveryDependencies['anchors'];
+    timeoutMs: number;
+    maximumBytes: number;
+    totalResponseBytes: number;
+}
+
+declare global {
+    var __aoo_TRUSTED_DISCOVERY__: StartupDiscoveryProvision | undefined;
+}
+
 
 function diagnosticError(error: unknown): Readonly<Record<string, unknown>> {
     if (!(error instanceof Error)) return Object.freeze({ message: String(error) });
@@ -65,14 +86,14 @@ export class LoginScreenBootstrap extends Component {
     @property({
         displayName: '是否测试环境',
         tooltip: '只从“网关地址集合”选择受 Aoo 网关策略校验的测试入口；不会关闭鉴权。',
-        visible: () => director.getScene()?.name === 'BootStrap',
+        visible: () => ['BootStrap', 'LoginScene'].includes(director.getScene()?.name ?? ''),
     })
     private isTestEnvironment = true;
 
     @property({
         displayName: '是否清除本地数据',
-        tooltip: '仅 BootStrap 启动入口读取的持续预览配置。勾选后每次浏览器刷新或 Creator 预览重启都会清除 Aoo 登录、会话及业务本地数据并进入登录；取消勾选后才允许恢复有效会话。',
-        visible: () => director.getScene()?.name === 'BootStrap',
+        tooltip: 'BootStrap 启动入口为最终权威，LoginScene 入口勾选是附加清除意图的持续预览配置。勾选后每次浏览器刷新或 Creator 预览重启都会清除 Aoo 登录、会话及业务本地数据并进入登录；取消勾选后才允许恢复有效会话。',
+        visible: () => ['BootStrap', 'LoginScene'].includes(director.getScene()?.name ?? ''),
     })
     private isClearLocalData = false;
 
@@ -80,7 +101,7 @@ export class LoginScreenBootstrap extends Component {
         displayName: '网关地址集合',
         type: [CCString],
         tooltip: 'Aoo apiBaseUrl 候选集合。正式环境仅接受非本机 HTTPS；空集合继续使用构建注入的 RuntimeEndpoints 配置。',
-        visible: () => director.getScene()?.name === 'BootStrap',
+        visible: () => ['BootStrap', 'LoginScene'].includes(director.getScene()?.name ?? ''),
     })
     private gatewayAddresses: string[] = [];
 
@@ -137,6 +158,9 @@ export class LoginScreenBootstrap extends Component {
                     return;
                 }
                 loadingRuntime.__aoo_BOOTSTRAP_ENTRY_REDIRECT__ = true;
+                // A LoginScene checkbox is an additive clear opt-in that must
+                // survive the redirect; BootStrap stays the final authority.
+                loadingBoot.noteEntrySceneClearIntent(this.isClearLocalData === true);
                 this.logBootstrapOwner({ action: 'ENTER_BOOTSTRAP', sceneName, nodeUuid: this.node.uuid });
                 this.setBootstrapStatus('正在进入启动场景...', 0.01);
                 director.loadScene('BootStrap', (error) => {
@@ -152,6 +176,11 @@ export class LoginScreenBootstrap extends Component {
                 owner: loadingRuntime.__aoo_BOOTSTRAP_ROUTE_OWNER__ ?? null,
             });
             if (sceneName === 'LoginScene') await this.mountLoginPresentation(epoch);
+            return;
+        }
+        // A second Boot must never rewrite configuration or clear a live session.
+        if (getStartedClientServices()) {
+            this.showBootstrapBlock('启动服务已经运行，不能重新配置活动会话');
             return;
         }
         if (loadingRuntime.__aoo_BOOTSTRAP_ROUTE_OWNER__) {
@@ -179,6 +208,9 @@ export class LoginScreenBootstrap extends Component {
         }
         const launchSelection = loadingBoot.resolveLaunchSelection(isBootstrapScene, {
             isTestEnvironment: this.isTestEnvironment,
+            // Preview ports are isolated browser clients, but they must obey
+            // the authored checkbox exactly. Treating a loopback port as an
+            // implicit clear request logs a player out on every refresh.
             isClearLocalData: this.isClearLocalData,
             gatewayAddresses: this.gatewayAddresses,
         });
@@ -186,15 +218,26 @@ export class LoginScreenBootstrap extends Component {
             this.showBootstrapBlock('启动配置尚未就绪，请从 BootStrap 启动预览');
             return;
         }
+        const startupRuntimeConfig = { ...(globalThis.__aoo_RUNTIME_CONFIG__ ?? {}) };
+        let provision: StartupDiscoveryProvision | undefined;
+        try {
+            // Snapshot before the first asynchronous environment/storage boundary.
+            provision = this.snapshotDiscoveryProvision(launchSelection.isTestEnvironment ? 'test' : 'production');
+        } catch (error: unknown) {
+            if (this.isBootstrapCurrent(epoch, routeBootId)) this.showBootstrapBlock(error instanceof Error ? error.message : String(error));
+            return;
+        }
         let applied: Awaited<ReturnType<typeof applyLoadingEnvironment>>;
         try {
-            applied = await applyLoadingEnvironment(launchSelection, globalThis.__aoo_RUNTIME_CONFIG__ ?? {}, {
+            applied = await applyLoadingEnvironment(launchSelection, startupRuntimeConfig, {
                 localStorage: sys.localStorage,
                 sessionStorage: sys.isBrowser ? globalThis.sessionStorage : undefined,
                 indexedDB: sys.isBrowser ? globalThis.indexedDB : undefined,
                 cacheStorage: sys.isBrowser ? globalThis.caches : undefined,
                 bootState: loadingBoot,
             });
+            if (!this.isBootstrapCurrent(epoch, routeBootId)) return;
+            if (getStartedClientServices()) throw new Error('启动服务已经运行，不能重新配置活动会话');
             globalThis.__aoo_RUNTIME_CONFIG__ = applied.runtimeConfig;
             loadingRuntime.__aoo_LOADING_DIAGNOSTIC__ = Object.freeze({
                 bootId: applied.bootId,
@@ -217,6 +260,21 @@ export class LoginScreenBootstrap extends Component {
             this.showBootstrapBlock(error instanceof Error ? error.message : String(error));
             return;
         }
+        try {
+            if (!this.isBootstrapCurrent(epoch, routeBootId)) return;
+            if (provision) {
+                const verified = await this.discoverStartupConfiguration(provision);
+                if (!this.isBootstrapCurrent(epoch, routeBootId)) return;
+                if (getStartedClientServices() || globalThis.__aoo_RUNTIME_CONFIG__ !== applied.runtimeConfig) {
+                    throw new Error('启动配置归属已变化，拒绝安装可信配置');
+                }
+                globalThis.__aoo_RUNTIME_CONFIG__ = { ...applied.runtimeConfig, ...verified };
+            }
+        } catch (error: unknown) {
+            if (this.isBootstrapCurrent(epoch, routeBootId)) this.showBootstrapBlock(error instanceof Error ? error.message : String(error));
+            return;
+        }
+        if (!this.isBootstrapCurrent(epoch, routeBootId)) return;
         this.setBootstrapStatus('正在连接启动服务...', 0.05);
         let startup;
         try {
@@ -239,6 +297,11 @@ export class LoginScreenBootstrap extends Component {
             this.showBootstrapBlock(error instanceof Error ? error.message : String(error));
             return;
         }
+        if (!this.isBootstrapCurrent(epoch, routeBootId)) return;
+        if (getStartedClientServices()) {
+            this.showBootstrapBlock('启动服务归属已变化，拒绝重复启动');
+            return;
+        }
         this.setBootstrapStatus('版本与服务器检查完成', 0.35);
         if (startup.status === 'MAINTENANCE' || startup.maintenance?.loginBlocked) {
             this.showBootstrapBlock(startup.maintenance?.message ?? '服务器维护中');
@@ -254,6 +317,11 @@ export class LoginScreenBootstrap extends Component {
             if (applied.autoRestoreBlocked && loadingBoot.claimAutomaticRestoreReset()) {
                 this.services.auth.blockAutomaticRestore();
                 this.services.scenes.resetSession();
+            } else if (!applied.autoRestoreBlocked) {
+                // Creator can retain ClientServices across a preview scene
+                // reload. Do not carry a previous explicit-clear notice into
+                // a subsequent boot whose checkbox is off.
+                this.services.auth.beginBootWithoutLocalDataClear();
             }
             // The bootstrap scene is the only minimal, fully-owned audio root.
             // Traversing the migrated Login hierarchy through the legacy audio
@@ -284,7 +352,12 @@ export class LoginScreenBootstrap extends Component {
                             this.setBootstrapStatus(message, progress);
                         },
                     ),
-                    12_000,
+                    // Room recovery is a single authenticated route transaction,
+                    // not a login-only request.  Its Hall retries plus the room
+                    // scene/snapshot load must share the same budget as the
+                    // SceneRouter presentation owner; otherwise the bootstrap
+                    // tears down the source while the room is still recovering.
+                    60_000,
                     '恢复登录状态超时，请检查网络后点击重试',
                 );
                 if (applied.environment === 'test') {
@@ -338,7 +411,18 @@ export class LoginScreenBootstrap extends Component {
             const services = this.services;
             if (!services) return;
             void services.scenes.recoverAuthenticatedTarget(account, this.node).catch((error: unknown) => {
-                loginView.showSystemMessage?.(error instanceof Error ? error.message : '活动房间查询失败，请稍后重试');
+                const message = error instanceof Error ? error.message : '活动房间查询失败，请稍后重试';
+                loginView.showSystemMessage?.(message);
+                // A failed authenticated handoff must close the same transition
+                // transaction that covered LoginScene.  Leaving it active makes
+                // the persistent cover wait until its timeout and masks the
+                // actual login/recovery error as “正在准备目标界面…超时”.
+                services.scenes.failStartupTransition(error, () => {
+                    void services.scenes.recoverAuthenticatedTarget(account, this.node).catch((retryError: unknown) => {
+                        loginView.showSystemMessage?.(retryError instanceof Error ? retryError.message : '活动房间查询失败，请稍后重试');
+                        services.scenes.failStartupTransition(retryError);
+                    });
+                });
             });
         }, this);
     }
@@ -615,9 +699,11 @@ export class LoginScreenBootstrap extends Component {
                 view.signUpPasswordInput = signUpPanel?.getChildByName('PasswordInput')?.getComponent(EditBox) ?? null;
                 view.signUpCodeInput = signUpPanel?.getChildByName('VerificationCodeInput')?.getComponent(EditBox) ?? null;
                 view.signUpConfirmButton = this.findDirectButton(signUpPanel, 'Btn_ConfirmSignUp');
-                view.signUpCancelButton = signUpPanel?.getChildByName('Btn_ConfirmSignUp')
-                    ?.getChildByName('Btn_Back')?.getComponent(Button) ?? null;
-                view.signUpSendCodeButton = this.findDirectButton(signUpPanel, 'Btn_SendVerificationCode');
+                // Current user-owned LoginScene keeps the signup back button in
+                // Popup/Title and names the verification button Btn_SendCode.
+                view.signUpCancelButton = signUpPanel?.getChildByPath('Popup/Title/Btn_Back')
+                    ?.getComponent(Button) ?? null;
+                view.signUpSendCodeButton = this.findDirectButton(signUpPanel, 'Btn_SendCode');
                 const driftRoot = node.getChildByName('Message_Drift') ?? null;
                 view.messageDriftRoot = driftRoot;
                 const driftLabelNode = driftRoot?.getChildByName('Sprite')?.getChildByName('LabelMessage') ?? null;
@@ -680,6 +766,29 @@ export class LoginScreenBootstrap extends Component {
                 bind(view.signUpCancelButton, () => view.closeSignUp());
                 bind(view.signUpSendCodeButton, () => void view.sendRegistrationCode());
                 bind(view.signUpConfirmButton, () => void view.confirmSignUp());
+
+                // The quad preview is a test-only harness.  Start its guest
+                // session automatically so the harness can exercise the
+                // authenticated lobby/room path without relying on canvas
+                // coordinate clicks that are below the visible fold.
+                const localQuadPreview = globalThis.location?.hostname === 'localhost'
+                    && ['7458', '7459', '5188', '7461'].includes(globalThis.location?.port ?? '');
+                const manualDailyPreview = (globalThis as typeof globalThis & {
+                    __aoo_LOCAL_PREVIEW_BOOTSTRAP_READY__?: boolean;
+                }).__aoo_LOCAL_PREVIEW_BOOTSTRAP_READY__ === true
+                    && globalThis.location?.protocol === 'http:'
+                    && globalThis.location?.hostname === 'localhost'
+                    && globalThis.location?.port === '7456'
+                    && new URLSearchParams(globalThis.location?.search ?? '').get('aooPreviewBootstrap') === '1';
+                if (!manualDailyPreview && (globalThis.__aoo_RUNTIME_CONFIG__?.environment === 'test' || localQuadPreview)) {
+                    let attempts = 0;
+                    const attemptGuestLogin = () => {
+                        attempts += 1;
+                        void view.onGuestLoginClicked();
+                        if (attempts < 8 && view.node?.isValid) view.scheduleOnce(attemptGuestLogin, 2);
+                    };
+                    view.scheduleOnce(attemptGuestLogin, 2);
+                }
 
                 return view;
             } catch (error: unknown) {
@@ -799,6 +908,88 @@ export class LoginScreenBootstrap extends Component {
     private findDirectButton(root: Node | null | undefined, name: string): Button | null {
         if (!root) return null;
         return root.getChildByName(name)?.getComponent(Button) ?? null;
+    }
+
+    private snapshotDiscoveryProvision(environment: 'test' | 'production'): StartupDiscoveryProvision | undefined {
+        const input = globalThis.__aoo_TRUSTED_DISCOVERY__;
+        // Only the already selected explicit test environment may retain its preview path.
+        if (input === undefined && environment === 'test') return undefined;
+        if (input === undefined) throw new Error('TRUSTED_DISCOVERY_PROVISION_REQUIRED');
+        const snapshot = JSON.parse(JSON.stringify(input)) as StartupDiscoveryProvision;
+        if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)
+            || Object.keys(snapshot).sort().join('|') !== ['schemaVersion','environment','issuer','issuerNamespace','clientVersion','sources','anchors','timeoutMs','maximumBytes','totalResponseBytes'].sort().join('|')
+            || snapshot.schemaVersion !== 1 || snapshot.environment !== environment
+            || typeof snapshot.issuer !== 'string' || !snapshot.issuer || snapshot.issuer !== snapshot.issuer.trim()
+            || typeof snapshot.issuerNamespace !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}$/.test(snapshot.issuerNamespace)
+            || typeof snapshot.clientVersion !== 'string' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(snapshot.clientVersion)
+            || !Array.isArray(snapshot.sources) || !Array.isArray(snapshot.anchors)
+            || !Number.isSafeInteger(snapshot.timeoutMs) || snapshot.timeoutMs < 1 || snapshot.timeoutMs > 30000
+            || !Number.isSafeInteger(snapshot.maximumBytes) || snapshot.maximumBytes < 1 || snapshot.maximumBytes > 1048576
+            || !Number.isSafeInteger(snapshot.totalResponseBytes) || snapshot.totalResponseBytes < 1 || snapshot.totalResponseBytes > 2097152) {
+            throw new Error('TRUSTED_DISCOVERY_PROVISION_REJECTED');
+        }
+        return snapshot;
+    }
+
+    private async discoverStartupConfiguration(provision: StartupDiscoveryProvision): Promise<Readonly<{
+        apiBaseUrl: string; clientVersion: string; resourceVersion: string;
+    }>> {
+        if (!sys.isBrowser || !globalThis.indexedDB || !globalThis.crypto?.subtle) {
+            throw new Error('TRUSTED_DISCOVERY_PLATFORM_UNAVAILABLE');
+        }
+        const store = new IndexedDbDiscoveryStateStore(globalThis.indexedDB, provision.issuerNamespace);
+        const responseBudget = { bytes: 0 };
+        try {
+            const verified = await resolveVerifiedDiscovery({
+                sources: provision.sources, anchors: provision.anchors,
+                issuer: provision.issuer, clientVersion: provision.clientVersion,
+                timeoutMs: provision.timeoutMs, maximumBytes: provision.maximumBytes,
+                now: () => Date.now(), crypto: globalThis.crypto, store,
+                transport: (source, signal) => this.fetchDiscoveryReply(source, signal, provision, responseBudget),
+            });
+            // Public discovery can install exactly these three endpoint/artifact fields.
+            return { apiBaseUrl: verified.runtimeConfig.apiBaseUrl,
+                clientVersion: verified.runtimeConfig.clientVersion, resourceVersion: verified.runtimeConfig.resourceVersion };
+        } finally {
+            store.close();
+        }
+    }
+
+    private async fetchDiscoveryReply(source: DiscoverySource, signal: AbortSignal, provision: StartupDiscoveryProvision, budget: { bytes: number }): Promise<DiscoveryReply> {
+        const response = await globalThis.fetch(source.url, { credentials: 'omit', redirect: 'error', signal });
+        if (!response.ok || !response.body) throw new Error('TRUSTED_DISCOVERY_TRANSPORT_REJECTED');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8', { fatal: true });
+        let body = '';
+        let complete = false;
+        try {
+            while (!complete) {
+                if (signal.aborted) throw new Error('TRUSTED_DISCOVERY_TRANSPORT_ABORTED');
+                const chunk = await reader.read();
+                if (chunk.done) { complete = true; break; }
+                // One budget covers all concurrent source response streams in this boot.
+                budget.bytes += chunk.value.byteLength;
+                if (budget.bytes > provision.totalResponseBytes) throw new Error('TRUSTED_DISCOVERY_RESPONSE_TOO_LARGE');
+                body += decoder.decode(chunk.value, { stream: true });
+            }
+            body += decoder.decode();
+            const reply = JSON.parse(body) as DiscoveryReply;
+            if (!reply || typeof reply !== 'object' || Array.isArray(reply)
+                || Object.keys(reply).some(key => key !== 'configuration' && key !== 'trustUpdate')
+                || Object.keys(reply).length === 0 || canonicalDiscoveryJson(reply) !== body
+                || Object.values(reply).some(value => typeof value !== 'string' || new TextEncoder().encode(value).length > provision.maximumBytes)) {
+                throw new Error('TRUSTED_DISCOVERY_REPLY_REJECTED');
+            }
+            return reply;
+        } finally {
+            if (!complete) await reader.cancel().catch(() => undefined);
+            reader.releaseLock();
+        }
+    }
+
+    private isBootstrapCurrent(epoch: number, bootId: string): boolean {
+        const owner = (globalThis as LoadingRuntimeState).__aoo_BOOTSTRAP_ROUTE_OWNER__;
+        return this.isCurrent(epoch) && owner?.bootId === bootId && owner.nodeUuid === this.node?.uuid;
     }
 
     private isCurrent(epoch: number): boolean {

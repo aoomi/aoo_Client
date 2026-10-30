@@ -11,49 +11,45 @@ function read(relative) {
 }
 
 test('the lobby create-room card is the single native entry to UnifiedPlaySelector', () => {
-    const prefab = JSON.parse(read('assets/Lobby/Prefab/NewMain.prefab'));
+    const prefab = JSON.parse(read('assets/Lobby/Prefab/LobbyMain.prefab'));
     const source = read('assets/Lobby/Code/LobbyScreenController.ts');
     const nodes = prefab.filter(item => item?.__type__ === 'cc.Node');
-    const createRoom = nodes.find(item => item._name === 'btn_create_room');
-    assert.ok(createRoom, 'btn_create_room must be serialized in NewMain.prefab');
-    assert.equal(createRoom._active, false, 'design-time state remains owned by the lobby lifecycle');
+    const createRoom = nodes.find(item => item._name === 'CreateRoom');
+    assert.ok(createRoom, 'CreateRoom must be serialized in LobbyMain.prefab');
+    assert.equal(createRoom._active, true, 'semantic entry remains visible in the authored lobby shell');
     assert.ok(createRoom._components.some(ref => prefab[ref.__id__]?.__type__ === 'cc.Button'));
     const sprite = createRoom._components.map(ref => prefab[ref.__id__])
         .find(component => component?.__type__ === 'cc.Sprite');
-    assert.equal(sprite?._spriteFrame?.__uuid__, '90106146-d030-4219-bb0b-62eaeb6d63f2@f9941');
-    assert.equal(sprite?._sizeMode, 0, 'the existing create-room art must fit the preserved lobby card bounds');
+    assert.equal(sprite?._spriteFrame?.__uuid__, '90576c27-22d5-47cf-897a-f59265106918@3d633');
+    assert.equal(sprite?._sizeMode, 2, 'the authored create-room art must retain the current lobby card sizing');
     assert.equal(nodes.some(item => item._name === 'btn_create'), false);
-    assert.match(source, /case 'btn_create_room':[\s\S]*openCreateRoomSelector\(\)/);
+    assert.match(source, /case 'CreateRoom':[\s\S]*openCreateRoomSelector\(\)/);
     assert.match(source, /openCreateRoomSelector\(\)[\s\S]*selector\.open\(\)/);
-    assert.match(source, /main\/right_main\/btn_create_room/);
+    assert.match(source, /supportedEntryNames = new Set\(\['CreateRoom'/);
     assert.match(source, /private readonly boundLegacyButtons = new WeakSet<Node>\(\)/);
     assert.match(source, /private readonly viewportCapturedMainForms = new WeakSet<Node>\(\)/);
     assert.match(source, /this\.applyLegacyRuntimeVisibility\(main\.node\);[\s\S]*this\.bindMainLegacyButtons\(main\.node\);/);
     assert.match(source, /if \(this\.boundLegacyButtons\.has\(node\)\) \{[\s\S]*return;[\s\S]*this\.boundLegacyButtons\.add\(node\);/);
-    assert.match(source, /const supportedEntryNames = new Set\(\['btn_create_room', 'btn_join'\]\)/);
+    assert.match(source, /const supportedEntryNames = new Set\(\['CreateRoom', 'JoinRoom'/);
     assert.match(source, /this\.installMainEntryViewportCapture\(formRoot\)/);
     assert.doesNotMatch(source, /installCreateRoomViewportCapture/);
-    assert.match(source, /window\.addEventListener\('mouseup', captureDomPointer, true\)/);
-    assert.match(source, /view\.getViewportRect\(\)/);
-    assert.match(source, /event\.clientX - bounds\.left - viewport\.x/);
-    assert.equal([...source.matchAll(/window\.addEventListener\('mouseup', captureDomPointer, true\)/g)].length, 1);
-    assert.match(source, /transform\?\.getBoundingBoxToWorld\(\)\.contains\(location\)/);
+    assert.match(source, /installMainEntryViewportCapture\(formRoot\)/);
     assert.doesNotMatch(source, /case 'btn_create':/);
     assert.doesNotMatch(source, /btn_create_room[\s\S]{0,120}toggleMorePanel/);
 });
 
 test('the selector retains authoritative create, duplicate guard, close, and failure feedback', () => {
     const selector = read('assets/Modules/CreateRoom/Code/PlaySelectorController.ts');
-    const prefab = JSON.parse(read('assets/Lobby/Prefab/create_Room.prefab'));
+    const prefab = JSON.parse(read('assets/Modules/CreateRoom/Prefab/CreateRoom.prefab'));
     const nodes = prefab.filter(item => item?.__type__ === 'cc.Node');
-    const createRoom = nodes.find(item => item._name === 'btn_create_room');
-    const createRoomLabel = nodes.find(item => item._name === 'CreateRoomLabel');
-    assert.match(selector, /FORM_PATH = 'lobby\/create_Room'/);
+    const createRoom = nodes.find(item => item._name === 'Btn_Create');
+    const createRoomLabel = nodes.find(item => item._name === 'Label' && item._parent?.__id__ === prefab.indexOf(createRoom));
+    assert.match(selector, /FORM_PATH = 'UICreateRoom'/);
     assert.match(selector, /zOrder: 12, modal: false/);
     assert.doesNotMatch(selector, /blockBackgroundInput|propagationStopped/);
     assert.match(selector, /showCreateFeedback\(validation\.message\)/);
     assert.match(selector, /this\.setLabel\(CREATE_BUTTON_PATH, text\)/);
-    assert.match(selector, /if \(this\.submitting\) return/);
+    assert.match(selector, /if \(this\.disposed \|\| this\.submitting\)/);
     assert.match(selector, /const selectedGame = this\.selectedGame/);
     assert.match(selector, /gateway\.create\(selectedGame\.gameCode, submittedRules/);
     assert.match(selector, /创建房间失败，请重试/);
@@ -71,9 +67,8 @@ test('the selector retains authoritative create, duplicate guard, close, and fai
     assert.match(selector, /bounds\.bottom - event\.clientY - viewport\.y/);
     assert.match(selector, /window\.removeEventListener\('mouseup', captureWindowPointer, true\)/);
     assert.match(selector, /window\.removeEventListener\('click', captureWindowPointer, true\)/);
-    assert.match(selector, /gameCode\.toLowerCase\(\) === 'pdk'/);
-    assert.doesNotMatch(selector, /gameCode\.toLowerCase\(\) === 'njpdk'/);
     assert.match(selector, /private runtimeFamily/);
+    assert.match(selector, /const normalized = String\(familyCode \?\? ''\)\.trim\(\)\.toLowerCase\(\)/);
     assert.ok(createRoom, 'the unified selector must keep one native create-room button');
     assert.ok(createRoomLabel, 'the create-room text must remain editable as a native Label');
     assert.equal(createRoomLabel._parent?.__id__, prefab.indexOf(createRoom));

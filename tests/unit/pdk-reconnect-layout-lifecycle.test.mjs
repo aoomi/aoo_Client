@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
 
 test('delayed out-card diagnostics never read nodes destroyed by reconnect projection', () => {
   const method = source.slice(source.indexOf('private updateActionCardLayout'),

@@ -1,39 +1,37 @@
-/** Stable business identities for the single PDK family. */
-export const PDK_BUSINESS_CODES={
- CHENGDU:'CD201',NEIJIANG:'NJ201',LIANGSHAN:'LS201',
- MIANNING:'MN201',ANYUE:'AY201',PANZHIHUA:'PZ201',
- WANNIAN:'WN201',LEPING:'LP201',BOZHOU:'BZ201',YUGAN:'YG201',JIAN:'JA201',GUSHI:'GS201',
- XIAOGAN:'XG201',NINGDU:'ND201',HUAIHUA:'HH201',XINXIAN:'XX201',JINGDEZHEN:'JD201',JIANGSU:'JS201',
- HENAN:'HN201',TAIZHOU:'TZ201',HUAIBIN:'HB201',HUANGCHUAN:'HC201',POYANG:'PY201',JINTAN:'JT201',
- GAOAN:'GA201',YIXING:'YX201',XUANCHENG:'XC201',FUZHOU:'FZ201'}as const;
+/** Current production identities for the single PDK family. */
+export const PDK_BUSINESS_CODES = {
+ CHENGDU:'chengdu2001', NEIJIANG:'neijiang2002', LIANGSHAN:'liangshan2003',
+ MIANNING:'mianning2004', ANYUE:'anyue2005', PANZHIHUA:'panzhihua2006',
+ WANNIAN:'wannian2007', LEPING:'leping2008', BOZHOU:'bozhou2009', YUGAN:'yugan2010',
+ JIAN:'jian2011', GUSHI:'gushi2012', XIAOGAN:'xiaogan2013', NINGDU:'ningdu2014',
+ HUAIHUA:'huaihua2015', XINXIAN:'xinxian2016', JINGDEZHEN:'jingdezhen2017',
+ JIANGSU:'jiangsu2018', HENAN:'henan2019', TAIZHOU:'taizhou2020', HUAIBIN:'huaibin2021',
+ HUANGCHUAN:'huangchuan2022', POYANG:'poyang2023', JINTAN:'jintan2024', GAOAN:'gaoan2025',
+ YIXING:'yixing2026', XUANCHENG:'xuancheng2027', FUZHOU:'fuzhou2028',
+} as const;
 export type PdkBusinessCode=typeof PDK_BUSINESS_CODES[keyof typeof PDK_BUSINESS_CODES];
 
 /** 全部规范地区业务编码（既有三地 + 本阶段 25 地，插入顺序固定）。 */
 export const PDK_BUSINESS_CODE_LIST:readonly string[]=Object.freeze(Object.values(PDK_BUSINESS_CODES));
 
-/** 既有三地：成都/内江/凉山。 */
-export const EXISTING_PDK_BUSINESS_CODES:readonly string[]=Object.freeze([
- PDK_BUSINESS_CODES.CHENGDU,PDK_BUSINESS_CODES.NEIJIANG,PDK_BUSINESS_CODES.LIANGSHAN
-]);
+/**
+ * 当前 PDK 运行入口的 canonical play-version registry。
+ *
+ * `PdkLegacyRegionIdentities` 是规则档案集合，历史上只覆盖 25 个地区；它
+ * 不能承担 28 个生产入口的生命周期能力握手。当前身份的版本合同由同一份
+ * canonical business-code list 生成，禁止从 handoff 自报或旧别名推导。
+ */
+export const PDK_CANONICAL_PLAY_VERSIONS: Readonly<Record<string, string>> = Object.freeze(
+ Object.fromEntries(PDK_BUSINESS_CODE_LIST.map(code => [code, `${code}-v1.0.0`])),
+);
 
-/** 本阶段新增的 25 个地区（不含既有三地）。 */
-export const NEW_PDK_BUSINESS_CODES:readonly string[]=Object.freeze([
- PDK_BUSINESS_CODES.MIANNING,PDK_BUSINESS_CODES.ANYUE,PDK_BUSINESS_CODES.PANZHIHUA,
- PDK_BUSINESS_CODES.WANNIAN,PDK_BUSINESS_CODES.LEPING,PDK_BUSINESS_CODES.BOZHOU,
- PDK_BUSINESS_CODES.YUGAN,PDK_BUSINESS_CODES.JIAN,PDK_BUSINESS_CODES.GUSHI,
- PDK_BUSINESS_CODES.XIAOGAN,PDK_BUSINESS_CODES.NINGDU,PDK_BUSINESS_CODES.HUAIHUA,
- PDK_BUSINESS_CODES.XINXIAN,PDK_BUSINESS_CODES.JINGDEZHEN,PDK_BUSINESS_CODES.JIANGSU,
- PDK_BUSINESS_CODES.HENAN,PDK_BUSINESS_CODES.TAIZHOU,PDK_BUSINESS_CODES.HUAIBIN,
- PDK_BUSINESS_CODES.HUANGCHUAN,PDK_BUSINESS_CODES.POYANG,PDK_BUSINESS_CODES.JINTAN,
- PDK_BUSINESS_CODES.GAOAN,PDK_BUSINESS_CODES.YIXING,PDK_BUSINESS_CODES.XUANCHENG,
- PDK_BUSINESS_CODES.FUZHOU
-]);
+export function supportsPdkPlayVersion(gameCode:string, playVersion:string):boolean{
+ const code=String(gameCode??'').trim().toLowerCase();
+ const version=String(playVersion??'').trim();
+ return Boolean(code && version && PDK_CANONICAL_PLAY_VERSIONS[code] === version);
+}
 
 const PDK_BUSINESS_CODE_SET:ReadonlySet<string>=new Set(Object.values(PDK_BUSINESS_CODES));
-const NEW_PDK_BUSINESS_CODE_SET:ReadonlySet<string>=new Set(NEW_PDK_BUSINESS_CODES);
 export function isPdkBusinessCode(value:string):value is PdkBusinessCode{
  return PDK_BUSINESS_CODE_SET.has(value);
-}
-export function isNewPdkBusinessCode(value:string):boolean{
- return NEW_PDK_BUSINESS_CODE_SET.has(value.trim());
 }

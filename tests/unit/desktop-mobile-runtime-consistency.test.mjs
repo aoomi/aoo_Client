@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const template = read('preview-template/index.ejs');
-const runtime = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntime.ts');
-const play = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+const runtime = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts');
+const play = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
 
 test('desktop and LAN expose one deterministic runtime identity', () => {
   assert.match(template, /aoo-preview-20260906-unified-room-4/);

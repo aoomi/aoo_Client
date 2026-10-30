@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-const controller = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
+const controller = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
 const animation = fs.readFileSync(new URL('../../assets/Games/Poker/Common/Spine/PokerDealNodeAnim.ts', import.meta.url), 'utf8');
-const runtime = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntime.ts', import.meta.url), 'utf8');
+const runtime = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts', import.meta.url), 'utf8');
 
 test('PDK initial hand is published immediately at the deal boundary', () => {
     assert.doesNotMatch(controller, /import \{ PokerDealNodeAnim \}/);

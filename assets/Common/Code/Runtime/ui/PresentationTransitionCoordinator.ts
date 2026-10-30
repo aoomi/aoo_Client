@@ -66,6 +66,17 @@ export class PresentationTransition {
         this.owner.update(this.id, message, progress, progressKind);
     }
 
+    /**
+     * Upgrades the inactivity budget when a route grows into a compound
+     * authenticated handoff (Hall -> room -> first frame). Existing callers
+     * keep the same transaction and retained frame; only its authoritative
+     * deadline is widened and re-armed.
+     */
+    public setTimeoutBudget(timeoutMs: number): void {
+        if (!this.active) return;
+        this.owner.setTimeoutBudget(this.id, timeoutMs);
+    }
+
     public isCurrent(): boolean {
         return this.active && this.owner.isCurrent(this.id);
     }
@@ -204,6 +215,14 @@ export class PresentationTransitionCoordinator {
         this.log('progress', record);
     }
 
+    public setTimeoutBudget(id: number, timeoutMs: number): void {
+        const record = this.records.get(id);
+        if (!record || record.failed || !Number.isFinite(timeoutMs) || timeoutMs <= 0) return;
+        const currentBudget = record.options.timeoutMs ?? 0;
+        if (timeoutMs > currentBudget) record.options = { ...record.options, timeoutMs };
+        this.armTimeout(record);
+    }
+
     public async commitAfterPresentation(id: number, readiness: PresentationReadiness): Promise<void> {
         const record = this.records.get(id);
         if (!record || record.failed) return;
@@ -219,7 +238,10 @@ export class PresentationTransitionCoordinator {
         if (!record) return;
         this.clearTimers(record);
         record.failed = true;
-        this.releaseCurrentFrame();
+        // Keep the retained source frame underneath the error cover until the
+        // caller retries or cancels this transaction. Releasing it before the
+        // failed cover is painted exposes Cocos' clear colour for one browser
+        // compositor frame, which is the black flash seen on room recovery.
         record.visible = true;
         record.message = error instanceof Error ? error.message : String(error);
         this.retry = () => {

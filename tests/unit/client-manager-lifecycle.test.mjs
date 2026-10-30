@@ -105,9 +105,10 @@ test('BootStrap is the only startup-route owner and presentation scenes only con
     assert.match(bootstrap, /__aoo_BOOTSTRAP_ROUTE_OWNER__/);
     assert.doesNotMatch(bootstrap, /addPersistRootNode\s*\(/);
 
-    assert.match(scenes, /if \(!activeRoom\) \{[\s\S]*await this\.presentLobbyScene\(account, role, operationId\)/,
-        'the no-room route must commit and mount MainScene using its existing Hall role');
-    assert.match(scenes, /private async presentLobbyScene\(account: AuthenticatedAccount, role: RoleSession, operationId: number\)/);
+    assert.match(scenes, /if \(!activeRoom\) \{[\s\S]*await this\.presentLobbyScene\(account,\s*role,\s*operationId(?:\s*,\s*[^)]*)?\)/,
+        'the no-room route must commit and mount MainScene using its existing Hall role and startup context');
+    assert.match(scenes, /private async presentLobbyScene\(account:\s*AuthenticatedAccount,\s*role:\s*RoleSession,\s*operationId:\s*number/,
+        'the lobby presentation contract must retain account, role and operationId parameters');
     const authenticatedRoute = scenes.slice(
         scenes.indexOf('public async recoverAuthenticatedTarget'),
         scenes.indexOf('public async recoverStartup'),

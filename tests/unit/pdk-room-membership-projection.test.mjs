@@ -7,15 +7,18 @@ const clientRoot = new URL('../..', import.meta.url).pathname;
 
 test('same-version authority projections retain seat membership in their duplicate fingerprint', () => {
   const runtime = readFileSync(join(clientRoot,
-    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntime.ts'), 'utf8');
+    'assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts'), 'utf8');
   assert.match(runtime, /const seatFingerprint = Object\.entries\(view\.seats \?\? \{\}\)/);
   assert.match(runtime, /Number\(seat\.playerId \?\? 0\)/);
-  assert.match(runtime, /seatFingerprint,\s*\]/);
+  assert.match(runtime, /const comparisonFingerprint = \[/);
+  assert.match(runtime, /projectedSet\.comparisonState/);
+  assert.match(runtime, /comparisonCards\.join\(','\)/);
+  assert.match(runtime, /seatFingerprint,\s*comparisonFingerprint,\s*\]/);
 });
 
 test('the room presentation clears an empty authority seat instead of rendering a placeholder head', () => {
   const controller = readFileSync(join(clientRoot,
-    'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts'), 'utf8');
+    'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts'), 'utf8');
   assert.match(controller, /Number\(player\.pid \?\? 0\) <= 0/);
   assert.match(controller, /seats\.clearHead\(entry\.dataSeat, entry\.physicalSlot\)/);
 });

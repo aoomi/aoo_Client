@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const play = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
-const coordinator = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts', import.meta.url), 'utf8');
+const play = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
+const coordinator = readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts', import.meta.url), 'utf8');
 
 test('SetEnd no longer clears before the terminal physical hand lands', () => {
   const setEnd = play.slice(play.indexOf("event === 'CommonPdkSetEnd'"), play.indexOf("event === 'ChatMessage'"));

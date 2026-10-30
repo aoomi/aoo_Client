@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const controller = readFileSync(new URL(
-  '../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts',
+  '../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts',
   import.meta.url,
 ), 'utf8');
 

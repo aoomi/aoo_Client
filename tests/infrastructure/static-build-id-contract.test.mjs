@@ -1,36 +1,36 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const serverSource = await readFile(new URL('../../scripts/static-build-server.mjs', import.meta.url), 'utf8');
+const read = async relative => readFile(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const [pkg, installer, supervisor, manager, proxy] = await Promise.all([
+    read('package.json'),
+    read('scripts/install-preview-snapshot-launchagent.mjs'),
+    read('scripts/preview-snapshot-supervisor.mjs'),
+    read('scripts/preview-snapshot-manager.mjs'),
+    read('scripts/lan-preview-proxy.mjs'),
+]);
 
-function declaredFingerprintFiles(source) {
-  const block = source.match(/const BUILD_ID_FILES = \[([\s\S]*?)\n\];/)?.[1];
-  assert.ok(block, 'static server must declare its build fingerprint inputs');
-  return [...block.matchAll(/'([^']+)'/g)].map((match) => match[1]);
-}
-
-function fingerprint(files, contents) {
-  const digest = createHash('sha256');
-  for (const file of files) digest.update(contents.get(file) ?? file);
-  return digest.digest('hex').slice(0, 20);
-}
-
-test('fixed-port buildId covers shared UI and PDK business bundles', () => {
-  const files = declaredFingerprintFiles(serverSource);
-  assert.ok(files.includes('assets/common/index.js'));
-  assert.ok(files.includes('assets/paodekuai-common/index.js'));
-  assert.equal(new Set(files).size, files.length, 'fingerprint inputs must be unique');
+test('current preview entry uses only the immutable snapshot supervisor chain', () => {
+    assert.match(pkg, /"preview:snapshot:supervisor":\s*"node scripts\/preview-snapshot-supervisor\.mjs"/);
+    assert.match(installer, /resolve\('scripts\/preview-snapshot-supervisor\.mjs'\)/);
+    assert.doesNotMatch(installer, /resolve\('scripts\/static-build-supervisor\.mjs'\)/);
+    assert.doesNotMatch(pkg, /static-build-(?:supervisor|server)/);
 });
 
-test('PDK bundle content changes the deterministic buildId', () => {
-  const files = declaredFingerprintFiles(serverSource);
-  const baseline = new Map(files.map((file) => [file, `content:${file}`]));
-  const unchanged = new Map(baseline);
-  const changed = new Map(baseline);
-  changed.set('assets/paodekuai-common/index.js', 'content:PDK-changed');
+test('snapshot build identity is immutable and shared by every fixed client port', () => {
+    assert.match(supervisor, /A:7462,B:7459,C:5188,D:7461/);
+    assert.match(manager, /const snapshotValidationRevision = '[^']+'/);
+    assert.match(manager, /const buildId = digest\.digest\('hex'\)\.slice\(0, 20\)/);
+    assert.match(proxy, /\/__aoo\/build\/\$\{buildId\}/);
+    assert.match(proxy, /const manifest = JSON\.parse\(readFileSync\(manifestPath, 'utf8'\)\)/);
+    assert.match(proxy, /entriesByKey: new Map\(manifest\.entries\.map/);
+});
 
-  assert.equal(fingerprint(files, baseline), fingerprint(files, unchanged));
-  assert.notEqual(fingerprint(files, baseline), fingerprint(files, changed));
+test('stale snapshots fail closed before serving an old build', () => {
+    assert.match(proxy, /status: 'STALE'/);
+    assert.match(proxy, /PREVIEW_SNAPSHOT_STALE/);
+    assert.match(proxy, /sendJson\(response, 503/);
+    assert.match(supervisor, /markStale\(\{ reason: 'upstream-unavailable'/);
+    assert.match(supervisor, /retainedPreviousSnapshot: false/);
 });

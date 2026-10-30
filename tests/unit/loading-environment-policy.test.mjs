@@ -55,6 +55,24 @@ const policy = compile(policyPath, {
     },
 });
 
+function clientBootstrapModule() {
+    return compile('assets/Login/Code/Bootstrap/ClientBootstrap.ts', {
+        '../../../Common/Code/Runtime/core/Storage': { BrowserKeyValueStorage: class {} },
+        '../../../Common/Code/Runtime/platform/LegacyPlatformRuntime': { legacyPlatformRuntime: {} },
+        '../../../Common/Code/Runtime/config/RuntimeEndpoints': { resolveRuntimeEndpoints: () => ({}) },
+        '../Auth/UnifiedIdentityAuthGateway': { AccountAuthGateway: class {} },
+        '../Auth/AuthSession': { AuthSession: class {} },
+        '../Auth/GuestSessionStore': { GuestSessionStore: class {} },
+        '../Auth/LastAccountStore': { LastAccountStore: class {} },
+        '../Network/NetworkRuntime': { NetworkRuntime: class {} },
+        '../Navigation/SceneRouter': { SceneRouter: class {} },
+        '../../../Common/Code/Runtime/room/RoomRecoveryStore': { RoomRecoveryStore: class {} },
+        '../../../Common/Code/Runtime/network/LegacyWebSocketClient': { sessionLifecycle: {} },
+        './LoadingEnvironmentPolicy': { currentAooLoadingBootState: () => ({}) },
+        '../../../Common/Code/Runtime/room/StuckRoomCleanupService': { StuckRoomCleanupService: class {} },
+    });
+}
+
 class BrowserStorage {
     constructor(entries = {}, failOnRemove = []) {
         this.values = new Map(Object.entries(entries));
@@ -347,7 +365,7 @@ test('logged-in and guest sessions restart empty and route to LoginScene when cl
         cc: { director: { loadScene: (name) => loadedScenes.push(name) } },
         '../../../Lobby/Code/LobbyScreenController': { LobbyScreenController: class {} },
         '../../../Lobby/Code/HallRoomGateway': { HallRoomGateway: class {} },
-        '../../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher': { CommonPdkGameSceneLauncher: class {} },
+        '../../../Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher': { PdkGameSceneLauncher: class {} },
         '../../../Common/Code/Runtime/platform/LegacyPlatformRuntime': {
             legacyPlatformRuntime: { audio: { detach() {} } },
         },
@@ -578,14 +596,60 @@ test('clear-local-data claims one authenticated authoritative room cleanup after
         'assets/Common/Code/Runtime/room/StuckRoomCleanupService.ts'), 'utf8');
     assert.match(policySource, /claimRoomCleanup\(\)/);
     assert.match(policySource, /releaseRoomCleanupClaim\(\)/);
-    assert.match(clientBootstrap, /claimRoomCleanup\(\)[\s\S]*StuckRoomCleanupService\(\)\.cleanup\(account\)/);
-    assert.match(clientBootstrap, /const recovery = roomRecovery\.load\(String\(account\.accountId\)\)/);
-    assert.match(clientBootstrap, /startup-cleanup-skipped-for-recovery/);
-    assert.match(clientBootstrap, /if \(recovery\)[\s\S]*return;[\s\S]*StuckRoomCleanupService\(\)\.cleanup\(account\)/);
+    assert.match(clientBootstrap, /StuckRoomCleanupService\(\)\.cleanup\(authenticated\)/);
+    assert.doesNotMatch(clientBootstrap, /startup-cleanup-skipped-for-recovery/);
+    assert.match(clientBootstrap, /await cleanup\(account\);[\s\S]*roomRecovery\.clear\(accountId\)/);
     assert.match(clientBootstrap, /catch \(error: unknown\)[\s\S]*releaseRoomCleanupClaim\(\)[\s\S]*throw error/);
     assert.match(authSource, /await this\.afterExplicitLogin\(authenticated\)/);
     assert.match(authSource, /await this\.afterExplicitLogin\(account\)/);
     assert.match(cleanup, /\/api\/v2\/hall\/rooms\/active/);
     assert.match(cleanup, /\/api\/v2\/hall\/rooms\/\$\{roomId\}\/leave/);
     assert.match(cleanup, /if \(confirmed\?\.active\) throw new Error/);
+});
+
+test('clear mode ignores local recovery intent, clears it only after cleanup, and is single-flight', async () => {
+    const clientBootstrap = clientBootstrapModule();
+    let claimed = false;
+    const bootState = {
+        claimRoomCleanup() { if (claimed) return false; claimed = true; return true; },
+        releaseRoomCleanupClaim() { claimed = false; },
+    };
+    const events = [];
+    const recovery = { load: () => ({ roomId: 719148 }), clear: (id) => events.push(`clear:${id}`) };
+    const account = { accountId: 108, accessToken: 'token' };
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(bootState, recovery, account, async () => events.push('leave-confirmed-inactive'));
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(bootState, recovery, account, async () => events.push('unexpected-second-leave'));
+    assert.deepEqual(events, ['leave-confirmed-inactive', 'clear:108']);
+});
+
+test('failed clear-mode leave blocks continuation, preserves intent, and remains retryable', async () => {
+    const clientBootstrap = clientBootstrapModule();
+    let claimed = false;
+    let clearCalls = 0;
+    const bootState = {
+        claimRoomCleanup() { if (claimed) return false; claimed = true; return true; },
+        releaseRoomCleanupClaim() { claimed = false; },
+    };
+    const account = { accountId: 108, accessToken: 'token' };
+    await assert.rejects(clientBootstrap.cleanupRoomAfterExplicitLogin(
+        bootState, { clear: () => { clearCalls += 1; } }, account, async () => { throw new Error('leave failed'); },
+    ), /leave failed/);
+    assert.equal(clearCalls, 0);
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(
+        bootState, { clear: () => { clearCalls += 1; } }, account, async () => undefined,
+    );
+    assert.equal(clearCalls, 1);
+});
+
+test('without clear mode the room cleanup claim is rejected and recovery intent is untouched', async () => {
+    let cleanupCalls = 0;
+    let clearCalls = 0;
+    const clientBootstrap = clientBootstrapModule();
+    const policyState = new policy.AooLoadingBootState('non-clear');
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(
+        policyState, { clear: () => { clearCalls += 1; } }, { accountId: 108 },
+        async () => { cleanupCalls += 1; },
+    );
+    assert.equal(cleanupCalls, 0);
+    assert.equal(clearCalls, 0);
 });

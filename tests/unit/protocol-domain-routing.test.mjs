@@ -3,10 +3,11 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const source = readFileSync(new URL('../../assets/Common/Code/Runtime/network/ProtocolClient.ts', import.meta.url), 'utf8');
+const roomMountSource = readFileSync(new URL('../../assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts', import.meta.url), 'utf8');
 const socketSource = readFileSync(new URL('../../assets/Common/Code/Runtime/network/LegacyWebSocketClient.ts', import.meta.url), 'utf8');
 
 test('lobby discovery is explicitly outside room authority and room commands remain fail-closed', () => {
-    for (const action of ['game.C1101GetRoomID', 'room.CBaseRoomConfig', 'room.CBaseEnterRoom', 'game.CPlayerSetRoomRecord', 'game.CPlayerPlayBack']) {
+    for (const action of ['game.C1101GetRoomID', 'game.CPlayerSetRoomRecord', 'game.CPlayerPlayBack']) {
         assert.ok(source.includes(`event === '${action}'`), `${action} must have an explicit lobby route`);
     }
     assert.match(source, /if \(\/\^room\[\._\]\/i\.test\(event\)\) return 'common\.room\.dispatch'/);
@@ -58,4 +59,11 @@ test('authoritative V2 room context uses only positive room ids and keeps error 
     assert.match(source, /roomId = this\.correlatedRoomId\(body\)/);
     assert.match(source, /return \/\^\[1-9\]\\d\*\$\/\.test\(text\) \? text : undefined/);
     assert.doesNotMatch(source, /String\(authority\.roomId \?\? authority\.roomID \?\? this\.roomAuthority\?\.roomId/);
+});
+
+test('room runtime identity long values reject numeric JSON before transport', () => {
+    assert.match(roomMountSource, /private decimal\(value: unknown\): string/);
+    assert.match(roomMountSource, /if \(typeof value !== 'string'\) return ''/);
+    assert.match(roomMountSource, /lifecycleEpoch: this\.decimal\(/);
+    assert.match(roomMountSource, /eventSequence: this\.decimal\(/);
 });

@@ -1,5 +1,3 @@
-export const COMMON_ROOM_FORM = 'room/CommonRoom';
-export const DISSOLVE_ROOM_FORM = 'room/DissolveRoom';
 export const PDK_ROOM_FORM = 'pdk/PDK_CommonRoom';
 export const POKER_CARD_SELECTION_FORM = 'poker/CardSelection';
 export const DEAL_QUALITY_FORM = 'room/AddSubtract';
@@ -9,16 +7,6 @@ export const CommonRoomNodePath = Object.freeze({
     clubCent: 'RoomInfo/Lb_ClubCent',
     roomIdLabel: 'RoomInfo/Lb_RoomId',
     roundLabel: 'RoomInfo/Lb_Round',
-    readyButton: 'WaitingActions/Btn_Ready',
-    startButton: 'WaitingActions/Btn_Start',
-    chatButton: 'Btn/Btn_Chat',
-    voiceButton: 'Btn/Btn_Voice',
-    backButton: 'Btn/Btn_Back',
-    smallSettlementButton: 'Btn/Btn_SmallSettlement',
-    moreButton: 'Btn/Btn_More',
-    moreItems: 'CardCounter/MoreMenu/MoreItems',
-    roomRuleButton: 'CardCounter/MoreMenu/MoreItems/Btn_RoomRule',
-    settingsButton: 'CardCounter/MoreMenu/MoreItems/Btn_Settings',
     dissolveButton: 'CardCounter/MoreMenu/MoreItems/Btn_DissolveRoom',
 } as const);
 
