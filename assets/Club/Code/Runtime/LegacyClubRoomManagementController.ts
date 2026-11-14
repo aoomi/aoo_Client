@@ -1,6 +1,7 @@
 import { Button, Label, Layout, Node, instantiate } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface RoomContext {
     id?: number;
@@ -108,7 +109,7 @@ export class LegacyClubRoomManagementController {
     private describe(cfg: RoomConfigData): string { const payment = Number(cfg.paymentRoomCardType ?? 0) === 2 ? '大赢家付' : Number(cfg.paymentRoomCardType ?? 0) === 1 ? 'AA付' : '管理付'; return `${payment}${cfg.clubWinnerPayConsume ?? ''}圈卡`; }
     private value(value: unknown): RoomContext { return value && typeof value === 'object' ? value as RoomContext : {}; }
     private clubId(): number { return Number(this.context.id ?? this.context.clubId ?? 0); }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private click(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.disposers.push(() => node.off(Button.EventType.CLICK, fn)); }
     private rowClick(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.rowDisposers.push(() => node.off(Button.EventType.CLICK, fn)); }

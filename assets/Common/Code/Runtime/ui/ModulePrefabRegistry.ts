@@ -25,11 +25,16 @@ const MODULE_PREFAB_BY_FORM = Object.freeze<Record<string, ModulePrefabRoute>>({
     UILobbyRemark: { bundle: 'profile-ui', asset: 'Prefab/Remark' },
     UILobbyLeaderboard: { bundle: 'ranking-ui', asset: 'Prefab/Leaderboard' },
     UILobbyRecords: { bundle: 'records-ui', asset: 'Prefab/Records' },
-    UILobbyRecordDetail: { bundle: 'records-ui', asset: 'Prefab/RecordDetail' },
+    UIGameStats: { bundle: 'records-ui', asset: 'Prefab/GameStats' },
+    UIMatchReplay: { bundle: 'records-ui', asset: 'Prefab/MatchReplay' },
+    UIClubStats: { bundle: 'records-ui', asset: 'Prefab/ClubStats' },
     UILobbyRecordItem: { bundle: 'records-ui', asset: 'Prefab/RecordItem' },
-    UILobbyRecordResult: { bundle: 'records-ui', asset: 'Prefab/RecordResult' },
-    UILobbyUserRecord: { bundle: 'records-ui', asset: 'Prefab/UserRecord' },
+    // The player record panel is shared by the lobby and club, but its
+    // authoritative prefab is owned by the club bundle.
+    UILobbyUserRecord: { bundle: 'club', asset: 'Prefab/UserRecord' },
+    UIClubRecordUser: { bundle: 'club', asset: 'Prefab/UserRecord' },
     UILobbyMatchRecord: { bundle: 'records-ui', asset: 'Prefab/MatchRecord' },
+    ClubPlayerLog: { bundle: 'records-ui', asset: 'Prefab/ClubPlayerLog' },
     UILobbyGift: { bundle: 'gift-room-card-ui', asset: 'Prefab/GiftRoomCard' },
     UILobbyInviteRewards: { bundle: 'rewards-ui', asset: 'Prefab/InviteRewards' },
     UILobbyInviteTask: { bundle: 'rewards-ui', asset: 'Prefab/InviteTask' },
@@ -49,6 +54,15 @@ const MODULE_PREFAB_BY_FORM = Object.freeze<Record<string, ModulePrefabRoute>>({
     UITop: { bundle: 'navigation-ui', asset: 'Prefab/ModalTopBar' },
     UIGameHelp: { bundle: 'help-ui', asset: 'Prefab/GameHelp' },
     UIStore: { bundle: 'store-ui', asset: 'Prefab/Store' },
+    UIPromoterAllManager_2: { bundle: 'club', asset: 'Prefab/ClubCaptain' },
+    ClubSwitch: { bundle: 'club', asset: 'Prefab/ClubSwitch' },
+    ClubAdmin: { bundle: 'club', asset: 'Prefab/ClubAdmin' },
+    ClubDynamic: { bundle: 'club', asset: 'Prefab/ClubDynamic' },
+    ClubFindRoom: { bundle: 'club', asset: 'Prefab/ClubFindRoom' },
+    ClubBanDeskMate: { bundle: 'club', asset: 'Prefab/ClubBanDeskMate' },
+    ClubAllianceManager: { bundle: 'club', asset: 'Prefab/ClubAllianceManager' },
+    UIUnionManager: { bundle: 'club', asset: 'Prefab/ClubAllianceManager' },
+    UIUnionManager_2: { bundle: 'club', asset: 'Prefab/ClubAllianceManager' },
 });
 
 export function resolveModulePrefabAsset(formPath: string): ModulePrefabRoute | null {

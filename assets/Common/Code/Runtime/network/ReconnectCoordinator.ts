@@ -140,6 +140,8 @@ export class ConnectionSlot<T> {
 /** The only owner allowed to schedule Hall or Game reconnection attempts. */
 export class ReconnectCoordinator<H, G> {
     public readonly hall = new ConnectionSlot<H>('HALL');
+    /** Canonical internal name. `hall` remains a wire/compatibility alias. */
+    public readonly lobby = this.hall;
     public readonly game = new ConnectionSlot<G>('GAME');
     private readonly retryControllers = new Map<ConnectionKind, AbortController>();
     private ticketRefresh: Promise<string> | null = null;
@@ -185,6 +187,11 @@ export class ReconnectCoordinator<H, G> {
     public cancelHall(state: 'DISCONNECTED' | 'LOGGED_OUT' | 'TERMINAL' = 'DISCONNECTED'): void {
         this.cancelRetry('HALL');
         this.hall.disconnect(state);
+    }
+
+    /** Canonical Lobby lifecycle cancellation; preserves the Hall protocol alias. */
+    public cancelLobby(state: 'DISCONNECTED' | 'LOGGED_OUT' | 'TERMINAL' = 'DISCONNECTED'): void {
+        this.cancelHall(state);
     }
 
     public cancelGame(state: 'DISCONNECTED' | 'LOGGED_OUT' | 'TERMINAL' = 'DISCONNECTED'): void {

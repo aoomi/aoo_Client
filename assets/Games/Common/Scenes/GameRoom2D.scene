@@ -447,7 +447,7 @@
     },
     "_children": [],
     "_active": true,
-    "_components": [{ "__id__": 24 }],
+    "_components": [{ "__id__": 24 }, { "__id__": 30 }],
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -525,7 +525,7 @@
     },
     "_children": [],
     "_active": true,
-    "_components": [{ "__id__": 26 }],
+    "_components": [{ "__id__": 26 }, { "__id__": 31 }],
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -603,7 +603,7 @@
     },
     "_children": [],
     "_active": true,
-    "_components": [{ "__id__": 28 }],
+    "_components": [{ "__id__": 28 }, { "__id__": 32 }],
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -720,7 +720,7 @@
   {
     "__type__": "cc.UITransform", "_name": "", "_objFlags": 0,
     "node": { "__id__": 16 }, "_enabled": true, "__prefab": null,
-    "_contentSize": { "__type__": "cc.Size", "width": 1280, "height": 720 },
+    "_contentSize": { "__type__": "cc.Size", "width": 1600, "height": 720 },
     "_anchorPoint": { "__type__": "cc.Vec2", "x": 0.5, "y": 0.5 }, "_id": "pdkTableLayerUIT000002"
   },
   {
@@ -752,5 +752,38 @@
     "node": { "__id__": 21 }, "_enabled": true, "__prefab": null,
     "_contentSize": { "__type__": "cc.Size", "width": 1280, "height": 720 },
     "_anchorPoint": { "__type__": "cc.Vec2", "x": 0.5, "y": 0.5 }, "_id": "pdkResultLayerUIT00006"
+  },
+  {
+    "__type__": "cc.Widget", "_name": "", "_objFlags": 0,
+    "node": { "__id__": 16 }, "_enabled": true, "__prefab": null,
+    "_alignFlags": 21, "_target": null,
+    "_left": 0, "_right": 0, "_top": 0, "_bottom": 0,
+    "_horizontalCenter": 0, "_verticalCenter": 0,
+    "_isAbsLeft": true, "_isAbsRight": true, "_isAbsTop": true, "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true, "_isAbsVerticalCenter": true,
+    "_originalWidth": 1600, "_originalHeight": 720,
+    "_alignMode": 2, "_lockFlags": 0, "_id": "pdkTableLayerWidget00001"
+  },
+  {
+    "__type__": "cc.Widget", "_name": "", "_objFlags": 0,
+    "node": { "__id__": 18 }, "_enabled": true, "__prefab": null,
+    "_alignFlags": 45, "_target": null,
+    "_left": 0, "_right": 0, "_top": 0, "_bottom": 0,
+    "_horizontalCenter": 0, "_verticalCenter": 0,
+    "_isAbsLeft": true, "_isAbsRight": true, "_isAbsTop": true, "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true, "_isAbsVerticalCenter": true,
+    "_originalWidth": 1280, "_originalHeight": 720,
+    "_alignMode": 2, "_lockFlags": 0, "_id": "pdkOperLayerWidget000002"
+  },
+  {
+    "__type__": "cc.Widget", "_name": "", "_objFlags": 0,
+    "node": { "__id__": 20 }, "_enabled": true, "__prefab": null,
+    "_alignFlags": 45, "_target": null,
+    "_left": 0, "_right": 0, "_top": 0, "_bottom": 0,
+    "_horizontalCenter": 0, "_verticalCenter": 0,
+    "_isAbsLeft": true, "_isAbsRight": true, "_isAbsTop": true, "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true, "_isAbsVerticalCenter": true,
+    "_originalWidth": 1280, "_originalHeight": 720,
+    "_alignMode": 2, "_lockFlags": 0, "_id": "pdkPopupLayerWidget00001"
   }
 ]

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "p0-e-ws-contract-20261011-r1",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "P0-E",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "path": "Client/assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts",
+  "scope": "room runtime identity extraction and lifecycle fail-closed mount boundary",
+  "preimageSha256": "9258975a07e42fd17d318d3d7433245441423915be067bc0ffaabfddc75c85b6",
+  "sourceWrite": true,
+  "testWrite": false,
+  "forbidden": ["Server", "Gateway", "Hall", "Lobby", "generated bundles", "protocol schema changes", "shared services", "shared ports", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "9258975a07e42fd17d318d3d7433245441423915be067bc0ffaabfddc75c85b6",
+  "evidence": "docs/05-当前状态/evidence/p0-e-ws-contract-20261011-r1/DEV_SELF_CHECK-v1.md"
+}

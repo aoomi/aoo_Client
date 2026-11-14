@@ -1,4 +1,4 @@
-export { CommonPdkRoomPosManager } from './CommonPdkRoomPosManager';
-export { CommonPdkRoomSet } from './CommonPdkRoomSet';
-export { CommonPdkRoom } from './CommonPdkRoom';
-export { CommonPdkRoomManager } from './CommonPdkRoomManager';
+export { PdkRoomPosManager } from './PdkRoomPosManager';
+export { PdkRoomSet } from './PdkRoomSet';
+export { PdkRoom } from './PdkRoom';
+export { PdkRoomManager } from './PdkRoomManager';

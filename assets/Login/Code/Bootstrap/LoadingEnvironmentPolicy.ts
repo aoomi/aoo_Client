@@ -123,10 +123,27 @@ export class AooLoadingBootState {
     private clearRequested = false;
     private cleanupPromise: Promise<AooLocalDataCleanupResult> | null = null;
     private authResetClaimed = false;
+    private roomCleanupClaimed = false;
+    private entrySceneClearIntent = false;
     private launchSelection: LoadingEnvironmentSelection | null = null;
 
     public constructor(bootId = createBootId()) {
         this.bootId = bootId;
+    }
+
+    /**
+     * An entry-scene checkbox (for example the LoginScene component during a
+     * Creator preview) is an additive clear opt-in recorded before BootStrap
+     * freezes the launch decision. It never overrides that frozen choice:
+     * BootStrap remains the final authority, and once noted the intent is
+     * kept because the boot freeze only ORs it in.
+     */
+    public noteEntrySceneClearIntent(requested: boolean): void {
+        if (requested === true) this.entrySceneClearIntent = true;
+    }
+
+    public hasEntrySceneClearIntent(): boolean {
+        return this.entrySceneClearIntent;
     }
 
     public async clearOnce(
@@ -154,8 +171,22 @@ export class AooLoadingBootState {
         return true;
     }
 
+    /** The next explicit authenticated login owns one authoritative stuck-room cleanup. */
+    public claimRoomCleanup(): boolean {
+        if (!this.clearRequested || this.roomCleanupClaimed) return false;
+        this.roomCleanupClaimed = true;
+        return true;
+    }
+
+    /** A failed authoritative cleanup must remain retryable on the next explicit login. */
+    public releaseRoomCleanupClaim(): void {
+        if (this.clearRequested) this.roomCleanupClaimed = false;
+    }
+
     /**
      * The editor-owned launch settings live only on BootStrap.  Components in
+     *  A noted entry-scene clear intent (noteEntrySceneClearIntent) is OR-ed
+     *  into the frozen choice; the BootStrap freeze remains the final authority.
      * subsequent scenes must reuse that immutable decision instead of reading
      * their own serialized defaults (which can otherwise differ by scene).
      */
@@ -166,7 +197,7 @@ export class AooLoadingBootState {
         if (isBootScene) {
             this.launchSelection = Object.freeze({
                 isTestEnvironment: selection.isTestEnvironment === true,
-                isClearLocalData: selection.isClearLocalData === true,
+                isClearLocalData: selection.isClearLocalData === true || this.entrySceneClearIntent,
                 gatewayAddresses: Object.freeze([...selection.gatewayAddresses]),
             });
         }
@@ -204,10 +235,15 @@ export async function applyLoadingEnvironment(
     const apiBaseUrl = selection.isTestEnvironment
         ? testPreviewGatewayOrigin(configuredGateway, platform.location ?? globalThis.location)
         : configuredGateway;
+    const previewLocation = platform.location ?? globalThis.location;
+    const avatarBaseUrl = selection.isTestEnvironment && previewLocation?.hostname
+        ? `http://${previewLocation.hostname}:8765/`
+        : currentConfig.avatarBaseUrl;
     const runtimeConfig: RuntimePublicConfig = {
         ...currentConfig,
         environment,
         ...(apiBaseUrl ? { apiBaseUrl } : {}),
+        ...(avatarBaseUrl ? { avatarBaseUrl } : {}),
     };
     return {
         runtimeConfig,

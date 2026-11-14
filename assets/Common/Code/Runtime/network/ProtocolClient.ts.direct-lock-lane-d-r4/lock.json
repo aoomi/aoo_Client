@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r4",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Common/Code/Runtime/network/ProtocolClient.ts",
+  "preimageSha256": "cd84c062f5455d15e458d8c44f8ef948bbbabf0b0b2418f6ca892e6e0ab1188b",
+  "scope": "Protocol WS responses to AppError with correlation",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "lane_g",
+  "replacementCounts": {"AppError import":1,"response mappings":3,"catch enrichment":1},
+  "postimageSha256": "cd84c062f5455d15e458d8c44f8ef948bbbabf0b0b2418f6ca892e6e0ab1188b"
+}

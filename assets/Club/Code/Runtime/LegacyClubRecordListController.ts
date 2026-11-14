@@ -1,6 +1,9 @@
-import { Button, EditBox, Label, Layout, Node, Toggle, instantiate } from 'cc';
+import { Button, EditBox, Label, Layout, Node, ScrollView, Toggle, instantiate } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
+import { ScrollEvents } from '../../../Common/Code/UI/UnifiedScroll';
+import type { RoomHistoryPage, RoomLifecycleGateway } from '../../../Common/Code/Runtime/room/RoomLifecycleGateway';
 
 interface ClubRecordPlayer {
     pid?: number;
@@ -46,12 +49,14 @@ export class LegacyClubRecordListController {
     private pageTotal = 1;
     private epoch = 0;
     private loading = false;
+    private historyCursors = new Map<number, number>();
     private selectAll = true;
     private readonly rowRecords = new Map<Node, ClubRecordInfo>();
 
     public constructor(
         private readonly forms: LegacyFormManager,
         private readonly client: ProtocolClient,
+        private readonly hallRoomGateway: RoomLifecycleGateway,
         private readonly playerId: number,
         private readonly lobbyNode: Node,
     ) {}
@@ -77,8 +82,14 @@ export class LegacyClubRecordListController {
     private bind(form: LegacyForm): void {
         this.clearLegacyToggleHandlers(form.node);
         this.click(form.find('btn_close'), () => this.forms.close('ui/club/UIClubRecordList'));
-        this.click(form.find('btn_next'), () => void this.changePage(1));
-        this.click(form.find('btn_last'), () => void this.changePage(-1));
+        this.active(form, 'btn_next', false);
+        this.active(form, 'btn_last', false);
+        this.active(form, 'page', false);
+        this.active(form, 'pageGo', false);
+        const scroll = form.find('mark')?.getComponent(ScrollView);
+        if (scroll) ScrollEvents.onBottom(scroll, () => {
+            if (!this.loading && this.page < this.pageTotal) { this.page += 1; void this.load(false, undefined, true); }
+        });
         this.click(form.find('top/btn_list/btn_all'), () => void this.selectType(6));
         this.click(form.find('top/btn_list/btn_zuotian'), () => void this.selectType(1));
         this.click(form.find('top/btn_list/btn_jintian'), () => void this.selectType(0));
@@ -98,6 +109,7 @@ export class LegacyClubRecordListController {
         this.recordType = 0;
         this.page = 1;
         this.pageTotal = 1;
+        this.historyCursors.clear();
         this.selectAll = true;
         this.epoch += 1;
         this.loading = false;
@@ -119,7 +131,7 @@ export class LegacyClubRecordListController {
         void this.load(true);
     }
 
-    private async load(refreshSummary: boolean, query?: string): Promise<void> {
+    private async load(refreshSummary: boolean, query?: string, append = false): Promise<void> {
         if (!this.form || this.clubId <= 0 || this.loading) return;
         const form = this.form;
         const requestEpoch = ++this.epoch;
@@ -140,19 +152,23 @@ export class LegacyClubRecordListController {
             packet.type = 0;
         }
         try {
-            const summaryPromise = refreshSummary
-                ? this.client.request<RecordSummary>('club.CClubTotalInfo', { ...packet, pageNum: undefined, type: undefined, query: undefined })
-                : Promise.resolve<RecordSummary | null>(null);
-            const [records, summary] = await Promise.all([
-                this.client.request<RecordResponse>('club.CClubGetRecord', packet),
-                summaryPromise,
-            ]);
+            const history = await this.hallRoomGateway.history(
+                query ? 0 : this.historyCursors.get(this.page) ?? 0,
+                query ? 100 : 20,
+                0, 0, this.clubId,
+            );
+            const records = this.historyRecords(history, query);
+            const summary: RecordSummary | null = refreshSummary ? {
+                pageNumTotal: history.hasMore ? this.page + 1 : this.page,
+                roomTotalCount: Number(history.totalCount ?? records.length),
+                roomCardTotalCount: 0,
+            } : null;
             if (!this.form || this.form !== form || requestEpoch !== this.epoch) return;
             if (summary) this.renderSummary(form, summary);
-            this.pageTotal = query ? 1 : Math.max(1, Number(summary?.pageNumTotal ?? records.pageNumTotal ?? this.pageTotal));
-            this.clearRows();
-            for (const record of records.clubRecordInfos ?? []) this.addRecord(form, record);
-            this.setLabel(form.node, 'page/lb_page', `${query ? 1 : this.page}/${this.pageTotal}`);
+            this.pageTotal = query ? 1 : Math.max(1, Number(summary?.pageNumTotal ?? this.pageTotal));
+            if (!query && history.hasMore) this.historyCursors.set(this.page + 1, Number(history.nextBeforeRoomId ?? 0));
+            if (!append) this.clearRows();
+            for (const record of records) this.addRecord(form, record);
         } catch (error: unknown) {
             if (requestEpoch === this.epoch) {
                 await this.forms.show('UIMessage_Drift', null, null,
@@ -161,6 +177,27 @@ export class LegacyClubRecordListController {
         } finally {
             if (requestEpoch === this.epoch) this.loading = false;
         }
+    }
+
+    private historyRecords(page: RoomHistoryPage, query?: string): ClubRecordInfo[] {
+        const expectedRoomId = query ? Number(query) : 0;
+        return page.items.flatMap((raw): ClubRecordInfo[] => {
+            const item = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+            const roomId = Number(item.roomId ?? 0);
+            if (expectedRoomId > 0 && roomId !== expectedRoomId) return [];
+            const settlement = item.settlement && typeof item.settlement === 'object'
+                ? item.settlement as Record<string, unknown> : {};
+            const entries = Array.isArray(settlement.entries) ? settlement.entries : [];
+            const playerList = entries.map(entry => {
+                const value = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {};
+                return { pid: Number(value.playerId ?? 0), name: String(value.name ?? ''),
+                    point: Number(value.scoreDelta ?? value.score ?? 0) };
+            });
+            return [{ roomID: roomId, roomKey: roomId, roomState: 0,
+                endTime: String(item.playedAt ?? ''), gameType: Number(settlement.gameType ?? 0),
+                configName: String(settlement.gameCode ?? item.playVersion ?? ''),
+                playerList }];
+        });
     }
 
     private renderSummary(form: LegacyForm, summary: RecordSummary): void {
@@ -236,13 +273,6 @@ export class LegacyClubRecordListController {
         }
     }
 
-    private async changePage(delta: number): Promise<void> {
-        const next = this.page + delta;
-        if (this.loading || next < 1 || next > this.pageTotal) return;
-        this.page = next;
-        await this.load(true);
-    }
-
     private async selectType(type: number): Promise<void> {
         if (this.loading) return;
         this.recordType = type;
@@ -301,16 +331,14 @@ export class LegacyClubRecordListController {
     private openDetail(row: Node): void {
         const record = this.rowRecords.get(row);
         if (!record) return;
-        if (Number(record.gameType) === 8 || Number(record.gameType) === 629) {
-            this.lobbyNode.emit('legacy-replay-room', {
-                roomId: record.roomID,
-                source: 'CLUB',
-                returnForm: 'ui/club/UIClubRecordList',
-            });
-            return;
-        }
-        void this.forms.show('UILobbyRecordResult', record.roomID, this.players(record.playerList),
-            record.gameType, record.unionId, record.roomKey, 1);
+        // Every gameplay family owns its settlement presentation. Record detail
+        // therefore enters the shared authoritative history boundary and lets
+        // the catalog resolve that game's real SmallSettlement prefab.
+        this.lobbyNode.emit('legacy-replay-room', {
+            roomId: record.roomID,
+            source: 'CLUB',
+            returnForm: 'ui/club/UIClubRecordList',
+        });
     }
 
     private markType(form: LegacyForm): void {
@@ -367,8 +395,8 @@ export class LegacyClubRecordListController {
     }
 
     private setLabel(root: Node, path: string, value: string): void {
-        const label = Label ? this.find(root, path)?.getComponent(Label) : null;
-        if (label) label.string = value;
+        const label = Label ? this.find(root, path)?.getComponent(Label) ?? null : null;
+        setClubDynamicLabel(label, path, value);
     }
 
     private toggleComponent(node: Node | null): Toggle | null {

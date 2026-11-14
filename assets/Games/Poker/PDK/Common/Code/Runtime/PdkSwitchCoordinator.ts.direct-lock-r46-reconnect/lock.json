@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "lockId": "R46-PDK-RECONNECT-OWNERSHIP-20261012",
+  "task": "DIRECT-20261006T193000Z-f4c9e2a1-PDK公共能力归属迁移",
+  "attempt": "R46-PDK-reconnect-ownership-20261012",
+  "lane": "PDK/CommonRoom",
+  "owner": "/root/pdk_compat_boundary",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "acquiredAtUtc": "2026-10-12T02:14:58Z",
+  "path": "Client/assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts",
+  "scope": "remove PDK-owned public reconnect recipe registration and cleanup; Common GameRuntimeEntries/RoomOrchestrator remains sole owner",
+  "taskCardSha256": "694271e6e84456faaccecd59c2b23d7e33ac15363daae79e4b3eeaeb4aa43136",
+  "preimageSha256": "870859608f467762305d0c2d6924f31d1945ea95946f61b3414d2dbf2262dbba",
+  "postimageSha256": "6ce5b9aaa447d49c54a09e1776cc3b89accee51232361818ad556c801cbb8769",
+  "releasedAtUtc": "2026-10-12T02:20:16Z",
+  "evidencePath": "/tmp/r46-pdk-reconnect-ownership-implementation-20261012",
+  "sourceWrite": true,
+  "testWrite": false,
+  "allowlist": [
+    "Client/assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts",
+    "Client/assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts.direct-lock-r46-reconnect/lock.json"
+  ],
+  "forbidden": [
+    "Client/assets/Login/Scenes/LoginScene.scene",
+    "Client/docs/开房规则表/**",
+    "Server/**",
+    "protocol semantics",
+    "generated Bundle/**",
+    "shared services",
+    "shared ports",
+    "Client/assets/Games/Common/Code/** production writes",
+    "PdkMagicExpressionPresenter deletion",
+    "production database",
+    "shared runtime/preview/ports"
+  ],
+  "acceptance": [
+    "PdkSwitchCoordinator has no setGameReconnectRecipe or setGameRoomReconnectRecipe ownership",
+    "Common GameRuntimeEntries remains the only reconnect recipe owner",
+    "legacy compatibility remains explicit and fail-closed",
+    "duplicate registration and destroy behavior are covered by focused behavior tests",
+    "independent Lane G review required; implementation owner cannot accept"
+  ],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review"
+}

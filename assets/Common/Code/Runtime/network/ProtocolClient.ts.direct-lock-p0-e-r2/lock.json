@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "p0-e-ws-contract-20261011-r2",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "P0-E",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "WAITING_FOR_INDEPENDENT_REVIEW",
+  "path": "Client/assets/Common/Code/Runtime/network/ProtocolClient.ts",
+  "scope": "preserve decimal-string lifecycle/runtime identity through WS leave/reconnect/handoff envelope",
+  "preimageSha256": "cd84c062f5455d15e458d8c44f8ef948bbbabf0b0b2418f6ca892e6e0ab1188b",
+  "sourceWrite": true,
+  "testWrite": false,
+  "forbidden": ["Server", "Gateway", "Hall", "Lobby", "generated bundles", "protocol schema changes", "shared services", "shared ports", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "cd84c062f5455d15e458d8c44f8ef948bbbabf0b0b2418f6ca892e6e0ab1188b",
+  "evidence": "docs/05-当前状态/evidence/p0-e-ws-contract-20261011-r2/DEV_SELF_CHECK-v1.md"
+}

@@ -7,9 +7,9 @@ import type { ClubTopBarPort } from '../../../Club/Code/Runtime/ClubTopBarPort';
 import { LobbyClubListController } from './LobbyClubListController';
 import { LobbyClubListGateway, type LobbyClubSummary } from './LobbyClubListGateway';
 import { hostRouteStore } from '../../../Common/Code/Runtime/navigation/HostRouteStore';
+import { HallRoomGateway } from '../HallRoomGateway';
 
 interface ClubDetail extends LobbyClubSummary {
-    diamond?: number;
     roomCard?: number;
     showUplevelId?: number;
     showClubSign?: number;
@@ -29,6 +29,7 @@ export class LobbyClubEntryController {
     public constructor(
         private readonly forms: LegacyFormManager,
         private readonly client: ProtocolClient,
+        private readonly hallRoomGateway: HallRoomGateway,
         private readonly mainNode: Node,
         private readonly top: ClubTopBarPort,
         private readonly playerId: number,
@@ -45,7 +46,7 @@ export class LobbyClubEntryController {
             if (this.mainNode.isValid) this.mainNode.off('legacy-open-club-create', openCreate);
         });
         this.mainController = new LegacyClubMainController(
-            this.forms, this.client, this.mainNode, this.top, this.playerId, this.playerName,
+            this.forms, this.client, this.hallRoomGateway, this.mainNode, this.top, this.playerId, this.playerName,
             () => hostRouteStore.save(this.accountId, { name: 'lobby' }),
         );
         this.mainController.install();
@@ -154,8 +155,8 @@ export class LobbyClubEntryController {
         this.createPending = true;
         try {
             const club = await this.client.request<ClubDetail>('club.CClubCreate', { clubName: name });
-            const balance = Number(club.diamond ?? club.roomCard);
-            if (Number.isFinite(balance)) this.top.setDiamond(balance);
+            const balance = Number(club.roomCard);
+            if (Number.isFinite(balance)) this.top.setRoomCard(balance);
             await this.forms.show('UIMessage_Drift', null, null, '俱乐部创建成功');
             this.forms.close('UILobbyClubList');
             this.mainNode.emit('legacy-club-created', club);

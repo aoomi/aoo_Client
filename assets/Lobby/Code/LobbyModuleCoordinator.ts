@@ -20,6 +20,8 @@ import { ProfileController } from '../../Modules/Profile/Code/ProfileController'
 import { LocationController } from './LocationController';
 import { StoreController } from '../../Modules/Store/Code/StoreController';
 import { ReplayController } from '../../Modules/Records/Code/ReplayController';
+import { ClubStatsController } from '../../Modules/Records/Code/ClubStatsController';
+import type { ProtocolClient } from '../../Common/Code/Runtime/network/ProtocolClient';
 import { LuckDrawController } from '../../Modules/Activity/Code/LuckDrawController';
 import { SupportCaseClient } from '../../Modules/Support/Code/SupportCaseClient';
 import { SupportLiveSessionClient } from '../../Modules/Support/Code/SupportLiveSessionClient';
@@ -60,6 +62,7 @@ export class LobbyModuleCoordinator {
     public readonly location: LocationController;
     public readonly store: StoreController;
     public readonly replay: ReplayController;
+    public readonly clubStats: ClubStatsController;
     public readonly luckDraw: LuckDrawController;
     public readonly support: LobbySupportCapability;
     public readonly identity: IdentityController;
@@ -74,6 +77,7 @@ export class LobbyModuleCoordinator {
     private readonly competitionApi: ProductionApiClient;
 
     public constructor(forms: LegacyFormManager, node: Node, token: AccessTokenSource, playerId: string,
+        protocolClient: ProtocolClient,
         error: (e: unknown) => void, refreshSession?: SessionRefresher,
         shouldRefreshSession?: SessionRefreshPolicy) {
         const config = (globalThis as typeof globalThis & {
@@ -92,6 +96,7 @@ export class LobbyModuleCoordinator {
         this.location = new LocationController(node, new LocationGateway(this.api), error);
         this.store = new StoreController(forms, node, new InventoryGateway(this.api), error);
         this.replay = new ReplayController(forms, node, new ReplayGateway(this.api), playerId, error);
+        this.clubStats = new ClubStatsController(forms, protocolClient, node, error);
         this.luckDraw = new LuckDrawController(forms, node, new LuckDrawGateway(this.luckDrawApi), error);
         this.support = config.supportEnabled && this.supportApi && config.supportHttpUrl
             ? new SupportController(forms, new SupportCaseClient(this.supportApi),
@@ -103,7 +108,7 @@ export class LobbyModuleCoordinator {
         this.roomSafety = new RoomSafetyController(node, new RoomSafetyGateway(this.api), error);
         this.feedback = new FeedbackController(forms, new SupportCaseClient(this.api), error);
         this.help = new GameHelpController();
-        for (const controller of [this.task, this.rank, this.profile, this.store, this.replay, this.competition, this.roomSafety]) {
+        for (const controller of [this.task, this.rank, this.profile, this.store, this.replay, this.clubStats, this.competition, this.roomSafety]) {
             controller.install();
         }
     }
@@ -118,6 +123,7 @@ export class LobbyModuleCoordinator {
         this.location.destroy();
         this.store.destroy();
         this.replay.destroy();
+        this.clubStats.destroy();
         this.luckDraw.destroy();
         this.support.destroy();
         this.identity.destroy();

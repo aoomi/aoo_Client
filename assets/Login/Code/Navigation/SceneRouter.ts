@@ -7,7 +7,11 @@ import { LobbyScreenController } from '../../../Lobby/Code/LobbyScreenController
 import { legacyPlatformRuntime } from '../../../Common/Code/Runtime/platform/LegacyPlatformRuntime';
 import type { RoomRecoveryStore } from '../../../Common/Code/Runtime/room/RoomRecoveryStore';
 import { HallRoomGateway } from '../../../Lobby/Code/HallRoomGateway';
-import { CommonPdkGameSceneLauncher } from '../../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher';
+import { PdkGameSceneLauncher } from '../../../Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher';
+import { PDK_BUSINESS_CODE_LIST, supportsPdkPlayVersion } from '../../../Games/Poker/PDK/Common/Code/Regional/PdkBusinessCodes';
+import { createProductionGameRuntimeEntryRegistry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntries';
+import type { GameRuntimeEntry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntry';
+import type { GameRuntimeEntryRegistry } from '../../../Games/Common/Code/Runtime/GameRuntimeEntryRegistry';
 import type { RoleSession } from '../../../Common/Code/Runtime/role/RoleTypes';
 import type { LegacySubgameTicket } from '../../../Common/Code/Runtime/subgame/AuthoritativeSubgameHandoff';
 import {
@@ -16,17 +20,31 @@ import {
     type PresentationTransition,
 } from '../../../Common/Code/Runtime/ui/PresentationTransitionCoordinator';
 import { LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { BrowserVoiceRecorder, type VoiceClientContext, type VoiceRecorder } from '../../../Common/Code/Runtime/Voice/VoiceMediaClient';
+import { resolveRuntimeEndpoints } from '../../../Common/Code/Runtime/config/RuntimeEndpoints';
+import type { CommonRoomRuntimeDependencies } from '../../../Games/Common/Code/Room/RoomNetworkControllerMount';
 import { getOrLoadBundle } from '../../../Common/Code/Runtime/navigation/BundleLoader';
 import { hostRouteStore } from '../../../Common/Code/Runtime/navigation/HostRouteStore';
 
 export type StartupRouteResult = 'NAVIGATED' | 'LOBBY_MOUNTED' | 'LOGIN_REQUIRED';
 export type StartupProgressReporter = (message: string, progress: number) => void;
 
+// A recovered room is a compound transaction: Hall login, active-room lookup,
+// one-time room-ticket refresh, scene/bundle activation and the first
+// authoritative snapshot all belong to the same navigation owner.  The HTTP
+// boundary may spend up to three read attempts and the room launcher has its
+// own bounded load budget, so the outer cover must not expire at the generic
+// 15-second UI-navigation threshold while the inner room transaction is still
+// making measurable progress.
+const AUTHENTICATED_ROUTE_TIMEOUT_MS = 60_000;
+
 /** Owns scene transitions, delayed navigation cancellation and lobby mounting. */
 export class SceneRouter {
     private static readonly transitionImplementation = 'aoo-transition-20260907-coordinator-1';
     private lobby: LobbyScreenController | null = null;
-    private gameLauncher: CommonPdkGameSceneLauncher | null = null;
+    private gameLauncher: PdkGameSceneLauncher | null = null;
+    private startupGameRuntimeEntries: GameRuntimeEntryRegistry | null = null;
+    private startupRecoveryForms: LegacyFormManager | null = null;
     private enterPending: Promise<Node> | null = null;
     private enterPendingAccount: AuthenticatedAccount | null = null;
     private pendingLobbyStartup: { restoreLastClubBeforeShow?: boolean; restoreClubId?: number; startupMessage?: string; skipRoomRecovery?: boolean } | null = null;
@@ -77,8 +95,9 @@ export class SceneRouter {
     public showLobby(): void { this.navigate('MainScene'); }
 
     public prepareStartupTransition(message = '正在准备目标界面...', progress = 0, showDuringProgress = true,
-        showAfterMs = NAVIGATION_REVEAL_DELAY_MS): void {
+        showAfterMs = NAVIGATION_REVEAL_DELAY_MS, timeoutMs = 15_000): void {
         if (this.startupTransition?.isCurrent()) {
+            this.startupTransition.setTimeoutBudget(timeoutMs);
             this.startupTransition.update(message, progress, 'STAGE');
             return;
         }
@@ -86,7 +105,7 @@ export class SceneRouter {
             name: 'scene-navigation', message, progress, progressKind: 'STAGE',
             showAfterMs,
             showDuringProgress, retainCurrentFrame: !showDuringProgress,
-            releaseInitialPresentation: true, timeoutMs: 15_000,
+            releaseInitialPresentation: true, timeoutMs,
         });
     }
 
@@ -123,7 +142,17 @@ export class SceneRouter {
         // presentation target. Cover it immediately so the nested room handoff
         // cannot reveal a retained login frame after GameRoom2D is active.
         this.prepareStartupTransition('正在准备目标界面...', 0, presentation === 'NAVIGATE',
-            leavingAuthenticatedLogin ? 0 : NAVIGATION_REVEAL_DELAY_MS);
+            leavingAuthenticatedLogin ? 0 : NAVIGATION_REVEAL_DELAY_MS,
+            AUTHENTICATED_ROUTE_TIMEOUT_MS);
+        // The authenticated handoff is one presentation transaction even when
+        // it crosses Hall, room-bundle, WebSocket and first-frame stages. Feed
+        // every route report back into that same owner so its inactivity
+        // deadline follows real progress instead of expiring in the middle of
+        // a healthy reconnect.
+        const routeReport: StartupProgressReporter = (message, progress) => {
+            report(message, progress);
+            this.startupTransition?.update(message, progress, 'STAGE');
+        };
         this.activeAccountId = String(account.accountId);
         const operationId = ++this.navigationGeneration;
         // The source scene node is expected to become invalid when MainScene or
@@ -135,12 +164,21 @@ export class SceneRouter {
         let gateway: HallRoomGateway;
         let activeRoom: LegacySubgameTicket | null;
         try {
-            role = await this.loginToHallForStartup(account, report);
+            role = await this.loginToHallForStartup(account, routeReport);
             if (!current()) return this.discardLateNavigation(operationId, 'HALL_LOGIN');
             gateway = this.createHallRoomGateway(account, role);
-            report('正在查询活动房间...', 0.58);
+            routeReport('正在查询活动房间...', 0.58);
             activeRoom = await gateway.activeRoom();
             if (!current()) return this.discardLateNavigation(operationId, 'ACTIVE_ROOM');
+            this.logNavigation({
+                operationId,
+                stage: 'ACTIVE_ROOM_RESOLVED',
+                accountId: account.accountId,
+                playerId: role.playerId,
+                roomId: Number(activeRoom?.roomId ?? 0),
+                stateVersion: 0,
+                hasActiveRoom: Boolean(activeRoom),
+            });
         } catch (error: unknown) {
             if (!current()) return this.discardLateNavigation(operationId, 'AUTH_FAILURE');
             // A ticket refusal is an expected authentication-state boundary,
@@ -152,6 +190,35 @@ export class SceneRouter {
             return 'LOGIN_REQUIRED';
         }
         const savedRoute = hostRouteStore.load(String(account.accountId));
+        const activeRoomWithRound = activeRoom as (LegacySubgameTicket & { roundNo?: number }) | null;
+        const waitingClubRoom = Number(activeRoomWithRound?.clubId ?? 0) > 0
+            && activeRoom?.gameName?.trim().toLowerCase() === 'liangshan2006'
+            && Number(activeRoomWithRound?.roundNo ?? 0) <= 0
+            && activeRoom.waitingFull !== true && activeRoom.state !== 'PLAYING';
+        if (activeRoom && waitingClubRoom) {
+            // liangshan2006 owns a lobby-side waiting state. Refresh/restart must restore
+            // ClubMain + RoomDetails; only a full-room event or an explicit second
+            // desk tap is allowed to cross into GameRoom2D.
+            this.roomRecovery.clear(String(account.accountId));
+            const savedClubId = savedRoute?.name === 'club' ? savedRoute.clubId : 0;
+            const clubId = Number(activeRoom.clubId ?? savedClubId ?? 0);
+            const waitingStartup = { restoreLastClubBeforeShow: true, restoreClubId: clubId || undefined,
+                skipRoomRecovery: true };
+            console.info('[StartupRoomRecovery] waiting-club-room-held', {
+                roomId: activeRoom.roomId, clubId, gameCode: activeRoom.gameName,
+                occupiedCount: activeRoom.occupiedCount, playerNum: activeRoom.playerNum,
+            });
+            if (presentation === 'MOUNT_CURRENT') {
+                await this.mountLobby(account, role, parent, waitingStartup);
+                await this.waitForTargetPresentation();
+                await this.releaseStartupTransition();
+                return 'LOBBY_MOUNTED';
+            }
+            await this.preloadLobbyPresentation(routeReport);
+            if (!current()) return this.discardLateNavigation(operationId, 'WAITING_CLUB_PRELOAD');
+            await this.presentLobbyScene(account, role, operationId, waitingStartup);
+            return 'NAVIGATED';
+        }
         if (!activeRoom) {
             this.roomRecovery.clear(String(account.accountId));
             const savedStartup = savedRoute?.name === 'club'
@@ -163,7 +230,7 @@ export class SceneRouter {
                 await this.releaseStartupTransition();
                 return 'LOBBY_MOUNTED';
             }
-            await this.preloadLobbyPresentation(report);
+            await this.preloadLobbyPresentation(routeReport);
             if (!current()) return this.discardLateNavigation(operationId, 'LOBBY_PRELOAD');
             await this.presentLobbyScene(account, role, operationId, savedStartup);
             return 'NAVIGATED';
@@ -178,9 +245,26 @@ export class SceneRouter {
                     returnContext: { clubId: returnTo.clubId } }
                 : { ...activeRoom, entryOrigin: 'GAME_LOBBY', fromClub: false, returnContext: {} };
         }
+        // Startup recovery receives BootStrap's node as its source parent. The
+        // native Mahjong/catalog entries mount their room root directly on the
+        // supplied parent, so entering them here would attach the active room
+        // to a scene that is destroyed by the subsequent MainScene handoff.
+        // Let the live lobby Canvas own non-PDK recovery; LobbyScreenController
+        // then reconciles the same Hall activity and mounts on that valid host.
+        // PDK keeps its launcher-owned GameRoom2D handoff and must not take this
+        // branch.
+        const startupRoom = activeRoom;
+        const isPdkStartupRuntime = PDK_BUSINESS_CODE_LIST.some(code =>
+            code.trim().toLowerCase() === String(startupRoom.gameName ?? '').trim().toLowerCase());
+        if (!isPdkStartupRuntime) {
+            await this.preloadLobbyPresentation(routeReport);
+            if (!current()) return this.discardLateNavigation(operationId, 'ACTIVE_ROOM_LOBBY_PRELOAD');
+            await this.presentLobbyScene(account, role, operationId, null, false);
+            return 'NAVIGATED';
+        }
         try {
-            report('正在恢复房间连接...', 0.62);
-            await this.recoverRoomHandoff(account, role, activeRoom, gateway, parent, report);
+            routeReport('正在恢复房间连接...', 0.62);
+            await this.recoverRoomHandoff(account, role, activeRoom, gateway, parent, routeReport);
             if (!current()) return this.discardLateNavigation(operationId, 'ROOM_RECOVERY');
             this.logNavigation({
                 operationId, stage: 'ROOM_PRESENTED', owner: 'authenticated-route',
@@ -190,22 +274,26 @@ export class SceneRouter {
             await this.releaseStartupTransition();
         } catch (error: unknown) {
             if (!current()) return this.discardLateNavigation(operationId, 'ROOM_RECOVERY_FAILURE');
-            this.roomRecovery.clear(String(account.accountId));
-            this.gameLauncher?.destroy();
-            this.gameLauncher = null;
-            this.pendingLobbyStartup = {
-                skipRoomRecovery: true,
-                startupMessage: error instanceof Error ? error.message : '房间恢复失败，已返回大厅',
-            };
+            // Hall membership is authoritative. A bundle, WebSocket or snapshot
+            // recovery failure is not an explicit leave command and must never
+            // evict the player or expose an interactive lobby behind that active
+            // membership. Preserve both the Hall row and local navigation intent;
+            // the bootstrap error surface owns retrying the same room.
+            this.destroyStartupGameRuntime();
             this.network.reset();
-            console.error('[StartupRoomRecovery] active-room recovery failed', this.roomRecoveryDiagnostic(error));
-            if (presentation === 'MOUNT_CURRENT') {
-                await this.enterLobby(account, parent);
-                await this.waitForTargetPresentation();
-                await this.releaseStartupTransition();
-                return 'LOBBY_MOUNTED';
-            }
-            this.showLobby();
+            const diagnostic = {
+                roomId: activeRoom.roomId,
+                playerId: role.playerId,
+                accountId: account.accountId,
+                operationId,
+                stateVersion: 0,
+                stage: 'ROOM_RECOVERY_FAILURE',
+                membershipAction: 'PRESERVED',
+                ...this.roomRecoveryDiagnostic(error),
+            };
+            this.logNavigation(diagnostic);
+            console.error('[StartupRoomRecovery] active-room recovery blocked; membership preserved', diagnostic);
+            throw error;
         }
         if (presentation === 'MOUNT_CURRENT' && this.startupTransition?.isCurrent()) {
             await this.waitForTargetPresentation();
@@ -250,8 +338,7 @@ export class SceneRouter {
         this.enterPendingAccount = null;
         this.lobby?.destroy();
         this.lobby = null;
-        this.gameLauncher?.destroy();
-        this.gameLauncher = null;
+        this.destroyStartupGameRuntime();
         this.pendingLobbyStartup = null;
         this.startupTransition?.cancel();
         this.startupTransition = null;
@@ -278,8 +365,7 @@ export class SceneRouter {
         this.enterPendingAccount = null;
         this.lobby?.destroy();
         this.lobby = null;
-        this.gameLauncher?.destroy();
-        this.gameLauncher = null;
+        this.destroyStartupGameRuntime();
         this.pendingLobbyStartup = null;
         this.auth.clearReplacedSession();
         this.showLogin();
@@ -293,8 +379,7 @@ export class SceneRouter {
         this.enterPendingAccount = null;
         this.lobby?.destroy();
         this.lobby = null;
-        this.gameLauncher?.destroy();
-        this.gameLauncher = null;
+        this.destroyStartupGameRuntime();
         this.pendingLobbyStartup = null;
         this.disposeSessionReplacementListener?.();
         this.disposeSessionReplacementListener = null;
@@ -457,20 +542,170 @@ export class SceneRouter {
         parent: Node,
         report: StartupProgressReporter,
     ): Promise<void> {
-        const playFamily = String(handoff.playFamily ?? '').trim().toLowerCase().replace(/[:_]/g, '-');
-        if (playFamily !== 'poker-pao-de-kuai') throw new Error('房间玩法暂不支持启动期直接恢复，已返回大厅');
         report('正在加载房间资源...', 0.78);
         this.network.reset();
-        this.gameLauncher?.destroy();
-        this.gameLauncher = new CommonPdkGameSceneLauncher(
+        this.destroyStartupGameRuntime();
+        const launcher = new PdkGameSceneLauncher(
             account,
             role.playerId,
             id => gateway.refreshRoomConnection(id),
             id => gateway.leave(id),
             async () => { this.roomRecovery.clear(String(account.accountId)); },
             target => this.returnFromRoom(account, role, target),
+            async (roomId, setId) => (await gateway.currentReplayCode(roomId, setId)).code,
+            roomId => gateway.historyDetail(roomId),
         );
-        await this.gameLauncher.launch(handoff, { node: parent, report });
+        this.gameLauncher = launcher;
+        const recoveryForms = new LegacyFormManager(parent, () => undefined, true);
+        this.startupRecoveryForms = recoveryForms;
+        const commonRoomRuntimeDependencies = this.createRecoveryRoomRuntimeDependencies(account, recoveryForms);
+        const pdkEntry: GameRuntimeEntry = {
+            id: 'startup-common-pdk',
+            canonicalGameCodes: Object.freeze([...PDK_BUSINESS_CODE_LIST]),
+            families: Object.freeze(['poker-pao-de-kuai']),
+            supportsPlayVersion: (playVersion, ticket) => {
+                const gameCode = String(ticket.gameName ?? '').trim().toLowerCase();
+                return supportsPdkPlayVersion(gameCode, playVersion);
+            },
+            preload: () => launcher.prewarmDefaultRoom(),
+            enter: target => launcher.launch(target, { node: parent, report }),
+            // Startup recovery uses the same launcher-owned coordinator as the
+            // ordinary lobby route.  Without forwarding the live ports here,
+            // the CommonRoom composition root falls back to the destroyed
+            // lobby mount and rejects recovery with missing dependencies.
+            commonRoomPorts: () => launcher.commonRoomPorts(),
+            destroy: () => launcher.destroy(),
+        };
+        const registry = createProductionGameRuntimeEntryRegistry({
+            pdk: pdkEntry,
+            lobbyNode: parent,
+            // RoleSession.playerId is the authoritative in-game identity returned
+            // by Hall (the public display ID in the legacy protocol). accountId is
+            // an authentication-domain key and must never replace it here.
+            playerId: role.playerId,
+            accountId: Number(account.accountId),
+            refreshRoomConnection: roomId => gateway.refreshRoomConnection(roomId),
+            commonRoomRuntimeDependencies,
+            requestRoomExit: roomId => this.exitRecoveredRoom(
+                account, role, handoff, gateway, roomId),
+            onCD299ExitRequested: roomId => this.exitRecoveredCD299Spectator(
+                account, role, handoff, gateway, roomId),
+        });
+        this.startupGameRuntimeEntries = registry;
+        const runtime = registry.resolveRequired(handoff);
+        console.info('[StartupRoomRecovery] runtime-resolved', {
+            roomId: Number(handoff.roomId ?? handoff.roomID ?? 0),
+            playerId: role.playerId,
+            accountId: account.accountId,
+            operationId: this.navigationGeneration,
+            stateVersion: Number((handoff as LegacySubgameTicket & { stateVersion?: unknown }).stateVersion ?? 0),
+            gameCode: String(handoff.gameName ?? ''),
+            playFamily: String(handoff.playFamily ?? ''),
+            runtimeEntry: runtime.id,
+        });
+        await runtime.enter(handoff);
+    }
+
+    /**
+     * Recovery may run before MainScene recreates LobbyScreenController. Keep
+     * the dependency contract in CommonRoom, but give it a temporary UI/form
+     * owner for this boot-owned room until the user returns to the lobby.
+     */
+    private createRecoveryRoomRuntimeDependencies(
+        account: AuthenticatedAccount,
+        forms: LegacyFormManager,
+    ): CommonRoomRuntimeDependencies {
+        const endpoints = resolveRuntimeEndpoints();
+        const apiBaseUrl = String(endpoints.apiBaseUrl ?? '').trim();
+        const deviceId = String(account.deviceId ?? endpoints.deviceId ?? '').trim();
+        const channel = String(endpoints.clientChannel ?? '').trim();
+        const clientVersion = String(endpoints.clientVersion ?? '').trim();
+        if (!apiBaseUrl) throw new Error('COMMON_ROOM_MEDIA_ENDPOINT_INVALID');
+        try { new URL(apiBaseUrl); } catch { throw new Error('COMMON_ROOM_MEDIA_ENDPOINT_INVALID'); }
+        if (!deviceId || !channel || !clientVersion) throw new Error('COMMON_ROOM_CLIENT_CONTEXT_REQUIRED');
+        const assertActive = (): void => {
+            if (this.disposed || !forms.isAlive()) throw new Error('COMMON_ROOM_FORM_HOST_DESTROYED');
+        };
+        const bearer = async (): Promise<string> => {
+            assertActive();
+            const token = String(account.accessToken || account.token || '').trim();
+            if (!token) throw new Error('COMMON_ROOM_ACCESS_TOKEN_REQUIRED');
+            return token;
+        };
+        const formHost = Object.freeze({
+            show: async (path: string, ...args: readonly unknown[]) => {
+                assertActive();
+                const normalized = String(path ?? '').trim();
+                if (!normalized) throw new Error('COMMON_ROOM_FORM_PATH_REQUIRED');
+                return forms.show(normalized, ...args);
+            },
+            close: (path: string): void => {
+                assertActive();
+                const normalized = String(path ?? '').trim();
+                if (!normalized) throw new Error('COMMON_ROOM_FORM_PATH_REQUIRED');
+                forms.close(normalized);
+            },
+        });
+        const browserRecorder = new BrowserVoiceRecorder();
+        const recorder = (): VoiceRecorder => {
+            assertActive();
+            const injected = (globalThis as typeof globalThis & { aooVoiceRecorder?: VoiceRecorder }).aooVoiceRecorder;
+            const selected = injected ?? browserRecorder;
+            if (typeof selected.record !== 'function' || typeof selected.play !== 'function'
+                || typeof selected.cancel !== 'function') throw new Error('COMMON_ROOM_VOICE_RECORDER_INVALID');
+            return selected;
+        };
+        return Object.assign(recorder, {
+            bearer,
+            formHost,
+            apiBaseUrl,
+            context: (): VoiceClientContext => ({ deviceId, channel, clientVersion }),
+        });
+    }
+
+    private async exitRecoveredCD299Spectator(
+        account: AuthenticatedAccount,
+        role: RoleSession,
+        handoff: LegacySubgameTicket,
+        gateway: HallRoomGateway,
+        roomId: number,
+    ): Promise<void> {
+        return this.exitRecoveredRoom(account, role, handoff, gateway, roomId);
+    }
+
+    private async exitRecoveredRoom(
+        account: AuthenticatedAccount,
+        role: RoleSession,
+        handoff: LegacySubgameTicket,
+        gateway: HallRoomGateway,
+        roomId: number,
+    ): Promise<void> {
+        const operationId = this.navigationGeneration;
+        console.info('[StartupRoomRecovery] spectator-exit', {
+            roomId, playerId: role.playerId, accountId: account.accountId,
+            operationId, stage: 'LEAVE_START',
+        });
+        try {
+            await gateway.leave(roomId);
+            console.info('[StartupRoomRecovery] spectator-exit', {
+                roomId, playerId: role.playerId, accountId: account.accountId,
+                operationId, stage: 'LEAVE_COMMITTED',
+            });
+        } catch (error: unknown) {
+            console.error('[StartupRoomRecovery] spectator-exit', {
+                roomId, playerId: role.playerId, accountId: account.accountId,
+                operationId, stage: 'LEAVE_FAILED',
+                error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+        }
+        this.roomRecovery.clear(String(account.accountId));
+        this.destroyStartupGameRuntime();
+        await this.returnFromRoom(account, role, handoff);
+        console.info('[StartupRoomRecovery] spectator-exit', {
+            roomId, playerId: role.playerId, accountId: account.accountId,
+            operationId, stage: 'LOBBY_PRESENTED',
+        });
     }
 
     private createHallRoomGateway(account: AuthenticatedAccount, role: RoleSession): HallRoomGateway {
@@ -526,8 +761,7 @@ export class SceneRouter {
 
     private invalidateStartupSession(account: AuthenticatedAccount): void {
         this.roomRecovery.clear(String(account.accountId));
-        this.gameLauncher?.destroy();
-        this.gameLauncher = null;
+        this.destroyStartupGameRuntime();
         this.pendingLobbyStartup = null;
         this.auth.clearSession();
         this.network.reset();
@@ -609,8 +843,7 @@ export class SceneRouter {
         this.enterPendingAccount = null;
         this.lobby?.destroy();
         this.lobby = null;
-        this.gameLauncher?.destroy();
-        this.gameLauncher = null;
+        this.destroyStartupGameRuntime();
         this.pendingLobbyStartup = null;
         this.showLogin();
     }
@@ -627,6 +860,15 @@ export class SceneRouter {
             if (scene === 'BootStrap') return;
             return this.waitForTargetPresentation().then(() => this.releaseStartupTransition());
         }).catch(error => this.failStartupTransition(error, () => this.navigate(scene)));
+    }
+
+    private destroyStartupGameRuntime(): void {
+        if (this.startupGameRuntimeEntries) this.startupGameRuntimeEntries.destroy();
+        else this.gameLauncher?.destroy();
+        this.startupRecoveryForms?.destroy();
+        this.startupRecoveryForms = null;
+        this.startupGameRuntimeEntries = null;
+        this.gameLauncher = null;
     }
 
     /** Scene ownership follows Bundle boundaries; only Login scenes live in the main bundle. */

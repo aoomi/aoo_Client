@@ -432,11 +432,6 @@ export class LegacyAycpRoomManager {
 			this.FormManager.GetFormComponentByFormName("game/" + this.app.subGameName.toUpperCase() + "/ui/UI" + this.app.subGameName.toUpperCase() + "Play").Pre_OutCard(cardID);
 		}
   }
-	//退出房间
-  public SendExitRoom(roomID, pos) {
-		this.NetManager.requestV2("room.CBaseExitRoom", {"roomID": roomID, "posIndex": pos});
-  }
-
 	//请求对局记录封包
   public SendRoomRecord(roomID) {
 		this.NetManager.requestV2(this.app.subGameName + ".C" + this.app.subGameName.toUpperCase() + "RoomRecord", {"roomID": roomID});

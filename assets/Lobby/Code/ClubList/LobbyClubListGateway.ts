@@ -1,4 +1,5 @@
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
+import { AppError } from '../../../Common/Code/Runtime/core/AppError';
 
 export interface LobbyClubSummary {
     id?: number;
@@ -38,10 +39,18 @@ export class LobbyClubListGateway implements LobbyClubListSource {
                 }
             }));
         } catch (error: unknown) {
-            // The legacy service uses 3008 for an account with no club records.
-            // The list screen represents that state as an empty list, not an error.
-            if (error instanceof Error && /^3008:\s/.test(error.message)) return [];
-            throw error;
+            // Legacy Club used numeric 3008 for several meanings. It must never
+            // be silently converted to an empty list because that hides the root
+            // cause and collides with Gateway's room-state 3008.
+            const appError = AppError.fromUnknown(error);
+            if (appError.legacyCode === 3008 || (error instanceof Error && /^3008:\s/.test(error.message))) {
+                const detail = appError.message.replace(/^3008:\s*/, '').trim() || 'legacy club list response';
+                console.error('[AooClientError]', {
+                    source: 'LobbyClubListGateway.list', code: 'CLUB_LIST_EMPTY', legacyCode: 3008, detail,
+                });
+                throw new AppError('CLUB_LIST_EMPTY', 'club list response used ambiguous numeric 3008', appError, 3008);
+            }
+            throw appError;
         }
     }
 

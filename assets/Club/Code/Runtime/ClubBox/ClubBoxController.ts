@@ -2,6 +2,7 @@ import { Button, Label, Layout, Node, ScrollView, Sprite, UITransform, instantia
 import { UnifiedScroll } from '../../../../Common/Code/UI/UnifiedScroll';
 import { PlayerAvatarService } from '../../../../Common/Code/UI/PlayerAvatarService';
 import type { ClubBoxBalance, ClubBoxRecord, ClubBoxSource } from './ClubBoxGateway';
+import { setClubDynamicLabel } from '../ClubDynamicLabel';
 
 export type ClubBoxOperation = 'store' | 'withdraw';
 
@@ -170,7 +171,7 @@ export class ClubBoxController {
     private setLabel(root: Node, path: string, value: string): void {
         const label = root.getChildByPath(path)?.getComponent(Label);
         if (!label) throw new Error(`ClubBox label is missing: ${path}`);
-        label.string = value;
+        setClubDynamicLabel(label, path, value);
     }
 
     private requireNode(path: string): Node {

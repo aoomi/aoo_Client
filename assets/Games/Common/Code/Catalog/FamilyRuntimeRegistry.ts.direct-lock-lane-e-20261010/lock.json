@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "LANE-E-20261010T000000Z-01",
+  "status": "RELEASED_FOR_TRANSFER",
+  "owner": "/root/lane_e_wordcard_migration",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "LANE-E-wordcard-longcard-implementation-20261010",
+  "taskCardSha256": "6d4b950b668076760ce48e37e6b8fbee5e0dccbe00b51f5c1ce6cb471c44d685",
+  "acquiredAt": "2026-10-10T00:00:00Z",
+  "path": "Client/assets/Games/Common/Code/Catalog/FamilyRuntimeRegistry.ts",
+  "preimageSha256": "965ce35e735dcee284303724cfe27c7ec3a3dcccb7805a46111653df1bffd9dc",
+  "scope": "Lane E current LongCard runtime family and explicit historical WordCard compatibility schema",
+  "releasedAt": "2026-10-12T10:38:19Z",
+  "releaseReason": "TYPED_CUSTODY_TRANSFER_R83_CLIENT_CATALOG",
+  "releaseReceipt": "docs/05-当前状态/evidence/c2-client-catalog-custody-r83-transfer-20261012/release-receipt.json",
+  "heldPreimageSha256": "965ce35e735dcee284303724cfe27c7ec3a3dcccb7805a46111653df1bffd9dc",
+  "currentDirtyPreimageSha256": "ea4e464bea84fde025fc2c2df7f8a0a85fae14c0ad9c29169ff8b1f3b4d56515",
+  "implementationWritesAfterRelease": false
+}

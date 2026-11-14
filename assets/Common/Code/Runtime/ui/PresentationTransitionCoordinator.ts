@@ -66,6 +66,17 @@ export class PresentationTransition {
         this.owner.update(this.id, message, progress, progressKind);
     }
 
+    /**
+     * Upgrades the inactivity budget when a route grows into a compound
+     * authenticated handoff (Hall -> room -> first frame). Existing callers
+     * keep the same transaction and retained frame; only its authoritative
+     * deadline is widened and re-armed.
+     */
+    public setTimeoutBudget(timeoutMs: number): void {
+        if (!this.active) return;
+        this.owner.setTimeoutBudget(this.id, timeoutMs);
+    }
+
     public isCurrent(): boolean {
         return this.active && this.owner.isCurrent(this.id);
     }
@@ -144,12 +155,14 @@ export class PresentationTransitionCoordinator {
         // inner room transaction must not capture its source scene (notably
         // LoginScene), otherwise releasing the navigation cover can expose that
         // stale snapshot for one browser-compositor frame before the room canvas.
-        const visibleOwnerActive = [...this.records.values()].some(item => item.id !== id
+        // Creator 3.8.8 loose Web output does not lower iterator spread correctly:
+        // `[...map.values()]` becomes `[].concat(iterator)`. Materialize it explicitly.
+        const visibleOwnerActive = Array.from(this.records.values()).some(item => item.id !== id
             && item.options.showDuringProgress !== false);
         if (options.retainCurrentFrame && !visibleOwnerActive) this.captureCurrentFrame();
         // A nested prefab/network transaction must stay behind an active silent
         // handoff; otherwise its delayed loading cover flashes over the retained frame.
-        const silentHandoff = [...this.records.values()].some(item => item.options.retainCurrentFrame
+        const silentHandoff = Array.from(this.records.values()).some(item => item.options.retainCurrentFrame
             && item.options.showDuringProgress === false);
         const initialPresentationVisible = this.initialPresentationActive
             || (this.initialPresentation?.isVisible() ?? false);
@@ -202,6 +215,14 @@ export class PresentationTransitionCoordinator {
         this.log('progress', record);
     }
 
+    public setTimeoutBudget(id: number, timeoutMs: number): void {
+        const record = this.records.get(id);
+        if (!record || record.failed || !Number.isFinite(timeoutMs) || timeoutMs <= 0) return;
+        const currentBudget = record.options.timeoutMs ?? 0;
+        if (timeoutMs > currentBudget) record.options = { ...record.options, timeoutMs };
+        this.armTimeout(record);
+    }
+
     public async commitAfterPresentation(id: number, readiness: PresentationReadiness): Promise<void> {
         const record = this.records.get(id);
         if (!record || record.failed) return;
@@ -217,7 +238,10 @@ export class PresentationTransitionCoordinator {
         if (!record) return;
         this.clearTimers(record);
         record.failed = true;
-        this.releaseCurrentFrame();
+        // Keep the retained source frame underneath the error cover until the
+        // caller retries or cancels this transaction. Releasing it before the
+        // failed cover is painted exposes Cocos' clear colour for one browser
+        // compositor frame, which is the black flash seen on room recovery.
         record.visible = true;
         record.message = error instanceof Error ? error.message : String(error);
         this.retry = () => {

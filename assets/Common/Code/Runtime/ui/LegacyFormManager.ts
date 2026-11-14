@@ -57,15 +57,28 @@ export class LegacyForm {
         public readonly node: Node,
         path: string,
         private readonly parent: Node,
-        private readonly options: LegacyFormOptions,
+        private options: LegacyFormOptions,
     ) {
         this.path = path;
         this.name = path.slice(path.lastIndexOf('/') + 1);
     }
 
+    /**
+     * Scene controllers may be recreated while the shared UI layer keeps a
+     * cached form instance. Refresh its lifecycle ownership so reopening the
+     * form cannot call a disposed controller or leave its buttons unbound.
+     */
+    public updateOptions(options: LegacyFormOptions): void {
+        this.options = options;
+    }
+
     public show(args: unknown[] = []): void {
         if (!this.parent.isValid || !this.node.isValid) return;
         if (!this.node.parent) this.parent.addChild(this.node);
+        // A presentation handoff may hide a cached form root before closing it.
+        // Reopening that form must restore the root before its onShow lifecycle
+        // hides the underlying surface, otherwise both surfaces become invisible.
+        this.node.active = true;
         if (!this.shown && this.options.showFromCenter && this.name !== 'Numpad') {
             const scale = this.node.scale.clone();
             this.node.setScale(new Vec3(scale.x * 0.5, scale.y * 0.5, scale.z));
@@ -133,6 +146,7 @@ export class LegacyFormManager {
     private readonly bundleLoading = new Map<string, Promise<AssetManager.Bundle | null>>();
     private readonly prefabLoading = new Map<string, Promise<Prefab | null>>();
     private refreshWarmup: Promise<void> | null = null;
+    private warmupPausedUntil = 0;
     private readonly defaults: string[] = [];
     private readonly shownStack: string[] = [];
     private readonly modalMask = new Node('LegacyModalInputMask');
@@ -141,6 +155,7 @@ export class LegacyFormManager {
     private disposed = false;
     private suppressPointerContinuation = false;
     private readonly pointerStart = (event?: unknown): void => {
+        this.deferBackgroundWarmup();
         this.suppressPointerContinuation = false;
         let target = (event as { target?: Node } | undefined)?.target ?? null;
         while (target && target !== this.uiLayer) {
@@ -164,6 +179,11 @@ export class LegacyFormManager {
         private readonly onLoadingChanged: (loading: boolean) => void = () => undefined,
         private readonly externalLoadingPresentation = false,
     ) {
+        // Runtime-created nodes default to the DEFAULT layer. A modal shield on
+        // that layer does not participate in the UI camera's hit-test chain,
+        // so pointer events can reach controls behind an otherwise visible
+        // modal. Keep the shield on the same UI layer as every mounted form.
+        this.modalMask.layer = this.uiLayer.layer;
         this.modalMask.addComponent(UITransform).setContentSize(1280, 720);
         this.modalMask.addComponent(BlockInputEvents);
         this.modalMask.active = false;
@@ -176,7 +196,9 @@ export class LegacyFormManager {
 
     public register(formPath: string, options: LegacyFormOptions): void {
         this.assertAlive();
-        this.options.set(this.normalize(formPath), options);
+        const path = this.normalize(formPath);
+        this.options.set(path, options);
+        this.loaded.get(path)?.updateOptions(options);
     }
 
     /** Warms a form's authoritative prefab without mounting it or firing lifecycle callbacks. */
@@ -206,31 +228,55 @@ export class LegacyFormManager {
     public preloadRefreshSurface(includeModules = true, concurrency = 1): Promise<void> {
         this.assertAlive();
         if (this.refreshWarmup) return this.refreshWarmup;
-        const paths = [...new Set([
+        // Showing a surface is not an idle boundary. The former setTimeout(0)
+        // implementation began decoding the complete prefab catalog on the next
+        // task, competing with the first click, room navigation and initial deal.
+        // Keep the established priority order, but consume it only in browser idle
+        // slices and yield again before every prefab.
+        this.deferBackgroundWarmup(600);
+        // Creator 3.8.8 loose Web output lowers iterable spread to Array#concat.
+        // A Set/Map iterator is then inserted as one route object instead of
+        // expanded, so normalize receives the Set itself. Materialize both
+        // iterable boundaries while keeping the authoritative string contract.
+        const paths = Array.from(new Set<string>([
             // The first post-refresh navigation is most often a room entry.
             // Decode game-room and shared-room forms before optional page/module
             // forms so entering a club can hit the room cache immediately.
             ...listGamePrefabForms(),
             ...listCommonPrefabForms(),
-            ...this.options.keys(),
+            ...Array.from(this.options.keys()),
             ...(includeModules ? listModulePrefabForms() : []),
-        ])];
+        ]));
+        const startedAt = Date.now();
+        console.info('[AooBackgroundWarmup] started', { total: paths.length, concurrency });
         let cursor = 0;
         const worker = async (): Promise<void> => {
             while (!this.disposed) {
                 const index = cursor++;
                 if (index >= paths.length) return;
+                await this.waitForBackgroundWarmupSlot();
+                if (this.disposed) return;
                 await this.loadNativePrefab(paths[index]);
             }
         };
         this.refreshWarmup = Promise.all(
             Array.from({ length: Math.min(Math.max(1, concurrency), paths.length || 1) }, () => worker()),
-        ).then(() => undefined).finally(() => { this.refreshWarmup = null; });
+        ).then(() => undefined).finally(() => {
+            console.info('[AooBackgroundWarmup] finished', {
+                loaded: Math.min(cursor, paths.length), total: paths.length,
+                elapsedMs: Date.now() - startedAt, disposed: this.disposed,
+            });
+            this.refreshWarmup = null;
+        });
         return this.refreshWarmup;
     }
 
     public async show(formPath: string, ...args: unknown[]): Promise<LegacyForm | null> {
         this.assertAlive();
+        // Foreground navigation always wins over speculative decoding. An already
+        // running Creator asset callback cannot be cancelled safely, but this gate
+        // prevents the warmup queue from starting another decode behind the click.
+        this.deferBackgroundWarmup(1_200);
         const path = this.normalize(formPath);
         const cached = this.loaded.get(path);
         if (cached?.node.isValid) {
@@ -325,6 +371,28 @@ export class LegacyFormManager {
         })();
         this.creating.set(path, request);
         return request.promise;
+    }
+
+    private deferBackgroundWarmup(milliseconds = 800): void {
+        this.warmupPausedUntil = Math.max(this.warmupPausedUntil, Date.now() + milliseconds);
+    }
+
+    private async waitForBackgroundWarmupSlot(): Promise<void> {
+        while (!this.disposed) {
+            const remaining = this.warmupPausedUntil - Date.now();
+            if (remaining > 0) {
+                await new Promise<void>(resolve => globalThis.setTimeout(resolve, Math.min(remaining, 200)));
+                continue;
+            }
+            const scheduler = globalThis as typeof globalThis & {
+                requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+            };
+            await new Promise<void>(resolve => {
+                if (scheduler.requestIdleCallback) scheduler.requestIdleCallback(resolve, { timeout: 1_000 });
+                else globalThis.setTimeout(resolve, 32);
+            });
+            if (Date.now() >= this.warmupPausedUntil) return;
+        }
     }
 
     private async instantiateWithFallback(
@@ -919,7 +987,7 @@ export class LegacyFormManager {
             'UIClubPromoterAdd/EditBox',
             'UIForbidAddUser/EditBox',
             'UIForbidGameAddUser/EditBox',
-            'ClubPromoterLevelAdd/EditBox',
+            'UIClubPromoterLevelAdd/EditBox',
             'UIPromoterXIaShuAdd/EditBox',
             'UIPromoterXiaShuList/EditBox',
             'UIUnionYaoQing/EditBox',

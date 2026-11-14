@@ -1,0 +1,63 @@
+{
+  "ver": "1.0.8",
+  "importer": "sprite-atlas",
+  "imported": true,
+  "uuid": "ea0891b5-fae8-4a82-8336-55e597dbdf7c",
+  "files": [
+    ".json"
+  ],
+  "subMetas": {
+    "4b9d1": {
+      "importer": "sprite-frame",
+      "uuid": "ea0891b5-fae8-4a82-8336-55e597dbdf7c@4b9d1",
+      "displayName": "",
+      "id": "4b9d1",
+      "name": "GoldIcon",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "trimX": 2,
+        "trimY": 2,
+        "width": 54,
+        "height": 49,
+        "rawWidth": 54,
+        "rawHeight": 49,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [],
+          "indexes": [],
+          "uv": [],
+          "nuv": [],
+          "minPos": [],
+          "maxPos": []
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "bab22955-a8df-489c-9010-13f50fd4d569@6c48a",
+        "atlasUuid": "ea0891b5-fae8-4a82-8336-55e597dbdf7c",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "atlasTextureName": "GameCommon.png",
+    "format": 3,
+    "uuid": "ea0891b5-fae8-4a82-8336-55e597dbdf7c",
+    "textureUuid": "bab22955-a8df-489c-9010-13f50fd4d569@6c48a"
+  }
+}

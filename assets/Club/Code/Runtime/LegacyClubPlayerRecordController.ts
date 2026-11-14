@@ -2,6 +2,7 @@ import { Button, JsonAsset, Label, Layout, Node, instantiate, resources } from '
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { populateAuthoritativeGameNames } from '../../../Games/Common/Code/Catalog/CatalogFamilyBindings';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 interface PlayerRecordRow { gameId?: number; size?: number; winner?: number; sumPoint?: number }
 
@@ -33,7 +34,7 @@ export class LegacyClubPlayerRecordController {
     private updateDates(): void { const tab = this.form ? this.desc(this.form.node, 'tab') : null; for (let i = 3; i < (tab?.children.length ?? 0); i += 1) { const child = tab?.children[i]; if (!child) continue; const date = new Date(Date.now() - i * 86400000); const text = `${date.getMonth() + 1}月${date.getDate()}日`; this.label(this.desc(child, 'on') ?? child, 'lb', text); this.label(this.desc(child, 'off') ?? child, 'lb', text); } }
     private click(root: Node, name: string, fn: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, fn); this.disposers.push(() => node.off(Button.EventType.CLICK, fn)); }
     private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const result = this.desc(child, name); if (result) return result; } return null; }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private active(root: Node, name: string, value: boolean): void { const node = this.desc(root, name); if (node) node.active = value; }
     private async tip(message: string): Promise<void> { await this.forms.show('UIMessage_Drift', null, null, message); }
 }

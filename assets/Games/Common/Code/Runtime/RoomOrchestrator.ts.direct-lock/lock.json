@@ -1,0 +1,19 @@
+{
+  "taskId": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "client-room-session-r1",
+  "owner": "/root/repair_common_room_session_registration",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_COORDINATION",
+  "acquiredAt": "2026-10-10T10:47:39Z",
+  "path": "Client/assets/Games/Common/Code/Runtime/RoomOrchestrator.ts",
+  "sourceWrite": true,
+  "preimageSha256": "74b13406f58e10db0ab16ad7e913831a02d396a2d00a7bf5501b87a6bc2108d5",
+  "custody": "untracked inherited file preserved; no active owner found in fresh Agent Tree; do not delete or replace",
+  "allowedChange": "two-phase Common/Gameplay ordering only; RoomOrchestrator remains sole lifecycle authority",
+  "forbidden": ["LoginScene", "rules workbooks", "Server", "protocol semantics", "generated bundles", "shared runtime", "reconnect/handoff contract", "deletion"],
+  "independentReviewRequired": true,
+  "releasedAt": "2026-10-10T11:05:00Z",
+  "postimageSha256": "5e8328bf5946e2009374df5fe5c7ce35a7134be943faed2382b45da60ff1f23a",
+  "independentReview": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-independent-review-20261010/independent-acceptance-v2.md",
+  "independentReviewSha256": "dc34a7b53e65362ec79d5fd530626b76534ceb3f7b83d2163cb587d1f072410f"
+}

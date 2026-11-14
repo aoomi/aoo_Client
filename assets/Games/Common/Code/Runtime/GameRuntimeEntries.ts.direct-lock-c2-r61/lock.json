@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "lockId": "c2-client-runtime-custody-20261012-r61-game-runtime-entries",
+  "task": "C2-CLIENT-RUNTIME-CUSTODY-20261012-R61",
+  "lane": "C2",
+  "owner": "/root/lane_c_client_e2e",
+  "coordinator": "/root",
+  "status": "RELEASED_NO_CHANGE",
+  "path": "Client/assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts",
+  "scope": "paired runtime provenance inspection only; no production source write",
+  "preimageSha256": "694a45b6d1446c9fb7df896cbbc065b2c7f208bb4d2e9afa960d90bc3aa98ce4",
+  "postimageSha256": "694a45b6d1446c9fb7df896cbbc065b2c7f208bb4d2e9afa960d90bc3aa98ce4",
+  "sourceWrite": false,
+  "resourceWrite": false,
+  "metadataWrite": false,
+  "testWrite": false,
+  "generatedBundleWrite": false,
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "releasePromotion": "forbidden until canonical manifest and independent acceptance",
+  "releasedAt": "2026-10-12T00:40:00+08:00",
+  "evidence": "docs/05-当前状态/evidence/c2-client-runtime-custody-r61-20261012/report.md"
+}

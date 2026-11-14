@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r5",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/assets/Common/Code/Runtime/core/AppError.ts",
+  "preimageSha256": "44fe79f8546b8f4fa138cbc20332c5777e51e6bdc00122eeca6ef20e6c12c0b3",
+  "scope": "add Hall typed aliases to Client AppError canonical mapping",
+  "sourceWrite": true,
+  "testWrite": false,
+  "independentReviewer": "lane_g",
+  "replacementCounts": {
+    "Hall invalid aliases": 1,
+    "Hall permission aliases": 1,
+    "Hall upstream aliases": 1,
+    "Hall route aliases": 1
+  },
+  "postimageSha256": "33aa0bca997678e49b15d2c7170c3743ca3288180d23e63e3b624ea7bbeeba53"
+}

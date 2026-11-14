@@ -3,6 +3,6 @@ export interface RoleSession {
     displayName: string;
     headImageUrl: string;
     roomCard: number;
-    diamond: number;
+    gold: number;
     raw: Readonly<Record<string, unknown>>;
 }

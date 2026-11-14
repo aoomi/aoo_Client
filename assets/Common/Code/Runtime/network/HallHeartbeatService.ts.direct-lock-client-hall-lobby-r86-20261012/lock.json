@@ -1,0 +1,14 @@
+{
+  "batch": "CLIENT-HALL-LOBBY-R86",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/lane_c_client_e2e",
+  "path": "Client/assets/Common/Code/Runtime/network/HallHeartbeatService.ts",
+  "preimageSha256": "71514d6e1685cdab8d373e707c63f7f0427fe2d6d940bcee4441399b06bfac1e",
+  "scope": "Canonical internal Lobby aliases only; Hall protocol and compatibility aliases preserved",
+  "forbidden": ["Client/assets/Lobby/Code/HallRoomGateway.ts", "Client/assets/Login/Code/Navigation/SceneRouter.ts", "LoginScene.scene", "rules workbooks", "Bundle", "Server", "protocol strings", "shared environment"],
+  "postimageSha256": "426fe4eff6000547cd5b104a2c0630c81eae98b51c389e53e526a3e33868ab04",
+  "releasedAt": "2026-10-12T11:46:00Z",
+  "productionWrite": true,
+  "tests": ["node --check Client/tests/unit/lobby-naming-contract.test.mjs", "node Client/tests/unit/lobby-naming-contract.test.mjs", "node --test Client/tests/unit/host-route-refresh-recovery.test.mjs (6/7; pre-existing LegacyClub refreshTemplateRooms assertion)", "node --test Client/tests/unit/client-manager-lifecycle.test.mjs", "node --test Client/tests/unit/reconnect-coordinator.test.mjs"],
+  "toolchain": {"nodeObserved": "v26.8.2", "pnpmObserved": "11.25.0", "required": "Node24.19.0/pnpm11.19.0"}
+}

@@ -103,8 +103,16 @@ export class ClubRoomFeeController {
         const config = wrapped && typeof wrapped === 'object' && 'bRoomConfigure' in wrapped
             ? (wrapped as { bRoomConfigure?: RoomConfig }).bRoomConfigure ?? {}
             : (wrapped as RoomConfig | undefined) ?? {};
-        this.edit(form.node, 'NameInput', String(config.roomName ?? ''));
         const baseScore = Math.max(1, Number(this.rulePacket.baseScore ?? 1));
+        const roomName = String(config.roomName ?? '').trim() || this.defaultRoomName(baseScore);
+        this.edit(form.node, 'NameInput', roomName);
+        console.info('[ClubRoomFee] form-ready', {
+            clubId: Number(this.context.clubId ?? 0),
+            gameCode: String(this.rulePacket.gameCode ?? ''),
+            baseScore,
+            roomName,
+            restoredName: Boolean(String(config.roomName ?? '').trim()),
+        });
         this.value(form.node, 'EntryCent/Btn_Value', Number(config.JoinGamePoint ?? config.roomSportsThreshold ?? baseScore * 100));
         this.value(form.node, 'ExitCent/Btn_Value', Number(config.roomSportsAutoDismiss ?? config.autoDismiss ?? baseScore * 50));
         const deskColor = Math.max(0, Math.min(3, Number(config.deskColor ?? 0)));
@@ -126,6 +134,15 @@ export class ClubRoomFeeController {
         const selected = this.desc(form.node, `Option_${['Stage', 'AA', 'Ratio'][this.feeType]}`)?.getComponent(Toggle);
         if (selected) selected.isChecked = true;
         this.selectFeeType(this.feeType);
+    }
+
+    private defaultRoomName(baseScore: number): string {
+        const displayName = String(this.rulePacket.gameDisplayName ?? '').trim();
+        const classificationName = String(this.rulePacket.classificationName ?? '').trim();
+        const playName = classificationName && displayName.startsWith(classificationName)
+            ? displayName.slice(classificationName.length).trim()
+            : displayName;
+        return playName ? `${playName}${baseScore}分` : `${baseScore}分房`;
     }
 
     private legacyConditions(config: RoomConfig): FeeCondition[] {

@@ -1,6 +1,7 @@
 import { Button, EditBox, Label, Node, RichText } from 'cc';
 import { ProtocolClient } from '../../../Common/Code/Runtime/network/ProtocolClient';
 import { LegacyForm, LegacyFormManager } from '../../../Common/Code/Runtime/ui/LegacyFormManager';
+import { setClubDynamicLabel } from './ClubDynamicLabel';
 
 export interface ClubCentContext {
     clubId?: number; unionId?: number; opClubId?: number; targetClubId?: number;
@@ -103,7 +104,7 @@ export class LegacyClubCentController {
 
     private number(form: LegacyForm): number { const text = this.desc(form.node, 'ClubCentEdit')?.getComponent(EditBox)?.string.trim() ?? ''; return /^\d+(?:\.\d+)?$/.test(text) ? Number(text) : -1; }
     private context(value: unknown): ClubCentContext { return value && typeof value === 'object' ? value as ClubCentContext : {}; }
-    private label(root: Node, name: string, value: string): void { const label = this.desc(root, name)?.getComponent(Label); if (label) label.string = value; }
+    private label(root: Node, name: string, value: string): void { setClubDynamicLabel(this.desc(root, name)?.getComponent(Label) ?? null, name, value); }
     private rich(root: Node, name: string, value: string): void { const rich = this.desc(root, name)?.getComponent(RichText); if (rich) rich.string = value; else this.label(root, name, value); }
     private click(root: Node, name: string, action: () => void): void { const node = this.desc(root, name); if (!node) return; node.on(Button.EventType.CLICK, action); this.disposers.push(() => node.off(Button.EventType.CLICK, action)); }
     private desc(root: Node, name: string): Node | null { if (root.name === name) return root; for (const child of root.children) { const found = this.desc(child, name); if (found) return found; } return null; }

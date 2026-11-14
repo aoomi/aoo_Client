@@ -1,7 +1,8 @@
 import { game, Game } from 'cc';
 import type { ProtocolTransport } from './StableTransportFacade';
 
-export class HallHeartbeatService {
+/** Canonical Lobby heartbeat owner. The Hall export below is compatibility-only. */
+export class LobbyHeartbeatService {
     private static readonly INTERVAL_MS = 15000;
     private static readonly TIMEOUT_MS = 5000;
     private readonly disposers: Array<() => void> = [];
@@ -21,7 +22,7 @@ export class HallHeartbeatService {
         );
         game.on(Game.EVENT_HIDE, this.handleHide, this);
         game.on(Game.EVENT_SHOW, this.handleShow, this);
-        this.timer = globalThis.setInterval(() => void this.sendHeartbeat(), HallHeartbeatService.INTERVAL_MS);
+        this.timer = globalThis.setInterval(() => void this.sendHeartbeat(), LobbyHeartbeatService.INTERVAL_MS);
     }
 
     public stop(): void {
@@ -39,7 +40,7 @@ export class HallHeartbeatService {
         if (this.hiddenAt || this.requestInFlight || !this.client.isConnected()) return;
         this.requestInFlight = true;
         try {
-            await this.client.request('gateway.heartbeat', { clientTime: Date.now() }, HallHeartbeatService.TIMEOUT_MS);
+            await this.client.request('gateway.heartbeat', { clientTime: Date.now() }, LobbyHeartbeatService.TIMEOUT_MS);
             this.lastActivity = Date.now();
             this.consecutiveFailures = 0;
         } catch {
@@ -58,10 +59,13 @@ export class HallHeartbeatService {
     }
 
     private handleShow(): void {
-        if (this.hiddenAt && Date.now() > this.hiddenAt + HallHeartbeatService.INTERVAL_MS) {
+        if (this.hiddenAt && Date.now() > this.hiddenAt + LobbyHeartbeatService.INTERVAL_MS) {
             void this.sendHeartbeat();
         }
         this.hiddenAt = 0;
         this.lastActivity = Date.now();
     }
 }
+
+/** Deprecated source-compatible export; the wire operation remains unchanged. */
+export { LobbyHeartbeatService as HallHeartbeatService };

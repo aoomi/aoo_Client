@@ -21,6 +21,7 @@ export class AuthSession {
         private readonly lastAccountStore: LastAccountStore,
         private readonly sessionStore: GuestSessionStore,
         private readonly resumeNetworkSession: () => void = () => undefined,
+        private readonly afterExplicitLogin: (account: AuthenticatedAccount) => Promise<void> = async () => undefined,
     ) {}
 
     public start(): void {
@@ -73,14 +74,28 @@ export class AuthSession {
         this.restoreFailureMessage = '';
     }
 
-    /** Prevents restoration while the replacement notice is awaiting confirmation. */
+    /**
+     * Invalidates the displaced browser as soon as the server reports a
+     * replacement. Waiting for the notice button is only a UI concern: the
+     * refresh credential must already be gone, otherwise reloading this page
+     * can sign in again and displace the newer device in turn.
+     */
     public suspendReplacedSession(): void {
         this.assertStarted();
+        const replacedAccount = this.currentAccount;
+        replacedAccount?.cancelWsTicketRequest?.();
+        if (replacedAccount) replacedAccount.onSessionRotated = undefined;
         this.sessionEpoch += 1;
         this.pending = false;
         this.currentAccount = null;
         this.restorePending = null;
         this.autoRestoreBlocked = true;
+        this.restoreFailureMessage = '';
+        this.sessionStore.clear();
+        this.lastAccountStore.clear();
+        console.info('[SessionReplacementBoundary] local-credentials-cleared', {
+            accountId: replacedAccount?.accountId ?? '',
+        });
     }
 
     /** Clears only this client's credentials; no logout request is sent to the server. */
@@ -110,6 +125,19 @@ export class AuthSession {
         this.restoreFailureMessage = '已清除本地登录数据，请重新登录';
         try { this.sessionStore.clear(); } catch { /* restore remains blocked in memory */ }
         try { this.lastAccountStore.clear(); } catch { /* account hint must not unblock restore */ }
+    }
+
+    /**
+     * A Creator preview can retain the process-wide service instance while its
+     * bootstrap scene restarts. A later boot that did not request a clear must
+     * not keep displaying the prior boot's clear notice. This only releases
+     * the in-memory gate; it never recreates credentials removed by a real
+     * clear operation.
+     */
+    public beginBootWithoutLocalDataClear(): void {
+        this.assertStarted();
+        this.autoRestoreBlocked = false;
+        this.restoreFailureMessage = '';
     }
 
     public loginGateState(): Readonly<{ autoRestoreBlocked: boolean; interactiveLoginAllowed: boolean }> {
@@ -145,6 +173,8 @@ export class AuthSession {
         try {
             const authenticated = await this.gateway.loginWithPassword({ account, password });
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
+            await this.afterExplicitLogin(authenticated);
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
             this.lastAccountStore.save(account);
             this.saveSession(authenticated);
             this.currentAccount = authenticated;
@@ -168,6 +198,8 @@ export class AuthSession {
         const epoch = ++this.sessionEpoch;
         try {
             const authenticated = await this.gateway.registerWithPassword(identity, password, verificationCode);
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '注册已取消');
+            await this.afterExplicitLogin(authenticated);
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '注册已取消');
             this.lastAccountStore.save(identity);
             this.saveSession(authenticated);
@@ -196,6 +228,8 @@ export class AuthSession {
                     this.sessionStore.clear(); account = await this.gateway.registerGuest();
                 }
             } else account = await this.gateway.registerGuest();
+            if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
+            await this.afterExplicitLogin(account);
             if (epoch !== this.sessionEpoch) throw new AppError('AUTH_CANCELLED', '登录已取消');
             this.saveSession(account);
             this.lastAccountStore.save(account.account);

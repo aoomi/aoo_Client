@@ -273,7 +273,11 @@ export class LegacyWebSocketClient {
             this.close();
             return;
         }
-        const pending = this.pending.get(packet.sequence);
+        // V2 room pushes carry the originating writer's sequence. On another
+        // player's connection that number can equal an unrelated local request
+        // sequence. A push must never resolve a pending response solely because
+        // those connection-local counters collide.
+        const pending = packet.event === 'protocol.v2.push' ? undefined : this.pending.get(packet.sequence);
         if (pending) {
             globalThis.clearTimeout(pending.timeoutId);
             this.pending.delete(packet.sequence);
@@ -337,7 +341,10 @@ export class LegacyWebSocketClient {
 
     private errorMessage(packet: LegacyIncomingPacket): string {
         const body = packet.body as { Msg?: unknown };
-        return typeof body.Msg === 'string' && body.Msg ? body.Msg : `${packet.event} 失败（${packet.errorCode}）`;
+        const detail = typeof body.Msg === 'string' && body.Msg ? body.Msg : `${packet.event} 失败`;
+        // Business handlers must be able to branch on stable protocol errors even
+        // when a gateway intentionally redacts the internal failure text.
+        return `${detail}（${packet.errorCode}）`;
     }
 
     private nextSequence(): number {

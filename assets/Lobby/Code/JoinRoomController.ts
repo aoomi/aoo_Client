@@ -3,9 +3,31 @@ import { LegacyForm, LegacyFormManager } from '../../Common/Code/Runtime/ui/Lega
 import { HallRoomGateway, HallRoomHandoff } from './HallRoomGateway';
 import { NumpadHandle, NumpadService } from '../../Common/Code/Runtime/ui/NumpadService';
 import { ProductionApiError } from '../../Common/Code/Runtime/Activity/ProductionApiClient';
+import {
+    CANONICAL_RUNTIME_METADATA_BINDINGS,
+    CANONICAL_RUNTIME_METADATA_MANIFEST_SHA256,
+    CANONICAL_RUNTIME_METADATA_RELEASE_EDITION,
+} from '../../Games/Common/Code/Catalog/CanonicalRuntimeMetadataBindings';
+import { requireCanonicalIdentityProjection } from '../../Games/Common/Code/Catalog/CanonicalIdentityRuntimeGate';
 
 const FORM_PATH = 'common/Numpad';
 const ROOM_KEY_DIGITS = 6;
+
+function requireCanonicalHandoffProjection(handoff: HallRoomHandoff) {
+    const gameId = Number(handoff.gameId);
+    const gameCode = String(handoff.gameCode ?? '').trim().toLowerCase();
+    const family = String(handoff.playFamily ?? '').trim();
+    const playVersion = String(handoff.playVersion ?? '').trim();
+    const binding = CANONICAL_RUNTIME_METADATA_BINDINGS.find(candidate =>
+        candidate.gameId === gameId && candidate.gameCode === gameCode
+        && candidate.family === family && candidate.playVersion === playVersion);
+    if (!binding) throw new Error('房间身份合同缺失或不匹配，已拒绝进入');
+    return requireCanonicalIdentityProjection(
+        CANONICAL_RUNTIME_METADATA_MANIFEST_SHA256,
+        CANONICAL_RUNTIME_METADATA_RELEASE_EDITION,
+        binding,
+    );
+}
 
 /** 公共 Numpad 是加入房间唯一界面；本控制器只维护房号和权威 Hall join 生命周期。 */
 export class JoinRoomController {
@@ -29,11 +51,26 @@ export class JoinRoomController {
             showFromCenter: true,
             lifecycle: {
                 onCreate: form => this.bind(form),
-                onShow: () => { this.epoch += 1; this.resolving = false; this.reset(); },
+                onShow: form => {
+                    // The form manager caches Common/Numpad across game-room
+                    // round trips. Rebind when this lobby controller did not
+                    // create that cached instance, otherwise every key keeps
+                    // the disposed controller's removed listener.
+                    if (this.form !== form || !this.numpad) this.bind(form);
+                    this.epoch += 1;
+                    this.resolving = false;
+                    this.reset();
+                },
                 onClose: () => { this.epoch += 1; this.resolving = false; },
                 onDestroy: () => this.dispose(),
             },
         });
+        // Common/Numpad may already be cached by the persistent form manager
+        // when the lobby is recreated after leaving a game room. Its original
+        // onCreate callback will not run a second time, so transfer the existing
+        // node to this controller immediately.
+        const cached = this.forms.get(FORM_PATH);
+        if (cached?.node.isValid) this.bind(cached);
     }
 
     public cancelPending(): void {
@@ -47,11 +84,23 @@ export class JoinRoomController {
     }
 
     private bind(form: LegacyForm): void {
+        // Cached Common/Numpad can be rebound after a lobby lifecycle handoff.
+        // Dispose this controller's prior listeners before attaching again so a
+        // single physical confirm can never fan out to stale join callbacks.
+        this.numpad?.dispose();
         this.form = form;
         this.confirmButton = form.find('Keypad/Btn_Confirm')?.getComponent(Button) ?? null;
         this.numpad = this.numpadService.attach(form.node, {
             close: () => this.forms.close(FORM_PATH),
-            confirm: () => { void this.resolveRoom(); },
+            confirm: () => {
+                console.info('[JoinRoomConfirm] confirm', {
+                    roomId: this.digits.join(''),
+                    epoch: this.epoch,
+                    formVisible: this.form?.isShown() === true,
+                    resolving: this.resolving,
+                });
+                void this.resolveRoom();
+            },
         }, {
             digitCount: ROOM_KEY_DIGITS,
             maxDigits: ROOM_KEY_DIGITS,
@@ -70,6 +119,7 @@ export class JoinRoomController {
         if (this.resolving) return;
         const roomKey = this.digits.join('');
         if (!/^\d{6}$/.test(roomKey)) {
+            console.warn('[JoinRoomConfirm] validation-failed', { roomId: roomKey, epoch: this.epoch });
             await this.forms.show('UIMessage_Drift', null, null, '请输入6位纯数字房间号');
             return;
         }
@@ -77,13 +127,36 @@ export class JoinRoomController {
         if (this.confirmButton) this.confirmButton.interactable = false;
         const epoch = this.epoch;
         try {
+            console.info('[JoinRoomConfirm] request', { roomId: Number(roomKey), epoch });
             const handoff = await this.gateway.join(Number(roomKey));
-            if (epoch !== this.epoch || !this.form) return;
+            if (epoch !== this.epoch || !this.form) {
+                console.warn('[JoinRoomConfirm] stale-response', {
+                    roomId: Number(roomKey), requestEpoch: epoch, currentEpoch: this.epoch,
+                });
+                return;
+            }
+            const canonicalIdentity = requireCanonicalHandoffProjection(handoff);
+            console.info('[JoinRoomConfirm] response', {
+                roomId: Number(handoff.roomId ?? roomKey),
+                gameCode: String(handoff.gameCode ?? ''),
+                providerKey: canonicalIdentity.provider.providerKey,
+                contractVersion: canonicalIdentity.provider.contractVersion,
+                bundleName: String(handoff.bundleName ?? ''),
+                sceneName: String(handoff.sceneName ?? ''),
+                epoch,
+            });
             this.resolving = false;
             if (this.confirmButton?.isValid) this.confirmButton.interactable = true;
-            this.form.node.emit('authoritative-join-room-resolved', handoff);
-            this.onResolved?.(handoff);
+            const resolved = { ...handoff, canonicalIdentity: canonicalIdentity.client };
+            this.form.node.emit('authoritative-join-room-resolved', resolved);
+            this.onResolved?.(resolved);
         } catch (error: unknown) {
+            console.error('[JoinRoomConfirm] failed', {
+                roomId: Number(roomKey),
+                epoch,
+                code: error instanceof ProductionApiError ? error.code : '',
+                error: error instanceof Error ? error.message : String(error),
+            });
             if (epoch !== this.epoch || !this.form) return;
             await this.forms.show('UIMessage_Drift', null, null,
                 this.joinFailureMessage(error));

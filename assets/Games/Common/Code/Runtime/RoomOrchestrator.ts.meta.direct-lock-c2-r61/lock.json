@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "lockId": "c2-client-runtime-custody-20261012-r61-room-orchestrator-meta",
+  "task": "C2-CLIENT-RUNTIME-CUSTODY-20261012-R61",
+  "lane": "C2",
+  "owner": "/root/lane_c_client_e2e",
+  "coordinator": "/root",
+  "status": "RELEASED_NO_CHANGE",
+  "path": "Client/assets/Games/Common/Code/Runtime/RoomOrchestrator.ts.meta",
+  "scope": "metadata provenance inspection only; Cocos-generated metadata may be created only in /tmp",
+  "preimageSha256": "0f7e3cd0bb39b306bfd63c7012ccefd13a669046f406cb21cdadb33eff2a92e8",
+  "postimageSha256": "0f7e3cd0bb39b306bfd63c7012ccefd13a669046f406cb21cdadb33eff2a92e8",
+  "sourceWrite": false,
+  "resourceWrite": false,
+  "metadataWrite": false,
+  "testWrite": false,
+  "generatedBundleWrite": false,
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "releasePromotion": "forbidden until canonical manifest and independent acceptance",
+  "releasedAt": "2026-10-12T00:40:00+08:00",
+  "evidence": "docs/05-当前状态/evidence/c2-client-runtime-custody-r61-20261012/report.md"
+}
