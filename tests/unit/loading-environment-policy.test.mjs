@@ -55,6 +55,24 @@ const policy = compile(policyPath, {
     },
 });
 
+function clientBootstrapModule() {
+    return compile('assets/Login/Code/Bootstrap/ClientBootstrap.ts', {
+        '../../../Common/Code/Runtime/core/Storage': { BrowserKeyValueStorage: class {} },
+        '../../../Common/Code/Runtime/platform/LegacyPlatformRuntime': { legacyPlatformRuntime: {} },
+        '../../../Common/Code/Runtime/config/RuntimeEndpoints': { resolveRuntimeEndpoints: () => ({}) },
+        '../Auth/UnifiedIdentityAuthGateway': { AccountAuthGateway: class {} },
+        '../Auth/AuthSession': { AuthSession: class {} },
+        '../Auth/GuestSessionStore': { GuestSessionStore: class {} },
+        '../Auth/LastAccountStore': { LastAccountStore: class {} },
+        '../Network/NetworkRuntime': { NetworkRuntime: class {} },
+        '../Navigation/SceneRouter': { SceneRouter: class {} },
+        '../../../Common/Code/Runtime/room/RoomRecoveryStore': { RoomRecoveryStore: class {} },
+        '../../../Common/Code/Runtime/network/LegacyWebSocketClient': { sessionLifecycle: {} },
+        './LoadingEnvironmentPolicy': { currentAooLoadingBootState: () => ({}) },
+        '../../../Common/Code/Runtime/room/StuckRoomCleanupService': { StuckRoomCleanupService: class {} },
+    });
+}
+
 class BrowserStorage {
     constructor(entries = {}, failOnRemove = []) {
         this.values = new Map(Object.entries(entries));
@@ -195,7 +213,9 @@ test('Creator keeps the three properties without rewriting the user-owned switch
     const launchSelectionRead = bootstrapSource.indexOf('const launchSelection = loadingBoot.resolveLaunchSelection');
     assert.ok(presentationGuard >= 0 && presentationGuard < launchSelectionRead,
         'LoginScene exits through presentation-only consumption before serialized launch settings are read');
-    assert.match(bootstrapSource, /启动所有者缺失：\$\{sceneName\} 只能消费 BootStrap 已启动的服务/);
+    assert.match(bootstrapSource, /if \(loadingRuntime\.__aoo_BOOTSTRAP_ENTRY_REDIRECT__\)/);
+    assert.match(bootstrapSource, /director\.loadScene\('BootStrap'/);
+    assert.match(bootstrapSource, /启动入口循环：\$\{sceneName\} 未能进入 BootStrap/);
     assert.match(bootstrapSource, /resolveLaunchSelection\(isBootstrapScene/);
     assert.match(bootstrapSource, /source=\{\$\{authoritySource\}\}/);
 });
@@ -243,6 +263,7 @@ test('Creator LAN preview rewrites the loopback gateway to the phone-reachable M
         gatewayAddresses: ['http://127.0.0.1:8080'],
     }, {}, { location: { protocol: 'http:', hostname: '192.168.1.107', port: '7456' } });
     assert.equal(applied.runtimeConfig.apiBaseUrl, 'http://192.168.1.107:8080/');
+    assert.equal(applied.runtimeConfig.avatarBaseUrl, 'http://192.168.1.107:8765/');
     assert.equal(applied.runtimeConfig.environment, 'test');
 });
 
@@ -344,7 +365,7 @@ test('logged-in and guest sessions restart empty and route to LoginScene when cl
         cc: { director: { loadScene: (name) => loadedScenes.push(name) } },
         '../../../Lobby/Code/LobbyScreenController': { LobbyScreenController: class {} },
         '../../../Lobby/Code/HallRoomGateway': { HallRoomGateway: class {} },
-        '../../../Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher': { CommonPdkGameSceneLauncher: class {} },
+        '../../../Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher': { PdkGameSceneLauncher: class {} },
         '../../../Common/Code/Runtime/platform/LegacyPlatformRuntime': {
             legacyPlatformRuntime: { audio: { detach() {} } },
         },
@@ -566,4 +587,69 @@ test('implementation has no broad clear, protected-login allowlist, old gateway 
     assert.match(authSource, /interactiveLoginAllowed:/);
     assert.doesNotMatch(bootstrapSource, /ServerDirectorySelector|区服：|installServerDirectorySelector/);
     assert.match(bootstrapSource, /bootstrapRuntime\.initialize\(\)/);
+});
+
+test('clear-local-data claims one authenticated authoritative room cleanup after explicit login', () => {
+    const clientBootstrap = fs.readFileSync(path.join(clientRoot, 'assets/Login/Code/Bootstrap/ClientBootstrap.ts'), 'utf8');
+    const authSource = fs.readFileSync(path.join(clientRoot, authPath), 'utf8');
+    const cleanup = fs.readFileSync(path.join(clientRoot,
+        'assets/Common/Code/Runtime/room/StuckRoomCleanupService.ts'), 'utf8');
+    assert.match(policySource, /claimRoomCleanup\(\)/);
+    assert.match(policySource, /releaseRoomCleanupClaim\(\)/);
+    assert.match(clientBootstrap, /StuckRoomCleanupService\(\)\.cleanup\(authenticated\)/);
+    assert.doesNotMatch(clientBootstrap, /startup-cleanup-skipped-for-recovery/);
+    assert.match(clientBootstrap, /await cleanup\(account\);[\s\S]*roomRecovery\.clear\(accountId\)/);
+    assert.match(clientBootstrap, /catch \(error: unknown\)[\s\S]*releaseRoomCleanupClaim\(\)[\s\S]*throw error/);
+    assert.match(authSource, /await this\.afterExplicitLogin\(authenticated\)/);
+    assert.match(authSource, /await this\.afterExplicitLogin\(account\)/);
+    assert.match(cleanup, /\/api\/v2\/hall\/rooms\/active/);
+    assert.match(cleanup, /\/api\/v2\/hall\/rooms\/\$\{roomId\}\/leave/);
+    assert.match(cleanup, /if \(confirmed\?\.active\) throw new Error/);
+});
+
+test('clear mode ignores local recovery intent, clears it only after cleanup, and is single-flight', async () => {
+    const clientBootstrap = clientBootstrapModule();
+    let claimed = false;
+    const bootState = {
+        claimRoomCleanup() { if (claimed) return false; claimed = true; return true; },
+        releaseRoomCleanupClaim() { claimed = false; },
+    };
+    const events = [];
+    const recovery = { load: () => ({ roomId: 719148 }), clear: (id) => events.push(`clear:${id}`) };
+    const account = { accountId: 108, accessToken: 'token' };
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(bootState, recovery, account, async () => events.push('leave-confirmed-inactive'));
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(bootState, recovery, account, async () => events.push('unexpected-second-leave'));
+    assert.deepEqual(events, ['leave-confirmed-inactive', 'clear:108']);
+});
+
+test('failed clear-mode leave blocks continuation, preserves intent, and remains retryable', async () => {
+    const clientBootstrap = clientBootstrapModule();
+    let claimed = false;
+    let clearCalls = 0;
+    const bootState = {
+        claimRoomCleanup() { if (claimed) return false; claimed = true; return true; },
+        releaseRoomCleanupClaim() { claimed = false; },
+    };
+    const account = { accountId: 108, accessToken: 'token' };
+    await assert.rejects(clientBootstrap.cleanupRoomAfterExplicitLogin(
+        bootState, { clear: () => { clearCalls += 1; } }, account, async () => { throw new Error('leave failed'); },
+    ), /leave failed/);
+    assert.equal(clearCalls, 0);
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(
+        bootState, { clear: () => { clearCalls += 1; } }, account, async () => undefined,
+    );
+    assert.equal(clearCalls, 1);
+});
+
+test('without clear mode the room cleanup claim is rejected and recovery intent is untouched', async () => {
+    let cleanupCalls = 0;
+    let clearCalls = 0;
+    const clientBootstrap = clientBootstrapModule();
+    const policyState = new policy.AooLoadingBootState('non-clear');
+    await clientBootstrap.cleanupRoomAfterExplicitLogin(
+        policyState, { clear: () => { clearCalls += 1; } }, { accountId: 108 },
+        async () => { cleanupCalls += 1; },
+    );
+    assert.equal(cleanupCalls, 0);
+    assert.equal(clearCalls, 0);
 });

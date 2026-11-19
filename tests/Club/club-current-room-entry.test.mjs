@@ -3,12 +3,21 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const main = readFileSync(new URL('../../assets/Club/Code/Runtime/LegacyClubMainController.ts', import.meta.url), 'utf8');
+const prefab = readFileSync(new URL('../../assets/Club/Prefab/ClubMain.prefab', import.meta.url), 'utf8');
 
 test('当前房间提示层仅供等待进入玩法使用', () => {
     const checkCurrentRoom = main.match(/private async checkCurrentRoom\(\): Promise<void> \{[\s\S]*?\n    \}/)?.[0] ?? '';
     assert.match(checkCurrentRoom, /this\.isWaitingEntry\(room\)/,
-        '恢复亲友圈时只有等待进入房间才能显示 UIClubInRoom');
-    assert.match(checkCurrentRoom, /forms\.show\('ui\/club\/UIClubInRoom'/);
+        '恢复亲友圈时只有等待进入房间才能显示 RoomDetails');
+    assert.match(checkCurrentRoom, /this\.openCurrentRoomDetails\(room\)/);
+    assert.doesNotMatch(main, /forms\.register\('ui\/club\/UIClubInRoom'/,
+        'RoomDetails 内嵌后不得继续注册独立 ClubInRoom 表单');
+    assert.match(main, /node\('RoomDetails'\)/);
+    assert.match(prefab, /"_name": "RoomDetails"/);
+    assert.match(main, /this\.find\(root, 'btn_exitroom'\)/);
+    assert.match(main, /this\.find\(root, 'mask\/userlist'\)/);
+    assert.doesNotMatch(main, /this\.find\(root, 'data\//,
+        'RoomDetails 已直接承载原预制体子节点，不得保留旧 data 中间层路径');
 });
 
 test('已入座的俱乐部房间仍经大厅权威 join 取得完整游戏票据', () => {

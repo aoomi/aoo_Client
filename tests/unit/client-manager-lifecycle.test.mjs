@@ -100,12 +100,15 @@ test('BootStrap is the only startup-route owner and presentation scenes only con
         'only the authored Boot path may construct/start client services');
     assert.match(bootstrap, /if \(!isBootstrapScene\) \{[\s\S]*getStartedClientServices\(\)[\s\S]*mountLoginPresentation\(epoch\)[\s\S]*return;/,
         'LoginScene must consume the existing runtime and return before startup routing');
+    assert.match(bootstrap, /if \(!services\) \{[\s\S]*action: 'ENTER_BOOTSTRAP'[\s\S]*director\.loadScene\('BootStrap'/,
+        'an editor preview opened on LoginScene must enter the authored BootStrap instead of inventing a route owner');
     assert.match(bootstrap, /__aoo_BOOTSTRAP_ROUTE_OWNER__/);
     assert.doesNotMatch(bootstrap, /addPersistRootNode\s*\(/);
 
-    assert.match(scenes, /if \(!activeRoom\) \{[\s\S]*await this\.presentLobbyScene\(account, role, operationId\)/,
-        'the no-room route must commit and mount MainScene using its existing Hall role');
-    assert.match(scenes, /private async presentLobbyScene\(account: AuthenticatedAccount, role: RoleSession, operationId: number\)/);
+    assert.match(scenes, /if \(!activeRoom\) \{[\s\S]*await this\.presentLobbyScene\(account,\s*role,\s*operationId(?:\s*,\s*[^)]*)?\)/,
+        'the no-room route must commit and mount MainScene using its existing Hall role and startup context');
+    assert.match(scenes, /private async presentLobbyScene\(account:\s*AuthenticatedAccount,\s*role:\s*RoleSession,\s*operationId:\s*number/,
+        'the lobby presentation contract must retain account, role and operationId parameters');
     const authenticatedRoute = scenes.slice(
         scenes.indexOf('public async recoverAuthenticatedTarget'),
         scenes.indexOf('public async recoverStartup'),

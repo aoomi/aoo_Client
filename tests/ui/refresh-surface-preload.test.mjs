@@ -10,25 +10,31 @@ test('refresh queues every registered and module-routed form after the current s
     const registry = read('assets/Common/Code/Runtime/ui/ModulePrefabRegistry.ts');
     const lobby = read('assets/Lobby/Code/LobbyScreenController.ts');
     assert.match(registry, /export function listModulePrefabForms/);
-    assert.match(manager, /\.\.\.this\.options\.keys\(\)/);
+    assert.match(manager, /const paths = Array\.from\(new Set<string>\(\[/);
+    assert.match(manager, /\.\.\.Array\.from\(this\.options\.keys\(\)\)/);
+    assert.doesNotMatch(manager, /const paths = \[\.\.\.new Set/);
+    assert.doesNotMatch(manager, /\.\.\.this\.options\.keys\(\)/);
     assert.match(manager, /\.\.\.listCommonPrefabForms\(\)/);
     assert.match(manager, /\.\.\.listGamePrefabForms\(\)/);
     assert.ok(manager.indexOf('...listGamePrefabForms()') < manager.indexOf('...listCommonPrefabForms()'),
         'game-room forms must lead the background preload queue');
-    assert.ok(manager.indexOf('...listCommonPrefabForms()') < manager.indexOf('...this.options.keys()'),
+    assert.ok(manager.indexOf('...listCommonPrefabForms()') < manager.indexOf('...Array.from(this.options.keys())'),
         'shared room forms must load before optional registered pages');
     assert.match(manager, /includeModules \? listModulePrefabForms\(\) : \[\]/);
     assert.match(manager, /preloadRefreshSurface\(includeModules = true, concurrency = 1\)/);
+    assert.match(manager, /await this\.waitForBackgroundWarmupSlot\(\)/);
+    assert.match(manager, /requestIdleCallback/);
+    assert.match(manager, /this\.deferBackgroundWarmup\(1_200\)/);
     assert.doesNotMatch(lobby, /await refreshSurfaceWarmup/);
     assert.match(lobby, /setTimeout\(\(\) => \{ void this\.forms\?\.preloadRefreshSurface\(true, 1\); \}, 0\)/);
 });
 
 test('login uses public warmup while an active room warms only room-reachable panels', () => {
     const login = read('assets/Login/Code/Bootstrap/LoginScreenBootstrap.ts');
-    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
     assert.match(login, /forms\.preloadRefreshSurface\(false, 1\)/);
     assert.doesNotMatch(room, /forms\.preloadRefreshSurface/);
-    assert.match(room, /Room-reachable panels are preloaded by CommonPdkSwitchCoordinator/);
+    assert.match(room, /Room-reachable panels are preloaded by PdkSwitchCoordinator/);
 });
 
 test('button and background warmup share prefab and bundle single-flight caches', () => {

@@ -1,0 +1,13 @@
+{
+  "batch": "CLIENT-HALL-LOBBY-R86",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/lane_c_client_e2e",
+  "path": "Client/tests/unit/lobby-naming-contract.test.mjs",
+  "scope": "Focused source contract for canonical Lobby naming while preserving Hall wire/compatibility aliases",
+  "preimageSha256": "ABSENT",
+  "postimageSha256": "000989ede098b4057f78526c817e23a4dde63b7532a4cca2036fd30b918d5554",
+  "releasedAt": "2026-10-12T11:46:00Z",
+  "productionWrite": true,
+  "tests": ["node --check Client/tests/unit/lobby-naming-contract.test.mjs", "node Client/tests/unit/lobby-naming-contract.test.mjs"],
+  "forbidden": ["Client/assets/Lobby/Code/HallRoomGateway.ts", "Client/assets/Login/Code/Navigation/SceneRouter.ts", "Client/assets/Login/Scenes/LoginScene.scene", "Client/docs/开房规则表/**", "Client/build/**", "Client/library/**", "Client/temp/**", "Server/**", "protocol strings and endpoints", "shared Creator/四端/shared ports/production DB"]
+}

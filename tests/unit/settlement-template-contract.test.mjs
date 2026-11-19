@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import test from 'node:test';
 
@@ -12,6 +13,33 @@ const pdkTemplatePath = 'Games/Poker/PDK/Common/Prefab/SmallSettlement';
 const pdkTemplateUuid = 'af823342-845f-4b26-9343-c2c95712a829';
 const pdkFinalTemplatePath = 'Games/Poker/Common/Prefab/BigSettlement_0';
 const pdkFinalTemplateUuid = '997768e2-c9b5-4e2b-addb-6f22cd54c0fc';
+const require = createRequire(import.meta.url);
+
+let settlementRuntime;
+
+function loadSettlementRuntime() {
+  if (settlementRuntime) return settlementRuntime;
+  const typescript = require('typescript');
+  const moduleApi = require('node:module');
+  const originalTsLoader = require.extensions['.ts'];
+  const originalLoad = moduleApi._load;
+  require.extensions['.ts'] = (module, filename) => module._compile(typescript.transpileModule(
+    readFileSync(filename, 'utf8'),
+    { compilerOptions: { module: typescript.ModuleKind.CommonJS, target: typescript.ScriptTarget.ES2022 }, fileName: filename },
+  ).outputText, filename);
+  moduleApi._load = (request, parent, isMain) => request === 'cc' ? {} : originalLoad(request, parent, isMain);
+  try {
+    settlementRuntime = {
+      service: require(join(assets, 'Games/Common/Code/Settlement/SettlementAssetService.ts')),
+      SettlementTemplateResolver: require(join(assets, 'Games/Common/Code/Settlement/SettlementTemplateResolver.ts')).SettlementTemplateResolver,
+    };
+  } finally {
+    if (originalTsLoader) require.extensions['.ts'] = originalTsLoader;
+    else delete require.extensions['.ts'];
+    moduleApi._load = originalLoad;
+  }
+  return settlementRuntime;
+}
 
 function nodeNames(prefabPath) {
   return JSON.parse(readFileSync(prefabPath, 'utf8'))
@@ -30,6 +58,26 @@ test('Poker owns one complete family-default small settlement template', () => {
   assert.equal(names.includes('Btn_'), false, 'unnamed replay button must be migrated');
 });
 
+test('PDK small-settlement list content contains only the player item template', () => {
+  const prefab = JSON.parse(readFileSync(join(pokerSmall, 'SmallSettlement.prefab'), 'utf8'));
+  const node = (name) => prefab.findIndex((entry) => entry?.__type__ === 'cc.Node' && entry._name === name);
+  const contentIndex = node('Content');
+  const itemIndex = node('Item');
+  const specialHandsIndex = node('SpecialHands');
+  assert.deepEqual(prefab[contentIndex]._children.map((entry) => entry.__id__), [itemIndex]);
+  assert.equal(prefab[itemIndex]._children.some((entry) => entry.__id__ === specialHandsIndex), true);
+  assert.equal(prefab[specialHandsIndex]._parent.__id__, itemIndex);
+  const itemTransform = prefab[prefab[itemIndex]._components
+    .map((entry) => entry.__id__)
+    .find((id) => prefab[id]?.__type__ === 'cc.UITransform')];
+  const specialHandsTransform = prefab[prefab[specialHandsIndex]._components
+    .map((entry) => entry.__id__)
+    .find((id) => prefab[id]?.__type__ === 'cc.UITransform')];
+  assert.ok(Math.abs(prefab[specialHandsIndex]._lpos.y) <= itemTransform._contentSize.height / 2,
+    'SpecialHands must remain inside the player item instead of inheriting Content coordinates');
+  assert.equal(specialHandsTransform._contentSize.height, 50);
+});
+
 test('Poker small settlements use stable family aliases and one family default', () => {
   const files = Array.from(new Set(Object.values(registry.pokerSmallDefaultTemplates ?? {})));
   assert.deepEqual(Object.keys(registry.pokerSmallFamilyAliases ?? {}).sort(),
@@ -42,33 +90,6 @@ test('Poker small settlements use stable family aliases and one family default',
       .map((asset) => asset.template.split('/').at(-1)),
   );
   for (const template of physical) assert.match(template, /^(SmallSettlement|SmallSettleTpl_[a-z0-9_]+_\d{2})$/);
-});
-
-test('active PDK variants use the PDK-owned small settlement default', () => {
-  for (const gameCode of ['cd201', 'nj201', 'ls201']) {
-    const gameAssets = registry.games[gameCode].assets;
-    assert.equal(gameAssets.find((asset) => asset.settlement === 'SmallSettle').template,
-      pdkTemplatePath);
-    assert.equal(gameAssets.find((asset) => asset.settlement === 'BigSettle').template,
-      pdkFinalTemplatePath);
-  }
-  assert.equal(existsSync(join(pokerBig, 'BigSettlement_0.prefab')), true);
-});
-
-test('CD201, NJ201, and LS201 register the Poker public settlement defaults', () => {
-  for (const gameCode of ['cd201', 'nj201', 'ls201']) {
-    const assets = registry.games[gameCode].assets;
-    const small = assets.find((asset) => asset.settlement === 'SmallSettle');
-    const big = assets.find((asset) => asset.settlement === 'BigSettle');
-    assert.deepEqual(small, {
-      settlement: 'SmallSettle', template: pdkTemplatePath,
-      uuid: pdkTemplateUuid, bundle: 'paodekuai-common',
-    }, gameCode);
-    assert.deepEqual(big, {
-      settlement: 'BigSettle', template: pdkFinalTemplatePath,
-      uuid: pdkFinalTemplateUuid, bundle: 'poker-common',
-    }, gameCode);
-  }
 });
 
 test('every PDK small-settlement registry entry points at the canonical SmallSettlement asset', () => {
@@ -97,26 +118,30 @@ test('every PDK big-settlement registry entry points at the canonical Poker publ
   assert.ok(pdkGameIds.length >= 3, `expected active PDK variants, got ${pdkGameIds.length}`);
 });
 
-test('the one resolver owns default selection and PDK preloading order', () => {
-  const resolver = readFileSync(join(assets, 'Games/Common/Code/Settlement/SettlementTemplateResolver.ts'), 'utf8');
-  const preloader = readFileSync(join(assets, 'Games/Common/Code/Settlement/SettlementBundlePreloader.ts'), 'utf8');
-  const coordinator = readFileSync(join(assets, 'Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts'), 'utf8');
-  assert.match(resolver, /const defaultTemplateId = 'SmallSettlement'/);
-  assert.match(resolver, /bundleName: 'paodekuai-common'/);
-  assert.match(resolver, /assetPath: 'Prefab\/SmallSettlement'/);
-  assert.match(resolver, /const defaultTemplateId = 'BigSettlement'/);
-  assert.match(resolver, /assetPath: isDefault \? 'Prefab\/BigSettlement_0'/);
-  assert.match(resolver, /bundleFor\('Poker', kind\)/);
-  assert.match(resolver, /\$\{kind\}Tpl_00/);
-  assert.match(preloader, /await this\.load\(category, 'SmallSettle'\);\s*await this\.load\(category, 'BigSettle'\);/s);
-  assert.match(preloader, /isPdkFamily\(playFamily\)/);
-  assert.match(preloader, /this\.loadBundle\('poker-common'\)/);
-  assert.match(preloader, /categoryForFamily\(playFamily\)/);
-  assert.match(resolver, /categoryByGameId\.get\(gameId\) \?\? categoryForFamily\(family\)/);
-  assert.match(coordinator, /settlementTemplateResolver\.resolve/);
-  assert.match(coordinator, /settlementBundlePreloader\.preloadForGame/);
-  assert.match(coordinator, /settlement\/poker\/BigSettlement/);
-  assert.doesNotMatch(coordinator, /Lobby\/Prefab\/uiGame|resources\.load/);
+test('settlement service and resolver honor Catalog identity and public settlement routes', () => {
+  const { service, SettlementTemplateResolver } = loadSettlementRuntime();
+  assert.equal(service.settlementFamilyForGame('ChengDu2001'), 'poker:pao-de-kuai');
+  assert.equal(service.settlementCategoryForGame('ChengDu2001', 'poker:landlord'), 'Poker');
+  assert.equal(service.isPdkSettlementGame('ChengDu2001', 'poker:landlord'), true);
+  assert.deepEqual(service.settlementPreloadBundleNames('ChengDu2001'), ['paodekuai-common', 'poker-common']);
+  assert.equal(service.settlementCategoryForGame('HZMJ'), 'Mahjong');
+  assert.equal(service.settlementCategoryForGame('unknown'), null);
+
+  const resolver = new SettlementTemplateResolver();
+  const pdkSmall = resolver.resolve({ gameId: 'ChengDu2001', playFamily: 'poker:landlord', settlementType: 'SMALL' });
+  assert.deepEqual(pdkSmall, {
+    category: 'Poker', kind: 'SmallSettle', bundleName: 'paodekuai-common',
+    templateId: 'SmallSettlement', defaultTemplateId: 'SmallSettlement', isDefault: true,
+    assetPath: 'Prefab/SmallSettlement',
+  });
+  const pdkBig = resolver.resolve({ gameId: 'ChengDu2001', settlementType: 'BIG' });
+  assert.equal(pdkBig.bundleName, 'poker-common');
+  assert.equal(pdkBig.assetPath, 'Prefab/BigSettlement_0');
+
+  const cd299 = resolver.resolve({ gameId: 'chengdu2999', settlementType: 'LOOP_BIG' });
+  assert.equal(cd299.bundleName, 'poker-common');
+  assert.equal(cd299.assetPath, 'Prefab/BigSettlement_0');
+  assert.throws(() => resolver.resolve({ gameId: 'ChengDu2001', settlementType: 'LOOP_BIG' }), /循环大结算仅允许 CD299/);
 });
 
 test('PDK final settlement uses the active poker-common bundle root', () => {

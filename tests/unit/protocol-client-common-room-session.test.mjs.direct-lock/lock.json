@@ -1,0 +1,19 @@
+{
+  "taskId": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "attempt": "client-room-session-r1",
+  "owner": "/root/repair_common_room_session_registration",
+  "coordinator": "/root",
+  "status": "RELEASED_FOR_COORDINATION",
+  "acquiredAt": "2026-10-10T10:47:39Z",
+  "path": "Client/tests/unit/protocol-client-common-room-session.test.mjs",
+  "sourceWrite": true,
+  "preimageSha256": "a0bc754e85aac76ea9b650ef8995d6c78631c461c570d4cd71106714c1e91d62c",
+  "custody": "untracked inherited file preserved; no active owner found in fresh Agent Tree",
+  "allowedChange": "focused regression for strict single active room client and zero-client rejection",
+  "forbidden": ["test deletion", "default/fake values", "protocol semantic changes"],
+  "independentReviewRequired": true,
+  "releasedAt": "2026-10-10T11:05:00Z",
+  "postimageSha256": "ddfff4d68e386a3932e56104924ddd6c1e7046df1054e4dd59fcd8a781dc099e",
+  "independentReview": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-independent-review-20261010/independent-acceptance-v2.md",
+  "independentReviewSha256": "dc34a7b53e65362ec79d5fd530626b76534ceb3f7b83d2163cb587d1f072410f"
+}

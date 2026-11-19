@@ -21,10 +21,12 @@ test('启动恢复优先服务端活动房间，否则恢复亲友圈或大厅',
     assert.match(router, /restoreLastClubBeforeShow: true/);
     assert.match(router, /Number\(savedRoute\.roomId\) === Number\(activeRoom\.roomId\)/);
     assert.match(router, /entryOrigin: 'CLUB'[\s\S]*returnContext: \{ clubId: returnTo\.clubId \}/);
+    assert.match(router, /isPdkStartupRuntime[\s\S]*preloadLobbyPresentation\(routeReport\)[\s\S]*presentLobbyScene\(account, role, operationId, null, false\)/);
+    assert.match(router, /PDK keeps its launcher-owned GameRoom2D handoff/);
 });
 
 test('刷新恢复房间退出不等待已关闭的 Hall 连接超时', () => {
-    const coordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
+    const coordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
     assert.match(coordinator, /await this\.recoverHall\(false\)/);
     assert.match(coordinator, /private async recoverHall\(reconnect = true\)/);
     assert.match(coordinator, /if \(reconnect && !this\.hallClient\.isConnected\(\)\)/);
@@ -32,7 +34,7 @@ test('刷新恢复房间退出不等待已关闭的 Hall 连接超时', () => {
 
 test('业务位置只在成功展示后提交', () => {
     const club = read('assets/Lobby/Code/ClubList/LobbyClubEntryController.ts');
-    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+    const room = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
     assert.ok(club.indexOf('await this.forms.show(path') < club.indexOf("name: 'club'"));
     assert.ok(room.indexOf("this.stage('mount-room-runtime'") < room.indexOf("name: 'game'"));
 });
@@ -55,11 +57,11 @@ test('俱乐部房间返回使用本次进入房间的权威俱乐部 ID', () =>
     assert.match(entry, /private async enterClub[\s\S]*Promise<boolean>/);
 });
 
-test('Hall 断线恢复后重新拉取并渲染当前俱乐部模板桌', () => {
+test('Lobby 断线恢复后重新拉取并渲染当前俱乐部模板桌', () => {
     const network = read('assets/Login/Code/Network/NetworkRuntime.ts');
     const club = read('assets/Club/Code/Runtime/LegacyClubMainController.ts');
     const entry = read('assets/Lobby/Code/ClubList/LobbyClubEntryController.ts');
-    assert.match(network, /recover: async \(\) => this\.hallTransport\.recoverGeneration\(generation\)/);
+    assert.match(network, /recover: async \(\) => this\.lobbyTransport\.recoverGeneration\(generation\)/);
     assert.match(club, /this\.client\.onReconnect\(\(\) => this\.restoreTemplatesAfterReconnect\(\)\)/);
     assert.match(club, /await this\.refreshTemplateRooms\(\)/);
     assert.doesNotMatch(entry, /C(?:Union|Club)RoomConfigItemList[\s\S]{0,220}\.catch\(\(\) => \[\]\)/);

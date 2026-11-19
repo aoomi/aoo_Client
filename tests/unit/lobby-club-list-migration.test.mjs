@@ -40,6 +40,8 @@ test('lobby club list owns only the nodes present in LobbyClubList prefab', () =
     const gateway = read('assets/Lobby/Code/ClubList/LobbyClubListGateway.ts');
     assert.match(gateway, /'club\.CGetClubListMin'/);
     assert.match(gateway, /this\.detail\(clubId\)/);
+    assert.match(gateway, /CLUB_LIST_EMPTY/);
+    assert.doesNotMatch(gateway, /return \[\]/);
     assert.doesNotMatch(list, /无职位|\.identity/);
     for (const position of ['管理/队长', '队长', '圈主', '管理', '成员']) assert.match(list, new RegExp(position));
     assert.equal(fs.existsSync(new URL('../../assets/Club/Code/Runtime/LegacyClubEntryController.ts', import.meta.url)), false);

@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const clientRoot = path.resolve(import.meta.dirname, '../..');
 const sourcePath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/Room/PdkGameAudioPresenter.ts');
-const controllerPath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+const controllerPath = path.join(clientRoot, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
 const commonRoot = path.join(clientRoot, 'assets/Games/Poker/PDK/Common');
 const audioRoot = path.join(commonRoot, 'Audio/Game');
 const source = fs.readFileSync(sourcePath, 'utf8');
@@ -32,7 +32,7 @@ test('every registered announcement exists for both genders with meta', () => {
 
 test('controller plays only newly presented authoritative actions and legacy OpCard events', () => {
     assert.match(controller, /if \(animate\) \{[\s\S]*this\.playGameOperation\(entry\.dataSeat, actionType, values\)/);
-    assert.match(controller, /event === 'OpCard'[\s\S]*this\.playGameOperation\(Number\(packet\.pos \?\? packet\.opPos\), opType/);
+    assert.match(controller, /event === 'OpCard'[\s\S]*const dataSeat = Number\(packet\.pos \?\? packet\.opPos\)[\s\S]*this\.playGameOperation\(dataSeat, opType/);
     assert.match(controller, /const actionKey = this\.authorityActionKey\(latest\);[\s\S]*this\.tableActionIds\.add\(actionKey\);[\s\S]*this\.playGameOperation\(dataSeat, actionType, cards\)/);
     assert.match(controller, /private authorityActionKey[\s\S]*if \(operationId\) return operationId;[\s\S]*cards\.map\(Number\)\.join/);
     assert.match(controller, /String\(action\.action\) === 'pass' \? 1/);

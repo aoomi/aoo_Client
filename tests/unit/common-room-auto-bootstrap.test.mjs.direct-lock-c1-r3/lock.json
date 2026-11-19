@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "lockId": "c1-common-room-session-20261011-r3",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "C1",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "RELEASED_NO_CHANGE",
+  "path": "Client/tests/unit/common-room-auto-bootstrap.test.mjs",
+  "scope": "Common prepare/commit, listener cleanup, stale/destroy and machine-code assertions only",
+  "preimageSha256": "c7620a9a8dd785926e953fc128205acf10f0142280b24fc683aba8b503baf731",
+  "sourceWrite": false,
+  "testWrite": true,
+  "forbidden": ["PdkSwitchCoordinator.ts", "protocol semantics", "reconnect/handoff contract", "Compatibility", "fake client", "old cache", "shared runtime", "generated bundles", "LoginScene", "rules workbooks", "Server", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "5537e346f2857db3ca176124c4475550fbd96ebf9c410722e5df0f7e0efb021c",
+  "evidence": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-20261011-r3/DEV_SELF_CHECK-v3.md"
+}

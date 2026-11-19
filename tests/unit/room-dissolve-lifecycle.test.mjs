@@ -6,11 +6,14 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
-const runtime = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkRuntime.ts');
-const coordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
-const dissolve = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkDissolveController.ts');
-const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
-const play = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
+const runtime = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts');
+const coordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
+const dissolve = read('assets/Games/Common/Code/Room/CommonRoomDissolveController.ts');
+const dissolveAdapter = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkDissolveController.ts');
+const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
+const play = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
+const forms = read('assets/Common/Code/Runtime/ui/LegacyFormManager.ts');
+const roomModel = read('assets/Games/Poker/PDK/Common/Code/Runtime/model/PdkRoom.ts');
 
 test('approved dissolve has one authoritative terminal projection and one navigation owner', () => {
   assert.match(runtime, /terminalStateVersion/);
@@ -26,17 +29,69 @@ test('room overlays close before the sole lobby navigation callback', () => {
 });
 
 test('dissolve applicant has no agree or reject actions', () => {
-  assert.match(dissolve, /const canVote = createPos !== clientPos && clientVote === 0/);
+  assert.match(dissolve, /const voteEstablished = Number\.isSafeInteger\(state\.createPos\)/);
+  assert.match(dissolve, /const canVote = voteEstablished && state\.createPos !== state\.clientSeat && clientVote === 0/);
   assert.match(dissolve, /this\.active\('Btn_Reject', canVote\)/);
   assert.match(dissolve, /this\.active\('Btn_Agree', canVote\)/);
 });
 
+test('vote actions keep button listeners and a deduplicated preview pointer fallback', () => {
+  assert.match(dissolve, /node\.on\(Button\.EventType\.CLICK, listener, this\)/);
+  assert.match(dissolve, /node\.on\(Node\.EventType\.TOUCH_END, listener, this\)/);
+  assert.match(dissolve, /node\.on\(Node\.EventType\.MOUSE_UP, listener, this\)/);
+  assert.match(dissolve, /onFormPointerEnd/);
+  assert.match(dissolve, /node\.getComponent\(UITransform\)\?\.hitTest\(location\)/);
+  assert.match(dissolve, /this\.inputRoot\?\.on\(Node\.EventType\.TOUCH_END, this\.onFormPointerEnd, this, true\)/);
+  assert.match(dissolve, /now - this\.lastVotePointerAt < 180/);
+});
+
+test('dissolve modal blocks the room and consumes the closing pointer transaction', () => {
+  assert.match(dissolve, /new Node\('ModalMask'\)[\s\S]*mask\.addComponent\(BlockInputEvents\)/);
+  assert.match(dissolve, /mask\.setSiblingIndex\(0\)/);
+  assert.match(dissolve, /Math\.max\(parentSize\?\.width[\s\S]*1280\)/);
+  assert.match(dissolve, /graphics\.fillColor = new Color\(0, 0, 0, 90\)/);
+  assert.doesNotMatch(dissolve, /root\.addComponent\(BlockInputEvents\)/);
+  assert.match(dissolve, /bindPointerButton\('Bg_Header\/Btn_Close', this\.onClose\)/);
+  assert.match(dissolve, /COMMON_ROOM_DISSOLVE_FORM/);
+  assert.match(dissolve, /formHost\.closeAfterPointer\(COMMON_ROOM_DISSOLVE_FORM\)/);
+  assert.match(coordinator, /new PdkDissolveAdapter/);
+  assert.match(coordinator, /event === 'CommonPdk_DissolveRoom'[\s\S]*dissolveAdapter\?\.notifyTerminal/);
+  assert.match(forms, /this\.modalMask\.layer = this\.uiLayer\.layer/);
+});
+
+test('an out-of-order legacy vote cannot crash after the authoritative ballot was cleared', () => {
+  assert.match(roomModel, /if\(!dissolveInfo \|\| typeof dissolveInfo !== "object"\)/);
+  assert.match(roomModel, /OnPosDealVote ignored without active dissolve ballot/);
+  assert.match(roomModel, /return null/);
+});
+
+test('vote request is blocked until the authoritative ballot exists', () => {
+  assert.match(dissolve, /blocked before authoritative ballot/);
+  assert.match(dissolve, /state\.endSec > Date\.now\(\) \/ 1000/);
+  assert.match(dissolve, /const generation = \+\+this\.requestGeneration/);
+  assert.match(dissolve, /session\.dispatch\(command/);
+});
+
+test('the final voter consumes the authoritative terminal response before fallback reconciliation', () => {
+  assert.match(dissolve, /\.then\(result =>/);
+  assert.match(dissolve, /port\.acceptVoteResult\(result, true\)/);
+  assert.match(dissolveAdapter, /acceptDissolveVoteResult\(result\)/);
+  assert.match(runtime, /body\.roomTerminal !== true[\s\S]*phase !== 'DISSOLVED'/);
+  assert.match(runtime, /CommonPdk_DissolveRoom/);
+  assert.match(runtime, /const terminalRoom = \/room \(\?:is \)\?dissolved/);
+  assert.match(runtime, /room \(\?:not found\|does not exist\)/);
+  assert.match(runtime, /room authority is not active/);
+  assert.doesNotMatch(runtime, /\\b3008\\b/);
+  assert.match(dissolve, /room \(\?:is \)\?dissolved[\s\S]*this\.port\.reconcile\(\)/);
+});
+
 test('dissolve follows the 2.2.2 authoritative terminal event instead of guessing from votes', () => {
   assert.doesNotMatch(dissolve, /allOccupiedSeatsAgreed|terminalHandled|onDissolved/);
-  assert.match(dissolve, /if \(agree\) this\.runtime\.reconcileAuthority\(\)/);
+  assert.match(dissolve, /if \(agree && !this\.port\.acceptVoteResult\(result, true\)\) this\.port\.reconcile\(\)/);
   assert.doesNotMatch(dissolve, /applyActionAuthority\(result\)/);
-    assert.match(runtime, /player is not seated\|room not found\|room route not found\|request_not_found\|\\b1002\\b\|\\b3001\\b/);
-  assert.match(coordinator, /event === 'CommonPdk_DissolveRoom'[\s\S]*requestLeave\('pdk-room-dissolved'\)/);
+  assert.match(runtime, /terminalRoom \|\| \(dissolve && typeof dissolve === 'object' && revokedMember\)/);
+  assert.match(coordinator, /event === 'CommonPdk_DissolveRoom'[\s\S]*dissolveAdapter\?\.notifyTerminal/);
+  assert.match(dissolveAdapter, /onTerminal\(result\)/);
 });
 
 test('successful dissolve reports once from the destination after room cleanup', () => {
@@ -52,16 +107,26 @@ test('dissolve return retains the live room frame before teardown and has no one
 test('user exit uses the single Hall lifecycle and cannot be blocked by a closing game socket', () => {
   const leave = coordinator.slice(coordinator.indexOf('private async performLeave'), coordinator.indexOf('public destroy'));
   assert.match(leave, /if \(!authorityAlreadyExited\) await this\.leaveRoom\(roomId\)/);
+  assert.doesNotMatch(leave, /authorityAlreadyExited[\s\S]{0,300}reason === 'room-not-found'/);
+  assert.doesNotMatch(leave, /authorityAlreadyExited[\s\S]{0,300}reason === 'reconnect-room-failed'/);
   assert.doesNotMatch(leave, /CNJPDKExitRoom|runtime\.action\('leave-room'/);
 });
 
+test('transient snapshot recovery retries in-room and only terminal authority state exits', () => {
+  assert.match(runtime, /\[CommonPdkReconnect\] transient-restore-failed/);
+  assert.match(runtime, /roomRestoreRetryTimer = globalThis\.setTimeout/);
+  assert.match(runtime, /if \(terminalRoom\)[\s\S]*onExit\?\.\('room-not-found'\)/);
+  assert.doesNotMatch(runtime, /onExit\?\.\('reconnect-room-failed'\)/);
+});
+
 test('refuse and timeout close dissolve without navigation', () => {
-  assert.match(dissolve, /refused >= 0[\s\S]*this\.close\(\)[\s\S]*拒绝解散房间/);
+  assert.match(dissolve, /this\.port\.clear\(\)[\s\S]*this\.close\(\)[\s\S]*拒绝解散房间/);
   assert.match(dissolve, /remaining === 0[\s\S]*this\.hide\(\)/);
   assert.match(runtime, /const rejected = String\(view\.dissolveReason/);
   assert.match(runtime, /if \(rejected\)[\s\S]*CommonPdk_DissolveVoteRejected[\s\S]*this\.activeDissolveApplicant = 0[\s\S]*return/);
-  assert.match(coordinator, /CommonPdk_DissolveVoteRejected[\s\S]*dissolveController\?\.onRejected/);
-  assert.match(dissolve, /public onRejected\([\s\S]*ClearDissolve\(\)[\s\S]*this\.close\(\)/);
+  assert.match(coordinator, /CommonPdk_DissolveVoteRejected[\s\S]*dissolveAdapter\?\.notifyRejected/);
+  assert.match(dissolveAdapter, /ClearDissolve\(\)/);
+  assert.match(dissolve, /onRejected\([\s\S]*this\.port\.clear\(\)[\s\S]*this\.close\(\)/);
   assert.match(runtime, /if \(!Boolean\(approved\)\) continue/);
 });
 
@@ -81,9 +146,9 @@ test('destroy cancels subscriptions and pending async ownership without recreati
 });
 
 test('a late dissolve form load is invalidated before it can issue or report through a destroyed manager', () => {
-  assert.match(coordinator, /const generation = this\.roomUiGeneration/);
-  assert.match(coordinator, /generation !== this\.roomUiGeneration \|\| !this\.forms\.isAlive\(\)/);
-  assert.match(coordinator, /!this\.forms\.isAlive\(\)/);
-  assert.match(coordinator, /private async performLeave[\s\S]*this\.roomUiGeneration \+= 1/);
-  assert.match(coordinator, /public destroy[\s\S]*this\.roomUiGeneration \+= 1/);
+  assert.match(dissolve, /const form = await this\.showForm\(\)/);
+  assert.match(dissolve, /if \(!form \|\| this\.disposed\) return/);
+  assert.match(dissolve, /this\.requestGeneration \+= 1/);
+  assert.match(dissolve, /this\.unsubscribe\(\)/);
+  assert.match(coordinator, /closeAfterPointer/);
 });

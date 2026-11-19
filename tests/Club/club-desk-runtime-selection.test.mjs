@@ -8,7 +8,7 @@ const catalogPath = new URL('../../assets/Games/Common/Code/Catalog/CatalogFamil
 
 test('亲友圈模板桌加载 ClubDesk 并按权威类别、人数选择精确节点', () => {
     const source = fs.readFileSync(controllerPath, 'utf8');
-    assert.match(source, /bundleName: 'club', assetPath: 'Prefab\/ClubDesk'/,
+    assert.match(source, /CLUB_DESK_PREFAB = \{ bundle: 'club', path: 'Prefab\/ClubDesk' \}/,
         '模板桌必须从父级 club Bundle 的 Prefab 目录加载');
     assert.match(source, /metadata\.category === 'MAHJONG' \? 'Square' : normalizedCount <= 5 \? 'Round' : 'Long'/);
     assert.match(source, /playersName: `Players_\$\{normalizedCount\}`/);

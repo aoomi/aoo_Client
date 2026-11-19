@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const gateway = fs.readFileSync(path.join(root, 'assets/Lobby/Code/HallRoomGateway.ts'), 'utf8');
 const selector = fs.readFileSync(path.join(root, 'assets/Modules/CreateRoom/Code/PlaySelectorController.ts'), 'utf8');
-const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts'), 'utf8');
+const launcher = fs.readFileSync(path.join(root, 'assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts'), 'utf8');
 const endpoints = fs.readFileSync(path.join(root, 'assets/Common/Code/Runtime/config/RuntimeEndpoints.ts'), 'utf8');
 const router = fs.readFileSync(path.join(root, 'assets/Login/Code/Navigation/SceneRouter.ts'), 'utf8');
 const lobby = fs.readFileSync(path.join(root, 'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');

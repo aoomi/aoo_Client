@@ -72,13 +72,13 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
         '列表接口短暂延迟时必须立即补入本次保存成功的模板桌');
     assert.match(lobby, /String\(room\.gameName \?\? ''\)/,
         '模板桌点击必须把稳定玩法编码传入进房分流');
-    assert.match(lobby, /stableGameCode === 'CD201'[\s\S]*stableGameCode === 'NJ201'[\s\S]*stableGameCode === 'LS201'/);
-    assert.match(lobby, /await this\.client\.request<\{ roomId\?: unknown; roomID\?: unknown \}>\('room\.CBaseEnterRoom'/,
-        '地区跑得快模板桌必须先执行权威建桌/进房请求');
+    assert.match(lobby, /isPdkBusinessCode\(stableGameCode\)/);
+    assert.match(lobby, /private createClubTemplateRoom\(roomKey: string, clubId: number\)/,
+        '模板桌旧协议必须收敛到统一 Hall 房间入口适配器');
     assert.match(lobby, /roomKey, posID: -1, password: '', clubId, existQuickJoin: false/,
         '模板桌必须按旧版协议把空配置房间号交给服务端权威建桌并进入');
-    assert.match(lobby, /this\.hallRoomGateway\.join\(roomId\)/,
-        '服务端返回真实房间号后必须签发票据并进入权威玩法');
+    assert.match(lobby, /this\.hallRoomGateway\.enterClubTemplateRoom\(roomKey, clubId/,
+        '模板桌必须通过统一 Hall 房间入口签发票据并进入权威玩法');
     assert.match(lobby, /private roomEntryMessage\(reason: unknown\): string/);
     for (const text of ['房间密码错误', '房间人数已满', '房间已经开局', '该模板桌已停用',
         '房主房卡不足，暂时无法进入', '房间暂不可用，请刷新后重试']) {
@@ -87,6 +87,14 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
     assert.match(lobby, /gameId: gameType, gameName, roomKey/,
         '外部玩法兜底也不得再产生缺少 gameName 的 handoff');
     assert.match(settings, /JoinGamePoint: entry/);
+    assert.match(selector, /gameDisplayName: this\.selectedGame\.displayName/);
+    assert.match(selector, /classificationName: this\.selectedGame\.classificationName/);
+    assert.match(settings, /String\(config\.roomName \?\? ''\)\.trim\(\) \|\| this\.defaultRoomName\(baseScore\)/,
+        '新模板房名称必须由玩法名称和底分自动生成，编辑已有模板时保留原名称');
+    assert.match(settings, /displayName\.startsWith\(classificationName\)[\s\S]*displayName\.slice\(classificationName\.length\)\.trim\(\)/,
+        '自动房间名必须移除地区前缀，例如凉山跑得快生成跑得快2分');
+    assert.match(settings, /`\$\{playName\}\$\{baseScore\}分`/);
+    assert.match(settings, /\[ClubRoomFee\] form-ready/);
     assert.match(settings, /deskColor:/);
     assert.match(settings, /rule,/);
     assert.equal(node(settingsPrefab, 'ClubRoomFee')?._name, 'ClubRoomFee');
@@ -102,7 +110,7 @@ test('联盟建房使用下一步并接通 ClubRoomFee 参数界面', () => {
     assert.match(formManager, /EditBox\.InputMode\.PHONE_NUMBER/);
     for (const field of [
         'UIClubPromoterAdd/EditBox', 'UIForbidAddUser/EditBox', 'UIForbidGameAddUser/EditBox',
-        'ClubPromoterLevelAdd/EditBox', 'UIPromoterXIaShuAdd/EditBox', 'UIPromoterXiaShuList/EditBox',
+        'UIClubPromoterLevelAdd/EditBox', 'UIPromoterXIaShuAdd/EditBox', 'UIPromoterXiaShuList/EditBox',
         'UIUnionYaoQing/EditBox', 'UIYaoQing/EditBox',
     ]) assert.ok(formManager.includes(`'${field}'`), `${field} 必须使用 Common Numpad`);
     assert.equal(settingsMeta.uuid, 'aa957b46-d867-4e72-9c32-9774f4e53a10');

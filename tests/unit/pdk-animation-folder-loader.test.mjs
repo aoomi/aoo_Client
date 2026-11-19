@@ -33,8 +33,8 @@ test('PDK card-pattern animation assets have one authoritative Common/Spine sour
 test('PDK animation registry maps protocol card types to Common/Spine SkeletonData', () => {
     const registry = readFileSync(join(runtimeRoot, 'PdkAnimationRegistry.ts'), 'utf8');
     const resolver = readFileSync(join(runtimeRoot, 'PdkAnimationResolver.ts'), 'utf8');
-    const presenter = readFileSync(join(runtimeRoot, 'Room/AnimationPresenter.ts'), 'utf8');
-    const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
+    const presenter = readFileSync(join(runtimeRoot, 'Room/PdkAnimationPresenter.ts'), 'utf8');
+    const controller = readFileSync(join(runtimeRoot, 'PdkPlayController.ts'), 'utf8');
     assert.match(registry, /PDK_ANIMATION_BUNDLE = 'paodekuai-common'/);
     for (const relative of requiredAssets) {
         const loadPath = `Spine/${relative.replace(/\.(json|skel)$/, '')}`;
@@ -44,25 +44,36 @@ test('PDK animation registry maps protocol card types to Common/Spine SkeletonDa
         assert.match(registry, new RegExp(`(?:^|\\s)${opType}:`));
     }
     assert.match(resolver, /sp\.SkeletonData/);
-    assert.match(resolver, /pdkAnimationDefinition\(folderKey\)\.assetPath/);
+    assert.match(resolver, /const definition = pdkAnimationDefinition\(folderKey\)/);
+    assert.match(resolver, /loadAsset\(bundle, definition\.assetPath, sp\.SkeletonData\)/);
+    assert.match(resolver, /`\$\{definition\.assetPath\}\/texture`/);
+    assert.match(resolver, /data\.textures = \[texture\]/);
+    assert.match(resolver, /data\.textureNames = \[textureName\]/);
+    assert.match(resolver, /data\.reset\(\)/);
+    assert.match(resolver, /TEXTURE_BOUND/);
+    assert.match(resolver, /mountRevisions\.get\(mount\) !== revision/);
+    assert.match(resolver, /this\.bundlePromise = null;[\s\S]*throw error/);
+    assert.match(resolver, /\[PdkAnimation\][\s\S]*LOAD_FAILED/);
+    assert.match(resolver, /\[PdkAnimation\][\s\S]*PLAY_STARTED/);
     assert.doesNotMatch(resolver, /AnimationClips|JsonAsset|AnimationClip|manifest/);
     assert.match(presenter, /pdkAnimationForOpCardType/);
-    assert.match(controller, /playOperation\(opType\)/);
+    assert.match(controller, /playOperation\(opType, physicalSlot/);
 });
 
-test('PDK room prefab contains the shared card-pattern animation mount nodes', () => {
+test('PDK room prefab gives every seat one shared card-pattern animation mount', () => {
     const prefab = JSON.parse(readFileSync(prefabPath, 'utf8'));
-    const names = new Set(prefab.filter((entry) => entry?.__type__ === 'cc.Node').map((entry) => entry._name));
-    for (const mount of ['Boom_Ani', 'Liandui_Spine', 'Sandaiyi_Spine', 'Sandaier', 'Sidaiyi', 'Sidaier', 'Sidaisan', 'Shunzi', 'Plane_Ani', 'Shut_Dow_Ani']) {
-        assert.equal(names.has(mount), true, `${mount} mount missing`);
-    }
+    const nodes = prefab.filter((entry) => entry?.__type__ === 'cc.Node');
+    assert.equal(nodes.filter((entry) => entry._name === 'Play_CardSpine').length, 4);
+    const resolver = readFileSync(join(runtimeRoot, 'PdkAnimationResolver.ts'), 'utf8');
+    assert.match(resolver, /Players\/Seat_\$\{physicalSlot\}\/Spine\/Play_CardSpine/);
+    assert.doesNotMatch(resolver, /definition\.mountPath/);
 });
 
 test('deal and outgoing-card animations do not replay history or carry card shadows', () => {
-    const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
+    const controller = readFileSync(join(runtimeRoot, 'PdkPlayController.ts'), 'utf8');
     const dealGate = controller.slice(
         controller.indexOf('private shouldAnimateDeal'),
-        controller.indexOf('public async waitForRoundEndPresentation'),
+        controller.indexOf('public async truncateRoundEndPresentation'),
     );
     assert.match(dealGate, /playHistory\.length > 0/);
     assert.match(dealGate, /hasPlayedCards/);
@@ -74,12 +85,12 @@ test('deal and outgoing-card animations do not replay history or carry card shad
 });
 
 test('authority reconciliation removes flight copies and reflows an unchanged hand', () => {
-    const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
+    const controller = readFileSync(join(runtimeRoot, 'PdkPlayController.ts'), 'utf8');
     const authority = controller.slice(
         controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
         controller.indexOf("} else if (event === 'CommonPdkSetStart')"),
     );
-    assert.match(authority, /await this\.ownCardFlight;\s*this\.clearOwnLandingCards\(\)/);
+    assert.match(authority, /await snapshotOwnCardFlight;[\s\S]*this\.clearOwnLandingCards\(\)/);
     const render = controller.slice(
         controller.indexOf('private async renderHand'),
         controller.indexOf('private shouldAnimateDeal'),
@@ -88,10 +99,10 @@ test('authority reconciliation removes flight copies and reflows an unchanged ha
 });
 
 test('local play compacts the surviving hand without a Layout jump frame', () => {
-    const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
+    const controller = readFileSync(join(runtimeRoot, 'PdkPlayController.ts'), 'utf8');
     const compact = controller.slice(
         controller.indexOf('private buildHandCompactionPlan'),
-        controller.indexOf('private schedulePublicCardsClear'),
+        controller.indexOf('private markPublicCardsShown'),
     );
     assert.match(compact, /removedBefore \+ selectedCount \/ 2/);
     assert.match(compact, /tween\(card\)\.by\(HAND_COMPACT_DURATION_SECONDS/);
@@ -99,7 +110,7 @@ test('local play compacts the surviving hand without a Layout jump frame', () =>
 });
 
 test('deal, light effects, trick cleanup, and More menu follow explicit UI boundaries', () => {
-    const controller = readFileSync(join(runtimeRoot, 'CommonPdkPlayController.ts'), 'utf8');
+    const controller = readFileSync(join(runtimeRoot, 'PdkPlayController.ts'), 'utf8');
     const resolver = readFileSync(join(runtimeRoot, 'PdkAnimationResolver.ts'), 'utf8');
     const authority = controller.slice(
         controller.indexOf("if (event === 'CommonPdk_AuthoritativeState')"),
@@ -108,13 +119,13 @@ test('deal, light effects, trick cleanup, and More menu follow explicit UI bound
     assert.doesNotMatch(authority, /renderHand\(this\.shouldAnimateDeal/);
     assert.match(controller, /to === 'PLAYING'[\s\S]*renderHand\(this\.shouldAnimateDeal\(setInfo\)\)/);
     const clear = controller.slice(
-        controller.indexOf('private schedulePublicCardsClear'),
+        controller.indexOf('private clearPublicCardsForTurn'),
         controller.indexOf('private prepareOwnFlightCards'),
     );
-    assert.match(clear, /if \(this\.runtime\.retainPlayedCardsOnTable\(\)\) return/);
-    assert.match(clear, /clearPublicCards\(\);\s*this\.clearTableCards\(\)/);
+    assert.match(clear, /COMPLETED_TRICK_HOLD_MS - \(Date\.now\(\) - shownAt\)/);
+    assert.match(clear, /this\.clearPublicCardsForSeat\(dataSeat\)/);
+    assert.doesNotMatch(clear, /animatePublicCardsClear\(\)/);
     assert.match(controller, /getBoundingBoxToWorld\(\)[\s\S]*toggleMoreMenu\(\)/);
-    assert.match(controller, /menu\.setSiblingIndex\(this\.view\.root\.children\.length - 1\)/);
     assert.match(resolver, /EVENT_AFTER_UPDATE/);
     assert.match(resolver, /glow\|halo\|guang\|gx_\|lizi\|diquan\|shadow\|ying/);
 });

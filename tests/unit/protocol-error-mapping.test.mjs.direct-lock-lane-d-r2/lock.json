@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r2",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/tests/unit/protocol-error-mapping.test.mjs",
+  "preimageSha256": "ABSENT",
+  "scope": "Node 24 AppError/ProtocolClient/ProtocolHttpClient focused contract",
+  "sourceWrite": false,
+  "testWrite": true,
+  "independentReviewer": "non-writer reviewer required"
+}

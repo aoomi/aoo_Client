@@ -1,32 +1,100 @@
-import assert from'node:assert/strict';
-import{readFile}from'node:fs/promises';
-import test from'node:test';
-import{fileURLToPath}from'node:url';
-const read=relative=>readFile(fileURLToPath(new URL(relative,import.meta.url)),'utf8');
-const[registry,bindings,map]=await Promise.all([read('../../../assets/Games/Common/Code/Catalog/FamilyRuntimeRegistry.ts'),read('../../../assets/Games/Common/Code/Catalog/CatalogFamilyBindings.ts'),read('../../../../Server/work/audit/r04-authoritative-four-layer-map.json')]);
-const catalog=JSON.parse(map);const families=[...new Set(catalog.items.map(item=>item.gameplayFamily).filter(family=>family!=='UNCLASSIFIED_MISSING_SOURCE'))];
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import test from 'node:test';
 
-test('all 15 core families have one shared intent adapter and snapshot contract',()=>{
-  assert.equal(families.length,15);
-  assert.equal((registry.match(/export class \w+FamilyAdapter extends FamilyGameplayAdapter/g)||[]).length,15);
-  for(const family of families){assert.match(registry,new RegExp(`'${family.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}'`));}
-  for(const action of['state','reconnect','join','ready','start','act'])assert.match(registry,new RegExp(`${action}\\(`));
-  assert.match(registry,/snapshot\.gameCode!==this\.binding\.code/);
-  assert.match(registry,/snapshot\.stateVersion<this\.current\.stateVersion/);
-  assert.doesNotMatch(registry,/canWin|isWinning|calculateScore|patternScore|settlement\s*\(/);
+const require = createRequire(import.meta.url);
+const clientRoot = new URL('../../..', import.meta.url).pathname;
+const catalogRoot = join(clientRoot, 'assets/Games/Common/Code/Catalog');
+
+let runtime;
+
+function loadRuntime() {
+  if (runtime) return runtime;
+  const typescript = require('typescript');
+  const originalTsLoader = require.extensions['.ts'];
+  require.extensions['.ts'] = (module, filename) => module._compile(typescript.transpileModule(
+    readFileSync(filename, 'utf8'),
+    { compilerOptions: { module: typescript.ModuleKind.CommonJS, target: typescript.ScriptTarget.ES2022 }, fileName: filename },
+  ).outputText, filename);
+  try {
+    runtime = {
+      ...require(join(catalogRoot, 'FamilyRuntimeRegistry.ts')),
+      ...require(join(catalogRoot, 'CatalogFamilyBindings.ts')),
+    };
+  } finally {
+    if (originalTsLoader) require.extensions['.ts'] = originalTsLoader;
+    else delete require.extensions['.ts'];
+  }
+  return runtime;
+}
+
+test('current catalog bindings resolve once through the public family runtime registry', () => {
+  const { CATALOG_FAMILY_BINDINGS, CATALOG_GAME_METADATA, FAMILY_RUNTIME_REGISTRY, FAMILY_RUNTIME_SCHEMAS } = loadRuntime();
+  const canonicalManifest = JSON.parse(readFileSync(join(clientRoot, '../Server/release-input/runtime-metadata-canonical-manifest-cd2999-current-20261012.json'), 'utf8'));
+  const canonicalCd2999 = canonicalManifest.rows.find((row) => row.gameCode === 'chengdu2999');
+  assert.ok(canonicalCd2999, 'canonical current chengdu2999 row must exist');
+  assert.equal(canonicalCd2999.gameId, 2999);
+  assert.equal(CATALOG_GAME_METADATA.chengdu2999.gameId, canonicalCd2999.gameId);
+  assert.notEqual(CATALOG_GAME_METADATA.chengdu2999.gameId, 630);
+  const active = CATALOG_FAMILY_BINDINGS.filter(({ family }) => family !== 'UNCLASSIFIED_MISSING_SOURCE');
+  assert.equal(FAMILY_RUNTIME_REGISTRY.all().length, active.length);
+  assert.equal(new Set(active.map(({ code }) => code)).size, active.length);
+  for (const binding of active) {
+    assert.deepEqual(FAMILY_RUNTIME_REGISTRY.resolve(binding.code), binding);
+    assert.ok(FAMILY_RUNTIME_SCHEMAS[binding.family], binding.family);
+  }
+  assert.equal(FAMILY_RUNTIME_REGISTRY.resolve('chengdu2001')?.family, 'poker:pao-de-kuai');
+  assert.equal(FAMILY_RUNTIME_REGISTRY.resolve('neijiang2002')?.family, 'poker:pao-de-kuai');
+  assert.equal(FAMILY_RUNTIME_REGISTRY.resolve('liangshan2003')?.family, 'poker:pao-de-kuai');
+  assert.ok(FAMILY_RUNTIME_SCHEMAS['poker:cd299']);
 });
 
-test('all catalog codes plus NJ201/LS201 bind once to their authoritative family and region config',()=>{
-  const entries=[...bindings.matchAll(/\{code:"([^"]+)",family:"([^"]+)",regionConfig:"([^"]+)"\}/g)].map(match=>({code:match[1],family:match[2],regionConfig:match[3]}));
-  assert.equal(entries.length,530);assert.equal(new Set(entries.map(entry=>entry.code)).size,530);
-  const expected=new Map(catalog.items.map(item=>[item.code,{family:item.gameplayFamily,regionConfig:item.regionRuleConfig}]));
-  expected.set('NJ201',{family:'poker:pao-de-kuai',regionConfig:'CONFIG:NJ201@sichuan/neijiang'});
-  expected.set('LS201',{family:'poker:pao-de-kuai',regionConfig:'CONFIG:LS201@sichuan/liangshan'});
-  for(const entry of entries)assert.deepEqual({family:entry.family,regionConfig:entry.regionConfig},expected.get(entry.code));
+test('registry rejects duplicate and unclassified runtime bindings', () => {
+  const { FamilyRuntimeRegistry } = loadRuntime();
+  const registry = new FamilyRuntimeRegistry();
+  const binding = { code: 'test-pdk', family: 'poker:pao-de-kuai', regionConfig: 'CONFIG:test@local' };
+  registry.register(binding);
+  assert.deepEqual(registry.resolve('test-pdk'), binding);
+  assert.throws(() => registry.register(binding), /duplicate family runtime test-pdk/);
+  assert.throws(() => registry.register({
+    code: 'missing-source', family: 'UNCLASSIFIED_MISSING_SOURCE', regionConfig: 'CONFIG:missing@local',
+  }), /blocked missing-source runtime missing-source/);
 });
 
-test('each family schema exposes generic action submission and authoritative snapshots',()=>{
-  for(const family of families){const marker=`'${family}':{family:'${family}'`;assert.ok(registry.includes(marker),family);}
-  assert.match(registry,/unsupported \$\{this\.schema\.family\} action/);
-  assert.match(registry,/this\.schema\.phases\.includes\(snapshot\.phase\)/);
+test('family adapter sends ordered intent and ignores stale authoritative snapshots', async () => {
+  const { FamilyGameplayAdapter, FAMILY_RUNTIME_SCHEMAS } = loadRuntime();
+  const requests = [];
+  const responses = [
+    { gameCode: 'chengdu2001', stateVersion: 4, phase: 'PLAYING' },
+    { gameCode: 'chengdu2001', stateVersion: 3, phase: 'PLAYING' },
+  ];
+  const adapter = new FamilyGameplayAdapter({
+    request: async (message, payload) => {
+      requests.push({ message, payload });
+      return responses.shift();
+    },
+  }, 88, {
+    code: 'chengdu2001', family: 'poker:pao-de-kuai', regionConfig: 'CONFIG:chengdu2001@sichuan/chengdu',
+  }, FAMILY_RUNTIME_SCHEMAS['poker:pao-de-kuai']);
+
+  const current = await adapter.act(2, 'play', { cards: [3, 4, 5] });
+  const stale = await adapter.act(2, 'pass');
+  assert.deepEqual(current, { gameCode: 'chengdu2001', stateVersion: 4, phase: 'PLAYING' });
+  assert.deepEqual(stale, current);
+  assert.deepEqual(requests, [
+    { message: 'poker.chengdu2001.dispatch', payload: { roomId: 88, sequence: 1, seatId: 2, action: 'play', payload: { cards: [3, 4, 5] } } },
+    { message: 'poker.chengdu2001.dispatch', payload: { roomId: 88, sequence: 2, seatId: 2, action: 'pass', payload: {} } },
+  ]);
+  assert.throws(() => adapter.act(2, 'discard'), /unsupported poker:pao-de-kuai action/);
+});
+
+test('family adapter rejects malformed or mismatched authoritative responses', async () => {
+  const { FamilyGameplayAdapter, FAMILY_RUNTIME_SCHEMAS } = loadRuntime();
+  const binding = { code: 'chengdu2001', family: 'poker:pao-de-kuai', regionConfig: 'CONFIG:chengdu2001@sichuan/chengdu' };
+  const adapter = new FamilyGameplayAdapter({ request: async () => ({ gameCode: 'wrong-game', stateVersion: 1, phase: 'PLAYING' }) }, 9, binding, FAMILY_RUNTIME_SCHEMAS['poker:pao-de-kuai']);
+  await assert.rejects(adapter.state(), /mismatched family response/);
+  const invalidPhase = new FamilyGameplayAdapter({ request: async () => ({ gameCode: 'chengdu2001', stateVersion: 1, phase: 'NOT_A_PHASE' }) }, 9, binding, FAMILY_RUNTIME_SCHEMAS['poker:pao-de-kuai']);
+  await assert.rejects(invalidPhase.state(), /mismatched family response/);
 });

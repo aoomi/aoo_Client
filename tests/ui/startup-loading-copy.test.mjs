@@ -139,8 +139,8 @@ test('scene navigation progress is anchored 30px above the viewport bottom', () 
 });
 
 test('room first-presentation wait cannot retain the previous frame until navigation timeout', () => {
-    const pdk = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts');
-    const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+    const pdk = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts');
+    const launcher = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
     assert.match(pdk, /waitForInitialPresentation\(\): Promise<void>[\s\S]*?return Promise\.resolve\(\)/);
     const initialWait = pdk.match(/waitForInitialPresentation\(\): Promise<void> \{[\s\S]*?\n    \}/)?.[0] ?? '';
     assert.doesNotMatch(initialWait, /waitForRoundEndPresentation|setTimeout|Promise\.race/);

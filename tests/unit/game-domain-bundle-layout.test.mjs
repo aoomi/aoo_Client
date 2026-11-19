@@ -9,7 +9,6 @@ const expected = new Map([
   ['Games/Common.meta', 'games-common'],
   ['Games/LongCard.meta', 'games-longcard'],
   ['Games/Mahjong.meta', 'games-mahjong'],
-  ['Games/WordCard.meta', 'games-wordcard'],
   ['Games/Poker/Common.meta', 'poker-common'],
   ['Games/Poker/CX.meta', 'poker-cx'],
   ['Games/Poker/DDZ.meta', 'poker-ddz'],

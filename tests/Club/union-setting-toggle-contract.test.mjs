@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const controller = readFileSync(new URL('../../assets/Club/Code/Runtime/LegacyUnionManagerController.ts', import.meta.url), 'utf8');
-const server = readFileSync(new URL('../../../Server/server/Club/src/main/java/com/aoo/bcg/club/ClubDispatchService.java', import.meta.url), 'utf8');
+const server = readFileSync(new URL('../../../server/modules/social-ops/Club/src/main/java/com/aoo/bcg/club/ClubDispatchService.java', import.meta.url), 'utf8');
 
 test('union setting toggles remain mutually exclusive without serialized Toggle groups', () => {
     assert.match(controller, /private bindExclusiveToggles\(toggles: Toggle\[\]\)/);

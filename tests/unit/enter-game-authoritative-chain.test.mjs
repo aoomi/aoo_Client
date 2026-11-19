@@ -77,11 +77,11 @@ test('authoritative handoff carries room version route, native resources and one
  assert.match(auth,/resolveRuntimeEndpoints\(\)/);
  assert.match(auth,/displayName, deviceId, accountToken/);
  assert.match(screen,/open-authoritative-subgame/);
- assert.match(screen,/CommonPdkGameSceneLauncher/);
+ assert.match(screen,/PdkGameSceneLauncher/);
  assert.match(screen,/enterAuthoritativeSubgame/);
  const protocol=read('assets/Common/Code/Runtime/network/ProtocolClient.ts');
- const switcher=read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
- const launcher=read('assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkGameSceneLauncher.ts');
+ const switcher=read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
+ const launcher=read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkGameSceneLauncher.ts');
  assert.match(protocol,/bindRoomAuthority\(roomId:/);
  assert.match(protocol,/endsWith\('\.dispatch'\)/);
  assert.match(switcher,/gameClient\.setWsTicket\(gameTicket\)/);

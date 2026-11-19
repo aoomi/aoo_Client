@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "D",
+  "attempt": "error-registry-20261011-r4",
+  "status": "RELEASED_FOR_INDEPENDENT_REVIEW",
+  "owner": "/root/error_registry_impl",
+  "path": "Client/tests/unit/protocol-error-mapping.test.mjs",
+  "preimageSha256": "ABSENT",
+  "scope": "Node focused AppError/ProtocolClient/ProtocolHttpClient mapping contract",
+  "sourceWrite": false,
+  "testWrite": true,
+  "independentReviewer": "lane_g",
+  "replacementCounts": {"runtime AppError assertions":1,"source mapping assertions":1},
+  "postimageSha256": "2759d6ed2972a77983220134bdb49761a7673ccf7e944a292c8b08b66b85ac8a"
+}

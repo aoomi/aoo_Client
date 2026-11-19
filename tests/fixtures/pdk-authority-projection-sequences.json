@@ -1,0 +1,24 @@
+{
+  "roomId": 527794,
+  "roundNo": 1,
+  "events": [
+    { "step": "live-play", "stateVersion": 10, "trickId": 3, "operationId": "1-10-play", "seat": 0, "action": "PLAY", "cards": [110, 111, 112] },
+    { "step": "duplicate-push", "stateVersion": 10, "trickId": 3, "operationId": "1-10-play", "seat": 0, "action": "PLAY", "cards": [110, 111, 112] },
+    { "step": "same-operation-newer-snapshot", "stateVersion": 11, "trickId": 3, "operationId": "1-10-play", "seat": 0, "action": "PLAY", "cards": [110, 111, 112] },
+    { "step": "reconnect-ledger", "stateVersion": 12, "trickId": 3, "operationId": "1-10-play", "seat": 0, "action": "PLAY", "cards": [110, 111, 112] },
+    { "step": "next-play", "stateVersion": 13, "trickId": 3, "operationId": "1-13-play", "seat": 1, "action": "PLAY", "cards": [213] },
+    { "step": "trick-reset", "stateVersion": 14, "trickId": 4, "operationId": "auto-pass-14-0", "seat": 0, "action": "PASS", "cards": [] },
+    { "step": "late-old-round-push", "stateVersion": 9, "trickId": 3, "operationId": "1-9-play", "seat": 1, "action": "PLAY", "cards": [209, 309] },
+    { "step": "next-round", "roundNo": 2, "stateVersion": 1, "trickId": 1, "operationId": "2-1-play", "seat": 0, "action": "PLAY", "cards": [105] }
+  ],
+  "expected": [
+    { "step": "live-play", "renderedOperationIds": ["1-10-play"], "visibleBySeat": { "0": [110, 111, 112] }, "playCountOperationId": "1-10-play" },
+    { "step": "duplicate-push", "renderedOperationIds": ["1-10-play"], "visibleBySeat": { "0": [110, 111, 112] }, "playCountOperationId": "1-10-play" },
+    { "step": "same-operation-newer-snapshot", "renderedOperationIds": ["1-10-play"], "visibleBySeat": { "0": [110, 111, 112] }, "playCountOperationId": "1-10-play" },
+    { "step": "reconnect-ledger", "renderedOperationIds": ["1-10-play"], "visibleBySeat": { "0": [110, 111, 112] }, "playCountOperationId": "1-10-play" },
+    { "step": "next-play", "renderedOperationIds": ["1-10-play", "1-13-play"], "visibleBySeat": { "0": [110, 111, 112], "1": [213] }, "playCountOperationId": "1-13-play" },
+    { "step": "trick-reset", "renderedOperationIds": [], "visibleBySeat": {}, "playCountOperationId": "" },
+    { "step": "late-old-round-push", "renderedOperationIds": [], "visibleBySeat": {}, "playCountOperationId": "" },
+    { "step": "next-round", "renderedOperationIds": ["2-1-play"], "visibleBySeat": { "0": [105] }, "playCountOperationId": "2-1-play" }
+  ]
+}

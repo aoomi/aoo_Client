@@ -17,9 +17,13 @@ function files(directory){return readdirSync(directory,{withFileTypes:true}).fla
 
 test('unified selector is the only reachable lobby play and room-create entry',()=>{
  for(const relative of retired)assert.equal(existsSync(path.join(root,relative)),false,relative);
- assert.equal(existsSync(path.join(root,'assets/Common/Prefab/create_Room.prefab')),true);
+ assert.equal(existsSync(path.join(root,'assets/Modules/CreateRoom/Prefab/CreateRoom.prefab')),true);
  const sources=files(path.join(root,'assets')).filter(file=>/\.(ts|json)$/.test(file)&&statSync(file).size<2_000_000)
    .map(file=>readFileSync(file,'utf8')).join('\n');
  assert.doesNotMatch(sources,/hall\.regions|UISelectCity|UIMoreGame/);
- assert.match(sources,/common\/create_Room/);
+ assert.match(sources,/case 'CreateRoom'/);
+ assert.match(sources,/UICreateRoom/);
+ const lobby=readFileSync(path.join(root,'assets/Lobby/Code/LobbyScreenController.ts'),'utf8');
+ const selector=readFileSync(path.join(root,'assets/Modules/CreateRoom/Code/PlaySelectorController.ts'),'utf8');
+ assert.doesNotMatch(`${lobby}\n${selector}`,/create_Room|CreatRoom/);
 });

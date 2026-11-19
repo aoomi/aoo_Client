@@ -22,6 +22,8 @@ test('club template desks use the same UnifiedScroll policy as ClubList', async 
             native[0].elastic, native[0].bounceDuration, native[0].cancelInnerEvents],
         [true, false, true, 0.32, true, 0.65, true],
     );
+    assert.equal(native[0]._horizontalScrollBar, null,
+        'RoomList must not activate the detached legacy ScrollBar whose component node is null');
     assert.equal(components.filter((item) => item?.__type__ === 'cc.Button').length, 0,
         'the viewport must not compete as a button');
     const unified = components.filter((item) => item?.__type__ === 'ef215DR9B1D24JQ689jnf3m');

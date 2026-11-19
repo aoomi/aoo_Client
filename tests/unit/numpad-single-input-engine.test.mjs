@@ -55,3 +55,12 @@ test('public Numpad displays and closes directly without any transition', () => 
     assert.doesNotMatch(service, /tween\(|Tween|ENTER_SECONDS|EXIT_SECONDS|travel|PARENT_CHANGED/);
     assert.match(manager, /showFromCenter && this\.name !== 'Numpad'/);
 });
+
+test('cached join-room Numpad transfers lifecycle and button ownership after returning from a game', () => {
+    const manager = read('assets/Common/Code/Runtime/ui/LegacyFormManager.ts');
+    const join = read('assets/Lobby/Code/JoinRoomController.ts');
+    assert.match(manager, /this\.loaded\.get\(path\)\?\.updateOptions\(options\)/);
+    assert.match(join, /const cached = this\.forms\.get\(FORM_PATH\)/);
+    assert.match(join, /if \(cached\?\.node\.isValid\) this\.bind\(cached\)/);
+    assert.match(join, /if \(this\.form !== form \|\| !this\.numpad\) this\.bind\(form\)/);
+});

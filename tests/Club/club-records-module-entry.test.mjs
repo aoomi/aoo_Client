@@ -9,11 +9,12 @@ test('club record buttons delegate opening to the Records module', () => {
     const records = read('assets/Modules/Records/Code/ReplayController.ts');
     const registry = read('assets/Common/Code/Runtime/ui/ModulePrefabRegistry.ts');
 
-    assert.match(club, /bottom\/btn_zhanji[^]*openClubRecord\(\)/);
-    assert.match(club, /top\/right_btn\/btn_unionRecord[^]*openClubRecord\(\)/);
-    assert.match(club, /mainNode\.emit\('legacy-open-records'/);
+    assert.match(club, /Btn_Record[^]*openClubRecord\(\)/);
+    assert.match(club, /Btn_EventRecord[^]*openClubRecord\(\)/);
+    assert.match(club, /mainNode\.emit\('legacy-open-records', \{ source: 'CLUB', clubId: this\.clubId\(\) \}\)/);
     assert.doesNotMatch(club, /openClubRecord\(\): void \{[^}]*forms\.show\('UILobbyRecords'/);
-    assert.match(records, /this\.on\('legacy-open-records', \(\) => \{ void this\.open\(\); \}\)/);
+    assert.match(records, /this\.on\('legacy-open-records', value => \{ void this\.open\(value\); \}\)/);
+    assert.match(records, /this\.api\.history\([\s\S]*this\.historyClubId/);
     assert.match(records, /const form = await this\.forms\.show\('UILobbyRecords'\)/);
     assert.match(registry, /UILobbyRecords: \{ bundle: 'records-ui', asset: 'Prefab\/Records' \}/);
 });

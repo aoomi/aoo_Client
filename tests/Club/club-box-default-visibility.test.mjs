@@ -16,9 +16,23 @@ const visibilityMethod = controller.match(
 assert.ok(visibilityMethod, 'club mode visibility method must exist');
 assert.ok(
     visibilityMethod[1].includes(
-        "this.active(form, 'top/right_btn/moreNode/childMore/btn_caseSprots', true);",
+        "this.active(form, 'Btn_Safe', true);",
     ),
     'club safe-box entry must be visible in both ordinary clubs and tournaments',
+);
+assert.ok(
+    visibilityMethod[1].includes("this.refreshMoreMenuLayout(form, 'mode');"),
+    'club mode visibility must immediately reflow the more menu after hiding sibling entries',
+);
+assert.match(
+    controller,
+    /semanticName === 'Menu'\) this\.refreshMoreMenuLayout\(form, 'open'\)/,
+    'opening the more menu must reflow its visible entries before interaction',
+);
+assert.match(
+    controller,
+    /if \(safe\?\.parent === menu\) safe\.setSiblingIndex\(0\)/,
+    'every club mode must keep the safe-box entry above the bottom toolbar',
 );
 assert.ok(
     !/btn_caseSprots[^\n]*(?:isUnion|unionId|minister|permission)/.test(visibilityMethod[1]),

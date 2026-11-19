@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "p0-e-ws-contract-20261011-r2",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "P0-E",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "WAITING_FOR_INDEPENDENT_REVIEW",
+  "path": "Client/tests/unit/websocket-ticket-boundary.test.mjs",
+  "scope": "WebSocket ticket/auth boundary regression coverage",
+  "preimageSha256": "ea283660c46d16e9e2e67741a509b0cac2b580eeb01295f38727b595458dbb75",
+  "sourceWrite": false,
+  "testWrite": true,
+  "forbidden": ["production source outside whitelist", "Server", "Gateway", "generated bundles", "shared services", "shared ports", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "ea283660c46d16e9e2e67741a509b0cac2b580eeb01295f38727b595458dbb75",
+  "evidence": "docs/05-当前状态/evidence/p0-e-ws-contract-20261011-r2/DEV_SELF_CHECK-v1.md"
+}

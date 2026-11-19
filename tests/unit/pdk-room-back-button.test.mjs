@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-const source = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/CommonPdkPlayController.ts', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../../assets/Games/Poker/PDK/Common/Code/Runtime/PdkPlayController.ts', import.meta.url), 'utf8');
 
 test('Btn_Back is the only room-menu exit contract', () => {
   assert.match(source, /this\.bind\('Btn\/RoomActions\/Btn_Menu\/Btn_Back', \(\) => this\.exitRoom\(\)\)/);

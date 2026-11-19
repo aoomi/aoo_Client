@@ -6,10 +6,10 @@ const expectAll = (text, tokens, label) => {
     for (const token of tokens) assert.ok(text.includes(token), `${label}: missing ${token}`);
 };
 
-const [forms, lobby, clubEntry, clubMain, interaction, scroll, unifiedInput] = await Promise.all([
+const [forms, lobby, lobbyEntry, clubMain, interaction, scroll, unifiedInput] = await Promise.all([
     source('Common/Code/Runtime/ui/LegacyFormManager.ts'),
     source('Lobby/Code/LobbyScreenController.ts'),
-    source('Club/Code/Runtime/LegacyClubEntryController.ts'),
+    source('Lobby/Code/ClubList/LobbyClubEntryController.ts'),
     source('Club/Code/Runtime/LegacyClubMainController.ts'),
     source('Common/Code/UI/Interaction.ts'),
     source('Common/Code/UI/UnifiedScroll.ts'),
@@ -21,7 +21,7 @@ const [forms, lobby, clubEntry, clubMain, interaction, scroll, unifiedInput] = a
 // loaders or inventing incompatible per-screen input/scroll behavior.
 expectAll(forms, [
     "throw new Error(`缺少 Creator 3.8.8 原生 Prefab: ${path}`)",
-    'bindLegacyFallbackInteractions(node, path, onLegacyUiEvent)',
+    'bindLegacyFallbackInteractions(instance, path, onLegacyUiEvent)',
     "eventType: 'button-click'",
     "attachEditbox('editbox-began', 'OnEditBox_Began')",
     "attachEditbox('editbox-ended', 'OnEditBox_End')",
@@ -64,27 +64,37 @@ expectAll(lobby, [
     'const handled = this.forms?.back() ?? false',
 ], 'hall duplicate click, loading flash and back handling');
 
+// The lobby bridge owns list/create/enter orchestration; the legacy club
+// surface remains the compatibility implementation for hydrated club views.
+expectAll(lobbyEntry, [
+    'new LegacyJoinClubController(this.forms, this.client).install()',
+    'new LegacyClubMainController(',
+    "this.forms.register('UILobbyClubList'",
+    'private readonly enteringClubIds = new Set<number>()',
+], 'lobby club entry bridge');
+
 // Empty and error paths remain actionable instead of leaving the old hall
 // hidden underneath a blank club layer.
-expectAll(clubEntry, [
-    "if (clubs.length === 0) await this.forms.show('ui/club/UIClubNone')",
-    "error instanceof Error ? error.message : '亲友圈数据加载失败，请稍后再试'",
+expectAll(clubMain, [
+    "this.setCollectionState(panel, clubs.length > 0 ? 'content' : 'empty')",
+    "this.setCollectionState(panel, 'error')",
     'this.mainNode.active = true',
-    'this.setLobbyTop(true)',
-    "const editBox = form.find('editbox')?.getComponent(EditBox)",
-    "if (editBox) editBox.string = ''",
-    'scroll.scrollToOffset(new Vec2(offset.x + delta, offset.y), 0.2)',
+    'this.onReturnLobby()',
+    "this.findDescendant(form.node, 'EditBox')?.getComponent(EditBox)",
+    "if (edit) edit.string = ''",
+    'scroll.scrollToOffset(offset, 0.16, true)',
 ], 'club empty/error/input/scroll/return behavior');
 
 // Club room/member views must keep their listener lifetimes bounded and expose
 // the principal return, paging and async-repeat guards.
 expectAll(clubMain, [
-    "this.onClick(form.find('top/btn_back'), () => this.forms.close(path))",
+    "if (['btn_close', 'btn_back', 'btn_closeshare', 'btn_bg'].includes(node.name))",
+    'this.onClick(node, () => this.forms.close(path))',
     'private invitePending = false',
     'if (this.invitePending || this.inviteCandidatePid <= 0)',
     'if (epoch === this.inviteEpoch) this.invitePending = false',
-    "this.onClick(form.find('right_main/btn_room_last'), () => this.scrollRooms(-1))",
-    "this.onClick(form.find('right_main/btn_room_next'), () => this.scrollRooms(1))",
+    "this.onClick(node('btn_room_last'), () => this.scrollRooms(-1))",
+    "this.onClick(node('btn_room_next'), () => this.scrollRooms(1))",
     'this.clearRoomListeners()',
     'this.clearQuickRoomListeners()',
 ], 'club navigation and repeat guards');

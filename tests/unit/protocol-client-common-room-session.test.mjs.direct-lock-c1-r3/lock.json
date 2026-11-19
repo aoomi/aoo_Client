@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "lockId": "c1-common-room-session-20261011-r3",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "C1",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "RELEASED_NO_CHANGE",
+  "path": "Client/tests/unit/protocol-client-common-room-session.test.mjs",
+  "scope": "tests for exactly one active client, callback ordering/gating and cleanup only",
+  "preimageSha256": "ddfff4d68e386a3932e56104924ddd6c1e7046df1054e4dd59fcd8a781dc099e",
+  "sourceWrite": false,
+  "testWrite": true,
+  "forbidden": ["PdkSwitchCoordinator.ts", "protocol semantics", "reconnect/handoff contract", "Compatibility", "fake client", "old cache", "shared runtime", "generated bundles", "LoginScene", "rules workbooks", "Server", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "bf59ee06ab182a5ae704aa846c04ccb727737cfd82ae8d68b7ed84cb676b87cf",
+  "evidence": "docs/05-当前状态/evidence/c3-client-room-session-lifecycle-20261011-r3/DEV_SELF_CHECK-v3.md"
+}

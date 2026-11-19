@@ -13,7 +13,9 @@ export class BootstrapGateway {
         try {
             const response = await ProtocolHttpClient.fetch(httpGatewayUrl('/api/v2/version/check', this.config.apiBaseUrl), {
                 method: 'POST', signal: controller.signal,
-                headers: { 'Content-Type': 'application/json', [API_VERSION_HEADER]: API_VERSION, Authorization: `Bearer ${this.config.bootstrapToken}` },
+                headers: { 'Content-Type': 'application/json', [API_VERSION_HEADER]: API_VERSION,
+                    'X-Device-Id': this.config.deviceId,
+                    ...(this.config.bootstrapToken ? { Authorization: `Bearer ${this.config.bootstrapToken}` } : {}) },
                 body: JSON.stringify({
                     platform: this.platform(), channel: this.config.clientChannel,
                     currentVersion: this.config.clientVersion, resourceVersion: this.config.resourceVersion,

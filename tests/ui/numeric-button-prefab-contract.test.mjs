@@ -44,4 +44,8 @@ test('runtime binds buttons without re-enabling legacy EditBox input', () => {
     assert.doesNotMatch(source, /edit\.enabled = true;/);
     assert.match(source, /getChildByName\('lb'\)/);
     assert.match(source, /if \(label\) label\.string = next;/);
+    assert.match(source, /'UIClubPromoterLevelAdd\/EditBox'/,
+        '添加队长表单必须按运行时表单名绑定公共数字键盘');
+    assert.doesNotMatch(source, /\n\s*'ClubPromoterLevelAdd\/EditBox'/,
+        '不得使用预制体根节点名冒充运行时表单名');
 });

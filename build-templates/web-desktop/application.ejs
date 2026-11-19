@@ -1,0 +1,30 @@
+<%- include(versionCheckTemplate, { version: '1.0.0'}) %>
+let cc;
+export class Application {
+    constructor () {
+        this.settingsPath = '<%= settingsJsonPath %>';
+        this.showFPS = <%= showFPS %>;
+    }
+
+    init (engine) {
+        cc = engine;
+        cc.game.onPostBaseInitDelegate.add(this.onPostInitBase.bind(this));
+        cc.game.onPostSubsystemInitDelegate.add(this.onPostSystemInit.bind(this));
+    }
+
+    onPostInitBase () {}
+    onPostSystemInit () {}
+
+    start () {
+        const projectBundles = Array.isArray(globalThis.__aooProjectBundles)
+            ? globalThis.__aooProjectBundles : [];
+        return cc.game.init({
+            debugMode: <%= debugMode %> ? cc.DebugMode.INFO : cc.DebugMode.ERROR,
+            settingsPath: this.settingsPath,
+            overrideSettings: {
+                assets: { preloadBundles: projectBundles.map((bundle) => ({ bundle })) },
+                profiling: { showFPS: this.showFPS }
+            }
+        }).then(() => cc.game.run());
+    }
+}

@@ -28,19 +28,62 @@ test('short replay target opens the authoritative single-round player', () => {
     assert.match(lobby, /roomId: target\.roomId, setId: target\.setId/);
 });
 
+test('authoritative replay keeps the selected round terminal cards visible', () => {
+    const replay = read('Modules/Records/Code/PdkReplayController.ts');
+    assert.match(replay, /const expectedRound = Number\(setId\) \+ 1/);
+    assert.match(replay, /Number\(snapshot\.roundNo \?\? expectedRound\) !== expectedRound/);
+    assert.match(replay, /if \(this\.isTerminalSnapshot\(snapshot\)\) break/);
+    assert.match(replay, /snapshot\.currentTrick\?\.cards, lastPlay\?\.cards/);
+    assert.match(replay, /for \(const play of \[\.\.\.history\]\.sort/);
+    assert.match(replay, /phase: 'PLAYING'/);
+    assert.match(replay, /scheduleStep\(1200\)/);
+    assert.doesNotMatch(replay, /setInterval/);
+    assert.match(replay, /Players\/Seat_\$\{ui\}\/Card\/Out_Card/);
+    assert.match(replay, /Players\/Seat_0\/Card\/Hand_Cards/);
+    assert.doesNotMatch(replay, /Players\/Sp_Seat_/);
+    assert.match(replay, /createSeatEntries\(seatEntries\.length, clientSeat\)/);
+    assert.match(replay, /changeRound\(-1\)/);
+    assert.match(replay, /changeRound\(1\)/);
+    assert.match(replay, /出牌时间/);
+    assert.match(replay, /new PdkSeatPresenter\(form\.node\)/);
+    assert.match(replay, /remainingHand\(snapshot, dataSeat/);
+    assert.match(replay, /Card\/Card_Layout/);
+    assert.match(replay, /renderTableCards\(snapshot, layout/);
+    assert.match(replay, /PdkAnimationResolver/);
+    assert.match(replay, /renderTurnCountdown\(snapshot, layout/);
+    assert.match(replay, /Players\/Seat_\$\{slot\}\/Clock\/Num/);
+    assert.match(replay, /addPlayCount\(hand, index\)/);
+    assert.match(replay, /PlayCount_\$\{playIndex\}/);
+    assert.match(replay, /clearExcept\(parent, \['Count'\]\)/);
+});
+
+test('authoritative replay pagination is bounded and fails closed after the limit', () => {
+    const replay = read('Modules/Records/Code/PdkReplayController.ts');
+    assert.match(replay, /const MAX_REPLAY_CHUNKS = 10_000/);
+    assert.equal((replay.match(/for \(let page = 0; page < MAX_REPLAY_CHUNKS; page \+= 1\)/g) ?? []).length, 2);
+    assert.equal((replay.match(/if \(!paginationComplete\) throw new Error\('回放分页超过安全上限'\)/g) ?? []).length, 2);
+    assert.equal((replay.match(/if \(!chunk\.hasMore\) \{ paginationComplete = true; break; \}/g) ?? []).length, 2);
+    assert.doesNotMatch(replay, /for \(;;\)/);
+    assert.match(replay, /cursors\.has\(afterSequence\)/);
+    assert.match(replay, /Number\.isSafeInteger\(next\) \|\| next <= afterSequence/);
+    assert.match(replay, /Number\.isSafeInteger\(cursor\) \|\| cursor <= afterSequence/);
+    assert.match(replay, /generation !== this\.renderGeneration \|\| !this\.form\?\.isShown\(\)/);
+});
+
 test('small settlement fetches displays and copies its stable code', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /this\.setEnd\.replayCode/);
-    assert.match(result, /回放码:\$\{this\.replayCode\}/);
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
+    assert.match(result, /this\.viewSetEnd\.replayCode/);
+    assert.match(result, /回放码:\$\{replayCode\}/);
     assert.match(result, /loadReplayCode\(roomId, setId\)/);
     assert.match(result, /roundNo - 1/);
-    assert.match(result, /Btn_Share', Boolean\(this\.replayCode\)/);
-    assert.match(result, /writeClipboard\(this\.replayCode\)/);
+    assert.match(result, /Btn_Share', Boolean\(replayCode\)/);
+    assert.match(result, /writeClipboard\(replayCode\)/);
+    assert.match(result, /target !== this\.viewSetEnd/);
     assert.doesNotMatch(result, /回放码:生成中/);
 });
 
 test('settlement resolves the durable round code but never blocks result presentation', () => {
-    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
     assert.match(coordinator, /payload = await this\.withReplayCode\(payload, roomId, roundNo\);[\s\S]*forms\.show\(this\.smallSettlementForm, payload\)/);
     assert.match(coordinator, /const setId = Math\.max\(0, roundNo - 1\)/);
     assert.match(coordinator, /return \{ \.\.\.payload, replayCode: '', replaySetId: setId \}/);
@@ -49,21 +92,28 @@ test('settlement resolves the durable round code but never blocks result present
     assert.match(coordinator, /event === 'RoomEnd'[\s\S]*showSettlementAfterPresentation\(false,/);
 });
 
+test('terminal round still opens the eighth small settlement before totals', () => {
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
+    assert.match(coordinator, /terminal round is still a completed round/);
+    assert.doesNotMatch(coordinator, /settlementPresentation === 'FLOATING' && \(matchFinished \|\| finalSettlement\)/);
+    assert.match(coordinator, /forms\.show\(this\.smallSettlementForm, payload\)/);
+});
+
 test('small settlement keeps global hand boundaries and completed-round pagination', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /PageLabel', `\$\{roundNo\}\/\$\{roundLimit\}`/);
-    assert.match(result, /new Node\(`PlayedHand_\$\{hand\.playIndex\}`\)/);
-    assert.match(result, /playIndex: order \+ 1/);
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
+    assert.match(result, /Bottom\/Page\/Label', `\$\{roundNo\}\/\$\{roundLimit\}`/);
+    assert.match(result, /PlayedCard_\$\{hand\.playIndex\}_\$\{index\}/);
+    assert.match(result, /: order \+ 1/);
     assert.match(result, /this\.sortedCards\(hand\.cards\)/);
-    assert.match(result, /Btn_Continue', !roomEnded/);
-    assert.match(result, /Btn_FinalSettlement', roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Continue', !roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Final', roomEnded/);
     assert.match(result, /if \(this\.matchFinished\(\)\) return;/);
 });
 
 test('final settlement receives the exact terminal payload instead of relying on room cache timing', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkSwitchCoordinator.ts');
-    const record = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkRecordController.ts');
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
+    const coordinator = read('Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
+    const record = read('Games/Poker/PDK/Common/Code/Runtime/PdkRecordController.ts');
     assert.match(result, /forms\.show\(this\.bigSettlementForm, this\.setEnd\)/);
     assert.match(coordinator, /onShow: \(form, roomEnd\)[\s\S]*recordController\?\.onShow\(form, roomEnd\)/);
     assert.match(record, /this\.terminalPayload = this\.record\(roomEnd\)/);
@@ -71,28 +121,52 @@ test('final settlement receives the exact terminal payload instead of relying on
 });
 
 test('terminal small settlement exposes only summary and cannot overlay it with return lobby', () => {
-    const result = read('Games/Poker/PDK/Common/Code/Runtime/CommonPdkResultController.ts');
-    assert.match(result, /Btn_FinalSettlement', roomEnded/);
-    assert.match(result, /Btn_ReturnLobby', false/);
-    assert.doesNotMatch(result, /Btn_ReturnLobby', roomEnded/);
+    const result = read('Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts');
+    assert.match(result, /Bottom\/Btn\/Btn_Final', roomEnded/);
+    assert.match(result, /Bottom\/Btn\/Btn_Return', false/);
+    assert.doesNotMatch(result, /Bottom\/Btn\/Btn_Return', roomEnded/);
 });
 
 test('record settlement uses explicit history context and shared rule formatting', () => {
     const history = read('Modules/Records/Code/ReplayController.ts');
+    const settlementPrefab = read('Games/Poker/PDK/Common/Prefab/SmallSettlement.prefab');
     const club = read('Club/Code/Runtime/LegacyClubRecordListController.ts');
     const formatter = read('Games/Poker/PDK/Common/Code/Rules/PdkRuleSummaryFormatter.ts');
-    assert.match(history, /const HISTORY_SMALL_SETTLEMENT = 'history\/pdk\/SmallSettlement'/);
+    assert.match(history, /const HISTORY_SMALL_SETTLEMENT = 'history\/poker\/SmallSettlement'/);
     assert.match(history, /historyReplayTarget/);
     assert.match(history, /roundNo - 1/);
-    assert.match(history, /PageLabel', rounds\.length \? `\$\{index \+ 1\}\/\$\{rounds\.length\}`/);
+    assert.match(history, /this\.textAt\(form\.node, 'Bottom\/Page\/Label', rounds\.length \? `\$\{index \+ 1\}\/\$\{rounds\.length\}`/);
     assert.match(history, /formatPdkRuleSummary\(detail\.ruleSnapshot, detail\.ruleFields\)/);
     assert.match(history, /source: context\.source \?\? 'HALL'/);
+    assert.match(history, /const formPath = HISTORY_SMALL_SETTLEMENT/);
+    assert.doesNotMatch(history, /settlementTemplateResolver\.resolve/);
+    assert.doesNotMatch(history, /registerGamePrefabForm\(formPath/);
+    assert.match(history, /this\.active\(form\.node, 'Btn_Return', true\)/);
+    assert.match(history, /this\.active\(form\.node, 'Btn_ReturnLobby', false\)/);
+    assert.match(history, /this\.historyRoundIndex = 0/);
+    assert.match(history, /Bottom\/Page\/Label/);
+    assert.match(history, /Bottom\/Bg_Rule\/Label/);
+    assert.match(history, /this\.label\(form\.node, 'Lb_PlaybackCode', hasDirectCode/);
+    assert.doesNotMatch(history, /this\.label\(form\.node, 'PlaybackCode'/);
+    assert.doesNotMatch(settlementPrefab, /回放码:123456/);
+    assert.match(settlementPrefab, /回放码:暂不可用/);
     assert.match(club, /emit\('legacy-replay-room'/);
     assert.match(club, /source: 'CLUB'/);
+    assert.doesNotMatch(club, /forms\.show\('UILobbyRecordResult'/);
     assert.match(formatter, /fields = Array\.isArray\(schema\)/);
     assert.match(formatter, /field\.visible !== false && !field\.disabled/);
     assert.match(formatter, /labels\.join\(' '\)/);
     assert.doesNotMatch(formatter, /return ['"]规则['"]/);
+});
+
+test('record date navigation and big-winner summary use their unique prefab paths', () => {
+    const history = read('Modules/Records/Code/ReplayController.ts');
+    const recordsPrefab = read('Modules/Records/Prefab/Records.prefab');
+    assert.match(history, /DateFilter\/Page\/Date/);
+    assert.match(history, /DateFilter\/Lb_Players', `大赢家次数:\$\{bigWinnerCount\}`/);
+    assert.match(history, /readonly bigWinnerCount\?: number/);
+    assert.doesNotMatch(recordsPrefab, /大赢家次数:1245/);
+    assert.match(recordsPrefab, /大赢家次数:0/);
 });
 
 test('client always sends an explicit replay lookup mode', () => {

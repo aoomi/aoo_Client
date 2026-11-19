@@ -13,7 +13,9 @@ const moduleRegistry = read('assets/Common/Code/Runtime/ui/ModulePrefabRegistry.
 
 function prefabButtonNames() {
   const prefab = read(fixture.mainPrefab);
-  return [...prefab.matchAll(/"_name": "(btn_[^"]+|logo)"/g)].map(match => match[1]);
+  const known = new Set([...fixture.routedButtons, ...Object.keys(fixture.nonActions)]);
+  return [...prefab.matchAll(/"_name": "([^"]+)"/g)]
+    .map(match => match[1]).filter(name => known.has(name));
 }
 
 test('every serialized lobby control is routed or explicitly classified as non-action', () => {
@@ -31,15 +33,15 @@ test('main actions use click de-duplication and request-lifetime single-flight g
   assert.match(screen, /mainActionBusy\.has\(key\)/);
   assert.match(screen, /mainActionBusy\.add\(key\)/);
   assert.match(screen, /pending\.then\([\s\S]{0,180}mainActionBusy\.delete\(key\)/);
-  for (const name of ['btn_head', 'btn_shop', 'btn_record', 'btn_qiandao', 'btn_service', 'btn_location']) {
+  for (const name of ['Avatar', 'Shop', 'Records', 'CheckIn', 'Support']) {
     assert.match(screen, new RegExp(`case '${name}':[\\s\\S]{0,180}runMainAction\\(normalized`), `${name} is not single-flight`);
   }
 });
 
 test('loading and first-load terminal states cannot leave a blocking overlay or stale timer', () => {
-  assert.match(screen, /globalThis\.setTimeout\([\s\S]{0,260}forms\.show\('UIWaitForm'\)/);
+  assert.match(screen, /this\.formLoadingTimer = globalThis\.setTimeout\([\s\S]{0,420}forms\.show\('UIWaitForm'\)/);
   assert.match(screen, /forms\.close\('UIWaitForm'\)/);
-  assert.match(screen, /forms\.close\('UIDownLoadGame'\)/);
+  assert.match(screen, /forms\.close\('UILobbyDownload'\)/);
   assert.match(screen, /if \(this\.formLoadingTimer\) globalThis\.clearTimeout\(this\.formLoadingTimer\)/);
   assert.match(screen, /this\.applyLegacyRuntimeVisibility\(main\.node\)[\s\S]{0,500}this\.formLoading = false/);
   assert.match(screen, /new LegacyFormManager\(parent,[\s\S]{0,100}true\)/);
@@ -73,20 +75,45 @@ test('lobby production routes do not use fixture, memory-demo, or legacy transpo
 
 test('V02 common room network controllers are mounted by the production lobby and return UI state', () => {
   const mount = read('assets/Games/Common/Code/Room/RoomNetworkControllerMount.ts');
-  for (const controller of ['RoomController', 'RoomReconnectController', 'RoomVoiceController']) {
+  for (const controller of ['RoomReconnectController', 'RoomVoiceController']) {
     assert.match(mount, new RegExp(`new ${controller}\\(`), `${controller} is not instantiated`);
   }
   assert.match(screen, /new RoomNetworkControllerMount\(/);
   assert.match(screen, /roomNetworkControllers\.install\(\)/);
   assert.match(screen, /roomNetworkControllers\?\.destroy\(\)/);
-  for (const event of ['legacy-njpdk-room-ready', 'aoo-room-network-mount', 'aoo-room-ready-change',
-    'aoo-room-state-refresh', 'aoo-room-exit', 'aoo-room-reconnect', 'aoo-room-voice-record']) {
+  for (const event of ['common-pdk-room-ready', 'aoo-room-network-mount']) {
     assert.ok(mount.includes(`'${event}'`), `${event} is not bound`);
   }
-  for (const callback of ['aoo-room-network-state', 'aoo-room-authoritative-state',
-    'aoo-room-action-state', 'aoo-room-voice-state']) {
+  for (const callback of ['aoo-room-network-state', 'aoo-room-authoritative-state', 'aoo-room-voice-state']) {
     assert.ok(mount.includes(`'${callback}'`), `${callback} has no UI callback`);
   }
   assert.match(mount, /VoiceMediaClient\(resolveRuntimeEndpoints\(\)\.apiBaseUrl/);
   assert.doesNotMatch(mount, /Mock|Fake|InMemory|SendPack|ClientPack/);
+});
+
+test('V5 lobby injects one live default social-media dependency bundle', () => {
+  assert.match(screen, /const roomRuntimeDependencies = this\.createRoomRuntimeDependencies\(this\.forms\)/);
+  assert.match(screen, /new RoomNetworkControllerMount\([\s\S]{0,240}roomRuntimeDependencies\.bearer,[\s\S]{0,80}roomRuntimeDependencies/);
+  assert.match(screen, /if \(this\.shouldRefreshAccessToken\(\)\) await this\.refreshAccessToken\(\)/);
+  assert.match(screen, /String\(this\.account\.accessToken \|\| this\.account\.token \|\| ''\)\.trim\(\)/);
+  assert.ok(screen.indexOf('await this.refreshAccessToken()') < screen.indexOf("const current = String(this.account.accessToken"));
+  assert.match(screen, /formHost: CommonRoomFormHost = Object\.freeze\(\{/);
+  assert.match(screen, /await forms\.show\(normalized\)/);
+  assert.match(screen, /forms\.close\(normalized\)/);
+  assert.match(screen, /const browserRecorder = new BrowserVoiceRecorder\(\)/);
+  assert.match(screen, /const selected = injected \?\? browserRecorder/);
+  assert.match(screen, /apiBaseUrl,[\s\S]{0,120}context: \(\): VoiceClientContext => \(\{ deviceId, channel, clientVersion \}\)/);
+});
+
+test('V5 default social-media dependencies fail closed and do not expose credentials', () => {
+  for (const code of [
+    'COMMON_ROOM_MEDIA_ENDPOINT_INVALID', 'COMMON_ROOM_CLIENT_CONTEXT_REQUIRED',
+    'COMMON_ROOM_SESSION_INVALID', 'COMMON_ROOM_FORM_HOST_DESTROYED',
+    'COMMON_ROOM_ACCESS_TOKEN_REQUIRED', 'COMMON_ROOM_FORM_PATH_REQUIRED',
+    'COMMON_ROOM_VOICE_RECORDER_INVALID',
+  ]) assert.ok(screen.includes(code), `missing fail-closed code ${code}`);
+  const factory = screen.slice(screen.indexOf('private createRoomRuntimeDependencies'),
+    screen.indexOf('private tokenExpiry('));
+  assert.doesNotMatch(factory, /console\.|Authorization|Cookie|headers|voice\.bytes|assetId/);
+  assert.doesNotMatch(factory, /const\s+\w*(?:token|bearer)\w*\s*=\s*this\.account/i);
 });

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "lockId": "p0-e-ws-contract-20261011-r2",
+  "task": "DIRECT-20261008T084000Z-4a7f1c9e",
+  "lane": "P0-E",
+  "owner": "/root/direct_module_runtime_probe",
+  "coordinator": "/root",
+  "status": "WAITING_FOR_INDEPENDENT_REVIEW",
+  "path": "Client/tests/unit/room-push-gate.test.mjs",
+  "scope": "room push version/identity fail-closed regression coverage",
+  "preimageSha256": "c01ee48b351905a72f3a112c95ea0a7d2d4d849fbe5aae2d5912d6045d88fffa",
+  "sourceWrite": false,
+  "testWrite": true,
+  "forbidden": ["production source outside whitelist", "Server", "Gateway", "generated bundles", "shared services", "shared ports", "production DB"],
+  "independentReviewRequired": true,
+  "requiredReviewer": "/root/lane_g_evidence_review",
+  "postimageSha256": "c01ee48b351905a72f3a112c95ea0a7d2d4d849fbe5aae2d5912d6045d88fffa",
+  "evidence": "docs/05-当前状态/evidence/p0-e-ws-contract-20261011-r2/DEV_SELF_CHECK-v1.md"
+}

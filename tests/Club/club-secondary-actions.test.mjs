@@ -151,7 +151,7 @@ const validToggleSprites = [
 for (const prefab of [
     'assets/Club/Prefab/ClubHuanPi.prefab',
     'assets/Club/Prefab/UnionManager.prefab',
-    'assets/Club/Prefab/Skin2UnionManager2.prefab',
+    'assets/Club/Prefab/ClubAllianceManager.prefab',
 ]) {
     const content = read(prefab);
     for (const uuid of invalidToggleSprites) {
