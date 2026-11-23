@@ -26,7 +26,10 @@ export class GiftRoomCardController {
         private readonly reportError: (error: unknown) => void,
     ) {}
 
-    public install(): void { void this.watchInbox(++this.generation); }
+    public install(): void {
+        this.generation += 1;
+        // 暂停收件箱轮询：远程 gifting 服务尚不可用。恢复时调用 watchInbox(this.generation)。
+    }
 
     public async open(): Promise<void> {
         const generation = this.generation;

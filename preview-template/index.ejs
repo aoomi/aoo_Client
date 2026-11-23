@@ -42,9 +42,10 @@
             </div>
         </div>
         <script>
-            // Local preview on this host always uses the authorized issuer handoff.
+            // Ordinary Creator preview starts directly; issuer handoff is an explicit opt-in.
             window.__aoo_LOCAL_PREVIEW_OPT_IN__ = location.origin === 'http://localhost:7456'
-                && location.hostname === 'localhost';
+                && location.hostname === 'localhost'
+                && new URLSearchParams(location.search).get('aooPreviewBootstrap') === '1';
             if (window.__aoo_LOCAL_PREVIEW_OPT_IN__) {
                 document.write('<script src="http://127.0.0.1:18662/bootstrap.js" referrerpolicy="origin"><\/script>');
             }
