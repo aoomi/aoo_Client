@@ -21,6 +21,8 @@ export interface CommonRoomPublicSeat {
     readonly displayName?: string;
     readonly score?: string | number;
     readonly avatarUrl?: string;
+    /** Authoritative waiting-state projection; absence is normalized to false. */
+    readonly ready?: boolean;
 }
 
 export interface CommonRoomPublicView {
@@ -195,10 +197,14 @@ function parseCommonRoomPublicSeat(value: unknown, seatCount: number, seen: Set<
     }
     seen.add(seatId);
     if (typeof source.occupied !== 'boolean') throw new Error('COMMON_ROOM_SEAT_OCCUPIED_REQUIRED');
+    if (source.ready !== undefined && typeof source.ready !== 'boolean') {
+        throw new Error('COMMON_ROOM_SEAT_READY_INVALID');
+    }
     const identityFields = ['playerId', 'displayName', 'avatarUrl', 'score'] as const;
     if (!source.occupied) {
         if (identityFields.some(field => source[field] !== undefined)) throw new Error('COMMON_ROOM_VACANT_IDENTITY');
-        return Object.freeze({ seatId, occupied: false });
+        if (source.ready === true) throw new Error('COMMON_ROOM_VACANT_READY');
+        return Object.freeze({ seatId, occupied: false, ready: false });
     }
     const playerId = Number(source.playerId);
     if (!Number.isSafeInteger(playerId) || playerId <= 0) throw new Error('COMMON_ROOM_PLAYER_ID_INVALID');
@@ -213,7 +219,8 @@ function parseCommonRoomPublicSeat(value: unknown, seatCount: number, seen: Set<
         throw new Error('COMMON_ROOM_SCORE_INVALID');
     }
     return Object.freeze({ seatId, occupied: true, playerId,
-        displayName: text('displayName'), avatarUrl: text('avatarUrl'), score });
+        displayName: text('displayName'), avatarUrl: text('avatarUrl'), score,
+        ready: source.ready === true });
 }
 
 export function canonicalGameCode(handoff: LegacySubgameTicket): string {

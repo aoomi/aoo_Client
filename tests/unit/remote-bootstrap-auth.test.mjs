@@ -17,6 +17,8 @@ test('remote runtime has no private token while LAN preview retains local token'
   const lan=run(compile('../../assets/Common/Code/Runtime/config/RuntimeEndpoints.ts'),()=>policy,{globalThis:{__aoo_RUNTIME_CONFIG__:{environment:'test'},crypto:{randomUUID:()=> 'device-2'}}});
   assert.equal(lan.resolveRuntimeEndpoints().apiBaseUrl,'http://localhost:8080/');
   assert.equal(lan.resolveRuntimeEndpoints().bootstrapToken,'local-version-bootstrap-token-32-bytes');
+  const equivalentLoopback=run(compile('../../assets/Common/Code/Runtime/config/RuntimeEndpoints.ts'),()=>policy,{globalThis:{__aoo_RUNTIME_CONFIG__:{environment:'test',apiBaseUrl:'http://127.0.0.1:8080/'},crypto:{randomUUID:()=> 'device-3'}}});
+  assert.equal(equivalentLoopback.resolveRuntimeEndpoints().bootstrapToken,'local-version-bootstrap-token-32-bytes');
 });
 
 test('bootstrap request omits empty token and carries device id',async()=>{

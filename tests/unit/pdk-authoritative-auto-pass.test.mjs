@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import ts from '../../../Admin/node_modules/typescript/lib/typescript.js';
 import {
   normalizePdkRoundActivitySnapshot,
   projectPdkAuthoritativeView,
@@ -24,7 +26,73 @@ const play = [
   controller,
 ].join('\n');
 const adapter = fs.readFileSync(path.join(runtimeCodeRoot, 'PdkAuthoritativeViewAdapter.ts'), 'utf8');
-test('automatic turn handling is bound to Authority and submits only trusteeship or an exact final hand', () => {
+const loadHintController = () => {
+  const filename = path.join(runtimeCodeRoot, 'PdkHintController.ts');
+  const javascript = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const module = { exports: {} };
+  const context = vm.createContext({
+    module, exports: module.exports, console, Date, Number, String, Array, Object, Math, Error, Promise,
+    require(id) {
+      if (id === 'cc') return { Node: class {} };
+      if (id.endsWith('/PdkBusinessCodes')) {
+        return { PDK_BUSINESS_CODES: { LIANGSHAN: 'liangshan2003' } };
+      }
+      if (id.endsWith('/PdkHintPolicyRegistry')) return { resolvePdkHintPolicy() { return {}; } };
+      if (id.endsWith('/PdkCleanHintRanker')) return {};
+      throw new Error(`unexpected dependency ${id}`);
+    },
+  });
+  new vm.Script(javascript, { filename }).runInContext(context);
+  return module.exports.PdkHintController;
+};
+
+const authorityResponseHarness = ({ gameCode = 'liangshan2003', reordered = true, drift = false, leading = false } = {}) => {
+  const comparisonCards = [9, 7, 7, 7];
+  const setInfo = {
+    roundNo: 1, opPos: 0, trickId: 4, tableOperations: [{ action: 'play' }],
+    operationDeadline: { operationId: 'op-4', seatId: 0 },
+    comparisonState: { trickId: 4, type: 6, cards: reordered ? [7, 9, 7, 7] : comparisonCards },
+  };
+  let outCards = 0;
+  const roomProperties = { state: 1, stateVersion: 22, setID: 1 };
+  const host = {
+    selectionIntentRevision: 0, view: {}, cardNodes: [{}], activeOpPos: 0,
+    autoPassInFlight: false, autoHintTurnKey: '', promptCycleKey: '', tipIndex: 0,
+    hintCacheKey: '', hintCache: [], activeHintPlan: null,
+    runtime: {
+      getPlayerId: () => 1, getGameCode: () => gameCode,
+      getRoom: () => ({ GetRoomProperty: (key) => roomProperties[key] }),
+      getRoomSet: () => ({ GetRoomSetInfo: () => setInfo }),
+    },
+    roomId: () => 88001, clientSeat: () => 0, record: (value) => value,
+    logic: {
+      lastCardList: comparisonCards,
+      GetLastCardType: () => 6, GetHandCard: () => [101, 102],
+      ChangeSelectCard() {},
+    },
+    updateSelection() {
+      if (drift) setInfo.comparisonState = { trickId: 4, type: 6, cards: [8, 7, 7, 7] };
+    },
+    outCard: async () => { outCards += 1; }, pass: async () => {},
+  };
+  const Controller = loadHintController();
+  const controller = new Controller(host);
+  controller.isFormalCardPlayPhase = () => true;
+  controller.synchronizeAuthorityComparison = () => {};
+  controller.isAuthoritativeLeadingTurn = () => leading;
+  controller.isLocalTrusteeship = () => false;
+  controller.sortedLegalTipCandidates = () => [[205]];
+  controller.validateHintRuleContext = () => {};
+  controller.intrinsicOperationTypeForCards = () => 1;
+  controller.authorityComparison = (current) => ({
+    cards: [...current.comparisonState.cards], type: Number(current.comparisonState.type),
+  });
+  controller.sameCards = (left, right) => controller.comparisonIdentity(left) === controller.comparisonIdentity(right);
+  return { controller, host, setInfo, outCards: () => outCards };
+};
+test('automatic turn handling is bound to Authority and submits only an exact play or an authority-bound pass', () => {
   const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
   assert.doesNotMatch(method, /this\.lifecycle\.hint/);
   assert.match(method, /this\.sortedLegalTipCandidates\(\s*leading/);
@@ -38,8 +106,8 @@ test('automatic turn handling is bound to Authority and submits only trusteeship
   assert.match(method, /this\.sameCards\(cards, finalHand\)/);
   assert.match(method, /await this\.outCard\(finalType\)/);
   assert.match(method, /await this\.outCard\(hostedType\)/);
-  assert.doesNotMatch(method, /await this\.pass\(\)/);
-  assert.doesNotMatch(method, /\[CommonRoomAutoPass\]/);
+  assert.match(method, /await this\.pass\(\)/);
+  assert.match(method, /\[CommonRoomAuthorityAutoPass\]/);
   assert.doesNotMatch(method, /maybeAutoPlay|isAutomaticWholeHand|wholeHandType/);
   assert.doesNotMatch(method, /setTimeout|navigator|userAgent/);
 });
@@ -148,13 +216,13 @@ test('a complete version-matched table snapshot remains atomic on a round transi
   assert.deepEqual(nextRound.comparisonState.cards, [66]);
   assert.deepEqual(nextRound.passSeats, [0]);
 });
-test('an automatic final-hand or trusteeship failure stays diagnostic and never submits pass', () => {
+test('an automatic action failure stays diagnostic while authority pass remains turn scoped', () => {
   const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
   assert.match(method, /\[CommonRoomAutoActionError\]/);
   assert.match(method, /let autoActionFailed = false/);
   assert.match(method, /autoActionFailed = true/);
   assert.match(method, /if \(autoActionFailed\) this\.refresh\(\)/);
-  assert.doesNotMatch(method, /await this\.pass\(\)/);
+  assert.match(method, /passAuthorityStable[\s\S]*await this\.pass\(\)/);
   assert.doesNotMatch(method, /reportUserActionError\('自动提示'/);
 });
 test('automatic hint waits for the hand but never blocks on the retained public-card hold', () => {
@@ -199,6 +267,83 @@ test('a lead turn remains manual after Authority marks it as a lead', () => {
   assert.ok(leadReturn >= 0 && leadReturn < leadLegal);
   assert.match(method.slice(leadReturn, leadLegal), /ChangeSelectCard\(\[\]\)[\s\S]*updateSelection\(\)[\s\S]*return/);
   assert.doesNotMatch(method.slice(leadReturn, leadLegal), /outCard\(/);
+  assert.doesNotMatch(method.slice(leadReturn, leadLegal), /pass\(/);
+});
+
+test('zero-candidate response passes only after complete authority identity revalidation', () => {
+  const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
+  const zeroCandidate = method.slice(method.indexOf('const passSet ='), method.indexOf('} catch (error: unknown)'));
+  assert.match(zeroCandidate, /passTurnSeat === turnSeat/);
+  assert.match(zeroCandidate, /passTrickId === trickId/);
+  assert.match(zeroCandidate, /passComparison\.type === lastCardType/);
+  assert.match(zeroCandidate, /this\.sameCards\(passComparison\.cards, lastCards\)/);
+  assert.match(zeroCandidate, /passKey === key/);
+  assert.match(zeroCandidate, /this\.autoHintTurnKey === key/);
+  assert.match(zeroCandidate, /if \(!passAuthorityStable\) return;[\s\S]*await this\.pass\(\)/);
+});
+
+test('candidate, lead and duplicate projections cannot enter authority auto-pass', () => {
+  const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
+  assert.match(method, /if \(!localTurn \|\| this\.autoPassInFlight\) return/);
+  assert.match(method, /this\.autoHintTurnKey === key/);
+  assert.match(method, /if \(automatic\)[\s\S]*await this\.outCard\(hostedType\);[\s\S]*return/);
+  assert.match(method, /if \(leading\)[\s\S]*return;[\s\S]*const hintComputeStartedAt/);
+  assert.match(method, /if \(tips\.length > 0\)[\s\S]*return;[\s\S]*const passSet/);
+});
+
+test('Liangshan submits its deterministic legal response only after authority revalidation', () => {
+  const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
+  const liangshan = method.slice(method.indexOf('if (this.runtime.getGameCode() === PDK_BUSINESS_CODES.LIANGSHAN)'),
+    method.indexOf('// Authority owns a response turn'));
+  assert.match(liangshan, /const responseSet = this\.runtime\.getRoomSet\(\)\.GetRoomSetInfo\(\) \?\? \{\}/);
+  assert.match(liangshan, /this\.isFormalCardPlayPhase\(responseSet\)/);
+  assert.match(liangshan, /responseTurnSeat === turnSeat/);
+  assert.match(liangshan, /responseTrickId === trickId/);
+  assert.match(liangshan, /responseComparison\.type === lastCardType/);
+  assert.match(liangshan, /this\.sameCards\(responseComparison\.cards, lastCards\)/);
+  assert.match(liangshan, /responseKey === key/);
+  assert.match(liangshan, /this\.autoHintTurnKey === key/);
+  assert.match(liangshan, /if \(!responseAuthorityStable\) return;[\s\S]*await this\.outCard\(responseType\)/);
+});
+
+test('canonical comparison identity executes reordered Liangshan response once and rejects real drift', async () => {
+  const reordered = authorityResponseHarness({ reordered: true });
+  await reordered.controller.autoHintForAuthoritativeTurn(reordered.setInfo, 0, 0);
+  assert.equal(reordered.outCards(), 1, 'same multiset in a different order must submit exactly once');
+  await reordered.controller.autoHintForAuthoritativeTurn(reordered.setInfo, 0, 0);
+  assert.equal(reordered.outCards(), 1, 'the same authority turn key must not submit twice');
+
+  const drifted = authorityResponseHarness({ reordered: true, drift: true });
+  await drifted.controller.autoHintForAuthoritativeTurn(drifted.setInfo, 0, 0);
+  assert.equal(drifted.outCards(), 0, 'a physically different comparison must fail closed');
+
+  const otherGame = authorityResponseHarness({ gameCode: 'chengdu2001' });
+  await otherGame.controller.autoHintForAuthoritativeTurn(otherGame.setInfo, 0, 0);
+  assert.equal(otherGame.outCards(), 0, 'other games retain selection-only behavior');
+
+  const leading = authorityResponseHarness({ leading: true });
+  await leading.controller.autoHintForAuthoritativeTurn(leading.setInfo, 0, 0);
+  assert.equal(leading.outCards(), 0, 'leading turns remain manual');
+});
+
+test('initial, response, and pass turn keys share the canonical comparison identity', () => {
+  const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
+  assert.equal((method.match(/this\.comparisonIdentity\(/g) ?? []).length, 3);
+  assert.match(method, /this\.comparisonIdentity\(lastCards\)/);
+  assert.match(method, /this\.comparisonIdentity\(responseComparison\.cards\)/);
+  assert.match(method, /this\.comparisonIdentity\(passComparison\.cards\)/);
+  assert.match(play, /private comparisonIdentity\(cards: readonly number\[\]\): string \{[\s\S]*sort\(\(left, right\) => left - right\)\.join\(','\)/);
+});
+
+test('non-Liangshan legal responses remain selected while lead and dealer competition cannot submit', () => {
+  const method = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
+  const tipsBranch = method.slice(method.indexOf('if (tips.length > 0)'), method.indexOf('// Authority owns a response turn'));
+  assert.match(tipsBranch, /this\.logic\.ChangeSelectCard\(automatic\)/);
+  assert.match(tipsBranch, /if \(this\.runtime\.getGameCode\(\) === PDK_BUSINESS_CODES\.LIANGSHAN\)[\s\S]*await this\.outCard\(responseType\)/);
+  assert.equal((tipsBranch.match(/await this\.outCard\(/g) ?? []).length, 1);
+  const leadBranch = method.slice(method.indexOf('if (leading)'), method.indexOf('const hintComputeStartedAt'));
+  assert.doesNotMatch(leadBranch, /outCard\(/);
+  assert.ok(method.indexOf('if (!this.isFormalCardPlayPhase(setInfo))') < method.indexOf('const roomId ='));
 });
 
 test('refresh never races a second pass-specific hint request', () => {
@@ -218,9 +363,9 @@ test('each committed authority version clears selection before rebuilding the ha
   assert.doesNotMatch(state, /setInfo\.cardList[\s\S]*SetCardData/);
   const auto = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'), play.indexOf('private operationTypeForCards'));
   const ordinaryResponse = auto.slice(auto.indexOf('if (leading)'), auto.indexOf('} catch (error: unknown)'));
-  assert.match(ordinaryResponse, /if \(tips\.length > 0\)[\s\S]*CommonRoomAutoHintUnavailable/);
-  assert.match(ordinaryResponse, /CommonRoomAutoHintUnavailable[\s\S]*return/);
-  assert.doesNotMatch(ordinaryResponse, /await this\.pass\(\)|operations\?\.hide\(\)|Tip\/Pass/);
+  assert.match(ordinaryResponse, /if \(tips\.length > 0\)[\s\S]*CommonRoomAuthorityAutoPass/);
+  assert.match(ordinaryResponse, /passAuthorityStable[\s\S]*await this\.pass\(\)/);
+  assert.doesNotMatch(ordinaryResponse, /operations\?\.hide\(\)|Tip\/Pass/);
   assert.match(play, /this\.cards\.clearSelectionImmediately\(this\.cardNodes\)/);
 });
 
@@ -382,7 +527,7 @@ test('first-lead hints consume the round-specific required card from Authority',
   assert.doesNotMatch(leadBranch, /outCard\(/);
 });
 
-test('only an exact legal final hand submits automatically; ordinary turns stay manual', () => {
+test('only exact final hand, trusteeship, or Liangshan deterministic response submits automatically', () => {
   assert.doesNotMatch(play, /AUTO_PLAY_SELECTION_DELAY_MS|autoPlayTurnKey|autoPlayOperationId|autoPlayInFlight|autoPlayTimer|autoPlayRejectedTurnKey/);
   assert.doesNotMatch(play, /isAutomaticWholeHand|maybeAutoPlay|last-hand-auto-play/);
   const authority = play.slice(play.indexOf('private async autoHintForAuthoritativeTurn'),
@@ -391,8 +536,9 @@ test('only an exact legal final hand submits automatically; ordinary turns stay 
   assert.match(authority, /if \(finalCandidate\) \{[\s\S]*await this\.outCard\(finalType\)/);
   assert.match(authority, /if \(hostedResponse\) \{/);
   assert.match(authority, /await this\.outCard\(hostedType\)/);
-  assert.equal([...authority.matchAll(/await this\.outCard\(/g)].length, 2,
-    'only the exact-final-hand and trusteeship branches may submit during automatic turn handling');
+  assert.match(authority, /PDK_BUSINESS_CODES\.LIANGSHAN[\s\S]*await this\.outCard\(responseType\)/);
+  assert.equal([...authority.matchAll(/await this\.outCard\(/g)].length, 3,
+    'only exact-final-hand, trusteeship, and Liangshan response branches may submit automatically');
 });
 
 test('only score-bearing bombs enter decomposition protection while every bomb remains manually selectable', () => {
@@ -417,4 +563,19 @@ test('table reconciliation and Hint use the same physical comparison type', () =
   assert.match(reconcile, /const \{ cards: cardList, type: opType \} = this\.authorityComparison\(packet\)/);
   assert.match(reconcile, /this\.logic\.SetCardData\(opType, cardList\)/);
   assert.doesNotMatch(reconcile, /legacyOperationType\(comparison\.cardType \?\? comparison\.type\)/);
+});
+
+test('authority beat rejection names a recognized comparison shape and preserves the generic fallback', () => {
+  const labels = controller.slice(controller.indexOf('private authorityComparisonLabel'),
+    controller.indexOf('private record', controller.indexOf('private authorityComparisonLabel')));
+  assert.match(labels, /case 6: return '三带一'/);
+  assert.match(labels, /default: return ''/);
+
+  const errors = controller.slice(controller.indexOf('private reportUserActionError'),
+    controller.indexOf('private requestPresentationFrame', controller.indexOf('private reportUserActionError')));
+  assert.match(errors,
+    /\/beat\|higher\|current trick\|cannot play\/i[\s\S]*authorityComparison\(this\.runtime\.getRoomSet\(\)\.GetRoomSetInfo\(\) \?\? \{\}\)/);
+  assert.match(errors, /targetLabel[\s\S]*`上家是\$\{targetLabel\}，所选牌不能压过`/);
+  assert.match(errors, /: '所选牌不能压过上家的牌'/);
+  assert.doesNotMatch(errors, /GetLastCardType|lastCardList|sortedLegalTipCandidates/);
 });

@@ -45,12 +45,17 @@ test('runtime card face keeps the same visual origin as the PDK room templates',
 
 test('public card factory lazy-loads the authoritative card atlas before the prefab', () => {
   const factory = read('assets/Games/Poker/Common/Code/Card/Poker_Card_Factory.ts');
+  const atlasMeta = JSON.parse(read('assets/Common/Atlas/xxxxxxxxxxxxxxxx/Poker_Common.plist.meta'));
   assert.match(factory, /POKER_CARD_ATLAS_BUNDLE = 'common'/);
-  assert.match(factory, /POKER_COMMON_ATLAS = 'Atlas\/Poker_Common'/);
+  assert.match(factory, /POKER_COMMON_ATLAS = 'Atlas\/xxxxxxxxxxxxxxxx\/Poker_Common'/);
+  assert.match(factory, /load\(POKER_COMMON_ATLAS, SpriteAtlas, bundle\)/);
   assert.match(factory, /loadSkin\(\)/);
   assert.match(factory, /getSpriteFrame\(name\)/);
+  assert.equal(atlasMeta.importer, 'sprite-atlas');
+  const atlasFrameNames = new Set(Object.values(atlasMeta.subMetas).map((entry) => entry.name));
   for (const frame of ['card_front', 'card_back_0', 'card_mask', 'card_front_out']) {
     assert.match(factory, new RegExp(frame));
+    assert.ok(atlasFrameNames.has(frame), `authoritative Poker_Common atlas is missing ${frame}`);
   }
   assert.ok(factory.indexOf('bundle(POKER_CARD_BUNDLE)') < factory.indexOf('bundle(POKER_CARD_ATLAS_BUNDLE)'));
   assert.doesNotMatch(factory, /common-poker-card['"]|poker_card\/card/);

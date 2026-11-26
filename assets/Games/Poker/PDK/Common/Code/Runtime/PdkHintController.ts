@@ -9,6 +9,7 @@ import { Node } from 'cc';
 
 
 import { resolvePdkHintPolicy } from '../Regional/PdkHintPolicyRegistry';
+import { PDK_BUSINESS_CODES } from '../Regional/PdkBusinessCodes';
 
 import { effectivePdkMaximumSingleRanks, generatePdkFixedPlanCandidates, pdkCardRank, pdkOperationTypeForCards, rankCleanPdkHints, rankPdkDragCandidates, resolvePdkHintRulePlan, responseBeatsTarget, type PdkHintCandidate, type PdkHintRulePlan } from './logic/PdkCleanHintRanker';
 
@@ -598,6 +599,10 @@ public promptKey(): string {
             Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? 0)].join('|');
     }
 
+public comparisonIdentity(cards: readonly number[]): string {
+        return [...cards].map(Number).sort((left, right) => left - right).join(',');
+    }
+
 public isAuthoritativeLeadingTurn(
         setInfo: Record<string, unknown> = this.host.runtime.getRoomSet().GetRoomSetInfo() ?? {},
     ): boolean {
@@ -656,7 +661,7 @@ public async autoHintForAuthoritativeTurn(
             trickId,
             tableOperations.length,
             lastCardType,
-            lastCards.join(','),
+            this.comparisonIdentity(lastCards),
         ].join(':');
         if (!operationId || stateVersion < 0 || this.host.autoHintTurnKey === key) return;
         this.host.autoHintTurnKey = key;
@@ -703,27 +708,21 @@ public async autoHintForAuthoritativeTurn(
                 // prompt cache, or ordinary hint ranking is consulted here.
                 const legal = this.sortedLegalTipCandidates(false, 'HOST');
                 const automatic = legal[0];
-                if (!automatic) {
-                    this.host.logic.ChangeSelectCard([]);
+                if (automatic) {
+                    const hostedType = this.intrinsicOperationTypeForCards(automatic);
+                    if (hostedType <= 0) throw new Error('托管接牌候选不是合法牌型');
+                    this.host.logic.ChangeSelectCard(automatic);
                     this.host.updateSelection();
-                    this.host.operations?.hide();
-                    this.host.view?.visible('Players/Seat_0/Tip/Pass', true);
+                    console.info('[CommonRoomTrusteeshipPlay]', {
+                        roomId, stateVersion, operationId, turnSeat, trickId,
+                        opType: hostedType, cardCount: automatic.length,
+                    });
+                    await this.host.outCard(hostedType);
                     return;
                 }
-                const hostedType = this.intrinsicOperationTypeForCards(automatic);
-                if (hostedType <= 0) throw new Error('托管接牌候选不是合法牌型');
-                this.host.logic.ChangeSelectCard(automatic);
-                this.host.updateSelection();
-                console.info('[CommonRoomTrusteeshipPlay]', {
-                    roomId, stateVersion, operationId, turnSeat, trickId,
-                    opType: hostedType, cardCount: automatic.length,
-                });
-                await this.host.outCard(hostedType);
-                return;
             }
-            // Outside trusteeship, the player owns every non-final card-play
-            // decision. The exact complete-final-hand case returned above is
-            // the sole automatic exception.
+            // Lead decisions remain manual. Response automation below is
+            // explicitly restricted to the Liangshan business code.
             if (leading) {
                 this.host.logic.ChangeSelectCard([]);
                 this.host.updateSelection();
@@ -754,28 +753,98 @@ public async autoHintForAuthoritativeTurn(
                     authorityToHintMs: Number((hintComputedAt - authorityProjectionStartedAt).toFixed(2)),
                     hintComputeMs: Number((hintComputedAt - hintComputeStartedAt).toFixed(2)),
                 });
+                if (this.host.runtime.getGameCode() === PDK_BUSINESS_CODES.LIANGSHAN) {
+                    const responseSet = this.host.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+                    const responseDeadline = this.host.record(responseSet.operationDeadline);
+                    const responseTurnSeat = Number(responseSet.opPos ?? responseDeadline?.seatId ?? -1);
+                    const responseTrick = this.host.record(responseSet.comparisonState);
+                    const responseTrickId = Number(responseSet.trickId ?? responseTrick?.trickId ?? 0);
+                    const responseTableOperations = Array.isArray(responseSet.tableOperations)
+                        ? responseSet.tableOperations : [];
+                    const responseComparison = this.authorityComparison(responseSet);
+                    const responseKey = [
+                        this.host.roomId(),
+                        Number(responseSet.roundNo ?? this.host.runtime.getRoom().GetRoomProperty('setID') ?? 0),
+                        Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2),
+                        String(responseDeadline?.operationId ?? ''),
+                        responseTurnSeat,
+                        responseTrickId,
+                        responseTableOperations.length,
+                        responseComparison.type,
+                        this.comparisonIdentity(responseComparison.cards),
+                    ].join(':');
+                    const responseAuthorityStable = this.isFormalCardPlayPhase(responseSet)
+                        && Number(this.host.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1
+                        && this.host.roomId() === roomId
+                        && Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2) === stateVersion
+                        && this.host.activeOpPos === turnSeat
+                        && responseTurnSeat === turnSeat
+                        && String(responseDeadline?.operationId ?? '') === operationId
+                        && responseTrickId === trickId
+                        && responseComparison.type === lastCardType
+                        && this.sameCards(responseComparison.cards, lastCards)
+                        && responseKey === key
+                        && this.host.autoHintTurnKey === key;
+                    if (!responseAuthorityStable) return;
+                    const responseType = this.intrinsicOperationTypeForCards(automatic);
+                    if (responseType <= 0) throw new Error('凉山自动接牌候选不是合法牌型');
+                    console.info('[CommonRoomLiangshanAuthorityResponse]', {
+                        roomId, stateVersion, operationId, turnSeat, trickId,
+                        opType: responseType, cardCount: automatic.length,
+                    });
+                    await this.host.outCard(responseType);
+                }
                 return;
             }
-            // A normal player owns the decision to pass.  An empty local hint
-            // list is diagnostic state, never authorization to submit PASS:
-            // Authority may still recognize a legal response that this client
-            // has filtered incorrectly.  Only trusteeship above may submit an
-            // automatic response, and a complete final hand may auto-play.
+            // Authority owns a response turn with no legal candidate, so PASS
+            // is not a local strategy choice. Re-read the complete turn identity
+            // immediately before sending; a newer projection must win without
+            // allowing this async computation to pass on its behalf.
             this.host.logic.ChangeSelectCard([]);
             this.host.updateSelection();
-            console.info('[CommonRoomAutoHintUnavailable]', {
+            const passSet = this.host.runtime.getRoomSet().GetRoomSetInfo() ?? {};
+            const passDeadline = this.host.record(passSet.operationDeadline);
+            const passTurnSeat = Number(passSet.opPos ?? passDeadline?.seatId ?? -1);
+            const passTrick = this.host.record(passSet.comparisonState);
+            const passTrickId = Number(passSet.trickId ?? passTrick?.trickId ?? 0);
+            const passTableOperations = Array.isArray(passSet.tableOperations) ? passSet.tableOperations : [];
+            const passComparison = this.authorityComparison(passSet);
+            const passKey = [
+                this.host.roomId(),
+                Number(passSet.roundNo ?? this.host.runtime.getRoom().GetRoomProperty('setID') ?? 0),
+                Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2),
+                String(passDeadline?.operationId ?? ''),
+                passTurnSeat,
+                passTrickId,
+                passTableOperations.length,
+                passComparison.type,
+                this.comparisonIdentity(passComparison.cards),
+            ].join(':');
+            const passAuthorityStable = Number(this.host.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1
+                && this.host.roomId() === roomId
+                && Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2) === stateVersion
+                && this.host.activeOpPos === turnSeat
+                && passTurnSeat === turnSeat
+                && String(passDeadline?.operationId ?? '') === operationId
+                && passTrickId === trickId
+                && passComparison.type === lastCardType
+                && this.sameCards(passComparison.cards, lastCards)
+                && passKey === key
+                && this.host.autoHintTurnKey === key;
+            if (!passAuthorityStable) return;
+            console.info('[CommonRoomAuthorityAutoPass]', {
                 roomId, stateVersion, operationId, turnSeat, trickId,
                 targetType: lastCardType, targetCardCount: lastCards.length,
+                trusteeship: hostedResponse,
             });
-            return;
+            await this.host.pass();
         } catch (error: unknown) {
             autoActionFailed = true;
             if (this.host.view && this.host.roomId() === roomId
                 && Number(this.host.runtime.getRoom().GetRoomProperty('state') ?? 0) === 1
                 && Number(this.host.runtime.getRoom().GetRoomProperty('stateVersion') ?? -2) === stateVersion) {
-                // Automatic final-hand or trusteeship actions retain only a
-                // turn-scoped diagnostic; the ordinary Hint UI owns its own
-                // feedback and never submits PASS automatically.
+                // Automatic final-hand, trusteeship, Liangshan response and
+                // authority-bound PASS failures retain only turn-scoped diagnostics.
                 console.error('[CommonRoomAutoActionError]', {
                     roomId, stateVersion, operationId, turnSeat, trickId,
                     targetType: lastCardType, targetCardCount: lastCards.length,

@@ -1,4 +1,4 @@
-import { Button, director, find, Node } from 'cc';
+import { Button, director, find, Node, UITransform } from 'cc';
 import type { AuthenticatedAccount } from '../../../../../../Login/Code/Auth/AuthTypes';
 import { ProtocolClient } from '../../../../../../Common/Code/Runtime/network/ProtocolClient';
 import { createOwnedGameClient } from '../../../../../../Common/Code/Runtime/network/ConnectionOwnership';
@@ -60,6 +60,7 @@ export class PdkSwitchCoordinator {
     private gameClient: ProtocolClient | null = null;
     private runtime: PdkRuntime | null = null;
     private playController: PdkPlayController | null = null;
+    private gameplayRoomRoot: Node | null = null;
     private resultController: PdkResultController | null = null;
     private dissolveAdapter: PdkDissolveAdapter | null = null;
     private recordController: PdkRecordController | null = null;
@@ -153,23 +154,10 @@ export class PdkSwitchCoordinator {
                 dissolve: this.roomCapabilities.supportsDissolve
                     ? this.commonDissolvePort() : undefined,
             },
-            // Common owns the SeatHost nodes and their Head lifecycle. PDK only
-            // contributes the physical table coordinates; using the same
-            // coordinates as the PDK table keeps the shared Heads visible and
-            // stable across 2/3/4-player rooms and reconnects.
-            seatLayout: ({ slots }) => {
-                const positions: Readonly<Record<CommonRoomSeatSlot, Readonly<{ x: number; y: number }>>> = {
-                    self: { x: -530, y: -220 },
-                    right: { x: 530, y: 100 },
-                    opposite: { x: 280, y: 280 },
-                    left: { x: -530, y: 100 },
-                };
-                return slots.map(slot => {
-                    const position = positions[slot];
-                    if (!position) throw new Error(`PDK_COMMON_SEAT_LAYOUT_UNSUPPORTED:${slot}`);
-                    return { slot, ...position };
-                });
-            },
+            // PDK's instantiated Creator prefab is the sole layout authority.
+            // Widget may adapt these authored nodes to the current viewport, so
+            // Common reads the live Head positions instead of duplicating them.
+            seatLayout: ({ slots }) => this.pdkCommonSeatLayout(slots),
             settlementHistoryWindow: {
                 path: this.smallSettlementForm,
                 prepare: (entries, context) => this.prepareSmallSettlementPayload(entries, context),
@@ -192,6 +180,28 @@ export class PdkSwitchCoordinator {
             () => this.requestLeave('pdk-room-dissolved'),
         );
         return this.dissolveAdapter.port();
+    }
+
+    private pdkCommonSeatLayout(slots: readonly CommonRoomSeatSlot[]):
+        readonly { readonly slot: CommonRoomSeatSlot; readonly x: number; readonly y: number }[] {
+        const root = this.gameplayRoomRoot;
+        const rootTransform = root?.getComponent(UITransform);
+        if (!root?.isValid || !rootTransform) throw new Error('PDK_COMMON_SEAT_LAYOUT_ROOT_INVALID');
+        const indexes: Readonly<Record<string, number>> = Object.freeze({
+            self: 0, right: 1, opposite: 2, left: 3,
+        });
+        return slots.map(slot => {
+            const index = indexes[slot];
+            if (!Number.isInteger(index)) throw new Error(`PDK_COMMON_SEAT_LAYOUT_UNSUPPORTED:${slot}`);
+            const head = root.getChildByName('Players')
+                ?.getChildByName(`Seat_${index}`)?.getChildByName('Head');
+            if (!head?.isValid) throw new Error(`PDK_COMMON_SEAT_LAYOUT_HEAD_MISSING:${index}`);
+            const position = rootTransform.convertToNodeSpaceAR(head.worldPosition);
+            if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+                throw new Error(`PDK_COMMON_SEAT_LAYOUT_POSITION_INVALID:${index}`);
+            }
+            return Object.freeze({ slot, x: position.x, y: position.y });
+        });
     }
 
     private commonRoomRuntimeDependencies(): CommonRoomRuntimeDependencies {
@@ -807,6 +817,7 @@ export class PdkSwitchCoordinator {
      */
     private markGameplayRoomRoot(node: Node): void {
         if (!node?.isValid) return;
+        this.gameplayRoomRoot = node;
         if (isLegacyCompatibilityTicket(this.sourceTicket)) {
             assertLegacyCompatibilityTicket(this.sourceTicket);
             markLegacyGameplayRoomRoot(node, this.sourceTicket);
@@ -911,7 +922,13 @@ export class PdkSwitchCoordinator {
             zOrder: 24,
             lifecycle: {
                 onCreate: (form) => this.resultController?.onCreate(form),
-                onShow: (_form, setEnd) => this.resultController?.onShow(setEnd),
+                onShow: (form, setEnd) => {
+                    // The settlement prefab may be preloaded before the room controller exists.
+                    // Rebind idempotently at show time so a cached form cannot expose an inert
+                    // Continue button owned by the missing preload-time controller.
+                    this.resultController?.onCreate(form);
+                    this.resultController?.onShow(setEnd);
+                },
                 onClose: () => this.resultController?.onClose(),
                 onDestroy: () => this.resultController?.destroy(),
             },
@@ -1201,6 +1218,7 @@ export class PdkSwitchCoordinator {
         this.runtime = null;
         this.playController?.destroy();
         this.playController = null;
+        this.gameplayRoomRoot = null;
         this.resultController?.destroy();
         this.resultController = null;
         this.dissolveAdapter?.destroy();
@@ -1224,6 +1242,7 @@ export class PdkSwitchCoordinator {
         this.runtime = null;
         this.playController?.destroy();
         this.playController = null;
+        this.gameplayRoomRoot = null;
         this.resultController?.destroy();
         this.resultController = null;
         this.dissolveAdapter?.destroy();

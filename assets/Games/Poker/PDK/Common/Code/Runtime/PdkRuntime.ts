@@ -11,6 +11,7 @@ import {
 } from './PdkAuthoritativeViewAdapter';
 import type { PdkBusinessCode } from '../Regional/PdkBusinessCodes';
 import { resolvePdkGameplayCapabilities } from '../Regional/PdkGameplayCapabilities';
+import { isContinuableSettlementPhase } from './PdkAuthorityPhase';
 
 export interface PdkRuntimeOptions {
     gameCode: PdkBusinessCode;
@@ -49,6 +50,14 @@ const shareDefine = {
     SetStateStringDict: { Init: 0, Playing: 1, End: 2, Waiting: 3, WaitingEx: 4 },
     isCoinRoom: false,
 };
+
+const CANONICAL_ROOM_LIFECYCLE_COMMANDS = new Set([
+    'common.room.ready_req',
+    'common.room.play_req',
+    'common.room.pass_req',
+    'common.room.trusteeship_req',
+    'common.room.continue_req',
+]);
 
 /** Connects the mechanically migrated 2.4.8 room layer to the 3.8 network client. */
 export class PdkRuntime {
@@ -233,7 +242,7 @@ export class PdkRuntime {
     public request<T = unknown>(event: string, body: unknown): Promise<T> {
         if (event === 'common.room.continue_req') {
             const phase = String(this.roomSet.GetRoomSetProperty('authorityPhase') ?? '').toUpperCase();
-            if (phase.length > 0 && phase !== 'FINISHED') {
+            if (phase.length > 0 && !isContinuableSettlementPhase(phase)) {
                 console.info('[CommonPdkContinueSuppressed]', { phase, reason: 'round-in-progress' });
                 return Promise.resolve(undefined as T);
             }
@@ -255,7 +264,9 @@ export class PdkRuntime {
             return this.client.request<unknown>(event, { ...authorityBody, action: command })
                 .then((packet) => this.unwrapDispatchPayload(packet) as T);
         }
-        const dispatchBody = event === dispatchEvent ? authorityBody : {
+        const canonicalLifecycleCommand = CANONICAL_ROOM_LIFECYCLE_COMMANDS.has(event);
+        const requestEvent = canonicalLifecycleCommand ? event : dispatchEvent;
+        const requestBody = canonicalLifecycleCommand || event === dispatchEvent ? authorityBody : {
             roundNo: authorityBody.roundNo,
             playVersion: authorityBody.playVersion,
             action: event,
@@ -263,13 +274,15 @@ export class PdkRuntime {
             ...(typeof source.idempotencyKey === 'string'
                 ? { idempotencyKey: source.idempotencyKey } : {}),
         };
-        return this.client.request<unknown>(dispatchEvent, dispatchBody)
+        return this.client.request<unknown>(requestEvent, requestBody)
             .then((packet) => {
-                // A successful play response already contains the committed
-                // authoritative room view. Apply it before resolving the user
-                // action; otherwise controls keep rendering the previous turn
-                // until a later WebSocket push happens to arrive.
-                if (event === 'common.room.play_req') this.applyAuthoritativePacket(packet, false);
+                // Every successful canonical lifecycle mutation returns the
+                // committed authoritative room view. Apply it before resolving
+                // the user action; otherwise controls can re-enable against the
+                // previous state and submit a second, now-stale mutation. The
+                // existing projector validates identity/version/completeness and
+                // throws before mutating when a response is not authoritative.
+                if (canonicalLifecycleCommand) this.applyAuthoritativePacket(packet, false);
                 return this.unwrapDispatchPayload(packet) as T;
             });
     }
@@ -608,7 +621,7 @@ export class PdkRuntime {
             return;
         }
         this.applyDissolveVote(view);
-        const settlementPhase = ['FINISHED', 'ROUND_SETTLEMENT', 'INTER_ROUND', 'SETTLED'].includes(view.phase);
+        const settlementPhase = isContinuableSettlementPhase(view.phase);
         if (settlementPhase && (force || !previousPhase || previousPhase !== view.phase)) {
             const rawSetEnd = this.roomSet.GetRoomSetProperty('setEnd') ?? {};
             const setEnd = {
@@ -670,6 +683,7 @@ export class PdkRuntime {
                 playerId,
                 displayName,
                 score: Number.isFinite(rawScore) ? rawScore : 0,
+                ready: seat.ready === true,
                 // The shared public-seat schema treats an absent avatar as
                 // optional.  Do not publish an empty string: it makes the
                 // entire seat snapshot invalid and prevents CommonHead render.

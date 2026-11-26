@@ -7,6 +7,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const runtime = fs.readFileSync(path.join(root,
     'assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts'), 'utf8');
+const resultController = fs.readFileSync(path.join(root,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/PdkResultController.ts'), 'utf8');
+const authorityPhase = fs.readFileSync(path.join(root,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/PdkAuthorityPhase.ts'), 'utf8');
 const lobby = fs.readFileSync(path.join(root, 'assets/Lobby/Code/LobbyScreenController.ts'), 'utf8');
 const manager = fs.readFileSync(path.join(root,
     'assets/Games/Poker/PDK/Common/Code/Runtime/model/PdkRoomManager.ts'), 'utf8');
@@ -69,6 +73,13 @@ test('poker runtime consumes canonical dispatch payloads and reconnects authorit
     assert.match(adapter, /shuffleSequence/);
     assert.match(adapter, /legacyPatternOptions\(ruleOptions\)/);
     assert.match(adapter, /CommonPdk 权威牌型配置不完整/);
+});
+
+test('authoritative PDK seat readiness reaches the shared public room snapshot', () => {
+    const projection = runtime.slice(runtime.indexOf('private publishCommonRoomSeats'));
+    assert.match(projection, /const source = view\.seats\[String\(seatId\)\]/);
+    assert.match(projection, /ready: seat\.ready === true/);
+    assert.match(projection, /publishCommonRoomSnapshot\(view\.roomId/);
 });
 
 test('play response applies its authority snapshot before resolving the UI action', () => {
@@ -186,6 +197,28 @@ test('settlement authority restores terminal snapshots without replaying present
     assert.match(switchCoordinator, /commonRoomHistory\.requestClose\(\)/);
     assert.match(commonSettlement, /formHost\.close\(this\.port\.path\)/);
     assert.doesNotMatch(switchCoordinator, /forms\.close\(this\.smallSettlementForm\)/);
+});
+
+test('Continue sends for every authoritative completed-round phase and never treats DIRECT_WIN as active play', () => {
+    for (const phase of ['FINISHED', 'ROUND_SETTLEMENT', 'INTER_ROUND', 'SETTLED', 'DIRECT_WIN']) {
+        assert.match(authorityPhase, new RegExp(`'${phase}'`));
+    }
+    for (const phase of ['PLAYING', 'WAITING', 'COMPETE_DEALER', 'DISSOLVED']) {
+        assert.doesNotMatch(authorityPhase, new RegExp(`'${phase}'`));
+    }
+    assert.match(runtime, /!isContinuableSettlementPhase\(phase\)/);
+    assert.match(runtime, /isContinuableSettlementPhase\(view\.phase\)/);
+    assert.match(resultController, /!isContinuableSettlementPhase\(currentPhase\)/);
+    assert.match(resultController, /return isContinuableSettlementPhase\(phase\)/);
+    assert.match(resultController, /runtime\.action\('continue', 'common\.room\.continue_req'/);
+});
+
+test('cached small-settlement form rebinds the live controller before projecting Continue', () => {
+    const registration = switchCoordinator.slice(
+        switchCoordinator.indexOf('private registerSmallSettlementForm'),
+        switchCoordinator.indexOf('private registerBigSettlementForm'),
+    );
+    assert.match(registration, /onShow: \(form, setEnd\) => \{[\s\S]*resultController\?\.onCreate\(form\);[\s\S]*resultController\?\.onShow\(setEnd\);/);
 });
 
 test('settlement presentation consumes the latest complete seat payload and Continue clears the old round', () => {

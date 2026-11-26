@@ -5,7 +5,7 @@ import { Poker_Card_Face, Poker_Card_Presenter, Poker_Card_Skin, Poker_Card_Suit
 const POKER_CARD_BUNDLE = 'poker-common';
 const POKER_CARD_ATLAS_BUNDLE = 'common';
 const POKER_CARD_ASSET = 'Prefab/Poker_Card';
-const POKER_COMMON_ATLAS = 'Atlas/Poker_Common';
+const POKER_COMMON_ATLAS = 'Atlas/xxxxxxxxxxxxxxxx/Poker_Common';
 
 interface DecodedPokerCard {
     rank: number;

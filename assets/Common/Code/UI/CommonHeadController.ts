@@ -173,9 +173,14 @@ export class CommonHeadController extends Component {
         readonly displayName?: string;
         readonly score?: string | number;
         readonly avatarUrl?: string;
+        readonly ready?: boolean;
     }): void {
         this.showGamePlayer(player.occupied);
         if (!player.occupied) return;
+        // Every authoritative seat render writes both edges so a new round or
+        // game start clears the waiting marker immediately instead of leaving
+        // the previous READY snapshot visible.
+        this.showReady(player.ready === true);
         const info = this.required('Game/Head/PlayerInfo');
         const name = info.getChildByName('Lb_PlayerName')?.getComponent(Label);
         const score = info.getChildByName('Lb_PlayerScore')?.getComponent(Label);

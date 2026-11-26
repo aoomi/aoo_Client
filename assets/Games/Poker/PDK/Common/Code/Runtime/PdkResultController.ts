@@ -5,6 +5,7 @@ import type { LegacyForm, LegacyFormManager } from '../../../../../../Common/Cod
 import type { CommonRoomHeadPort } from '../../../../../Common/Code/Room/CommonRoomHeadMount';
 import { PdkCardPresenter } from './Room/PdkCardPresenter';
 import type { PdkRuntime } from './PdkRuntime';
+import { isContinuableSettlementPhase } from './PdkAuthorityPhase';
 import { legacyPlatformBridge } from '../../../../../../Common/Code/Runtime/platform/LegacyPlatformBridge';
 import { formatPdkRuleSummary } from '../Rules/PdkRuleSummaryFormatter';
 import { resolvePdkRegionalProfile } from '../Regional/PdkRegionalProfileRegistry';
@@ -717,7 +718,7 @@ export class PdkResultController {
             || (this.form?.node as (Node & { __pdkRoomButtonReview?: boolean }) | undefined)?.__pdkRoomButtonReview === true
             // A stale settlement payload may still say canContinue after the next
             // round has begun. The live authoritative phase always wins.
-            || (currentPhase.length > 0 && currentPhase !== 'FINISHED')) {
+            || (currentPhase.length > 0 && !isContinuableSettlementPhase(currentPhase))) {
             this.stopAutoContinue();
             this.requestSettlementClose();
             return;
@@ -762,7 +763,7 @@ export class PdkResultController {
 
     private isCompletedSettlement(payload: Record<string, unknown>): boolean {
         const phase = String(payload.authorityPhase ?? payload.phase ?? '').toUpperCase();
-        return ['FINISHED', 'ROUND_SETTLEMENT', 'INTER_ROUND', 'SETTLED', 'DIRECT_WIN'].includes(phase)
+        return isContinuableSettlementPhase(phase)
             || payload.matchFinished === true
             || payload.canContinue === true;
     }

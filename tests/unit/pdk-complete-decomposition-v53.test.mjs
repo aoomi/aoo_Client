@@ -726,6 +726,20 @@ test('43e a single response opens only the smallest legal pair when no loose sin
     'without a legal loose response, only the lowest legal pair may supply one card');
 });
 
+test('43e1 a single ace with no higher response returns an empty candidate list', () => {
+  const hand = [card(13), card(12), card(10), card(8), card(7)];
+  const responseRules = {
+    ...rules,
+    decompositionPlanMode: 'RESPONSE',
+    responseTurn: true,
+    responseTargetType: 2,
+    responseTargetCount: 1,
+    responseTargetCards: [card(14)],
+  };
+  assert.deepEqual(load.generatePdkFixedPlanCandidates(hand, responseRules), [],
+    'no legal response is a normal empty result so the authoritative caller can auto-pass');
+});
+
 test('43f reported-single response constrains the fixed root before candidate filtering', () => {
   const hand = [...group(13, 2), card(12), ...group(11, 2), card(9), card(8), card(7)];
   const responseRules = {

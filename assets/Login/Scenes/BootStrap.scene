@@ -200,7 +200,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 360,
+    "_orthoHeight": 502.57178526841454,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -823,7 +823,7 @@
     "_string": "0%",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 34.37777777777778,
+    "_actualFontSize": 32.540625,
     "_fontSize": 26,
     "_fontFamily": "Arial",
     "_lineHeight": 32,
@@ -955,7 +955,7 @@
     "_string": "正在检查版本与服务器...",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31.733333333333334,
+    "_actualFontSize": 30.037499999999998,
     "_fontSize": 24,
     "_fontFamily": "Arial",
     "_lineHeight": 30,
@@ -1219,7 +1219,7 @@
     "_string": "V1.0.0",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 23.8,
+    "_actualFontSize": 22.528125,
     "_fontSize": 18,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
@@ -1890,7 +1890,7 @@
     "isTestEnvironment": true,
     "isClearLocalData": true,
     "gatewayAddresses": [
-      "https://8-137-34-190.sslip.io"
+      "http://127.0.0.1:8080"
     ],
     "_id": "c7386d6hBPO43rg1sdJ8A2"
   },
@@ -1954,8 +1954,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 84.49748832638524,
-      "height": 50.4
+      "width": 84.50745162297129,
+      "height": 50.400000000000006
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -1987,7 +1987,7 @@
     "_string": "label",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 52.888888888888886,
+    "_actualFontSize": 50.0625,
     "_fontSize": 40,
     "_fontFamily": "Arial",
     "_lineHeight": 40,

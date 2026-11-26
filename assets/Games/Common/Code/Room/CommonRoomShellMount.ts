@@ -2,30 +2,27 @@ import { assetManager, director, instantiate, Node, Prefab, UITransform } from '
 
 const COMMON_ROOM_BUNDLE = 'games-common';
 const COMMON_ROOM_PREFAB = 'Prefab/CommonRoom';
+const pendingMounts = new WeakMap<Node, Promise<Node>>();
 
 /** The only feature-facing mount point for the shared CommonRoom prefab. */
 export function mountCommonRoomShell(parent: Node): Promise<Node> {
-    return new Promise((resolve, reject) => {
-        const host = resolveCommonRoomHost(parent);
-        if (!host?.isValid || !host.children) {
-            reject(new Error('COMMON_ROOM_PARENT_INVALID'));
-            return;
-        }
+    const host = resolveCommonRoomHost(parent);
+    if (!host?.isValid || !host.children) {
+        return Promise.reject(new Error('COMMON_ROOM_PARENT_INVALID'));
+    }
+    const existing = host.children.find(child => child.isValid && child.name === 'CommonRoom');
+    if (existing) {
+        existing.active = true;
+        placeShellInMiddle(host, existing);
+        return Promise.resolve(existing);
+    }
+    const pending = pendingMounts.get(host);
+    if (pending) return pending;
+
+    const mounting = new Promise<Node>((resolve, reject) => {
         // Canvas is the UI render root. Mounting through a plain Node creates
         // an invisible branch because it is not a UI container. Gameplay may
         // mount only its own content beside this direct Canvas child.
-        const existing = host.children.find(child => child.isValid && child.name === 'CommonRoom');
-        if (existing) {
-            // A failed handoff can leave the direct Canvas child behind after
-            // its feature runtime has already gone away.  The public shell is
-            // single-instance by design: hand the valid root back to the new
-            // lifecycle so it can rebind every capability and seat instead of
-            // rejecting the next game entry as a duplicate.
-            existing.active = true;
-            placeShellInMiddle(host, existing);
-            resolve(existing);
-            return;
-        }
         const mount = (bundle: ReturnType<typeof assetManager.getBundle>): void => {
             if (!bundle) {
                 reject(new Error('COMMON_ROOM_BUNDLE_MISSING'));
@@ -34,6 +31,13 @@ export function mountCommonRoomShell(parent: Node): Promise<Node> {
             bundle.load(COMMON_ROOM_PREFAB, Prefab, (error, prefab) => {
                 if (error || !prefab) {
                     reject(error ?? new Error('COMMON_ROOM_PREFAB_MISSING'));
+                    return;
+                }
+                const concurrent = host.children.find(child => child.isValid && child.name === 'CommonRoom');
+                if (concurrent) {
+                    concurrent.active = true;
+                    placeShellInMiddle(host, concurrent);
+                    resolve(concurrent);
                     return;
                 }
                 const root = instantiate(prefab);
@@ -59,6 +63,13 @@ export function mountCommonRoomShell(parent: Node): Promise<Node> {
             else mount(loaded);
         });
     });
+    pendingMounts.set(host, mounting);
+    void mounting.then(() => {
+        if (pendingMounts.get(host) === mounting) pendingMounts.delete(host);
+    }, () => {
+        if (pendingMounts.get(host) === mounting) pendingMounts.delete(host);
+    });
+    return mounting;
 }
 
 /** Keep public room controls above the table background but below cards/effects. */

@@ -1656,6 +1656,28 @@ export class PdkPlayController {
             default: return 0;
         }
     }
+    private authorityComparisonLabel(type: number): string {
+        switch (type) {
+            case 2: return '单张';
+            case 3: return '对子';
+            case 4: return '顺子';
+            case 5: return '三张';
+            case 6: return '三带一';
+            case 7: return '三带二';
+            case 8: return '四带一';
+            case 9: return '四带二';
+            case 10: return '四带三';
+            case 11: return '炸弹';
+            case 14: return '连对';
+            case 15: return '三带对';
+            case 16: return '飞机带单';
+            case 17: return '飞机带对';
+            case 18: return '飞机带二';
+            case 19: return '飞机';
+            case 20: return '四带两对';
+            default: return '';
+        }
+    }
     private record(value: unknown): Record<string, unknown> | null {
         return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
     }
@@ -1717,7 +1739,11 @@ export class PdkPlayController {
                 || /required|must.*contain|opening card/i.test(message)) {
                 this.showMessage(required > 0 ? `必须带${this.cardDisplayName(required)}牌` : '必须带指定牌');
             } else if (/beat|higher|current trick|cannot play/i.test(message)) {
-                this.showMessage('所选牌不能压过上家的牌');
+                const comparison = this.authorityComparison(this.runtime.getRoomSet().GetRoomSetInfo() ?? {});
+                const targetLabel = this.authorityComparisonLabel(comparison.type);
+                this.showMessage(targetLabel
+                    ? `上家是${targetLabel}，所选牌不能压过`
+                    : '所选牌不能压过上家的牌');
             } else if (/card type|pattern|attachment|invalid play|牌型/i.test(message)) {
                 this.showMessage('牌型错误');
             } else {

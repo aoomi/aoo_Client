@@ -90,7 +90,16 @@ export function resolveRuntimeEndpoints(): RuntimeEndpointConfig {
         if (config[name]) throw new Error(`旧独立服务入口已关闭：${name}`);
     }
     const base = gatewayOrigin(raw).toString();
-    const selectedPreview = previewGateway !== undefined && base === gatewayOrigin(previewGateway).toString();
+    const selectedPreviewOrigin = previewGateway === undefined ? undefined : gatewayOrigin(previewGateway);
+    const selectedOrigin = new URL(base);
+    const loopbackHosts = new Set(['localhost', '127.0.0.1', '::1']);
+    const selectedPreview = selectedPreviewOrigin !== undefined && (
+        base === selectedPreviewOrigin.toString()
+        || (loopbackHosts.has(selectedOrigin.hostname)
+            && loopbackHosts.has(selectedPreviewOrigin.hostname)
+            && selectedOrigin.protocol === selectedPreviewOrigin.protocol
+            && selectedOrigin.port === selectedPreviewOrigin.port)
+    );
     const bootstrapToken = config.bootstrapToken ?? (selectedPreview ? 'local-version-bootstrap-token-32-bytes' : '');
     return {
         apiBaseUrl: base,

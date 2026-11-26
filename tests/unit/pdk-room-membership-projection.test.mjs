@@ -22,3 +22,11 @@ test('the room presentation clears an empty authority seat instead of rendering 
   assert.match(controller, /Number\(player\.pid \?\? 0\) <= 0/);
   assert.match(controller, /seats\.clearHead\(entry\.dataSeat, entry\.physicalSlot\)/);
 });
+
+test('PDK publishes authoritative ready state into the shared seat projection', () => {
+  const runtime = readFileSync(join(clientRoot,
+    'assets/Games/Poker/PDK/Common/Code/Runtime/PdkRuntime.ts'), 'utf8');
+  const projection = runtime.slice(runtime.indexOf('private publishCommonRoomSeats'));
+  assert.match(projection, /ready: seat\.ready === true/);
+  assert.match(projection, /publishCommonRoomSnapshot/);
+});

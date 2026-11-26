@@ -186,16 +186,6 @@ type ResolvedCommonRoomFeaturePorts = Omit<CommonRoomFeaturePorts,
 };
 type PreparedCommonRoom = Readonly<{
     readonly roomId: number;
-    /**
-     * An override may provide an already-mounted root.  The normal path keeps
-     * this null until commit: prepare must not mutate the live Canvas.
-     */
-    readonly root: Node | null;
-    readonly defaults: ReturnType<typeof RoomNetworkControllerMount.createCommonRoomDefaultPorts>;
-    readonly ports: ResolvedCommonRoomFeaturePorts;
-    readonly ownsRoot: boolean;
-    readonly hasSettlementHistory: boolean;
-    readonly formHost: CommonRoomFormHost | null;
 }>;
 
 /**
@@ -282,29 +272,33 @@ function withPresentationLifecycle(entry: GameRuntimeEntry,
     const prepareCommonRoom = async (handoff: Parameters<GameRuntimeEntry['enter']>[0],
         context?: RoomOrchestratorContext): Promise<void> => {
         if (commonRoom || preparedCommonRoom) return;
-        const providedOverrides = entry.commonRoomPorts?.() ?? null;
-        const overrides: CommonRoomFeaturePorts = providedOverrides ?? Object.freeze({});
         const roomId = commonRoomId(handoff);
-        let root: Node | null = null;
+        if (context?.signal.aborted) throw new Error('ROOM_ORCHESTRATOR_ABORTED');
+        // Gameplay owns the family-specific controller and authored table
+        // prefab. Common prepare therefore records only immutable identity;
+        // feature ports are resolved at commit, after gameplay commit exists.
+        preparedCommonRoom = Object.freeze({ roomId });
+    };
+    const commitCommonRoom = async (context?: RoomOrchestratorContext): Promise<void> => {
+        if (commonRoom) {
+            await commonRoom.install();
+            return;
+        }
+        const prepared = preparedCommonRoom;
+        if (!prepared) throw new Error('COMMON_ROOM_PREPARE_REQUIRED');
+        const overrides: CommonRoomFeaturePorts = entry.commonRoomPorts?.() ?? Object.freeze({});
+        let root: Node | null = overrides.mountedRoot ?? null;
         let defaults: ReturnType<typeof RoomNetworkControllerMount.createCommonRoomDefaultPorts> | null = null;
         try {
             if (Boolean(overrides.settlementHistoryRenderer || overrides.settlementHistoryWindow)
                 !== Boolean(overrides.settlementHistoryFeed)) {
                 throw new Error('COMMON_ROOM_SETTLEMENT_PORTS_INCOMPLETE');
             }
-            // A caller-supplied root is already owned by its caller and may be
-            // validated during preparation.  The normal prefab path is loaded
-            // and attached only by commitCommonRoom, after Gameplay has
-            // established the sole active room client.
-            root = overrides.mountedRoot ?? null;
             if (root && (!root.isValid || !root.activeInHierarchy)) {
                 throw new Error('COMMON_ROOM_MOUNTED_ROOT_INVALID');
             }
             if (context?.signal.aborted) throw new Error('ROOM_ORCHESTRATOR_ABORTED');
             defaults = overrides.mountedRootDefaults?.()
-                // The shared network mount is installed on the persistent
-                // lobby controller node. The shell itself mounts to the live
-                // scene Canvas, so these must intentionally be separate hosts.
                 ?? RoomNetworkControllerMount.createCommonRoomDefaultPorts(
                     defaultPortsHost, commonRoomRuntimeDependencies);
             const report = overrides.report ?? commonRoomReport(entry.id);
@@ -321,23 +315,25 @@ function withPresentationLifecycle(entry: GameRuntimeEntry,
                 settlementHistoryRenderer: overrides.settlementHistoryRenderer
                     ?? (overrides.settlementHistoryWindow
                         ? new CommonRoomSettlementWindowRenderer(
-                            commonRoomRuntimeDependencies?.formHost ?? defaults!.formHost,
+                            commonRoomRuntimeDependencies?.formHost ?? defaults.formHost,
                             overrides.settlementHistoryWindow,
                             report,
                         )
                         : failClosedSettlementRenderer(entry.id)),
-                exit: overrides.exit ?? Object.freeze({ request: () => requestRoomExit(roomId) }),
+                exit: overrides.exit ?? Object.freeze({ request: () => requestRoomExit(prepared.roomId) }),
                 report,
             });
-            preparedCommonRoom = Object.freeze({
-                roomId,
-                root,
-                defaults,
-                ports,
-                ownsRoot: !overrides.mountedRoot,
-                hasSettlementHistory: Boolean(overrides.settlementHistoryRenderer || overrides.settlementHistoryWindow),
-                formHost: commonRoomRuntimeDependencies?.formHost ?? defaults.formHost,
-            });
+            root ??= await mountCommonRoomShellCancellable(roomHost, context?.signal);
+            if (!root.isValid || !root.activeInHierarchy) throw new Error('COMMON_ROOM_MOUNTED_ROOT_INVALID');
+            if (context?.signal.aborted) throw new Error('ROOM_ORCHESTRATOR_ABORTED');
+            const session = ProtocolClient.commonRoomSession(prepared.roomId);
+            const lifecycle = new CommonRoomRuntimeLifecycle(entry.id, root, ports, session,
+                defaults.destroy, !overrides.mountedRoot,
+                Boolean(overrides.settlementHistoryRenderer || overrides.settlementHistoryWindow), true,
+                commonRoomRuntimeDependencies?.formHost ?? defaults.formHost);
+            commonRoom = lifecycle;
+            preparedCommonRoom = null;
+            await lifecycle.install();
         } catch (error) {
             defaults?.destroy();
             if (!overrides.mountedRoot && root?.isValid) root.destroy();
@@ -345,27 +341,6 @@ function withPresentationLifecycle(entry: GameRuntimeEntry,
             commonRoom = null;
             throw error;
         }
-    };
-    const commitCommonRoom = async (context?: RoomOrchestratorContext): Promise<void> => {
-        if (commonRoom) {
-            await commonRoom.install();
-            return;
-        }
-        const prepared = preparedCommonRoom;
-        if (!prepared) throw new Error('COMMON_ROOM_PREPARE_REQUIRED');
-        // The gameplay commit establishes the sole active room ProtocolClient
-        // before Common asks for its session. This is intentionally the only
-        // place where CommonRoom acquires the live session handle.
-        const root = prepared.root ?? await mountCommonRoomShellCancellable(roomHost, context?.signal);
-        if (!root.isValid || !root.activeInHierarchy) throw new Error('COMMON_ROOM_MOUNTED_ROOT_INVALID');
-        if (context?.signal.aborted) throw new Error('ROOM_ORCHESTRATOR_ABORTED');
-        const session = ProtocolClient.commonRoomSession(prepared.roomId);
-        const lifecycle = new CommonRoomRuntimeLifecycle(entry.id, root, prepared.ports, session,
-            prepared.defaults.destroy, prepared.ownsRoot,
-            prepared.hasSettlementHistory, true, prepared.formHost);
-        commonRoom = lifecycle;
-        preparedCommonRoom = null;
-        await lifecycle.install();
     };
     const bindCommonRoom = async (handoff: Parameters<GameRuntimeEntry['enter']>[0]): Promise<void> => {
         await prepareCommonRoom(handoff);
@@ -376,10 +351,7 @@ function withPresentationLifecycle(entry: GameRuntimeEntry,
         commonRoom = null;
         const prepared = preparedCommonRoom;
         preparedCommonRoom = null;
-        if (prepared) {
-            prepared.defaults.destroy();
-            if (prepared.ownsRoot && prepared.root?.isValid) prepared.root.destroy();
-        }
+        void prepared;
     };
     return {
         id: entry.id,
@@ -593,7 +565,6 @@ function mountCommonRoomShellCancellable(parent: Node, signal?: AbortSignal): Pr
         signal.addEventListener('abort', onAbort, { once: true });
         mounted.then(root => {
             if (aborted || signal.aborted) {
-                if (root.isValid) root.destroy();
                 return;
             }
             cleanup();

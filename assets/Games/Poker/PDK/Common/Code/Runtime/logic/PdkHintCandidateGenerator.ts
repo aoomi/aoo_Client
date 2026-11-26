@@ -227,6 +227,7 @@ export const generatePdkResponseRootCandidates = (
     const rootsForSingle = loose.length > 0 ? loose : result;
     const ordinary = rootsForSingle.filter((candidate) => !isBombLike(candidate.cards, rules));
     const comparable = ordinary.length > 0 ? ordinary : rootsForSingle;
+    if (comparable.length === 0) return [];
     const best = comparable.reduce((chosen, candidate) =>
         planCompare(candidate.fixedDecomposition as DecompositionPlan,
             chosen.fixedDecomposition as DecompositionPlan) < 0 ? candidate : chosen,

@@ -10,7 +10,9 @@ const perspective = read('assets/Common/Code/Runtime/state/SeatPerspective.ts');
 const head = read('assets/Common/Code/UI/CommonHeadController.ts');
 const entries = read('assets/Games/Common/Code/Runtime/GameRuntimeEntries.ts');
 const entryContract = read('assets/Games/Common/Code/Runtime/GameRuntimeEntry.ts');
+const pdkCoordinator = read('assets/Games/Poker/PDK/Common/Code/Runtime/PdkSwitchCoordinator.ts');
 const prefab = JSON.parse(read('assets/Games/Common/Prefab/CommonRoom.prefab'));
+const pdkPrefab = JSON.parse(read('assets/Games/Poker/PDK/Common/Prefab/PDK_CommonRoom.prefab'));
 
 test('CommonRoom prefab has one stable SeatHost with four physical slots', () => {
     const nodes = prefab.map((value, index) => ({ value, index })).filter(item => item.value?.__type__ === 'cc.Node');
@@ -42,6 +44,16 @@ test('vacancy clears public identity and transient state before occupied render'
     assert.match(head, /this\.hideTransientEffects\(\)/);
     assert.match(entries, /occupied: false/);
     assert.match(entries, /for \(const head of this\.createdHeads\.values\(\)\).*head\.destroy\(\)/);
+});
+
+test('public seat ready is authority-backed and both true and false edges render', () => {
+    assert.match(entryContract, /readonly ready\?: boolean/);
+    assert.match(entryContract, /COMMON_ROOM_SEAT_READY_INVALID/);
+    assert.match(entryContract, /COMMON_ROOM_VACANT_READY/);
+    assert.match(entryContract, /ready: source\.ready === true/);
+    assert.match(head, /this\.showReady\(player\.ready === true\)/);
+    assert.match(head, /if \(!player\.occupied\) return/);
+    assert.match(head, /this\.showReady\(false\)/);
 });
 
 test('mounted gameplay view cannot retain Common root ownership after destroy', () => {
@@ -80,4 +92,35 @@ test('seat layout override is exact, finite and fail-closed while default layout
     assert.match(entries, /host\.setPosition\(position\.x, position\.y, position\.z \?\? 0\)/);
     assert.match(entries, /800 \+ 650 \* Math\.cos\(angle\)/);
     assert.match(entries, /450 \+ 350 \* Math\.sin\(angle\)/);
+});
+
+test('family ports resolve only after gameplay commit so live room state reaches Common', () => {
+    const prepare = entries.slice(entries.indexOf('const prepareCommonRoom'), entries.indexOf('const commitCommonRoom'));
+    const commit = entries.slice(entries.indexOf('const commitCommonRoom'), entries.indexOf('const bindCommonRoom'));
+    assert.doesNotMatch(prepare, /commonRoomPorts\?\.\(\)/);
+    assert.match(commit, /entry\.commonRoomPorts\?\.\(\)/);
+    assert.match(pdkCoordinator, /mounted: view => \{\s*const disposePlayMount = play\.bindCommonRoomMountedView\(view\)/);
+});
+
+test('PDK seat layout reads live instantiated Head nodes instead of duplicating coordinates', () => {
+    assert.match(pdkCoordinator, /this\.gameplayRoomRoot = node/);
+    assert.match(pdkCoordinator, /getChildByName\('Players'\)/);
+    assert.match(pdkCoordinator, /getChildByName\(`Seat_\$\{index\}`\)\?\.getChildByName\('Head'\)/);
+    assert.match(pdkCoordinator, /convertToNodeSpaceAR\(head\.worldPosition\)/);
+    assert.doesNotMatch(pdkCoordinator, /self:\s*\{\s*x:\s*-530/);
+
+    const nodes = pdkPrefab.map((value, index) => ({ value, index }))
+        .filter(item => item.value?.__type__ === 'cc.Node');
+    const position = (seatName) => {
+        const seat = nodes.find(item => item.value._name === seatName
+            && pdkPrefab[item.value._parent?.__id__]?._name === 'Players');
+        assert.ok(seat, `${seatName} must exist below Players`);
+        const head = nodes.find(item => item.value._name === 'Head'
+            && item.value._parent?.__id__ === seat.index);
+        assert.ok(head, `${seatName}/Head must exist`);
+        return [seat.value._lpos.x + head.value._lpos.x, seat.value._lpos.y + head.value._lpos.y];
+    };
+    assert.deepEqual(['Seat_0', 'Seat_1', 'Seat_2', 'Seat_3'].map(position), [
+        [-530, -220], [530, 100], [280, 280], [-530, 100],
+    ]);
 });

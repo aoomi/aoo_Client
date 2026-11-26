@@ -30,6 +30,22 @@ test('PDK card-pattern animation assets have one authoritative Common/Spine sour
     assert.notEqual(spineMeta.userData?.isBundle, true, 'Spine must inherit the common PDK bundle');
 });
 
+test('PDK SkeletonData metadata resolves every registered atlas by its current UUID', () => {
+    for (const relative of requiredAssets.filter((asset) => asset.endsWith('.json'))) {
+        const skeletonPath = join(spineRoot, relative);
+        const skeletonMeta = JSON.parse(readFileSync(`${skeletonPath}.meta`, 'utf8'));
+        const atlasPath = skeletonPath.replace(/\.json$/, '.atlas');
+        assert.equal(existsSync(atlasPath), true, `${relative} atlas missing`);
+        assert.equal(existsSync(`${atlasPath}.meta`), true, `${relative} atlas meta missing`);
+        const atlasMeta = JSON.parse(readFileSync(`${atlasPath}.meta`, 'utf8'));
+        assert.equal(
+            skeletonMeta.userData?.atlasUuid,
+            atlasMeta.uuid,
+            `${relative} references a stale atlas UUID and cannot be imported by Creator`,
+        );
+    }
+});
+
 test('PDK animation registry maps protocol card types to Common/Spine SkeletonData', () => {
     const registry = readFileSync(join(runtimeRoot, 'PdkAnimationRegistry.ts'), 'utf8');
     const resolver = readFileSync(join(runtimeRoot, 'PdkAnimationResolver.ts'), 'utf8');
